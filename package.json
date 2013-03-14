@@ -1,0 +1,12 @@
+{
+  "name": "cncserver",
+  "version": "0.1.0",
+  "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
+  "main": "cncserver.js",
+  "author": "techninja",
+  "license": "MIT",
+  "dependencies" : {
+    "express": "~3.0.0",
+    "serialport" : "~1.0.6"
+  }
+}
