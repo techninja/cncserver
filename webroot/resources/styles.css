@@ -1,0 +1,61 @@
+/*
+  @file
+*/
+
+body {
+  font-family: sans-serif;
+}
+
+/* Drawing Area */
+svg#main {
+  border: 2px solid red;
+}
+
+/* Nav Tools */
+nav#tools {
+  float: right;
+  left: 1050px;
+  margin-right: 10em;
+  position: absolute;
+  top: 27px;
+}
+
+nav#tools a, nav#tools a:link  {
+  display: block;
+  color: white;
+  text-decoration: none;
+}
+
+nav#tools .color {
+  border-radius: 100px / 65px;
+  height: 52px;
+  line-height: 47px;
+  margin-top: 6px;
+  text-align: center;
+  width: 85px;
+}
+
+nav#tools #water {
+  background-image:url("resources/images/water.png");
+  background-size: 89px 41px;
+  width: 89px;
+  height: 43px;
+}
+
+nav#tools .color:hover {
+  border: 2px dashed red;
+  margin: 3px -2px -1px -2px;
+}
+
+/* Color Set 1 */
+nav#tools #color0.colorset1 { background-color: #926350; } /* Brown */
+nav#tools #color1.colorset1 { background-color: #907DBD; } /* Violet */
+nav#tools #color2.colorset1 { background-color: #353AAA; } /* Blue */
+nav#tools #color3.colorset1 { background-color: #2E6F3A; } /* Green */
+nav#tools #color4.colorset1 { background-color: #F7F756; color: black;} /* Yellow */
+nav#tools #color5.colorset1 { background-color: #FF6A00; } /* Orange */
+nav#tools #color6.colorset1 { background-color: #A72611; } /* Red */
+nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
+
+
+/* Path Manager */
