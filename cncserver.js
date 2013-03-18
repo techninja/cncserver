@@ -20,45 +20,53 @@ var serialTimeout = 5000;
 // CONFIGURE Data
 config = {
   name: 'WaterColorBot',
-  maxArea: {width: 15500, height: 8600}, // Size in steps
-  workArea: {top: 0, left: 3850}, // Size in steps
+  maxArea: {width: 12420, height: 7350}, // Size in steps
+  workArea: {top: 0, left: 2850}, // Size in steps
   speed: 1000, // in steps per second
   tools: {
-    water: {
+    water0: {
       x: 0,
-      y: 3500
+      y: 0
+    },
+    water1: {
+      x: 0,
+      y: 2600
+    },
+    water2: {
+      x: 0,
+      y: 5500
     },
     color0: {
-      x: 2500,
+      x: 1700,
       y: 0
     },
     color1: {
-      x: 2500,
+      x: 1700,
       y: 950
     },
     color2: {
-      x: 2500,
-      y: 2000
+      x: 1700,
+      y: 1950
     },
     color3: {
-      x: 2500,
-      y: 3300
+      x: 1700,
+      y: 2900
     },
     color4: {
-      x: 2500,
-      y: 4500
+      x: 1700,
+      y: 3700
     },
     color5: {
-      x: 2500,
-      y: 5700
+      x: 1700,
+      y: 4650
     },
     color6: {
-      x: 2500,
-      y: 6900
+      x: 1700,
+      y: 5550
     },
     color7: {
-      x: 2500,
-      y: 8100
+      x: 1700,
+      y: 6450
     }
   }
 };
