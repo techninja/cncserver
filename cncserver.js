@@ -329,7 +329,7 @@ serialPort.on("open", function () {
       if (err) {
         // What kind of error is this anyways? :P
         console.log('err ' + err);
-        callback(false);
+        if (callback) callback(false);
       }
       //console.log('results ' + results);
     });
@@ -350,7 +350,7 @@ serialPort.on("open", function () {
           console.log('Serial Error: ' + data);
           callback(false);
         }else{*/
-          callback(data);
+          if (callback) callback(data);
         //}
       //}
     });
