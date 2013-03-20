@@ -13,8 +13,9 @@
   <button id="park">Park</button>
   <button id="movefirst">Move to First point</button>
   <button id="draw">Draw Path</button>
-  <button id="pen-up">Pen Up</button>
-  <button id="pen-down">Pen Down</button>
+  <button id="stop">STOP draw</button>
+  <button id="pen-up">Brush Up</button>
+  <button id="pen-down">Brush Down</button>
   <button id="disable">Unlock/Disable Motors</button>
 </nav>
 
@@ -253,6 +254,7 @@
   $('#park').click(function(){ parkPen(); });
   $('#movefirst').click(function(){ readyFirstPoint(); });
   $('#draw').click(function(){ drawNextPoint(); });
+  $('#stop').click(function(){ stopDraw = true; });
   $('#pen-up').click(function(){ penUp() });
   $('#pen-down').click(function(){ penDown(); });
   $('#disable').click(function(){ disableMotors(); });
@@ -306,6 +308,9 @@
   }
 
   function drawNextPoint(){
+    if (stopDraw) {
+      stopDraw = false;
+      penUp();
     index+=1;
     if (index > path.getTotalLength()) {
       console.log('Path Complete!')
