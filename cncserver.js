@@ -237,7 +237,12 @@ serialPort.on("open", function () {
     if (inPen.x !== undefined){
       // Input values are given as percentages of working area (not max area)
 
-      // TODO: verify incoming values
+      // Sanity check incoming values
+      inPen.x  = inPen.x > 100 ? 100 : inPen.x;
+      inPen.x  = inPen.x < 0 ? 0 : inPen.x;
+
+      inPen.y  = inPen.y > 100 ? 100 : inPen.y;
+      inPen.y  = inPen.y < 0 ? 0 : inPen.y;
 
       // Convert the percentage values into real absolute and appropriate values
       var absInput = {
