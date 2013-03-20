@@ -22,7 +22,8 @@ config = {
   name: 'WaterColorBot',
   maxArea: {width: 12420, height: 7350}, // Size in steps
   workArea: {top: 0, left: 2850}, // Size in steps
-  speed: 1000, // in steps per second
+  drawSpeed: 1000, // Drawing (brush down) speed in steps per second
+  moveSpeed: 1500, // Moving (brush up) speed in steps per second
   tools: {
     water0: {
       x: 0,
@@ -256,7 +257,8 @@ serialPort.on("open", function () {
       console.log('Pos Change: ', change);
 
       var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-      var duration = parseInt(distance / config.speed * 1000); // How many steps a second?
+      var speed = pen.state ? config.drawSpeed : config.moveSpeed;
+      var duration = parseInt(distance / speed * 1000); // How many steps a second?
 
 
       console.log('Distance to move: ' + distance + ' steps');
@@ -299,7 +301,7 @@ serialPort.on("open", function () {
     console.log('Pos Change: ', change);
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-    var duration = parseInt(distance / config.speed * 1000); // How many steps a second?
+    var duration = parseInt(distance / config.moveSpeed * 1000); // How many steps a second?
 
     // Flop X to match stepper command direction
     serialCommand('SM,' + duration + ',' + (change.x*-1) + ',' + change.y, function(data){
