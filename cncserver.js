@@ -224,9 +224,6 @@ serialPort.on("open", function () {
 
   // UTILITY FUNCTIONS =======================================================
   function setPen(inPen, callback) {
-
-    console.log('Input val: ', inPen);
-
     // Validate inPen (just force invalid to be valid for now)
     if (inPen.state !== undefined){
       // Future will support non-integers, but for now, 0 or 1
@@ -239,7 +236,6 @@ serialPort.on("open", function () {
 
     // State has changed
     if (inPen.state != pen.state) {
-      console.log('Changed State! Writing to serial');
       // Flop state value on write
       serialCommand('SP,' + (pen.state == 1 ? 1 : 0), function(data){
         if (data) {
@@ -318,7 +314,7 @@ serialPort.on("open", function () {
     point.y = point.y > config.maxArea.height ? height : point.y;
     point.y = point.y < 0 ? 0 : point.y;
 
-    console.log('Absolute pos: ', point)
+    //console.log('Absolute pos: ', point)
 
     var change = {
       x: Math.round(point.x - pen.x),
@@ -331,17 +327,15 @@ serialPort.on("open", function () {
     var speed = pen.state ? config.drawSpeed : config.moveSpeed;
     var duration = parseInt(distance / speed * 1000); // How many steps a second?
 
-    console.log('Distance to move: ' + distance + ' steps');
-    console.log('Time to Take: ' + duration + ' ms');
+    //console.log('Distance to move: ' + distance + ' steps');
+    //console.log('Time to Take: ' + duration + ' ms');
+
+    pen.x = point.x;
+    pen.y = point.y;
 
     // Send the final serial command
     // Flop X to match stepper command direction
     serialCommand('SM,' + duration + ',' + (change.x*-1) + ',' + change.y, function(data){
-      if (data) {
-        pen.x = point.x;
-        pen.y = point.y;
-      }
-
       // Can't trust this to callback when move is done, so trust duration
       if (immediate == 1) {
         callback(data);
@@ -385,29 +379,15 @@ serialPort.on("open", function () {
         // What kind of error is this anyways? :P
         console.log('err ' + err);
         if (callback) callback(false);
+      } else {
+        // This is terrible, but.. you can NOT trust the data return
+        if (callback) callback(true);
       }
-      //console.log('results ' + results);
     });
-
-    //var timedOut = false;
-    //var to = setTimeout(function(){
-    //  console.log('Serial Timed out on "' + command + '"')
-      //timedOut = true;
-    //  callback(false);
-    //}, serialTimeout);
 
     // Catch the return data
     serialPort.on('data', function(data) {
-      //clearTimeout(to);
-      //if (!timedOut) {
-        // TODO: Implement proper serial OK, EBB ERROR catch
-        /*if (data && data.indexOf("Err") !== -1){
-          console.log('Serial Error: ' + data);
-          callback(false);
-        }else{*/
-          if (callback) callback(data);
-        //}
-      //}
+      // Do nothing as the EBB gives utterly unhelpful data for non-blocking applications
     });
   }
 });
