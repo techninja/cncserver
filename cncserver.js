@@ -129,16 +129,15 @@ serialPort.on("open", function () {
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       console.log('Parking Pen...');
-      setPen({state: 0}, function(stat){
-        setPen({x: 0, y:0, park: true}, function(stat){
-          if (!stat) {
-            res.status(500).send(JSON.stringify({
-              status: 'Error'
-            }));
-          } else {
-            res.status(200).send(JSON.stringify(pen));
-          }
-        });
+      setPen({state: 0});
+      setPen({x: 0, y:0, park: true}, function(stat){
+        if (!stat) {
+          res.status(500).send(JSON.stringify({
+            status: 'Error'
+          }));
+        } else {
+          res.status(200).send(JSON.stringify(pen));
+        }
       });
     } else {
       res.status(405).send(JSON.stringify({
@@ -228,7 +227,7 @@ serialPort.on("open", function () {
           pen.state = inPen.state;
         }
 
-        callback(data);
+        if (callback) callback(data);
       });
 
       return;
