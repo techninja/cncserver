@@ -261,44 +261,12 @@ serialPort.on("open", function () {
         }
       }
 
-      console.log('Absolute pos: ', absInput)
-
-      var change = {
-        x: Math.round(absInput.x - pen.x),
-        y: Math.round(absInput.y - pen.y)
-      }
-
-      console.log('Pos Change: ', change);
-
-      var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-      var speed = pen.state ? config.drawSpeed : config.moveSpeed;
-      var duration = parseInt(distance / speed * 1000); // How many steps a second?
-
-
-      console.log('Distance to move: ' + distance + ' steps');
-      console.log('Time to Take: ' + duration + ' ms');
-
-      // Flop X to match stepper command direction
-      serialCommand('SM,' + duration + ',' + (change.x*-1) + ',' + change.y, function(data){
-        if (data) {
-          pen.x = absInput.x;
-          pen.y = absInput.y;
-        }
-
-        // Can't trust this to callback when move is done, so trust duration
-        if (inPen.ignoreTimeout == 1) {
-          callback(data);
-        } else {
-          setTimeout(function(){
-            callback(data);
-          }, duration);
-        }
-
-      });
+      // Actually move the pen!
+      movePenAbs(absInput, callback, inPen.ignoreTimeout);
       return;
     }
 
-    callback(true);
+    if (callback) callback(true);
   }
 
   // Tool change
@@ -307,27 +275,51 @@ serialPort.on("open", function () {
 
     console.log('Changing to tool: ' + toolName);
 
+    // Actually move the pen!
+    movePenAbs(tool, callback);
+  }
+
+  // Move the Pen to an absolute point in the entire work area
+  function movePenAbs(point, callback, immediate) {
+    // Sanity check absolute position input point
+    point.x = point.x > config.maxArea.width ? config.maxArea.width : point.x;
+    point.x = point.x < 0 ? 0 : point.x;
+
+    point.y = point.y > config.maxArea.height ? height : point.y;
+    point.y = point.y < 0 ? 0 : point.y;
+
+    console.log('Absolute pos: ', point)
+
     var change = {
-      x: Math.round(tool.x - pen.x),
-      y: Math.round(tool.y - pen.y)
+      x: Math.round(point.x - pen.x),
+      y: Math.round(point.y - pen.y)
     }
 
     console.log('Pos Change: ', change);
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-    var duration = parseInt(distance / config.moveSpeed * 1000); // How many steps a second?
+    var speed = pen.state ? config.drawSpeed : config.moveSpeed;
+    var duration = parseInt(distance / speed * 1000); // How many steps a second?
 
+    console.log('Distance to move: ' + distance + ' steps');
+    console.log('Time to Take: ' + duration + ' ms');
+
+    // Send the final serial command
     // Flop X to match stepper command direction
     serialCommand('SM,' + duration + ',' + (change.x*-1) + ',' + change.y, function(data){
       if (data) {
-        pen.x = tool.x;
-        pen.y = tool.y;
+        pen.x = point.x;
+        pen.y = point.y;
       }
 
-      setTimeout(function(){
+      // Can't trust this to callback when move is done, so trust duration
+      if (immediate == 1) {
         callback(data);
-      }, duration);
-
+      } else {
+        setTimeout(function(){
+          callback(data);
+        }, duration);
+      }
     });
   }
 
