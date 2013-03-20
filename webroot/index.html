@@ -331,7 +331,46 @@
       return;
     }
 
-    moveTo(curr, drawNextPoint);
+    var point = $path[0].getPointAtLength(index).matrixTransform($path.transformMatrix);
+    point.ignoreTimeout = 1;
+
+    // With each coordinate, check to see that the path is visible
+    $('#drawpoint').hide()
+    var coordPath = document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
+    $('#drawpoint').show()
+
+    if (coordPath) {
+      if (coordPath.id == $path[0].id){
+        // Correct path
+        console.log('Path Visible');
+
+        // If Pen isn't down, put it down, then continue!
+        if (penStat.state == 0){
+          penDown(function(){
+            moveTo(point, drawNextPoint);
+          });
+        } else{
+          moveTo(point, drawNextPoint);
+        }
+      } else {
+        // Wrong path!
+        console.log('Path Hidden by ', coordPath.id);
+
+        // If Pen is down, put it up, then continue!
+        if (penStat.state == 1){
+          penUp(function(){
+            moveTo(point, drawNextPoint);
+          });
+        } else {
+          moveTo(point, drawNextPoint);
+        }
+      }
+    } else {
+      console.log('Bad Point?: ', point);
+      moveTo(point, drawNextPoint);
+    }
+  }
+
   // Get the pen x/y status
   function setPenStat(){
     $.ajax({
