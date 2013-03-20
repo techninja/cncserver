@@ -32,47 +32,69 @@ config = {
   tools: {
     water0: {
       x: 0,
-      y: 0
+      y: 0,
+      wiggleAxis: 'y',
+      wiggleTravel: 500
     },
     water1: {
       x: 0,
-      y: 3050
+      y: 3050,
+      wiggleAxis: 'y',
+      wiggleTravel: 500
     },
     water2: {
       x: 0,
-      y: 5800
+      y: 5800,
+      wiggleAxis: 'y',
+      wiggleTravel: 500
     },
     color0: {
       x: colorX,
-      y: 0
+      y: 0,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color1: {
       x: colorX,
-      y: 1200
+      y: 1200,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color2: {
       x: colorX,
-      y: 2150
+      y: 2150,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color3: {
       x: colorX,
-      y: 3100
+      y: 3100,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color4: {
       x: colorX,
-      y: 3900
+      y: 3900,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color5: {
       x: colorX,
-      y: 4900
+      y: 4900,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color6: {
       x: colorX,
-      y: 5800
+      y: 5800,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     },
     color7: {
       x: colorX,
-      y: 6700
+      y: 6700,
+      wiggleAxis: 'x',
+      wiggleTravel: 300
     }
   }
 };
@@ -178,9 +200,6 @@ serialPort.on("open", function () {
   app.all("/tools/:tool", function(req, res){
     res.set('Content-Type', 'application/json');
 
-    // Pen Up
-    setPen({state: 0}, function(){});
-
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method == 'put') { // Set Tool
@@ -275,8 +294,19 @@ serialPort.on("open", function () {
 
     console.log('Changing to tool: ' + toolName);
 
-    // Actually move the pen!
-    movePenAbs(tool, callback);
+    // Pen Up
+    setPen({state: 0}, function(){
+      // Move to the tool
+      movePenAbs(tool, function(data){
+        // Pen down
+        setPen({state: 1}, function(){
+          // Wiggle the brush a bit
+          wigglePen(tool.wiggleAxis, tool.wiggleTravel, 3, function(){
+            callback(data);
+          });
+        });
+      });
+    });
   }
 
   // Move the Pen to an absolute point in the entire work area
@@ -323,8 +353,27 @@ serialPort.on("open", function () {
     });
   }
 
-  function wigglePen(axis, travel, iterations){
 
+  function wigglePen(axis, travel, iterations, callback){
+    var start = {x: pen.x, y: pen.y};
+    var i = 0;
+
+    // Start the wiggle!
+    _wiggleSlave(true);
+
+    function _wiggleSlave(toggle){
+      var point = {x: start.x, y: start.y};
+      point[axis]+= (toggle ? travel : travel * -1);
+      movePenAbs(point, function(){
+        i++;
+
+        if (i <= iterations){ // Wiggle again!
+          _wiggleSlave(!toggle);
+        } else { // Done wiggling, go back to start
+          movePenAbs(start, callback);
+        }
+      })
+    }
   }
 
   // BLOCKING SERIAL READ/WRITE ================================================
