@@ -332,6 +332,15 @@
     }
 
     moveTo(curr, drawNextPoint);
+  // Get the pen x/y status
+  function setPenStat(){
+    $.ajax({
+      url: '/pen',
+      type: 'GET',
+      success: function(d){
+        penStat = d;
+      }
+    });
   }
 
   function penUp(callback){
@@ -364,6 +373,7 @@
 
 
   function moveTo(point, callback){
+    // Move visible drawpoint
     $('#drawpoint').attr({
       x1:point.x-2,
       y1:point.y-2,
