@@ -242,7 +242,12 @@ serialPort.on("open", function () {
           pen.state = inPen.state;
         }
 
-        if (callback) callback(data);
+        // Pen lift / drop, 200ms!
+        if (callback) {
+          setTimeout(function(){
+            callback(data);
+          }, 200);
+        }
       });
 
       return;
