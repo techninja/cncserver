@@ -320,14 +320,16 @@
     if (stopDraw) {
       stopDraw = false;
       penUp();
-    index+=1;
-    if (index > path.getTotalLength()) {
-      console.log('Path Complete!')
       return;
     }
 
-    var curr = path.getPointAtLength(index).matrixTransform(path.transformMatrix);
-    curr.ignoreTimeout = 1;
+    index+= precision;
+    if (index > $path[0].getTotalLength()) {
+      console.log('Path Complete!');
+      index = 0;
+      penUp();
+      return;
+    }
 
     moveTo(curr, drawNextPoint);
   }
