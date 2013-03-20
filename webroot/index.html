@@ -235,6 +235,10 @@
   // Convert the polys and lines to path
   // TODO: This happens after load, or before print... :|
   changeToPaths();
+
+  // Get initial pen data from machine
+  setPenStat();
+
   // Bind all SVG element click / select
   $('svg *:not(g)').on('click', function(e){
     if ($path.length) {
@@ -336,6 +340,7 @@
         state: 0
       },
       success: function(d){
+        penStat = d;
         if (callback) callback();
       }
     });
@@ -349,6 +354,7 @@
         state: 1
       },
       success: function(d){
+        penStat = d;
         if (callback) callback();
       }
     });

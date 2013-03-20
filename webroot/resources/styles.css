@@ -40,8 +40,8 @@ nav#tools .color {
   width: 85px;
 }
 
-nav#tools #water {
-  background-image:url("resources/images/water.png");
+nav#tools .water {
+  background-image:url("images/water.png");
   background-size: 89px 41px;
   width: 89px;
   height: 43px;
