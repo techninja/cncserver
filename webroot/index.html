@@ -221,12 +221,33 @@
 
 <script>
 
-  var path = document.getElementById("path492");
-  path.transformMatrix = path.getTransformToElement(path.ownerSVGElement);
-
+  var $path = {};
   var index = 1;
-  var height = $('#main').height();
-  var width = $('#main').width();
+  var penStat = {};
+  var $svg = $('#main');
+  var height = $svg.height();
+  var width = $svg.width();
+  var stopDraw = false;
+  var precision = 1;
+  var svgOffset = $svg.offset();
+
+  // Convert the polys and lines to path
+  // TODO: This happens after load, or before print... :|
+  changeToPaths();
+  // Bind all SVG element click / select
+  $('svg *:not(g)').on('click', function(e){
+    if ($path.length) {
+      $path.removeClass('selected');
+    }
+    $path = $(this);
+    $path.addClass('selected');
+    $path.transformMatrix = this.getTransformToElement(this.ownerSVGElement);
+    index = 0;
+
+    console.log($path);
+
+    e.stopPropagation(); // Don't bubble up and select groups
+  });
 
   // Bind to control buttons
   $('#park').click(function(){ parkPen(); });
@@ -236,8 +257,52 @@
   $('#pen-down').click(function(){ penDown(); });
   $('#disable').click(function(){ disableMotors(); });
 
+  // Convert everything to paths
+  function changeToPaths() {
+    var polys = document.querySelectorAll('polygon,polyline');
+    [].forEach.call(polys, convertPolyToPath);
+
+    var lines = document.querySelectorAll('line');
+    [].forEach.call(lines, convertLineToPath);
+
+    function convertPolyToPath(poly){
+      var svgNS = poly.ownerSVGElement.namespaceURI;
+      var path = document.createElementNS(svgNS,'path');
+      var points = poly.getAttribute('points').split(/\s+|,/);
+      var x0=points.shift(), y0=points.shift();
+      var pathdata = 'M'+x0+','+y0+'L'+points.join(' ');
+      if (poly.tagName=='polygon') {
+        pathdata+='z';
+      }
+
+      path.setAttribute('d',pathdata);
+
+      path.setAttribute('style', poly.style.cssText);
+      path.setAttribute('id', poly.id);
+      poly.parentNode.replaceChild(path,poly);
+    }
+
+    function convertLineToPath(line){
+      // Don't convert our drawpoint
+      // TODO: Add the point after load or something to avoid this :P
+      if (line.id == 'drawpoint'){
+        return;
+      }
+      var svgNS = line.ownerSVGElement.namespaceURI;
+      var path = document.createElementNS(svgNS,'path');
+      path.setAttribute('d', 'M'+
+        line.getAttribute('x1')+','+
+        line.getAttribute('y1')+' L'+
+        line.getAttribute('x2')+','+
+        line.getAttribute('y2'));
+      path.setAttribute('style', line.style.cssText);
+      path.setAttribute('id', line.id);
+      line.parentNode.replaceChild(path, line);
+    }
+  }
+
   function readyFirstPoint() {
-    moveTo(path.getPointAtLength(0).matrixTransform(path.transformMatrix));
+    moveTo($path[0].getPointAtLength(0).matrixTransform($path.transformMatrix));
   }
 
   function drawNextPoint(){

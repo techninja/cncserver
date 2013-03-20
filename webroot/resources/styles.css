@@ -11,6 +11,11 @@ svg#main {
   border: 2px solid red;
 }
 
+svg#main *.selected {
+  stroke: blue !important;
+  stroke-width: 1;
+}
+
 /* Nav Tools */
 nav#tools {
   float: right;
