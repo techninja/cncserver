@@ -326,6 +326,12 @@ serialPort.on("open", function () {
       y: Math.round(point.y - pen.y)
     }
 
+    // Don't do anything if there's no change
+    if (change.x == 0 && change.y == 0) {
+      callback(false);
+      return;
+    }
+
     console.log('Pos Change: ', change);
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
