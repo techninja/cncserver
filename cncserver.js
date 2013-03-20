@@ -24,6 +24,10 @@ config = {
   workArea: {top: 0, left: 2850}, // Size in steps
   drawSpeed: 1000, // Drawing (brush down) speed in steps per second
   moveSpeed: 1500, // Moving (brush up) speed in steps per second
+  servo: {
+    min: 12900, // Brush Lift amount (lower number lifts higher)
+    max: 18000  // Brush fall (servo arm stays clear)
+  },
   tools: {
     water0: {
       x: 0,
@@ -95,6 +99,11 @@ console.log('Attempting to open serial port:' + serialPath);
 // All serial requests are blocking to fetch returns
 serialPort.on("open", function () {
   console.log('Serial connection open at 9600bps');
+
+  // Set initial EBB values from Config
+  // SERVO
+  serialCommand('SC,4,' + config.servo.min);
+  serialCommand('SC,5,' + config.servo.max);
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
