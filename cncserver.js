@@ -18,10 +18,11 @@ var serialPort = new SerialPort(serialPath, { baudrate : 9600 });
 var serialTimeout = 5000;
 
 // CONFIGURE Data
+var colorX = 1300;
 config = {
   name: 'WaterColorBot',
   maxArea: {width: 12420, height: 7350}, // Size in steps
-  workArea: {top: 0, left: 2850}, // Size in steps
+  workArea: {top: 0, left: 2450}, // Size in steps
   drawSpeed: 1000, // Drawing (brush down) speed in steps per second
   moveSpeed: 1500, // Moving (brush up) speed in steps per second
   servo: {
@@ -35,43 +36,43 @@ config = {
     },
     water1: {
       x: 0,
-      y: 2600
+      y: 3050
     },
     water2: {
       x: 0,
-      y: 5500
+      y: 5800
     },
     color0: {
-      x: 1700,
+      x: colorX,
       y: 0
     },
     color1: {
-      x: 1700,
-      y: 950
+      x: colorX,
+      y: 1200
     },
     color2: {
-      x: 1700,
-      y: 1950
+      x: colorX,
+      y: 2150
     },
     color3: {
-      x: 1700,
-      y: 2900
+      x: colorX,
+      y: 3100
     },
     color4: {
-      x: 1700,
-      y: 3700
+      x: colorX,
+      y: 3900
     },
     color5: {
-      x: 1700,
-      y: 4650
+      x: colorX,
+      y: 4900
     },
     color6: {
-      x: 1700,
-      y: 5550
+      x: colorX,
+      y: 5800
     },
     color7: {
-      x: 1700,
-      y: 6450
+      x: colorX,
+      y: 6700
     }
   }
 };
