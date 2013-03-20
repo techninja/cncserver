@@ -250,6 +250,11 @@
     e.stopPropagation(); // Don't bubble up and select groups
   });
 
+  // Bind to Tool Change nav items
+  $('nav#tools a').click(function(e){
+    changeTool(this.id);
+  });
+
   // Bind to control buttons
   $('#park').click(function(){ parkPen(); });
   $('#movefirst').click(function(){ readyFirstPoint(); });
@@ -386,6 +391,16 @@
     $.ajax({
       url: '/motors',
       type: 'DELETE',
+      success: function(d){
+        if (callback) callback();
+      }
+    });
+  }
+
+  function changeTool(toolName, callback){
+    $.ajax({
+      url: '/tools/' + toolName,
+      type: 'PUT',
       success: function(d){
         if (callback) callback();
       }
