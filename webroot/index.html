@@ -496,6 +496,11 @@
   }
 
   function moveTo(point, callback){
+    if (point == undefined){
+      if (callback) callback(false);
+      return;
+    }
+
     // Move visible drawpoint
     $('#drawpoint').attr({
       x1:point.x-2,
@@ -504,12 +509,24 @@
       y2:point.y+2
     });
 
+    var percent = {
+      x: (point.x / width) * 100,
+      y: (point.y / height) * 100
+    }
+
+    // Sanity check outputs
+    percent.x = percent.x > 100 ? 100 : percent.x;
+    percent.y = percent.y > 100 ? 100 : percent.y;
+    percent.x = percent.x < 0 ? 0 : percent.x;
+    percent.y = percent.y < 0 ? 0 : percent.y;
+
+
     $.ajax({
       url: '/pen',
       type: 'PUT',
       data: { // Send as percentage
-        x: (point.x / width) * 100,
-        y: (point.y / height) * 100,
+        x: percent.x,
+        y: percent.y,
         ignoreTimeout: point.ignoreTimeout
       },
       success: function(d){
