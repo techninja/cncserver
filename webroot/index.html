@@ -353,27 +353,36 @@
     point.ignoreTimeout = 1;
 
     // With each coordinate, check to see that the path is visible
-    $('#drawpoint').hide()
-    var coordPath = document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
-    $('#drawpoint').show()
+    getPenStatePathCollide($path[0], point, function(){
+      moveTo(point, drawNextFillPathPoint);
+    });
+  }
 
   // Find out what DOM object is directly below the point given
   // Will NOT work if point is outside visible screen range!
   function getPointPathCollide(point) {
     return document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
   }
-    if (coordPath) {
-      if (coordPath.id == $path[0].id){
-        // Correct path
-        console.log('Path Visible');
 
+  // Set the pen down or up based on visibility of a given path at a given point
+  // TODO: Document this function
+  function getPenStatePathCollide(path, point, callback) {
+    // Drawpoint element can get in the way of elementFromPoint, hide it!
+    $('#drawpoint').hide();
+    var coordPath = getPointPathCollide(point);
+    $('#drawpoint').show();
+
+    if (coordPath) {
+      // TODO: Check via something other than ID
+      if (coordPath.id == path.id){
+        // Correct path, visible at this coordinate!!
         // If Pen isn't down, put it down, then continue!
         if (penStat.state == 0){
           penDown(function(){
-            moveTo(point, drawNextPoint);
+            callback();
           });
         } else{
-          moveTo(point, drawNextPoint);
+          callback();
         }
       } else {
         // Wrong path!
@@ -382,15 +391,18 @@
         // If Pen is down, put it up, then continue!
         if (penStat.state == 1){
           penUp(function(){
-            moveTo(point, drawNextPoint);
+            callback();
           });
         } else {
-          moveTo(point, drawNextPoint);
+          callback();
         }
       }
     } else {
-      console.log('Bad Point?: ', point);
-      moveTo(point, drawNextPoint);
+      console.log('Point not visible!: ', point);
+      callback();
+    }
+  }
+
   // Wet the brush and get more of selected paint color, then return to
   // point given and trigger callback
   function getMorePaint(point, callback) {
