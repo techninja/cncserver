@@ -357,6 +357,11 @@
     var coordPath = document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
     $('#drawpoint').show()
 
+  // Find out what DOM object is directly below the point given
+  // Will NOT work if point is outside visible screen range!
+  function getPointPathCollide(point) {
+    return document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
+  }
     if (coordPath) {
       if (coordPath.id == $path[0].id){
         // Correct path
