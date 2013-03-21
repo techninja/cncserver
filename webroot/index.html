@@ -283,6 +283,7 @@
   $('#pen-up').click(function(){ penUp() });
   $('#pen-down').click(function(){ penDown(); });
   $('#disable').click(function(){ disableMotors(); });
+  $('#precision').change(function(){ precision = Number($(this).val()); });
 
   // Convert everything to paths
   function changeToPaths() {
