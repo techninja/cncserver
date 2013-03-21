@@ -266,7 +266,7 @@
 
   // Bind to control buttons
   $('#park').click(function(){ parkPen(); });
-  $('#movefirst').click(function(){ readyFirstPoint(); });
+  $('#movefirst').click(function(){ penUp(readyFirstPoint); });
   $('#draw').click(function(){
     if (stopDraw === 0) {
       stopDraw = true;
