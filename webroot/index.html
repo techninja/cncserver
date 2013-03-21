@@ -236,6 +236,7 @@
   var stopDraw = false;
   var precision = Number($('#precision').val());
   var svgOffset = $svg.offset();
+  var maxPaintDistance = 8000;
 
   // Convert the polys and lines to path
   // TODO: This happens after load, or before print... :|
@@ -351,6 +352,28 @@
     }
 
     var point = $path[0].getPointAtLength(index).matrixTransform($path.transformMatrix);
+
+    // Only ignore the pen timeout if we've been drawing
+    // TODO: This is probably still a bad idea
+    point.ignoreTimeout = (penStat.distanceCounter == 0 ? 0 : 1);
+
+    // With each coordinate, check to see that the path is visible
+    getPenStatePathCollide($path[0], point, function(){
+      moveTo(point, function(data){
+
+        // If we've used this one too much, go get more paint!
+        if (data.distanceCounter > maxPaintDistance) {
+          getMorePaint(point, function(){
+            index-= precision * 5; // Draw backwards three steps
+            drawNextPoint();
+          });
+        } else {
+          drawNextPoint();
+        }
+
+      });
+    });
+  }
     point.ignoreTimeout = 1;
 
     // With each coordinate, check to see that the path is visible
@@ -439,7 +462,7 @@
       },
       success: function(d){
         penStat = d;
-        if (callback) callback();
+        if (callback) callback(d);
       }
     });
   }
@@ -453,11 +476,24 @@
       },
       success: function(d){
         penStat = d;
-        if (callback) callback();
+        if (callback) callback(d);
       }
     });
   }
 
+  function penResetCounter(callback) {
+    $.ajax({
+      url: '/pen',
+      type: 'PUT',
+      data: {
+        resetCounter: true
+      },
+      success: function(d){
+        penStat = d;
+        if (callback) callback();
+      }
+    });
+  }
 
   function moveTo(point, callback){
     // Move visible drawpoint
@@ -477,7 +513,8 @@
         ignoreTimeout: point.ignoreTimeout
       },
       success: function(d){
-        if (callback) callback();
+        penStat = d;
+        if (callback) callback(d);
       }
     });
   }
@@ -507,7 +544,9 @@
       url: '/tools/' + toolName,
       type: 'PUT',
       success: function(d){
-        if (callback) callback();
+        penResetCounter(function (){
+          if (callback) callback(d);
+        });
       }
     });
   }
