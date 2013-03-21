@@ -17,6 +17,13 @@
   <button id="pen-up">Brush Up</button>
   <button id="pen-down">Brush Down</button>
   <button id="disable">Unlock/Disable Motors</button>
+  <select id="precision" title="Trace precision: Default is 'Fine'">
+    <option value="0.1">Super-fine (0.1)</option>
+    <option value="0.4">Very Fine (0.4)</option>
+    <option value="1" selected>Fine* (1)</option>
+    <option value="3">Coarse (3)</option>
+    <option value="5">Very Coarse (5)</option>
+  </select>
 </nav>
 
 <nav id="tools">
@@ -229,7 +236,7 @@
   var height = $svg.height();
   var width = $svg.width();
   var stopDraw = false;
-  var precision = 1;
+  var precision = Number($('#precision').val());
   var svgOffset = $svg.offset();
 
   // Convert the polys and lines to path
