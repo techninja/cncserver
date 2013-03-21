@@ -15,6 +15,11 @@ svg#main *.selected {
   stroke: blue !important;
   stroke-width: 1 !important;
 }
+
+/* Drawing Simulation Canvas */
+canvas#simulate {
+  position: absolute;
+  z-index: -10;
 }
 
 /* Nav Tools */
