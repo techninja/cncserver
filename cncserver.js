@@ -105,7 +105,8 @@ var pen  = {
   x: 0, // Assume we start in top left corner
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
-  tool: 0
+  tool: 0,
+  distanceCounter: 0 // Holds a running tally of distance travelled
 }
 
 // Start express hosting the site from "webroot" folder on the given port
@@ -228,6 +229,14 @@ serialPort.on("open", function () {
 
   // UTILITY FUNCTIONS =======================================================
   function setPen(inPen, callback) {
+
+    // Counter Reset
+    if (inPen.resetCounter) {
+      pen.distanceCounter = 0;
+      callback(true);
+      return;
+    }
+
     // Validate inPen (just force invalid to be valid for now)
     if (inPen.state !== undefined){
       // Future will support non-integers, but for now, 0 or 1
@@ -286,7 +295,10 @@ serialPort.on("open", function () {
       }
 
       // Actually move the pen!
-      movePenAbs(absInput, callback, inPen.ignoreTimeout);
+      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
+      if (pen.state) {
+        pen.distanceCounter+= distance;
+      }
       return;
     }
 
@@ -315,6 +327,7 @@ serialPort.on("open", function () {
   }
 
   // Move the Pen to an absolute point in the entire work area
+  // Returns distance moved, in steps
   function movePenAbs(point, callback, immediate) {
     // Sanity check absolute position input point
     point.x = point.x > config.maxArea.width ? config.maxArea.width : point.x;
@@ -360,6 +373,8 @@ serialPort.on("open", function () {
         }, duration);
       }
     });
+
+    return distance;
   }
 
 
