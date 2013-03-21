@@ -13,7 +13,8 @@ svg#main {
 
 svg#main *.selected {
   stroke: blue !important;
-  stroke-width: 1;
+  stroke-width: 1 !important;
+}
 }
 
 /* Nav Tools */
