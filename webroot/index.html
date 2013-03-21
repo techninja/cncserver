@@ -244,7 +244,7 @@
   changeToPaths();
 
   // Get initial pen data from machine
-  setPenStat();
+  getPenStat();
 
   // Bind all SVG element click / select
   $('svg *:not(g)').on('click', function(e){
@@ -263,7 +263,7 @@
 
   // Bind to Tool Change nav items
   $('nav#tools a').click(function(e){
-    changeTool(this.id);
+    toolChange(this.id);
   });
 
   // Bind to control buttons
@@ -379,7 +379,7 @@
   }
 
   // Get the pen x/y status
-  function setPenStat(){
+  function getPenStat(){
     $.ajax({
       url: '/pen',
       type: 'GET',
@@ -461,7 +461,7 @@
     });
   }
 
-  function changeTool(toolName, callback){
+  function toolChange(toolName, callback){
     $.ajax({
       url: '/tools/' + toolName,
       type: 'PUT',
