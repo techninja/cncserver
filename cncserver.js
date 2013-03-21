@@ -145,7 +145,11 @@ serialPort.on("open", function () {
             status: 'Error'
           }));
         } else {
-          res.status(202).send(JSON.stringify(pen));
+          if (req.body.ignoreTimeout){
+            res.status(202).send(JSON.stringify(pen));
+          } else {
+            res.status(200).send(JSON.stringify(pen));
+          }
         }
       });
     } else if (req.route.method == 'delete'){
