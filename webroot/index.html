@@ -8,12 +8,10 @@
   </head>
 <body>
 
-
 <nav id="control">
   <button id="park">Park</button>
-  <button id="movefirst">Move to First point</button>
-  <button id="draw">Draw Path</button>
-  <button id="stop">STOP draw</button>
+  <button id="movefirst" disabled>Move to First point</button>
+  <button id="draw" disabled>Draw Path</button>
   <button id="pen-up">Brush Up</button>
   <button id="pen-down">Brush Down</button>
   <button id="disable">Unlock/Disable Motors</button>
@@ -269,8 +267,15 @@
   // Bind to control buttons
   $('#park').click(function(){ parkPen(); });
   $('#movefirst').click(function(){ readyFirstPoint(); });
-  $('#draw').click(function(){ drawNextPoint(); });
-  $('#stop').click(function(){ stopDraw = true; });
+  $('#draw').click(function(){
+    if (stopDraw === 0) {
+      stopDraw = true;
+    } else {
+      stopDraw = 0;
+      $('#draw').text('STOP Draw');
+      drawNextPoint();
+    }
+  });
   $('#pen-up').click(function(){ penUp() });
   $('#pen-down').click(function(){ penDown(); });
   $('#disable').click(function(){ disableMotors(); });
@@ -323,9 +328,11 @@
     moveTo($path[0].getPointAtLength(0).matrixTransform($path.transformMatrix));
   }
 
+  // Outlines all visible portions of a given path, one step at a time
   function drawNextPoint(){
     if (stopDraw) {
       stopDraw = false;
+      $('#draw').text('Draw Path');
       penUp();
       return;
     }
