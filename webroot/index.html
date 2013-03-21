@@ -386,6 +386,18 @@
     } else {
       console.log('Bad Point?: ', point);
       moveTo(point, drawNextPoint);
+  // Wet the brush and get more of selected paint color, then return to
+  // point given and trigger callback
+  function getMorePaint(point, callback) {
+    toolChange('water1', function(){
+      toolChange($('.color.selected').attr('id'), function(){
+        penUp(function(){
+          moveTo(point, callback);
+        });
+      });
+    });
+  }
+
     }
   }
 
