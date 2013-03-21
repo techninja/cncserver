@@ -275,7 +275,11 @@
     $path.transformMatrix = this.getTransformToElement(this.ownerSVGElement);
     index = 0;
 
-    console.log($path);
+    // Enable buttons because we're selected now!
+    $('#movefirst').prop('disabled', false);
+    $('#draw').prop('disabled', false);
+    $('#fill-build').prop('disabled', false);
+    $('#fill-paint').prop('disabled', !$path.data('fill'));
 
     e.stopPropagation(); // Don't bubble up and select groups
   });
@@ -283,6 +287,7 @@
   // Select Fill Path and set matrix
   $fillPath = $('svg #fill-swirl');
   $fillPath.transformMatrix = $fillPath[0].getTransformToElement($fillPath[0].ownerSVGElement);
+
   // Bind to Tool Change nav items
   $('nav#tools a').click(function(e){
     toolChange(this.id);
