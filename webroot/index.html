@@ -35,7 +35,7 @@
   <a id="color4" class="color colorset1" href="#">Yellow</a>
   <a id="color5" class="color colorset1" href="#">Orange</a>
   <a id="color6" class="color colorset1" href="#">Red</a>
-  <a id="color7" class="color colorset1" href="#">Black</a>
+  <a id="color7" class="color colorset1 selected" href="#">Black</a>
 </nav>
 
 <nav id="paths"><ul></ul></nav>
@@ -262,6 +262,10 @@
   // Bind to Tool Change nav items
   $('nav#tools a').click(function(e){
     toolChange(this.id);
+    if ($(this).is('.color')){
+      $('nav#tools a.selected').removeClass('selected');
+      $(this).addClass('selected');
+    }
   });
 
   // Bind to control buttons
