@@ -139,8 +139,7 @@ serialPort.on("open", function () {
       // GET pen state
       res.send(JSON.stringify(pen));
     } else if (req.route.method == 'put') {
-      // SET/UPDATE pen state
-      console.log('Set pen to:' + req.body.state);
+      // SET/UPDATE pen status
       setPen(req.body, function(stat){
         if (!stat) {
           res.status(500).send(JSON.stringify({
