@@ -27,7 +27,8 @@ config = {
   moveSpeed: 3000, // Moving (brush up) speed in steps per second
   servo: {
     min: 12900, // Brush Lift amount (lower number lifts higher)
-    max: 18000  // Brush fall (servo arm stays clear)
+    max: 25000,  // Brush fall (servo arm stays clear)
+    speed: 720 // AMount of time a full movement takes
   },
   tools: {
     water0: {
@@ -255,11 +256,11 @@ serialPort.on("open", function () {
           pen.state = inPen.state;
         }
 
-        // Pen lift / drop, 200ms!
+        // Pen lift / drop
         if (callback) {
           setTimeout(function(){
             callback(data);
-          }, 200);
+          }, config.servo.speed);
         }
       });
 
