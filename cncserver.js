@@ -211,6 +211,7 @@ serialPort.on("open", function () {
     if (req.route.method == 'put') { // Set Tool
       if (config.tools[toolName]){
         setTool(toolName, function(data){
+          pen.tool = toolName;
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
