@@ -202,6 +202,19 @@ serialPort.on("open", function () {
   });
 
   // Get/Change Tool API ================================================
+  app.all("/tools", function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+
+    var toolName = req.params.tool;
+    if (req.route.method == 'get') { // Get list of tools
+      res.status(200).send(JSON.stringify({tools: Object.keys(config.tools)}));
+    } else {
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    }
+  });
+
   app.all("/tools/:tool", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
