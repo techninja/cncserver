@@ -133,7 +133,7 @@ serialPort.on("open", function () {
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
   app.all("/pen", function(req, res){
-    res.set('Content-Type', 'application/json');
+    res.set('Content-Type', 'application/json; charset=UTF-8');
 
     if (req.route.method == 'get') {
       // GET pen state
@@ -176,7 +176,7 @@ serialPort.on("open", function () {
 
   // Return/Set Motor state API ================================================
   app.all("/motors", function(req, res){
-    res.set('Content-Type', 'application/json');
+    res.set('Content-Type', 'application/json; charset=UTF-8');
 
     console.log(req.route.method);
 
@@ -204,7 +204,7 @@ serialPort.on("open", function () {
 
   // Get/Change Tool API ================================================
   app.all("/tools/:tool", function(req, res){
-    res.set('Content-Type', 'application/json');
+    res.set('Content-Type', 'application/json; charset=UTF-8');
 
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
