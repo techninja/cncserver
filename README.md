@@ -34,7 +34,7 @@ CNC server comes as two component parts, a client application, and a server appl
 ### Server
  * Fast HTTP server via [Express](http://expressjs.com) allows for full stack web application and extensions.
  * Self manages absolute pen position.
- * 3 API endpoints allow full pen control, motor overrides and tool changes.
+ * 3 API endpoints allow full pen control, motor overrides and tool changes. Read [the documentation](API.md) to implement *your own* client!
  * Accepts direct X/Y absolute pen positions as percentage of total width/height.
  * Client agnostic! We don't care what controls the bot, as long as it follows the rules. (iPad app coming soon!)
  * Config file driven, allows for server customization to fit any style of bot.
