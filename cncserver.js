@@ -11,11 +11,40 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 
-// TODO: Interactively choose serialport
+// Serial port specific setup
+var serialPath = "";
+var serialPort = {};
 var SerialPort = require("serialport").SerialPort;
-var serialPath = "/dev/ttyACM0";
-var serialPort = new SerialPort(serialPath, { baudrate : 9600 });
-var serialTimeout = 5000;
+
+// Attempt to auto detect EBB Board via PNPID
+console.log('Finding available serial ports...');
+require("serialport").list(function (err, ports) {
+  var portNames = ['None'];
+  for (var portID in ports){
+    portNames[portID] = ports[portID].comName;
+    if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1) {
+      serialPath = portNames[portID];
+    }
+  }
+
+  console.log('Available Serial ports: ' + portNames.join(', '));
+
+  // Try to connect to serial, or exit with error codes
+  if (!serialPath) {
+    console.log("EiBotBoard not found. Are you sure it's connected? Exiting with code 22");
+    process.exit(22);
+  } else {
+    console.log('Attempting to open serial port: "' + serialPath + '"...');
+    try {
+      serialPort = new SerialPort(serialPath, {baudrate : 9600});
+    } catch(e) {
+      console.log("Serial port failed to connect. Is it busy or in use elsewhere? Exiting with code 10");
+      process.exit(10);
+    }
+
+    serialPort.on("open", serialPortReadyCallback);
+  }
+});
 
 // CONFIGURE Data
 var colorX = 1300;
@@ -110,20 +139,18 @@ var pen  = {
   distanceCounter: 0 // Holds a running tally of distance travelled
 }
 
-// Start express hosting the site from "webroot" folder on the given port
-server.listen(port);
-app.configure(function(){
-  app.use("/", express.static(__dirname + '/webroot'));
-  app.use(express.bodyParser());
-});
-console.log('CNC server listening on localhost:' + port);
 
-
-console.log('Attempting to open serial port:' + serialPath);
-
-// All serial requests are blocking to fetch returns
-serialPort.on("open", function () {
+// No events are bound till we have a real serial connection
+function serialPortReadyCallback() {
   console.log('Serial connection open at 9600bps');
+
+  // Start express hosting the site from "webroot" folder on the given port
+  server.listen(port);
+  app.configure(function(){
+    app.use("/", express.static(__dirname + '/webroot'));
+    app.use(express.bodyParser());
+  });
+  console.log('CNC server listening on localhost:' + port);
 
   // Set initial EBB values from Config
   // SERVO
@@ -434,4 +461,4 @@ serialPort.on("open", function () {
       // Do nothing as the EBB gives utterly unhelpful data for non-blocking applications
     });
   }
-});
+};
