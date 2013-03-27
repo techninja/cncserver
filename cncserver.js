@@ -51,7 +51,7 @@ require("serialport").list(function (err, ports) {
 });
 
 // CONFIGURE Data
-var colorX = 1300;
+var colorX = 1620;
 config = {
   name: 'WaterColorBot',
   maxArea: {width: 12630, height: 7200}, // Size in steps
@@ -72,13 +72,13 @@ config = {
     },
     water1: {
       x: 0,
-      y: 3050,
+      y: 2900,
       wiggleAxis: 'y',
       wiggleTravel: 500
     },
     water2: {
       x: 0,
-      y: 5800,
+      y: 5650,
       wiggleAxis: 'y',
       wiggleTravel: 500
     },
@@ -90,43 +90,43 @@ config = {
     },
     color1: {
       x: colorX,
-      y: 1200,
+      y: 1050,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color2: {
       x: colorX,
-      y: 2150,
+      y: 2000,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color3: {
       x: colorX,
-      y: 3100,
+      y: 2950,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color4: {
       x: colorX,
-      y: 3900,
+      y: 3750,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color5: {
       x: colorX,
-      y: 4900,
+      y: 4750,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color6: {
       x: colorX,
-      y: 5800,
+      y: 5650,
       wiggleAxis: 'x',
       wiggleTravel: 300
     },
     color7: {
       x: colorX,
-      y: 6700,
+      y: 6550,
       wiggleAxis: 'x',
       wiggleTravel: 300
     }
