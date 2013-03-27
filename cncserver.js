@@ -50,14 +50,14 @@ require("serialport").list(function (err, ports) {
 var colorX = 1300;
 config = {
   name: 'WaterColorBot',
-  maxArea: {width: 12420, height: 7350}, // Size in steps
+  maxArea: {width: 12630, height: 7200}, // Size in steps
   workArea: {top: 0, left: 2450}, // Size in steps
   drawSpeed: 2000, // Drawing (brush down) speed in steps per second
   moveSpeed: 3000, // Moving (brush up) speed in steps per second
   servo: {
     min: 12900, // Brush Lift amount (lower number lifts higher)
     max: 25000,  // Brush fall (servo arm stays clear)
-    speed: 720 // AMount of time a full movement takes
+    speed: 720 // Amount of time a full movement takes
   },
   tools: {
     water0: {
