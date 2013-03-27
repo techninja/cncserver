@@ -86,49 +86,49 @@ config = {
       x: colorX,
       y: 0,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color1: {
       x: colorX,
       y: 1050,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color2: {
       x: colorX,
       y: 2000,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color3: {
       x: colorX,
       y: 2950,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color4: {
       x: colorX,
       y: 3750,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color5: {
       x: colorX,
       y: 4750,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color6: {
       x: colorX,
       y: 5650,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     },
     color7: {
       x: colorX,
       y: 6550,
       wiggleAxis: 'x',
-      wiggleTravel: 300
+      wiggleTravel: 500
     }
   }
 };
