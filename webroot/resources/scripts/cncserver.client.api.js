@@ -27,7 +27,7 @@ cncserver.api = {
       _put('pen', {
         data: { state: flop ? 1 : 0}, // 0 is off (no draw), 1 is on (do draw)
         success: function(d){
-          penStat = d;
+          cncserver.state.pen = d;
           if (callback) callback(d);
       }});
     },
@@ -46,7 +46,7 @@ cncserver.api = {
       _put('pen', {
         data: { resetCounter: 1},
         success: function(d){
-          penStat = d;
+          cncserver.state.pen = d;
           if (callback) callback(d);
       }});
     },
@@ -59,7 +59,7 @@ cncserver.api = {
     park: function(callback){
       _delete('pen',{
         success: function(d){
-          penStat = d;
+          cncserver.state.pen = d;
           if (callback) callback(d);
       }});
     },
@@ -104,7 +104,7 @@ cncserver.api = {
           ignoreTimeout: point.ignoreTimeout
         },
         success: function(d){
-          penStat = d;
+          cncserver.state.pen = d;
           if (callback) callback(d);
       }});
     }
