@@ -11,6 +11,10 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 
+// Quick change for inverting motors
+var invertX = true;
+var invertY = false;
+
 // Serial port specific setup
 var serialPath = "";
 var serialPort = {};
@@ -402,9 +406,12 @@ function serialPortReadyCallback() {
     pen.x = point.x;
     pen.y = point.y;
 
+    // Invert X or Y to match stepper direction
+    change.x = invertX ? change.x * -1 : change.x;
+    change.y = invertY ? change.y * -1 : change.y;
+
     // Send the final serial command
-    // Flop X to match stepper command direction
-    serialCommand('SM,' + duration + ',' + (change.x*-1) + ',' + change.y, function(data){
+    serialCommand('SM,' + duration + ',' + change.x + ',' + change.y, function(data){
       // Can't trust this to callback when move is done, so trust duration
       if (immediate == 1) {
         callback(data);
