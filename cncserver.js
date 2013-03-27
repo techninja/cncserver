@@ -59,7 +59,7 @@ config = {
   drawSpeed: 2000, // Drawing (brush down) speed in steps per second
   moveSpeed: 3000, // Moving (brush up) speed in steps per second
   servo: {
-    min: 12900, // Brush Lift amount (lower number lifts higher)
+    min: 18000, // Brush Lift amount (lower number lifts higher)
     max: 25000,  // Brush fall (servo arm stays clear)
     rate: 0, // Servo rate sent to the EBB
     duration: 200 // Amount of time (in milliseconds) a full movement takes
