@@ -24,6 +24,12 @@ cncserver.api = {
     *   Set to true to swap pen position state to 1 (down/draw)
     */
     up: function(callback, flop){
+      // Short circuit if state already matches local state
+      if (cncserver.state.pen.state == flop ? 1 : 0) {
+        callback(cncserver.state.pen);
+        return;
+      }
+
       _put('pen', {
         data: { state: flop ? 1 : 0}, // 0 is off (no draw), 1 is on (do draw)
         success: function(d){
