@@ -61,7 +61,8 @@ config = {
   servo: {
     min: 12900, // Brush Lift amount (lower number lifts higher)
     max: 25000,  // Brush fall (servo arm stays clear)
-    speed: 720 // Amount of time a full movement takes
+    rate: 0, // Servo rate sent to the EBB
+    duration: 200 // Amount of time (in milliseconds) a full movement takes
   },
   tools: {
     water0: {
@@ -158,8 +159,10 @@ function serialPortReadyCallback() {
 
   // Set initial EBB values from Config
   // SERVO
+  console.log('Sending EBB config...')
   serialCommand('SC,4,' + config.servo.min);
   serialCommand('SC,5,' + config.servo.max);
+  serialCommand('SC,10,' + config.servo.rate);
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
@@ -304,7 +307,7 @@ function serialPortReadyCallback() {
         if (callback) {
           setTimeout(function(){
             callback(data);
-          }, config.servo.speed);
+          }, config.servo.duration);
         }
       });
 
