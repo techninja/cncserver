@@ -212,8 +212,8 @@ $(function() {
     $('#drawpoint').show();
 
     if (coordPath) {
-      // TODO: Check via something other than ID
-      if (coordPath.id == path.id){
+      // Check that the objects are exactly the same
+      if (coordPath == path){
         // Correct path, visible at this coordinate!!
         // If Pen isn't down, put it down, then continue!
         if (cncserver.state.pen.state == 0){
@@ -366,7 +366,7 @@ $(function() {
 
       // If we still think it's valid, use the slow visual path collision check
       if (validPoint) {
-        validPoint = getPointPathCollide(point).id == $path[0].id
+        validPoint = getPointPathCollide(point) == $path[0];
       }
 
       if (validPoint){
