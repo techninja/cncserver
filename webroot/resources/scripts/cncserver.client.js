@@ -11,7 +11,8 @@ var cncserver = {
     pen: {}
   },
   config: {
-    precision: 1
+    precision: 1,
+    maxPaintDistance: 12000
   }
 };
 
@@ -22,6 +23,7 @@ $(function() {
   var $fillPath = {};
   var index = 1;
   var $svg = $('#main');
+  var svgOffset = $svg.offset();
 
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
@@ -29,8 +31,6 @@ $(function() {
   var stopDraw = false;
   var stopBuildFill = false;
   cncserver.config.precision = Number($('#precision').val());
-  var svgOffset = $svg.offset();
-  var maxPaintDistance = 8000;
 
   // Convert the polys and lines to path
   // TODO: This happens after load, or before print... :|
@@ -184,7 +184,7 @@ $(function() {
       cncserver.api.pen.move(point, function(data){
 
         // If we've used this one too much, go get more paint!
-        if (data.distanceCounter > maxPaintDistance) {
+        if (data.distanceCounter > cncserver.config.maxPaintDistance) {
           getMorePaint(point, function(){
             index-= cncserver.config.precision * 5; // Draw backwards three steps
             drawNextPoint();
@@ -450,7 +450,7 @@ $(function() {
             // Move to next path after raising pen
             cncserver.api.pen.up(drawNextFillPath);
           } else { // Actually painting...
-            if (cncserver.state.pen.distanceCounter > maxPaintDistance) {
+            if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
               console.log('Time to go get more paint!');
               getMorePaint(fillQueue[fillGroupIndex][fillIndex-1], function(){
                 console.log('Resuming fill painting');
