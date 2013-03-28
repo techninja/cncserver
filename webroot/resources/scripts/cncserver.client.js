@@ -224,9 +224,7 @@ $(function() {
         // Correct path, visible at this coordinate!!
         // If Pen isn't down, put it down, then continue!
         if (cncserver.state.pen.state == 0){
-          cncserver.api.pen.down(function(){
-            callback();
-          });
+          cncserver.api.pen.down(callback);
         } else{
           callback();
         }
