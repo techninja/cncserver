@@ -271,6 +271,13 @@ $(function() {
     var fillSpacing = 8; // Only used for horizontal or vertical fillStyle
     var pathRect = $path[0].getBoundingClientRect();
 
+    pathRect = {
+      top: pathRect.top - svgOffset.top,
+      left: pathRect.left - svgOffset.left,
+      right: pathRect.right - svgOffset.left,
+      bottom: pathRect.bottom - svgOffset.top
+    }
+
     $('#fill-build').text('STOP Build');
 
     // Clear canvas and set visual options
