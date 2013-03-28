@@ -37,7 +37,14 @@ $(function() {
   changeToPaths();
 
   // Get initial pen data from machine
-  cncserver.api.pen.stat();
+  cncserver.api.pen.stat(function(){
+    // Select tool from last machine tool
+    if (cncserver.state.pen.tool) {
+      $('.color').removeClass('selected');
+      $('#' + cncserver.state.pen.tool).addClass('selected');
+    }
+  });
+
 
   // Bind all SVG element click / select
   $('svg *:not(g)').on('click', function(e){
