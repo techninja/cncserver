@@ -278,20 +278,20 @@ $(function() {
 
     // Other fill styles..
     if (fillStyle == 'horizontal') {
-      max = (height / fillSpacing) * width;
+      max = (cncserver.canvas.height / fillSpacing) * cncserver.canvas.width;
       fillPrecision = 10;
 
       // Start the fillIndex at the Bounding Box TOP
       var top = pathRect.top;
-      fillIndex = (top / fillSpacing) * width;
+      fillIndex = (top / fillSpacing) * cncserver.canvas.width;
     }
 
     if (fillStyle == 'vertical') {
-      max = (width / fillSpacing) * height;
+      max = (cncserver.canvas.width / fillSpacing) * cncserver.canvas.height;
       fillPrecision = 10;
 
       var left = pathRect.left;
-      fillIndex = (left / fillSpacing) * height;
+      fillIndex = (left / fillSpacing) * cncserver.canvas.height;
     }
 
     fillQueue = [];
@@ -311,14 +311,14 @@ $(function() {
         // Hatch back and forth lines across the full width to the bottom
 
         // Get the number of full widths done so far
-        var fillWidths = parseInt(fillIndex / width);
+        var fillWidths = parseInt(fillIndex / cncserver.canvas.width);
 
         // Our fillIndex less any full widths crossed, gives us any leftover
-        point.x = fillIndex - (fillWidths * width);
+        point.x = fillIndex - (fillWidths * cncserver.canvas.width);
 
         // Alternate directions
         if (fillWidths % 2) {
-          point.x = width - point.x;
+          point.x = cncserver.canvas.width - point.x;
         }
 
         // How many widths we've gone so far, multiply that by the fillspacing for height
@@ -333,14 +333,14 @@ $(function() {
         // Hatch up and down lines the full height to the right
 
         // Get the number of full heights done so far
-        var fillHeights = parseInt(fillIndex / height);
+        var fillHeights = parseInt(fillIndex / cncserver.canvas.height);
 
         // Our fillIndex less any full heights crossed, gives us any leftover
-        point.y = fillIndex - (fillHeights * height);
+        point.y = fillIndex - (fillHeights * cncserver.canvas.height);
 
         // Alternate directions
         if (fillHeights % 2) {
-          point.y = height - point.y;
+          point.y = cncserver.canvas.height - point.y;
         }
 
         // How many heights we've gone so far, multiply that by the fillspacing for width
