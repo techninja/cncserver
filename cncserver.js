@@ -69,67 +69,78 @@ config = {
       x: 0,
       y: 0,
       wiggleAxis: 'y',
-      wiggleTravel: 500
+      wiggleTravel: 500,
+      wiggleIterations: 4
     },
     water1: {
       x: 0,
       y: 2900,
       wiggleAxis: 'y',
-      wiggleTravel: 500
+      wiggleTravel: 500,
+      wiggleIterations: 4
     },
     water2: {
       x: 0,
       y: 5650,
       wiggleAxis: 'y',
-      wiggleTravel: 500
+      wiggleTravel: 500,
+      wiggleIterations: 4
     },
     color0: {
       x: colorX,
       y: 0,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color1: {
       x: colorX,
       y: 1050,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color2: {
       x: colorX,
       y: 2000,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color3: {
       x: colorX,
       y: 2950,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color4: {
       x: colorX,
       y: 3750,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color5: {
       x: colorX,
       y: 4750,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color6: {
       x: colorX,
       y: 5650,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     },
     color7: {
       x: colorX,
       y: 6550,
-      wiggleAxis: 'x',
-      wiggleTravel: 500
+      wiggleAxis: 'xy',
+      wiggleTravel: 500,
+      wiggleIterations: 8
     }
   }
 };
@@ -366,7 +377,7 @@ function serialPortReadyCallback() {
         // Pen down
         setPen({state: 1}, function(){
           // Wiggle the brush a bit
-          wigglePen(tool.wiggleAxis, tool.wiggleTravel, 3, function(){
+          wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations, function(){
             callback(data);
           });
         });
@@ -438,7 +449,28 @@ function serialPortReadyCallback() {
 
     function _wiggleSlave(toggle){
       var point = {x: start.x, y: start.y};
-      point[axis]+= (toggle ? travel : travel * -1);
+
+      if (axis == 'xy') {
+        var rot = i % 4; // Ensure rot is always 0-3
+
+        // This confuluted series ensure the wiggle moves in a proper diamond
+        if (rot % 3) { // Results in F, T, T, F
+          if (toggle) {
+            point.y+= travel/2; // Down
+          } else {
+            point.x-= travel; // Left
+          }
+        } else {
+           if (toggle) {
+             point.y-= travel/2; // Up
+           } else {
+             point.x+= travel; // Right
+           }
+        }
+      } else {
+        point[axis]+= (toggle ? travel : travel * -1);
+      }
+
       movePenAbs(point, function(){
         i++;
 
