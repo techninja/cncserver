@@ -16,17 +16,22 @@ var invertX = true;
 var invertY = false;
 
 // Serial port specific setup
-var serialPath = "";
+var serialPath = arguments[1] ? arguments[1] : "";
 var serialPort = {};
 var SerialPort = require("serialport").SerialPort;
 
 // Attempt to auto detect EBB Board via PNPID
-console.log('Finding available serial ports...');
+if (serialPath == "") {
+  console.log('Finding available serial ports...');
+} else {
+  console.log('Using passed serial port "' + serialPath + '"...');
+}
+
 require("serialport").list(function (err, ports) {
   var portNames = ['None'];
   for (var portID in ports){
     portNames[portID] = ports[portID].comName;
-    if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1) {
+    if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1 && serialPath == "") {
       serialPath = portNames[portID];
     }
   }

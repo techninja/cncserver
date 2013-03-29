@@ -32,21 +32,27 @@ a handy folder, and you're ready to run!
 repo and submit a pull request, we're always looking for contributions that make
 things better for everyone!
 
-## Running
+#### Installing NPM Dependencies
+With your system setup and everything else installed, open a terminal and make your
+way to the `cncserver` folder, and enter `npm install` (you may need to preface
+that with a sudo command on Mac/Linux). For Mac, building `node-serialport`
+requires `make`, which comes with Xcode, a free download.
 
+## Running
 CNC Server *currently* only supports the late model EBB and its command set, and
 of the devices that use it, ***only*** the WaterColorBot Beta. More devices to
 come soon!
 
-With your system setup and everything installed, open a terminal and make your
-way to the cncserver folder, and enter `npm install` (you may need to preface
-that with a sudo command on Mac/Linux). Once that finishes installing the server
-dependencies, plug in your WaterColorBot, ***make sure the carriage is in the
-top left park position***, and start the server with the command
-`node cncserver.js [PORT]` where "`[PORT]`" is where you want host the website
-that controls the bot. If you were ot pass `8080`, then the website would be
-available at `http://localhost:8080`. Leave it blank and it will default to
-`4242`.
+Plug in your WaterColorBot, ***Always make sure the carriage is in the top left
+park position***, and start the server with the command
+`node cncserver.js [HTTP PORT] [SERIAL PORT]` where "`[HTTP PORT]`" is what port
+you want to access the website from, and "`[SERIAL PORT]`" is the local port
+that the USB connection from the bot supplies.
+
+If you were to pass `8080`, then the website would be available at
+`http://localhost:8080`. Leave it blank and it will default to `4242`. You can
+also leave off the serial port and the server will try its best to detect the
+bot.
 
 ## Features
 
