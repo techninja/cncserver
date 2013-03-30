@@ -49,7 +49,7 @@ Content-Type: application/json; charset=UTF-8
     "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)
     "tool": color2,          // Machine name of last tool
     "distanceCounter": 231,  // Distance traveled in steps with pen down
-    "simulation": false      // false = pen is real/ready, true = Pen is virtual/not connected to bot
+    "simulation": 0      // 0 = pen is real/ready, 1 = Pen is virtual/not connected to bot
 }
 ```
 
@@ -59,6 +59,8 @@ runtime state.
  * tool will default to 0 if it hasn't been set since server start.
  * distanceCounter must be reset/managed via the client, otherwise it's just a
 handy realtime counter for steps when pen is down.
+ * Pen simulation mode means that either the serial connection to the bot never
+worked, or has been lost. Put a value of 0 to attempt to reconnect.
 
 
 ### PUT /pen
@@ -94,7 +96,7 @@ PUT /pen
 Content-Type: application/json; charset=UTF-8
 
 {
-    "resetCounter": 1 // Value can be anything that resolves to 'true'
+    "resetCounter": 1 // Should be 0 or 1
 }
 
 ```
@@ -118,7 +120,7 @@ stretching in the final image.
  * Tools can't be changed here. See `/tools` resource below.
  * Request will not complete until movement is actually complete, though you can
 send more requests through separate channels.
- * Passing the variable `ignoreTimeout` as `true`/`1` for x/y movements will
+ * Passing the variable `ignoreTimeout` as `1` for x/y movements will
 finish the request immediately, even though it may still be moving to that
 position. In those cases, the response will return a `202 Accepted` instead of a
 `200 OK`.

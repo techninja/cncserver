@@ -16,7 +16,8 @@ var invertX = true;
 var invertY = false;
 
 // Serial port specific setup
-var serialPath = arguments[1] ? arguments[1] : "";
+var serialPathArg = arguments[1] ? arguments[1] : "";
+var serialPath = serialPathArg ? serialPathArg : ""; // Allow for var reset on disconnect
 var serialPort = false;
 var SerialPort = require("serialport").SerialPort;
 
@@ -126,7 +127,7 @@ var pen  = {
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
   tool: 0,
   distanceCounter: 0, // Holds a running tally of distance travelled
-  simulation: false // Fake everything and act like it's working, no serial
+  simulation: 0 // Fake everything and act like it's working, no serial
 }
 
 
@@ -266,6 +267,25 @@ function serialPortReadyCallback() {
     if (inPen.resetCounter) {
       pen.distanceCounter = 0;
       callback(true);
+      return;
+    }
+
+    // Setting the value of simulation
+    if (typeof inPen.simulation != "undefined") {
+
+      // No change
+      if (inPen.simulation == pen.simulation) {
+        callback(true);
+        return;
+      }
+
+      if (inPen.simulation == 0) { // Attempt to connect to serial
+        connectSerial(false, callback);
+      } else {  // Turn off serial!
+        // TODO: Actually nullify connection.. no use case worth it yet
+        simulationModeInit();
+      }
+
       return;
     }
 
@@ -480,17 +500,20 @@ function serialPortReadyCallback() {
 function serialPortCloseCallback() {
   console.log('Serialport connection to "' + serialPath + '" lost!! Did it get unplugged?');
   serialPort = false;
+
+  // Reset to argument serial path, or nothing!
+  serialPath = serialPathArg ? serialPathArg : "";
   simulationModeInit();
 }
 
 // Helper to initialize simulation mode
 function simulationModeInit() {
   console.log("=======Continuing in SIMULATION MODE!!!============");
-  pen.simulation = true;
+  pen.simulation = 1;
 }
 
 // Helper function to manage initial serial connection and reconnection
-function connectSerial(init){
+function connectSerial(init, callback){
   // Attempt to auto detect EBB Board via PNPID
   if (serialPath == "") {
     console.log('Finding available serial ports...');
@@ -513,7 +536,8 @@ function connectSerial(init){
     if (!serialPath) {
       console.log("EiBotBoard not found. Are you sure it's connected? Error #22");
       simulationModeInit();
-      serialPortReadyCallback();
+      if (init) serialPortReadyCallback();
+      if (callback) callback(false);
     } else {
       console.log('Attempting to open serial port: "' + serialPath + '"...');
       try {
@@ -521,10 +545,13 @@ function connectSerial(init){
         serialPort.on("open", serialPortReadyCallback);
         serialPort.on("close", serialPortCloseCallback);
         console.log('Serial connection open at 9600bps');
+        pen.simulation = 0;
+        if (callback) callback(true);
       } catch(e) {
         console.log("Serial port failed to connect. Is it busy or in use? Error #10");
         simulationModeInit();
-        serialPortReadyCallback();
+        if (init) serialPortReadyCallback();
+        if (callback) callback(false);
       }
     }
   });
