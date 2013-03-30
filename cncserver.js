@@ -502,10 +502,5 @@ function serialPortReadyCallback() {
         if (callback) callback(true);
       }
     });
-
-    // Catch the return data
-    serialPort.on('data', function(data) {
-      // Do nothing as the EBB gives utterly unhelpful data for non-blocking applications
-    });
   }
 };
