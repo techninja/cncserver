@@ -262,6 +262,8 @@ function serialPortReadyCallback() {
 
   // UTILITY FUNCTIONS =======================================================
   function setPen(inPen, callback) {
+    // Force the distanceCounter to be a number (was coming up as null)
+    pen.distanceCounter = Number(pen.distanceCounter);
 
     // Counter Reset
     if (inPen.resetCounter) {
