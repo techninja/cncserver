@@ -15,9 +15,11 @@ var server = require('http').createServer(app);
 var invertX = true;
 var invertY = false;
 
+var simulation = false; // Fake everything and act like it's working, no serial
+
 // Serial port specific setup
 var serialPath = arguments[1] ? arguments[1] : "";
-var serialPort = {};
+var serialPort = false;
 var SerialPort = require("serialport").SerialPort;
 
 // Attempt to auto detect EBB Board via PNPID
@@ -40,18 +42,27 @@ require("serialport").list(function (err, ports) {
 
   // Try to connect to serial, or exit with error codes
   if (!serialPath) {
-    console.log("EiBotBoard not found. Are you sure it's connected? Exiting with code 22");
-    process.exit(22);
+    console.log("EiBotBoard not found. Are you sure it's connected? Error #22");
+    console.log("=======Continuing to launch server in SIMULATION MODE!!!============");
+    simulation = true;
+    serialPortReadyCallback();
   } else {
     console.log('Attempting to open serial port: "' + serialPath + '"...');
     try {
       serialPort = new SerialPort(serialPath, {baudrate : 9600});
     } catch(e) {
-      console.log("Serial port failed to connect. Is it busy or in use elsewhere? Exiting with code 10");
-      process.exit(10);
+      console.log("Serial port failed to connect. Is it busy or in use elsewhere? Error #10");
     }
 
-    serialPort.on("open", serialPortReadyCallback);
+    if (serialPort){
+      console.log('Serial connection open at 9600bps');
+      serialPort.on("open", serialPortReadyCallback);
+    } else {
+      console.log("=======Continuing to launch server in SIMULATION MODE!!!============");
+      simulation = true;
+      serialPortReadyCallback();
+    }
+
   }
 });
 
@@ -163,7 +174,6 @@ var pen  = {
 
 // No events are bound till we have a real serial connection
 function serialPortReadyCallback() {
-  console.log('Serial connection open at 9600bps');
 
   // Start express hosting the site from "webroot" folder on the given port
   server.listen(port);
@@ -491,16 +501,19 @@ function serialPortReadyCallback() {
   // BLOCKING SERIAL READ/WRITE ================================================
   function serialCommand(command, callback){
     console.log('Executing serial command: ' + command);
-    serialPort.write(command + "\r", function(err, results) {
-      // TODO: Better Error Handling
-      if (err) {
-        // What kind of error is this anyways? :P
-        console.log('err ' + err);
-        if (callback) callback(false);
-      } else {
-        // This is terrible, but.. you can NOT trust the data return
-        if (callback) callback(true);
-      }
-    });
+    if (!simulation) {
+      serialPort.write(command + "\r", function(err, results) {
+        // TODO: Better Error Handling
+        if (err) {
+          // What kind of error is this anyways? :P
+          console.log('err ' + err);
+          if (callback) callback(false);
+        } else {
+          if (callback) callback(true);
+        }
+      });
+    } else {
+      if (callback) callback(true);
+    }
   }
 };
