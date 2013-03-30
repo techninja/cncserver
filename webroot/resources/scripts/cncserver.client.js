@@ -28,6 +28,9 @@ $(function() {
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
 
+  // Fit the SVG to the screen size
+  fitSVGSize();
+
   var stopDraw = false;
   var stopBuildFill = false;
   cncserver.config.precision = Number($('#precision').val());
@@ -477,6 +480,23 @@ $(function() {
 
 
     }
+  }
+
+  // Catch the resize event and fill the main svg element to the screen
+  $(window).resize(fitSVGSize);
+
+  function fitSVGSize(){
+    var offset = $('svg#main').offset();
+    var margin = 40; // TODO: Place this somewhere better
+    var scale = {
+      x: ($(window).width() - offset.left - margin) / cncserver.canvas.width,
+      y: ($(window).height() - offset.top - margin) / cncserver.canvas.height
+    }
+
+    // Use the shorter of the two
+    scale = scale.x < scale.y ? scale.x : scale.y;
+
+    $('svg#main').css('transform', 'scale(' + scale + ')')
   }
 
 });
