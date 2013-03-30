@@ -15,56 +15,13 @@ var server = require('http').createServer(app);
 var invertX = true;
 var invertY = false;
 
-var simulation = false; // Fake everything and act like it's working, no serial
-
 // Serial port specific setup
 var serialPath = arguments[1] ? arguments[1] : "";
 var serialPort = false;
 var SerialPort = require("serialport").SerialPort;
 
-// Attempt to auto detect EBB Board via PNPID
-if (serialPath == "") {
-  console.log('Finding available serial ports...');
-} else {
-  console.log('Using passed serial port "' + serialPath + '"...');
-}
-
-require("serialport").list(function (err, ports) {
-  var portNames = ['None'];
-  for (var portID in ports){
-    portNames[portID] = ports[portID].comName;
-    if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1 && serialPath == "") {
-      serialPath = portNames[portID];
-    }
-  }
-
-  console.log('Available Serial ports: ' + portNames.join(', '));
-
-  // Try to connect to serial, or exit with error codes
-  if (!serialPath) {
-    console.log("EiBotBoard not found. Are you sure it's connected? Error #22");
-    console.log("=======Continuing to launch server in SIMULATION MODE!!!============");
-    simulation = true;
-    serialPortReadyCallback();
-  } else {
-    console.log('Attempting to open serial port: "' + serialPath + '"...');
-    try {
-      serialPort = new SerialPort(serialPath, {baudrate : 9600});
-    } catch(e) {
-      console.log("Serial port failed to connect. Is it busy or in use elsewhere? Error #10");
-    }
-
-    if (serialPort){
-      console.log('Serial connection open at 9600bps');
-      serialPort.on("open", serialPortReadyCallback);
-    } else {
-      console.log("=======Continuing to launch server in SIMULATION MODE!!!============");
-      simulation = true;
-      serialPortReadyCallback();
-    }
-
-  }
-});
+// Attempt Initial Serial Connection
+connectSerial(true);
 
 // CONFIGURE Data
 var colorX = 1620;
@@ -168,7 +125,8 @@ var pen  = {
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
   tool: 0,
-  distanceCounter: 0 // Holds a running tally of distance travelled
+  distanceCounter: 0, // Holds a running tally of distance travelled
+  simulation: false // Fake everything and act like it's working, no serial
 }
 
 
@@ -501,7 +459,7 @@ function serialPortReadyCallback() {
   // BLOCKING SERIAL READ/WRITE ================================================
   function serialCommand(command, callback){
     console.log('Executing serial command: ' + command);
-    if (!simulation) {
+    if (!pen.simulation) {
       serialPort.write(command + "\r", function(err, results) {
         // TODO: Better Error Handling
         if (err) {
@@ -517,3 +475,57 @@ function serialPortReadyCallback() {
     }
   }
 };
+
+// Event callback for serial close
+function serialPortCloseCallback() {
+  console.log('Serialport connection to "' + serialPath + '" lost!! Did it get unplugged?');
+  serialPort = false;
+  simulationModeInit();
+}
+
+// Helper to initialize simulation mode
+function simulationModeInit() {
+  console.log("=======Continuing in SIMULATION MODE!!!============");
+  pen.simulation = true;
+}
+
+// Helper function to manage initial serial connection and reconnection
+function connectSerial(init){
+  // Attempt to auto detect EBB Board via PNPID
+  if (serialPath == "") {
+    console.log('Finding available serial ports...');
+  } else {
+    console.log('Using passed serial port "' + serialPath + '"...');
+  }
+
+  require("serialport").list(function (err, ports) {
+    var portNames = ['None'];
+    for (var portID in ports){
+      portNames[portID] = ports[portID].comName;
+      if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1 && serialPath == "") {
+        serialPath = portNames[portID];
+      }
+    }
+
+    console.log('Available Serial ports: ' + portNames.join(', '));
+
+    // Try to connect to serial, or exit with error codes
+    if (!serialPath) {
+      console.log("EiBotBoard not found. Are you sure it's connected? Error #22");
+      simulationModeInit();
+      serialPortReadyCallback();
+    } else {
+      console.log('Attempting to open serial port: "' + serialPath + '"...');
+      try {
+        serialPort = new SerialPort(serialPath, {baudrate : 9600});
+        serialPort.on("open", serialPortReadyCallback);
+        serialPort.on("close", serialPortCloseCallback);
+        console.log('Serial connection open at 9600bps');
+      } catch(e) {
+        console.log("Serial port failed to connect. Is it busy or in use? Error #10");
+        simulationModeInit();
+        serialPortReadyCallback();
+      }
+    }
+  });
+}

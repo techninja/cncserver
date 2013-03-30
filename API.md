@@ -44,11 +44,12 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "x": 2344,              // Coordinates of drawing position, in steps
+    "x": 2344,               // Coordinates of drawing position, in steps
     "y: 281,
-    "state": 1,             // Pen state is from 0 (Up/Off) to 1 (Down/On)
-    "tool": color2,         // Machine name of last tool
-    "distanceCounter": 231  // Distance travelled in steps with pen down
+    "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)
+    "tool": color2,          // Machine name of last tool
+    "distanceCounter": 231,  // Distance traveled in steps with pen down
+    "simulation": false      // false = pen is real/ready, true = Pen is virtual/not connected to bot
 }
 ```
 
