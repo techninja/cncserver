@@ -42,7 +42,7 @@
 			curConfig = {
 				canvasName: 'default',
 				canvas_expansion: 3,
-				dimensions: [640,480],
+				dimensions: [1152,864],
 				initFill: {
 					color: 'FF0000',  // solid red
 					opacity: 1
@@ -63,7 +63,7 @@
 				colorPickerCSS: null,
 				gridSnapping: false,
 				gridColor: "#000",
-				baseUnit: 'px',
+				baseUnit: 'in',
 				snappingStep: 10,
 				showRulers: true
 			},
