@@ -56,8 +56,8 @@
 				imgPath: 'images/',
 				langPath: 'locale/',
 				extPath: 'extensions/',
-				jGraduatePath: 'jgraduate/images/',
-				extensions: ['ext-markers.js','ext-connector.js', 'ext-eyedropper.js', 'ext-shapes.js', 'ext-imagelib.js','ext-grid.js'],
+				jGraduatePath: 'libs/jgraduate/images/',
+				extensions: ['ext-shapes.js', 'ext-imagelib.js','ext-grid.js'],
 				initTool: 'select',
 				wireframe: false,
 				colorPickerCSS: null,
@@ -820,7 +820,7 @@
 
 				zoomDone();
 			}
-     
+
 
 			$('#cur_context_panel').delegate('a', 'click', function() {
 				var link = $(this);
