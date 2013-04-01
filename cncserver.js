@@ -373,7 +373,10 @@ function serialPortReadyCallback() {
         setPen({state: 1}, function(){
           // Wiggle the brush a bit
           wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations, function(){
-            callback(data);
+            // Put the pen back up when done!
+            setPen({state: 0}, function(){
+              callback(data);
+            });
           });
         });
       });
@@ -402,8 +405,6 @@ function serialPortReadyCallback() {
       callback(false);
       return;
     }
-
-    console.log('Pos Change: ', change);
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
     var speed = pen.state ? config.drawSpeed : config.moveSpeed;
