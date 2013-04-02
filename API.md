@@ -48,6 +48,7 @@ Content-Type: application/json; charset=UTF-8
     "y: 281,
     "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)
     "tool": color2,          // Machine name of last tool
+    "lastDuration": 1288     // The duration of the last movement
     "distanceCounter": 231,  // Distance traveled in steps with pen down
     "simulation": 0      // 0 = pen is real/ready, 1 = Pen is virtual/not connected to bot
 }
@@ -124,7 +125,8 @@ send more requests through separate channels.
 finish the request immediately, even though it may still be moving to that
 position. In those cases, the response will return a `202 Accepted` instead of a
 `200 OK`.
-
+ * `lastDuration` in return data can be used in conjunction with ignoreTimeout
+to allow the client to manage timings instead of waiting on the server.
 
 ### DELETE /pen
 Parks the pen, as you cannot move pen outside of draw area using PUT.

@@ -126,6 +126,7 @@ var pen  = {
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
   tool: 0,
+  lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0 // Fake everything and act like it's working, no serial
 }
@@ -410,8 +411,8 @@ function serialPortReadyCallback() {
     var speed = pen.state ? config.drawSpeed : config.moveSpeed;
     var duration = parseInt(distance / speed * 1000); // How many steps a second?
 
-    //console.log('Distance to move: ' + distance + ' steps');
-    //console.log('Time to Take: ' + duration + ' ms');
+    // Save the duration state
+    pen.lastDuration = duration;
 
     pen.x = point.x;
     pen.y = point.y;
