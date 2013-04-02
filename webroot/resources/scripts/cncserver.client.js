@@ -5,7 +5,12 @@
 var cncserver = {
   canvas: {
     height: 0,
-    width: 0
+    width: 0,
+    scale: 1,
+    offset: {
+      top: 80,
+      left: 235
+    }
   },
   state: {
     pen: {}
@@ -23,13 +28,18 @@ $(function() {
   var $fillPath = {};
   var index = 1;
   var $svg = $('#main');
-  var svgOffset = $svg.offset();
 
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
 
+  // Ensure buttons are disabled as we have no selection
+  $('#movefirst').prop('disabled', true);
+  $('#draw').prop('disabled', true);
+  $('#fill-build').prop('disabled', true);
+
   // Fit the SVG to the screen size
   fitSVGSize();
+  setTimeout(fitSVGSize, 500);
 
   var stopDraw = false;
   var stopBuildFill = false;
@@ -215,7 +225,10 @@ $(function() {
   // Find out what DOM object is directly below the point given
   // Will NOT work if point is outside visible screen range!
   function getPointPathCollide(point) {
-    return document.elementFromPoint(point.x+svgOffset.left+2, point.y+svgOffset.top+2);
+    return document.elementFromPoint(
+      (point.x * cncserver.canvas.scale)+cncserver.canvas.offset.left,
+      (point.y * cncserver.canvas.scale)+cncserver.canvas.offset.top
+    );
   }
 
   // Set the pen down or up based on visibility of a given path at a given point
@@ -278,10 +291,10 @@ $(function() {
     var pathRect = $path[0].getBoundingClientRect();
 
     pathRect = {
-      top: pathRect.top - svgOffset.top,
-      left: pathRect.left - svgOffset.left,
-      right: pathRect.right - svgOffset.left,
-      bottom: pathRect.bottom - svgOffset.top
+      top: pathRect.top - cncserver.canvas.offset.top,
+      left: pathRect.left - cncserver.canvas.offset.left,
+      right: pathRect.right - cncserver.canvas.offset.left,
+      bottom: pathRect.bottom - cncserver.canvas.offset.top
     }
 
     $('#fill-build').text('STOP Build');
@@ -493,15 +506,16 @@ $(function() {
   function fitSVGSize(){
     var offset = $('svg#main').offset();
     var margin = 40; // TODO: Place this somewhere better
+    var rightMargin = 235; // TODO: This too...
     var scale = {
-      x: ($(window).width() - offset.left - margin) / cncserver.canvas.width,
+      x: ($(window).width() - offset.left - margin - rightMargin) / cncserver.canvas.width,
       y: ($(window).height() - offset.top - margin) / cncserver.canvas.height
     }
 
     // Use the shorter of the two
-    scale = scale.x < scale.y ? scale.x : scale.y;
+    cncserver.canvas.scale = scale.x < scale.y ? scale.x : scale.y;
 
-    $('svg#main').css('transform', 'scale(' + scale + ')')
+    $('svg#main').css('transform', 'scale(' + cncserver.canvas.scale + ')');
   }
 
 });
