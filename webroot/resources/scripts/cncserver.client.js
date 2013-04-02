@@ -99,6 +99,7 @@ $(function() {
   $('#pen-up').click(function(){ cncserver.api.pen.up(); });
   $('#pen-down').click(function(){ cncserver.api.pen.down(); });
   $('#disable').click(function(){ cncserver.api.motors.unlock(); });
+  $('#zero').click(function(){ cncserver.api.pen.zero(); });
   $('#precision').change(function(){ cncserver.config.precision = Number($(this).val()); });
 
   // Bind to fill controls

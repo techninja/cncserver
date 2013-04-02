@@ -70,6 +70,19 @@ cncserver.api = {
       }});
     },
 
+    /**
+    * Reset the server state of the pen position to 0,0, parking position
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    zero: function(callback){
+      _put('motors',{
+        data: {reset: 1},
+        success: function(d){
+          if (callback) callback(d);
+      }});
+    },
+
    /**
     * Set pen to absolute x/y point within defined cncserver canvas width/height
     * @param {object} point

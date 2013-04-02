@@ -197,11 +197,8 @@ function serialPortReadyCallback() {
   app.all("/motors", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
-    console.log(req.route.method);
-
     // Disable/unlock motors
-    // TODO: Find out why jQuery sends a GET for this...
-    if (req.route.method == 'delete' || req.route.method == 'get') {
+    if (req.route.method == 'delete') {
       console.log('Disabling motors');
       serialCommand('EM,0,0', function(data){
         if (data) {
@@ -214,6 +211,19 @@ function serialPortReadyCallback() {
           }));
         }
       });
+    } else if (req.route.method == 'put') {
+      if (req.body.reset == 1) {
+        pen.x = 0;
+        pen.y = 0;
+        console.log('Motor offset reset to zero')
+        res.status(200).send(JSON.stringify({
+          status: 'Motor offset zeroed'
+        }));
+      } else {
+        res.status(406).send(JSON.stringify({
+          status: 'Input not acceptable, see API spec for details.'
+        }));
+      }
     } else {
       res.status(405).send(JSON.stringify({
         status: 'Not supported'
