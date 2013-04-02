@@ -149,11 +149,6 @@ $(function() {
     }
 
     function convertLineToPath(line){
-      // Don't convert our drawpoint
-      // TODO: Add the point after load or something to avoid this :P
-      if (line.id == 'drawpoint'){
-        return;
-      }
       var svgNS = line.ownerSVGElement.namespaceURI;
       var path = document.createElementNS(svgNS,'path');
       path.setAttribute('d', 'M'+
@@ -167,8 +162,16 @@ $(function() {
     }
   }
 
+  // Move to first point and wait
   function readyFirstPoint() {
     cncserver.api.pen.move($path[0].getPointAtLength(0).matrixTransform($path.transformMatrix));
+  }
+
+
+  // Move the visible draw position indicator
+  cncserver.moveDrawPoint = function(point) {
+    // Move visible drawpoint
+    $('#drawpoint').attr('transform', 'translate(' + point.x + ',' + point.y + ')');
   }
 
   // Outlines all visible portions of a given path, one step at a time

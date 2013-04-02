@@ -83,14 +83,7 @@ cncserver.api = {
         return;
       }
 
-      // Move visible drawpoint
-      // TODO: This doesn't belong here...
-      $('#drawpoint').attr({
-        x1:point.x-2,
-        y1:point.y-2,
-        x2:point.x+2,
-        y2:point.y+2
-      });
+      cncserver.moveDrawPoint(point);
 
       var percent = {
         x: (point.x / cncserver.canvas.width) * 100,
