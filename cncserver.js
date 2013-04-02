@@ -25,13 +25,14 @@ var SerialPort = require("serialport").SerialPort;
 connectSerial(true);
 
 // CONFIGURE Data
-var colorX = 1620;
+var colorX = 810;
 config = {
   name: 'WaterColorBot',
-  maxArea: {width: 12630, height: 7200}, // Size in steps
-  workArea: {top: 0, left: 2450}, // Size in steps
-  drawSpeed: 2000, // Drawing (brush down) speed in steps per second
-  moveSpeed: 3000, // Moving (brush up) speed in steps per second
+  maxArea: {width: 6315, height: 3600}, // Size in steps
+  workArea: {top: 0, left: 1225}, // Size in steps
+  stepPrecision: 2, // 1 = 1/16 steps, 2 = 1/8, 3 = 1/4, 4 = 1/2 & 5 = full steps
+  drawSpeed: 1000, // Drawing (brush down) speed in steps per second
+  moveSpeed: 1500, // Moving (brush up) speed in steps per second
   servo: {
     min: 18000, // Brush Lift amount (lower number lifts higher)
     max: 25000,  // Brush fall (servo arm stays clear)
@@ -43,77 +44,77 @@ config = {
       x: 0,
       y: 0,
       wiggleAxis: 'y',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 4
     },
     water1: {
       x: 0,
-      y: 2900,
+      y: 1450,
       wiggleAxis: 'y',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 4
     },
     water2: {
       x: 0,
-      y: 5650,
+      y: 2825,
       wiggleAxis: 'y',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 4
     },
     color0: {
       x: colorX,
       y: 0,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color1: {
       x: colorX,
-      y: 1050,
+      y: 525,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color2: {
       x: colorX,
-      y: 2000,
+      y: 1000,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color3: {
       x: colorX,
-      y: 2950,
+      y: 1475,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color4: {
       x: colorX,
-      y: 3750,
+      y: 1875,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color5: {
       x: colorX,
-      y: 4750,
+      y: 2375,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color6: {
       x: colorX,
-      y: 5650,
+      y: 2825,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     },
     color7: {
       x: colorX,
-      y: 6550,
+      y: 3275,
       wiggleAxis: 'xy',
-      wiggleTravel: 500,
+      wiggleTravel: 250,
       wiggleIterations: 8
     }
   }
@@ -149,6 +150,7 @@ function serialPortReadyCallback() {
   serialCommand('SC,4,' + config.servo.min);
   serialCommand('SC,5,' + config.servo.max);
   serialCommand('SC,10,' + config.servo.rate);
+  serialCommand('EM,' + config.stepPrecision);
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
