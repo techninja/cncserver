@@ -232,3 +232,29 @@ Content-Type: application/json; charset=UTF-8
 
 ##### Usage Notes
  * Motors will be enabled again as soon as any command that moves them is run.
+
+
+### PUT /motors
+Allows direct setting of motor details, currently only supports resetting motor
+offsets. Use after disabling the motors and parking by hand to ensure proper
+relative offset reset without needing to restart the server.
+
+#### Request
+```
+PUT /motors
+Content-Type: application/json; charset=UTF-8
+
+{
+    "reset": 1
+}
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "status": "Motor offset zeroed"
+}
+```
