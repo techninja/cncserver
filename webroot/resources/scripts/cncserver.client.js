@@ -51,7 +51,6 @@ $(function() {
   cncserver.config.precision = Number($('#precision').val());
 
   // Convert the polys and lines to path
-  // TODO: This happens after load, or before print... :|
   changeToPaths();
 
   // Get initial pen data from machine
@@ -157,9 +156,11 @@ $(function() {
       if (poly.tagName=='polygon') {
         pathdata+='z';
       }
-
       path.setAttribute('d',pathdata);
 
+      path.setAttribute('stroke', poly.getAttribute('stroke'));
+      path.setAttribute('stroke-width', poly.getAttribute('stroke-width'));
+      path.setAttribute('fill', poly.getAttribute('fill'));
       path.setAttribute('style', poly.style.cssText);
       path.setAttribute('id', poly.id);
       poly.parentNode.replaceChild(path,poly);
@@ -173,6 +174,8 @@ $(function() {
         line.getAttribute('y1')+' L'+
         line.getAttribute('x2')+','+
         line.getAttribute('y2'));
+      path.setAttribute('stroke', line.getAttribute('stroke'));
+      path.setAttribute('stroke-width', line.getAttribute('stroke-width'));
       path.setAttribute('style', line.style.cssText);
       path.setAttribute('id', line.id);
       line.parentNode.replaceChild(path, line);
