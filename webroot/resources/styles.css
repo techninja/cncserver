@@ -14,12 +14,12 @@ img.logo {
 
 /* Drawing Area */
 svg#main {
-  margin-top: 2em;
-  box-shadow: 0 0 0 1.3rem #CCC;
   background-color: white;
-  transform: scale(0.75);
-  transform-origin: 0 0;
+  box-shadow: 0 0 0 1.3rem #CCCCCC;
+  left: 235px;
   position: absolute;
+  top: 80px;
+  transform-origin: 0 0 0;
 }
 
 svg#main *.selected {
@@ -34,6 +34,18 @@ canvas#simulate {
 }
 
 /* Nav Tools */
+nav#control {
+  border: 2px solid black;
+  padding: 0.5em;
+  position: absolute;
+  right: 2em;
+  width: 11.5em;
+}
+
+nav#control h3 {
+  margin-top: 0;
+}
+
 nav#tools {
   float: left;
   margin-right: 2.5em;

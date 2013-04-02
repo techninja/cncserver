@@ -16,11 +16,12 @@
 
 <img class="logo" src ="/resources/images/watercolorbot_logo.svg"/>
 <nav id="control">
-  <button id="park">Park</button>
-  <button id="movefirst" disabled>Move to First point</button>
-  <button id="draw" disabled>Draw Path</button>
+  <h3>Bot Controls</h3>
   <button id="pen-up">Brush Up</button>
   <button id="pen-down">Brush Down</button>
+  <button id="movefirst" disabled>Move to First point</button>
+  <button id="draw" disabled>Draw Path</button>
+  <button id="park">Park</button>
   <button id="disable">Unlock/Disable Motors</button>
   <button id="zero">Zero Motor Position</button>
   <select id="precision" title="Trace precision: Default is 'Fine'">
@@ -30,17 +31,16 @@
     <option value="8">Coarse (8)</option>
     <option value="10">Very Coarse (10)</option>
   </select>
-</nav>
-
-<nav id="fills">
-  <button id="fill-build" disabled>Build Fill</button>
-  <select>
-    <option value="horizontal">Horizontal</option>
-    <option value="vertical">Vertical</option>
-    <option value="path">Spiral</option>
-  </select>
-  <button id="fill-paint" disabled>Paint Fill</button>
-  <progress max="100" value="0"></progress>
+  <nav id="fills">
+    <button id="fill-build" disabled>Build Fill</button>
+    <select>
+      <option value="horizontal">Horizontal</option>
+      <option value="vertical">Vertical</option>
+      <option value="path">Spiral</option>
+    </select>
+    <button id="fill-paint" disabled>Paint Fill</button>
+    <progress max="100" value="0"></progress>
+  </nav>
 </nav>
 
 <nav id="tools">
