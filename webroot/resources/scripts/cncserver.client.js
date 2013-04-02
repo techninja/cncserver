@@ -81,6 +81,7 @@ $(function() {
       $('nav#tools a.selected').removeClass('selected');
       $(this).addClass('selected');
     }
+    return false;
   });
 
   // Bind to control buttons
