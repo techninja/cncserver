@@ -32,6 +32,11 @@ $(function() {
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
 
+  // Load default content from SVG-edit
+  if (localStorage["svgedit-default"]){
+    $('svg#main g').append(localStorage["svgedit-default"]);
+  }
+
   // Ensure buttons are disabled as we have no selection
   $('#movefirst').prop('disabled', true);
   $('#draw').prop('disabled', true);
