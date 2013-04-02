@@ -24,7 +24,7 @@ svg#main {
 
 svg#main *.selected {
   stroke: blue !important;
-  stroke-width: 1 !important;
+  stroke-width: 10 !important;
 }
 
 /* Drawing Simulation Canvas */
