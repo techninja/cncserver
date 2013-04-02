@@ -51,6 +51,40 @@ nav#tools .water {
   border-radius: 150px;
 }
 
+nav#tools a:hover, nav#tools a:focus {
+  animation-name: hover-pulse;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-name: hover-pulse;
+  -webkit-animation-duration: 1000ms;
+  -webkit-animation-iteration-count: infinite;
+}
+
+@keyframes hover-pulse {
+  0%   { box-shadow: 0 0 2px 5px red; }
+  50%  { box-shadow: 0 0 6px 8px red; }
+  100%  { box-shadow: 0 0 2px 5px red; }
+}
+
+@-webkit-keyframes hover-pulse {
+  0%   { box-shadow: 0 0 2px 5px red; }
+  50%  { box-shadow: 0 0 6px 8px red; }
+  100%  { box-shadow: 0 0 2px 5px red; }
+}
+
+@keyframes hover-pulse-selected {
+  0%   { box-shadow: 0 0 0 3px #fff, 0 0 2px 8px #33F; }
+  50%  { box-shadow: 0 0 0 3px #fff, 0 0 6px 8px #33F; }
+  100%  { box-shadow: 0 0 0 3px #fff, 0 0 2px 8px #33F; }
+}
+
+@-webkit-keyframes hover-pulse-selected {
+  0%   { box-shadow: 0 0 0 3px #fff, 0 0 2px 8px #33F; }
+  50%  { box-shadow: 0 0 0 3px #fff, 0 0 6px 8px #33F; }
+  100%  { box-shadow: 0 0 0 3px #fff, 0 0 2px 8px #33F; }
+}
+
 nav#tools #water0 {
   top: -35px;
 }
@@ -88,12 +122,14 @@ nav#tools .color {
   width: 85px;
 }
 
-nav#tools .color:hover {
-  box-shadow: 0 0 0 5px red;
-}
-
 nav#tools .color.selected {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 8px #55F;
+  animation-name: hover-pulse-selected;
+  animation-duration: 3000ms;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-name: hover-pulse-selected;
+  -webkit-animation-duration: 3000ms;
+  -webkit-animation-iteration-count: infinite;
 }
 
 /* Color Set 1 */
