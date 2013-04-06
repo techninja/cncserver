@@ -63,7 +63,7 @@ html, body, div{
 	height: 480px;
 	-apple-dashboard-region:dashboard-region(control rectangle 0px 0px 0px 0px); /* for widget regions that shouldn't react to dragging */
 	position: relative;
-	/* 
+	/*
 	  A subtle gradient effect in the canvas.
 	  Just experimenting - not sure if this is worth it.
 	*/
@@ -119,7 +119,7 @@ html, body, div{
 	margin-top: -16px;
 }
 
-#ruler_x > div, 
+#ruler_x > div,
 #ruler_y > div {
 	overflow: hidden;
 }
@@ -136,13 +136,13 @@ html, body, div{
 	z-index: 2;
 }
 
- #stroke_bg, 
+ #stroke_bg,
  #fill_bg {
 	height: 16px;
 	width: 16px;
 	margin: 1px;
 }
- 
+
  #zoomLabel {
 	cursor: pointer;
 	margin-right: 5px;
@@ -204,7 +204,7 @@ html, body, div{
 /*
 	border-style: solid;
 	border-color: #666;
-	border-width: 0px 0px 0px 1px;	
+	border-width: 0px 0px 0px 1px;
 */
  #sidepanel_handle {
 	display: inline-block;
@@ -279,7 +279,7 @@ html, body, div{
 	margin: 1px;
 	padding: 0px;
 	width: 127px;
-	border-collapse: collapse;	
+	border-collapse: collapse;
 	border: 1px solid #808080;
 	background-color: #FFFFFF;
 }
@@ -479,7 +479,7 @@ div.palette_item:first-child {
 
  .tool_button_current,
  .push_button_pressed,
- .buttondown { 
+ .buttondown {
 	background-color: #f4e284 !important;
 	-webkit-box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4), 1px 1px  0 white  !important;
 	-moz-box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4), 1px 1px  0 white  !important;
@@ -686,7 +686,7 @@ span.zoom_tool {
 }
 
 .dropdown li.special {
-	padding: 10px 4px; 
+	padding: 10px 4px;
 }
 
 .dropdown li.special:hover {
@@ -703,10 +703,10 @@ span.zoom_tool {
 }
 
 
- .tool_button, 
+ .tool_button,
  .push_button,
  .tool_button_current,
- .push_button_pressed 
+ .push_button_pressed
 {
 	height: 24px;
 	width: 24px;
@@ -731,7 +731,7 @@ span.zoom_tool {
 	overflow: hidden;
 }
 
-#tool_open input, 
+#tool_open input,
 #tool_import input,
 #tool_image input {
 	position: absolute;
@@ -772,7 +772,7 @@ span.zoom_tool {
 	padding-right: 5px;
 }
 
-#tool_bold, #tool_italic { 
+#tool_bold, #tool_italic {
 	font: bold 2.1em/1.1em serif;
 	text-align: center;
 	padding-left: 2px;
@@ -784,7 +784,7 @@ span.zoom_tool {
 	left: -9999px;
 }
 
-#tool_bold span, #tool_italic span { 
+#tool_bold span, #tool_italic span {
 	position: absolute;
 	width: 100%;
 	height: 100%;
@@ -1158,17 +1158,17 @@ span.zoom_tool {
 	max-width: 14em;
 }
 
-#tool_docprops_back, 
+#tool_docprops_back,
 #tool_prefs_back {
 	margin-left: 1em;
 	overflow: auto;
 }
 
-#svg_docprops_container #svg_docprops_docprops, 
+#svg_docprops_container #svg_docprops_docprops,
 #svg_prefs #svg_docprops_prefs {
 	float: left;
 	width: 221px;
-	margin: 5px .7em; 
+	margin: 5px .7em;
 	overflow: hidden;
 }
 
@@ -1176,12 +1176,12 @@ span.zoom_tool {
 	float: right;
 }
 
-#svg_docprops legend, 
+#svg_docprops legend,
 #svg_prefs legend {
 	max-width: 195px;
 }
 
-#svg_docprops_docprops > legend, 
+#svg_docprops_docprops > legend,
 #svg_prefs_container > fieldset > legend {
 	font-weight: bold;
 	font-size: 1.1em;
@@ -1286,8 +1286,8 @@ span.zoom_tool {
 	background: #E8E8E8 none;
     padding:5px 10px 5px 7px; /* Firefox */
     line-height:17px; /* Safari */
-	margin: 5px 20px 0 0;	
-	
+	margin: 5px 20px 0 0;
+
 	border: 1px #808080 solid;
 	border-top-color: #FFF;
 	border-left-color: #FFF;
@@ -1421,7 +1421,7 @@ span.zoom_tool {
 	margin: 0;
 	border-radius: 0px;
 	-moz-border-radius: 0px;
-	-webkit-border-radius: 0px;	
+	-webkit-border-radius: 0px;
 }
 
 /* Generic context menu styles */
@@ -1448,7 +1448,7 @@ span.zoom_tool {
 }
 
 .contextMenu .shortcut {
-	width: 115px;           
+	width: 115px;
 	text-align:right;
 	float:right;
 }
@@ -1489,7 +1489,7 @@ span.zoom_tool {
 
 /*
 	Adding Icons
-	
+
 	You can add icons to the context menu by adding
 	classes to the respective LI element(s)
 */
