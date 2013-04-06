@@ -449,7 +449,25 @@ div.palette_item:first-child {
 
 /*—————————————————————————————*/
 
- .tool_button:hover, 
+/* WCB print menu item */
+#tool_print div {
+  background-image: url("../resources/images/icon_draw_path.png");
+  background-position: -4px 0;
+  background-repeat: no-repeat;
+  background-size: 26px auto;
+  height: 32px;
+  margin-left: 1px;
+  margin-right: 3px;
+  width: 19px;
+}
+
+#tool_print a {
+ font-weight: bold;
+ text-decoration: none;
+}
+
+
+ .tool_button:hover,
  .push_button:hover,
  .buttonup:hover,
  .buttondown,
