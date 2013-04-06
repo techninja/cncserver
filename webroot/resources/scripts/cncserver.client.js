@@ -139,54 +139,10 @@ $(function() {
   });
 
 
-  // Convert everything to paths
-  function changeToPaths() {
-    var polys = document.querySelectorAll('polygon,polyline');
-    [].forEach.call(polys, convertPolyToPath);
-
-    var lines = document.querySelectorAll('line');
-    [].forEach.call(lines, convertLineToPath);
-
-    function convertPolyToPath(poly){
-      var svgNS = poly.ownerSVGElement.namespaceURI;
-      var path = document.createElementNS(svgNS,'path');
-      var points = poly.getAttribute('points').split(/\s+|,/);
-      var x0=points.shift(), y0=points.shift();
-      var pathdata = 'M'+x0+','+y0+'L'+points.join(' ');
-      if (poly.tagName=='polygon') {
-        pathdata+='z';
-      }
-      path.setAttribute('d',pathdata);
-
-      path.setAttribute('stroke', poly.getAttribute('stroke'));
-      path.setAttribute('stroke-width', poly.getAttribute('stroke-width'));
-      path.setAttribute('fill', poly.getAttribute('fill'));
-      path.setAttribute('style', poly.style.cssText);
-      path.setAttribute('id', poly.id);
-      poly.parentNode.replaceChild(path,poly);
-    }
-
-    function convertLineToPath(line){
-      var svgNS = line.ownerSVGElement.namespaceURI;
-      var path = document.createElementNS(svgNS,'path');
-      path.setAttribute('d', 'M'+
-        line.getAttribute('x1')+','+
-        line.getAttribute('y1')+' L'+
-        line.getAttribute('x2')+','+
-        line.getAttribute('y2'));
-      path.setAttribute('stroke', line.getAttribute('stroke'));
-      path.setAttribute('stroke-width', line.getAttribute('stroke-width'));
-      path.setAttribute('style', line.style.cssText);
-      path.setAttribute('id', line.id);
-      line.parentNode.replaceChild(path, line);
-    }
-  }
-
   // Move to first point and wait
   function readyFirstPoint() {
     cncserver.api.pen.move($path[0].getPointAtLength(0).matrixTransform($path.transformMatrix));
   }
-
 
   // Move the visible draw position indicator
   cncserver.moveDrawPoint = function(point) {
