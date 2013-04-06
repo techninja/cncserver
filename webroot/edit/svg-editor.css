@@ -997,25 +997,6 @@ span.zoom_tool {
 		margin-top: 2px;
 		height: 30px;
 	}
-	#tools_top {
-		height: 71px;
-	}
-	#workarea, #sidepanels {
-		top: 70px;
-	}
-	#rulers #ruler_corner,
-	#rulers #ruler_x, #tools_left {
-		top: 71px;
-	}
-
-	#rulers #ruler_y {
-		top: 86px;
-	}
-
-	#cur_context_panel {
-		top: 87px;
-	}
-
 	#selected_panel {
 		clear: right;
 	}
