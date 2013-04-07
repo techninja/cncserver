@@ -17,7 +17,9 @@ var cncserver = {
   },
   config: {
     precision: 1,
-    maxPaintDistance: 12000
+    maxPaintDistance: 12000,
+    colors: [],
+    colorsYUV: []
   }
 };
 
@@ -32,9 +34,25 @@ $(function() {
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
 
+  // Cache the current colorset config for measuring against as HSL
+  $('a.color').each(function(){
+    cncserver.config.colors.push(
+      cncserver.utils.colorStringToArray($(this).css('background-color'))
+    );
+  });
+  // Also add white paper for near-white color detection
+  cncserver.config.colors.push([255,255,255]);
+
+  // Add cached YUV conversions for visual color matching
+  $.each(cncserver.config.colors, function(i, color){
+    cncserver.config.colorsYUV.push(cncserver.utils.rgbToYUV(color));
+  });
+
   // Load default content from SVG-edit
   if (localStorage["svgedit-default"]){
     $('svg#main g').append(localStorage["svgedit-default"]);
+    // Convert the polys and lines to path after loading
+    cncserver.utils.changeToPaths();
   }
 
   // Ensure buttons are disabled as we have no selection
@@ -116,6 +134,17 @@ $(function() {
   $('#disable').click(function(){ cncserver.api.motors.unlock(); });
   $('#zero').click(function(){ cncserver.api.pen.zero(); });
   $('#precision').change(function(){ cncserver.config.precision = Number($(this).val()); });
+  $('#auto-color').click(function(){
+    // Momentarily hide selection
+    if ($path.length) $path.toggleClass('selected');
+
+    $(this).toggleClass('undo');
+    cncserver.wcb.autoColor($('#cncserversvg'), !$(this).is('.undo'));
+
+    // Bring back selection
+    if ($path.length) $path.toggleClass('selected');
+
+  });
 
   // Bind to fill controls
   $('#fill-build').click(function(){
