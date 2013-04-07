@@ -10,10 +10,15 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     stat: function(callback){
-      _get('pen', {success: function(d){
+      _get('pen', {
+        success: function(d){
           cncserver.state.pen = d;
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     },
 
    /**
@@ -35,7 +40,11 @@ cncserver.api = {
         success: function(d){
           cncserver.state.pen = d;
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     },
 
     // Shortcut call to the above with flop set to true
@@ -48,13 +57,17 @@ cncserver.api = {
     * @param {function} callback
     *   Function to callback when done, including data from response body
     */
-    reset: function(callback){
+    resetCounter: function(callback){
       _put('pen', {
         data: { resetCounter: 1},
         success: function(d){
           cncserver.state.pen = d;
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     },
 
    /**
@@ -67,7 +80,11 @@ cncserver.api = {
         success: function(d){
           cncserver.state.pen = d;
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     },
 
     /**
@@ -80,7 +97,11 @@ cncserver.api = {
         data: {reset: 1},
         success: function(d){
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     },
 
    /**
@@ -118,7 +139,11 @@ cncserver.api = {
         success: function(d){
           cncserver.state.pen = d;
           if (callback) callback(d);
-      }});
+        },
+        error: function(e) {
+          callback(false);
+        }
+      });
     }
   },
 
@@ -129,7 +154,12 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     unlock: function(callback){
-      _delete('motors', {success: callback});
+      _delete('motors', {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
     }
   },
 
@@ -142,7 +172,12 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     change: function(toolName, callback){
-      _put('tools/' + toolName, {success: callback});
+      _put('tools/' + toolName, {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
     }
   }
 };
@@ -166,6 +201,7 @@ function _request(method, path, options) {
     type: method,
     data: options.data,
     success: options.success,
-    error: options.error
+    error: options.error,
+    timeout: options.error
   });
 }
