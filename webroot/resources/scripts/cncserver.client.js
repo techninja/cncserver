@@ -17,7 +17,7 @@ var cncserver = {
   },
   config: {
     precision: 1,
-    maxPaintDistance: 12000,
+    maxPaintDistance: 6000,
     colors: [],
     colorsYUV: []
   }
