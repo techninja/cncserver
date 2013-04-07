@@ -406,8 +406,6 @@ function serialPortReadyCallback() {
     point.y = point.y > config.maxArea.height ? height : point.y;
     point.y = point.y < 0 ? 0 : point.y;
 
-    //console.log('Absolute pos: ', point)
-
     var change = {
       x: Math.round(point.x - pen.x),
       y: Math.round(point.y - pen.y)
@@ -415,7 +413,7 @@ function serialPortReadyCallback() {
 
     // Don't do anything if there's no change
     if (change.x == 0 && change.y == 0) {
-      callback(false);
+      callback(true);
       return;
     }
 
