@@ -33,7 +33,7 @@ $(function() {
   var $path = {};
   var $fillPath = {};
   var index = 1;
-  var $svg = $('#main');
+  var $svg = $('svg#main');
 
   cncserver.canvas.height = $svg.height();
   cncserver.canvas.width = $svg.width();
@@ -54,7 +54,8 @@ $(function() {
 
   // Load default content from SVG-edit
   if (localStorage["svgedit-default"]){
-    $('svg#main g').append(localStorage["svgedit-default"]);
+    $('svg#main g#cncserversvg').append(localStorage["svgedit-default"]);
+
     // Convert the polys and lines to path after loading
     cncserver.utils.changeToPaths();
   }
@@ -517,7 +518,7 @@ $(function() {
   $(window).resize(fitSVGSize);
 
   function fitSVGSize(){
-    var offset = $('svg#main').offset();
+    var offset = $svg.offset();
     var margin = 40; // TODO: Place this somewhere better
     var rightMargin = 235; // TODO: This too...
     var scale = {
