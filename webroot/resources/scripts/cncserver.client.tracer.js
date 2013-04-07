@@ -170,5 +170,37 @@ cncserver.utils = {
       path.setAttribute('id', line.id);
       line.parentNode.replaceChild(path, line);
     }
+  },
+
+  log: function(msg) {
+    var $logitem = $('<div>').append(
+     $('<span>').addClass('time').text(new Date().toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1")),
+     $('<span>').addClass('message').text(msg),
+     $('<span>').addClass('status loading')
+    );
+
+    // Easy updating!
+    $logitem.logDone = function(msg, classname){
+      var $item = $logitem.children('.status');
+
+      // Allow direct passing of object for success/error
+      if (typeof msg != "string") {
+        // If no classname, assume based on msg
+        if (typeof classname == 'undefined') {
+          classname = (msg === false ? 'error' : 'success')
+        }
+
+        msg = (msg === false ? 'Error!' : 'Success');
+      }
+
+      // If no classname STILL, just make one out of the text
+      if (typeof classname == 'undefined') {
+        classname = msg.toLowerCase();
+      }
+      $item.removeClass('loading').addClass(classname).text(msg);
+    }
+
+    $logitem.appendTo($('#log'));
+    return $logitem;
   }
 };

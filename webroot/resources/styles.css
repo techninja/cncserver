@@ -13,6 +13,30 @@ img.logo {
   display: block;
 }
 
+/* Status Area  */
+#status {
+  background-color: whitesmoke;
+  border-radius: 12px 0;
+  height: 4em;
+  margin-left: 215px;
+  margin-top: 0.5em;
+  padding: 3px;
+  width: 723px;
+  position: relative;
+}
+
+#status .progress-wrapper {
+  bottom: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 99%;
+}
+
+#status progress {
+  margin-right: 10px;
+  width: 89%;
+}
+
 /* Drawing Area */
 svg#main {
   background-color: white;

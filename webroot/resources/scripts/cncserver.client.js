@@ -8,7 +8,7 @@ var cncserver = {
     width: 0,
     scale: 1,
     offset: {
-      top: 80,
+      top: 147,
       left: 235
     }
   },
