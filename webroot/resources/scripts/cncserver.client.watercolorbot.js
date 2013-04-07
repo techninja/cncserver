@@ -43,7 +43,19 @@ cncserver.wcb = {
         // Set the new color!
         $(this).css('stroke', setColor)
       }
+    });
+  },
 
+  // Grouping function to do a full wash of the brush
+  fullWash: function(callback) {
+    var $log = cncserver.utils.log('Doing a full brush wash...');
+    cncserver.api.tools.change('water0', function(){
+      cncserver.api.tools.change('water1', function(){
+        cncserver.api.tools.change('water2', function(d){
+          $log.logDone('Complete');
+          if (callback) callback(d);
+        });
+      });
     });
   }
 };
