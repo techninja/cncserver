@@ -206,6 +206,7 @@ $(function() {
         $log.logDone(d);
         var steps = Math.round($path.maxLength / cncserver.config.precision) + 1;
         cncserver.utils.log('Drawing path: ' + steps  + ' steps...');
+        $('progress')[0].max = $path.maxLength;
         drawNextPoint();
       });
     });
@@ -278,9 +279,12 @@ $(function() {
       $('#draw').text('Draw Path');
       index = 0;
       cncserver.api.pen.up();
+      cncserver.state.process.waiting = false;
+      $('progress').val(0);
       return;
     }
 
+    $('progress').val(index);
     var point = $path.getPoint(index);
 
     // Only ignore the pen timeout if we've been drawing
@@ -292,7 +296,7 @@ $(function() {
       // Pen is up! Ignore movement till it comes back
       if (!p.state) {
         cncserver.state.process.waiting = true;
-        drawNextPoint();
+        setTimeout(drawNextPoint, 1);
       } else {
         // Move the pen
         cncserver.api.pen.move(point, function(data){
