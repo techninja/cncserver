@@ -41,52 +41,62 @@ img.logo {
 svg#main {
   background-color: white;
   box-shadow: 0 0 0 1.3rem #CCCCCC;
-  left: 235px;
   position: absolute;
-  top: 80px;
+  left: 235px;
+  top: 147px;
   transform-origin: 0 0 0;
   -webkit-transform-origin: 0 0 0;
 }
 
-svg#main *.selected {
+svg#main * {
+  stroke-width: 8 !important;
+}
+
+svg#main #cncserversvg path.selected {
   stroke: blue !important;
   stroke-width: 10 !important;
+}
+
+svg#main path:hover {
+  stroke: red !important;
 }
 
 /* Drawing Simulation Canvas */
 canvas#simulate {
   position: absolute;
   z-index: -10;
+  display:none;
 }
 
 /* Nav Tools */
-nav#control {
-  border: 2px solid black;
-  padding: 0.5em;
-  position: absolute;
-  right: 2em;
-  width: 11.5em;
-}
 
 nav#control h3 {
   margin-top: 0;
 }
 
 nav#tools {
-  float: left;
-  margin-right: 2.5em;
-  position: relative;
-  margin-top: 45px;
+  left: 0;
+  position: absolute;
+  top: 4em;
+}
+
+nav#tools #waters {
+  left: -96px;
+  overflow: hidden;
+  padding: 1em;
+  position: absolute;
+  top: 19px;
 }
 
 nav#tools .water {
-  position: absolute;
-  left: -75px;
+  border: 2px solid #EEE;
+  border-radius: 150px 150px 150px 150px;
   height: 150px;
+  margin-bottom: 51px;
   width: 150px;
-  background-color: #DDF;
-  border: 4px solid #AAA;
-  border-radius: 150px;
+
+  background: #c5deea; /* Old browsers */
+  background: radial-gradient(ellipse at center, #c5deea 0%,#b1c9d6 44%,#a6e3f4 100%); /* W3C */
 }
 
 nav#tools a:hover, nav#tools a:focus {
@@ -99,6 +109,7 @@ nav#tools a:hover, nav#tools a:focus {
   -webkit-animation-iteration-count: infinite;
 }
 
+/* Animation Keyframes */
 @keyframes hover-pulse {
   0%   { box-shadow: 0 0 2px 5px red; }
   50%  { box-shadow: 0 0 6px 8px red; }
@@ -123,18 +134,62 @@ nav#tools a:hover, nav#tools a:focus {
   100%  { box-shadow: 0 0 0 3px #fff, 0 0 2px 8px #33F; }
 }
 
-nav#tools #water0 {
-  top: -35px;
+@keyframes hover-button {
+  0%   { box-shadow: 0 0 2px 8px #33F; }
+  50%  { box-shadow: 0 0 6px 8px #33F; }
+  100%  { box-shadow: 0 0 2px 8px #33F; }
 }
 
-nav#tools #water1 {
-  top: 150px;
+@-webkit-keyframes hover-button {
+  0%   { box-shadow: 0 0 2px 8px #33F; }
+  50%  { box-shadow: 0 0 6px 8px #33F; }
+  100%  { box-shadow: 0 0 2px 8px #33F; }
 }
 
-nav#tools #water2 {
-  top: 330px;
+nav#tools div.static {
+  background-color: #CCCCCC;
+  border-radius: 15px 15px 15px 15px;
+  margin: 13px -7px -13px;
+  padding: 7px;
+  overflow: hidden;
+  border-top: 3px solid #000000;
+  position: relative;
 }
 
+nav#tools div.static:before {
+  background-color: black;
+  content: "";
+  display: block;
+  height: 65px;
+  left: 50px;
+  position: absolute;
+  top: 0;
+  width: 2px;
+  z-index: 2;
+}
+
+nav#tools div.static a {
+  display: block;
+  width: 40%;
+  height: 50px;
+  text-align: center;
+  border-radius: 15px;
+}
+
+nav#tools div.static a#colorx {
+  color: red;
+  float: left;
+  font-size: 3.5em;
+  line-height: 0.9em;
+}
+
+nav#tools div.static a#colornone {
+  background-color: white;
+  float: right;
+  color: black;
+  overflow: hidden;
+  text-indent: -7em;
+}
 
 nav#tools a, nav#tools a:link  {
   display: block;
@@ -144,17 +199,18 @@ nav#tools a, nav#tools a:link  {
 
 nav#tools #colors {
   background-color: #FFFFFF;
-  border-radius: 13px;
-  padding: 10px 8px 15px;
-  margin-left: 90px;
+  border-radius: 13px 13px 13px 13px;
+  box-shadow: 0 0 2px 8px #CCCCCC, 0 0 0 9px #777777;
+  margin-left: 91px;
+  padding: 1px 7px 9px;
   position: relative;
 }
 
 nav#tools .color {
-  border: 1px solid #000;
-  border-radius: 100px / 65px;
-  height: 52px;
-  line-height: 47px;
+  border: 2px solid #999;
+  border-radius: 135px 135px 135px 135px / 95px 95px 95px 95px;
+  height: 58px;
+  line-height: 55px;
   margin-top: 10px;
   text-align: center;
   width: 85px;
@@ -170,8 +226,80 @@ nav#tools .color.selected {
   -webkit-animation-iteration-count: infinite;
 }
 
+/* Nav Controls & Button Graphics */
+fieldset#control {
+  padding: 0.3em;
+  position: absolute;
+  right: 1em;
+  width: 11.5em;
+  background-color: #DDD;
+}
+
+#control button {
+  background-color: #FFFFFF;
+  border-radius: 12px 12px 12px 12px;
+  display: block;
+  float: left;
+  height: 68px;
+  line-height: 1.2em;
+  margin-bottom: 2.7em;
+  margin-right: 0.7em;
+  padding-top: 64px;
+  width: 68px;
+}
+
+#control button:hover {
+  animation-name: hover-button;
+  animation-duration: 3000ms;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-name: hover-button;
+  -webkit-animation-duration: 3000ms;
+  -webkit-animation-iteration-count: infinite;
+}
+
+#control button:disabled, #control button:disabled:hover {
+  opacity: 0.5;
+  animation: none;
+  -webkit-animation: none;
+}
+
+#control button#pen.up { background-image: url("images/icon_brush_up.png"); }
+#control button#pen.down { background-image: url("images/icon_brush_down.png"); }
+#control button#draw { background-image: url("images/icon_draw_path.png"); }
+#control button#fill { background-image: url("images/icon_fill.png"); }
+#control button#disable { background-image: url("images/icon_unlock.png"); }
+#control button#zero { background-image: url("images/icon_zero.png"); }
+#control button#park { background-image: url("images/icon_home.png"); }
+#control button#auto-paint { background-image: url("images/icon_auto_paint.png"); }
+#control button#auto-color { background-image: url("images/icon_auto_color.png"); }
+#control button#auto-color.undo { background-image: url("images/icon_auto_color_undo.png"); }
+
+
+/* Color Action selection */
+nav#color-action #color-action-label {
+  display: block;
+  font-weight: bold;
+}
+
+nav#color-action input {
+  display:none;
+}
+
+nav#color-action label {
+    display:block;
+    background-color:#ddd;
+    padding:4px 11px;
+    font-family:Arial;
+    font-size:16px;
+}
+
+nav#color-action input[type="radio"]:checked + label {
+ background-color:#bbb;
+}
+
 /* Color Set 1 */
-nav#tools #color0.colorset1 { background-color: #926350; } /* Brown */
+nav#tools #color0.colorset1 { background-color: #844B35; } /* Brown */
 nav#tools #color1.colorset1 { background-color: #907DBD; } /* Violet */
 nav#tools #color2.colorset1 { background-color: #353AAA; } /* Blue */
 nav#tools #color3.colorset1 { background-color: #2E6F3A; } /* Green */
@@ -181,4 +309,53 @@ nav#tools #color6.colorset1 { background-color: #A72611; } /* Red */
 nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
 
 
-/* Path Manager */
+/* Status Log */
+#cancel {
+  color: red;
+}
+
+#log span.status {
+  display: inline-block;
+  width: 100px;
+}
+#log span.loading {
+  background-image: url("images/log-loader.gif");
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+
+/* Collapsable fieldsets */
+#control fieldset {
+  padding: 0;
+}
+
+#control fieldset legend {
+  margin-left: 6px;
+}
+
+#control fieldset nav {
+  overflow: hidden;
+  padding: 10px;
+}
+
+#control fieldset.closed {
+  border-bottom: medium none;
+  border-left: medium none;
+  border-right: medium none;
+  height: 0;
+  overflow: hidden;
+}
+
+#control fieldset.closed, fieldset.closed legend, fieldset.open legend {
+  cursor: pointer;
+}
+
+#control fieldset.closed:hover, fieldset.closed legend:hover {
+  background-color: turquoise;
+}
+
+#control fieldset.closed nav {
+  height: 0;
+  padding: 0;
+}

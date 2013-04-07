@@ -22,6 +22,7 @@ var cncserver = {
   config: {
     precision: 1,
     maxPaintDistance: 6000,
+    colorAction: 'bot',
     colors: [],
     colorsYUV: []
   }
@@ -61,9 +62,8 @@ $(function() {
   }
 
   // Ensure buttons are disabled as we have no selection
-  $('#movefirst').prop('disabled', true);
   $('#draw').prop('disabled', true);
-  $('#fill-build').prop('disabled', true);
+  $('#fill').prop('disabled', true);
 
   // Fit the SVG to the screen size
   fitSVGSize();
@@ -73,11 +73,18 @@ $(function() {
   var stopBuildFill = false;
   cncserver.config.precision = Number($('#precision').val());
 
-  // Convert the polys and lines to path
-  changeToPaths();
+  // Bind color action config set and set initial
+  $('input[name=color-action]:radio').change(function(e){
+    cncserver.config.colorAction = $(this).val();
+  })
+  cncserver.config.colorAction = $('input[name=color-action]:radio:checked').val();
 
-  // Get initial pen data from machine
+  // Get initial pen data from server
   cncserver.api.pen.stat(function(){
+    // Set the Pen state button
+    $('#pen').addClass(!cncserver.state.pen.state ? 'down' : 'up')
+    .text('Brush ' + (!cncserver.state.pen.state ? 'Down' : 'Up'));
+
     // Select tool from last machine tool
     if (cncserver.state.pen.tool) {
       $('.color').removeClass('selected');
@@ -97,17 +104,25 @@ $(function() {
         delete($path);
       }
     } else { // Otherwise, select
+      selected = true;
+      if ($path.length) {
+        $path.removeClass('selected');
+      }
+      $path = $(e.target);
+      $path.addClass('selected');
+      $path.transformMatrix = $path[0].getTransformToElement($path[0].ownerSVGElement);
+      $path.getPoint = function(distance){ // Handy helper function for gPAL
+        return this[0].getPointAtLength(distance).matrixTransform(this.transformMatrix);
+      };
+      $path.maxLength = $path[0].getTotalLength(); // Shortcut!
+      cncserver.path = $path;
+      index = 0;
     }
-    $path = $(this);
-    $path.addClass('selected');
-    $path.transformMatrix = this.getTransformToElement(this.ownerSVGElement);
-    index = 0;
 
-    // Enable buttons because we're selected now!
-    $('#movefirst').prop('disabled', false);
-    $('#draw').prop('disabled', false);
-    $('#fill-build').prop('disabled', false);
-    $('#fill-paint').prop('disabled', !$path.data('fill'));
+    // Enable/disable buttons if selected/not
+    $('#movefirst').prop('disabled', !selected);
+    $('#draw').prop('disabled', !selected);
+    $('#fill').prop('disabled', !selected);
 
     e.stopPropagation(); // Don't bubble up and select groups
   });
@@ -116,36 +131,105 @@ $(function() {
   $fillPath = $('svg #fill-swirl');
   $fillPath.transformMatrix = $fillPath[0].getTransformToElement($fillPath[0].ownerSVGElement);
 
+  $('#control fieldset').click(function(e){
+    if ($(this).is('.closed')){
+      var $open = $('#control fieldset.open');
+      var $close = $(this);
+
+      // Open one to closed
+      $open.removeClass('open');
+      $open.addClass('closed');
+
+      // Closed to open
+      $close.removeClass('closed');
+      $close.addClass('open');
+    }
+  });
+
   // Bind to Tool Change nav items
   $('nav#tools a').click(function(e){
-    cncserver.api.tools.change(this.id, function(){
-      cncserver.api.pen.reset();
-    });
-    if ($(this).is('.color')){
+
+    // Instead of controlling the bot, change the path!
+    if ($(this).is('.color')) {
+      if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
+        if ($path.length) {
+          $path.attr(cncserver.config.colorAction, $(this).css('background-color'));
+        }
+        $(this).blur();
+        return false;
+      }
+
       $('nav#tools a.selected').removeClass('selected');
       $(this).addClass('selected');
     }
+
+    // X clicked: Do a full brush wash, or clear the stroke/fill of $path
+    if ($(this).is('#colorx')) {
+      if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
+        $path.attr(cncserver.config.colorAction, 'none');
+      } else {
+        cncserver.wcb.fullWash();
+        $('nav#tools a.selected').removeClass('selected');
+      }
+      return false;
+    }
+
+    // White/Paper clicked: Set the stroke/fill of $path to white
+    if ($(this).is('#colornone')) {
+      if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
+        $path.attr(cncserver.config.colorAction, 'rgb(255,255,255)');
+      }
+      return false;
+    }
+
+    // Standard tool change...
+    var stuff = this.id.indexOf('water') == -1 ? $(this).text().toLowerCase() + ' paint' : 'water'
+    var $stat = cncserver.utils.log('Putting some ' + stuff + ' on the brush...')
+    cncserver.api.tools.change(this.id, function(d){
+      $stat.logDone(d);
+      cncserver.api.pen.resetCounter();
+    });
+
     return false;
   });
 
   // Bind to control buttons
-  $('#park').click(function(){ cncserver.api.pen.park(); });
-  $('#movefirst').click(function(){ cncserver.api.pen.up(readyFirstPoint); });
+  $('#park').click(function(){
+    cncserver.api.pen.park(cncserver.utils.log('Parking brush...').logDone);
+  });
+  $('#movefirst').click(function(){});
   $('#draw').click(function(){
-    if (stopDraw === 0) {
-      stopDraw = true;
-    } else {
-      stopDraw = 0;
-      $('#draw').text('STOP Draw');
-      drawNextPoint();
-    }
+    $log = cncserver.utils.log('Moving to first point on path...');
+    cncserver.api.pen.up(function(){
+      console.log($path.getPoint(0));
+      cncserver.api.pen.move($path.getPoint(0), function(d){
+        $log.logDone(d);
+        var steps = Math.round($path.maxLength / cncserver.config.precision) + 1;
+        cncserver.utils.log('Drawing path: ' + steps  + ' steps...');
+        drawNextPoint();
+      });
+    });
   });
 
-  $('#pen-up').click(function(){ cncserver.api.pen.up(); });
-  $('#pen-down').click(function(){ cncserver.api.pen.down(); });
-  $('#disable').click(function(){ cncserver.api.motors.unlock(); });
-  $('#zero').click(function(){ cncserver.api.pen.zero(); });
-  $('#precision').change(function(){ cncserver.config.precision = Number($(this).val()); });
+  $('#pen').click(function(){
+    if (cncserver.state.pen.state) {
+      cncserver.api.pen.up(function(){
+        $('#pen').removeClass('up').addClass('down').text('Brush Down');
+      });
+    } else {
+      cncserver.api.pen.down(function(){
+        $('#pen').removeClass('down').addClass('up').text('Brush Up');
+      });
+    }
+  });
+  $('#disable').click(function(){
+    cncserver.api.motors.unlock(cncserver.utils.log('Unlocking stepper motors...').logDone);
+  });
+  $('#zero').click(function(){
+    cncserver.api.pen.zero(cncserver.utils.log('Make sure the carriage is parked! Resetting absolute position...').logDone);
+  });
+  $('#precision').change(function(){cncserver.config.precision = Number($(this).val());});
+
   $('#auto-color').click(function(){
     // Momentarily hide selection
     if ($path.length) $path.toggleClass('selected');
@@ -179,12 +263,6 @@ $(function() {
     }
   });
 
-
-  // Move to first point and wait
-  function readyFirstPoint() {
-    cncserver.api.pen.move($path[0].getPointAtLength(0).matrixTransform($path.transformMatrix));
-  }
-
   // Move the visible draw position indicator
   cncserver.moveDrawPoint = function(point) {
     // Move visible drawpoint
@@ -194,7 +272,7 @@ $(function() {
   // Outlines all visible portions of a given path, one step at a time
   function drawNextPoint(){
     index+= cncserver.config.precision;
-    if (index > $path[0].getTotalLength() || stopDraw) {
+    if (index > $path.maxLength || stopDraw) {
       stopDraw = false;
       console.log('Path Complete!');
       $('#draw').text('Draw Path');
@@ -203,7 +281,7 @@ $(function() {
       return;
     }
 
-    var point = $path[0].getPointAtLength(index).matrixTransform($path.transformMatrix);
+    var point = $path.getPoint(index);
 
     // Only ignore the pen timeout if we've been drawing
     // TODO: This is probably still a bad idea
@@ -290,11 +368,15 @@ $(function() {
   // Wet the brush and get more of selected paint color, then return to
   // point given and trigger callback
   function getMorePaint(point, callback) {
-    cncserver.api.tools.change('water1', function(){
-      cncserver.api.tools.change($('.color.selected').attr('id'), function(){
-        cncserver.api.pen.reset();
-        cncserver.api.pen.up(function(){
-          cncserver.api.pen.move(point, callback);
+    var $stat = cncserver.utils.log('Running low! Getting some more paint...')
+    cncserver.api.tools.change('water0', function(d){
+      cncserver.api.tools.change($('.color.selected').attr('id'), function(d){
+        cncserver.api.pen.resetCounter();
+        cncserver.api.pen.up(function(d){
+          cncserver.api.pen.move(point, function(d) {
+            $stat.logDone('Done', 'complete');
+            callback(d);
+          });
         });
       });
     });
@@ -462,7 +544,7 @@ $(function() {
         if (!stopBuildFill) {
           console.log('Path fill done!')
           $path.data('fill', fillQueue); // Pass the draw queue into the element
-          $('#fill-paint').prop('disabled', false); // Enable paint button
+          $('#fill').prop('disabled', false); // Enable paint button
         }
       } else {
         // Run Again! Waits 1 ms, lets browser do other things
@@ -505,9 +587,7 @@ $(function() {
             cncserver.api.pen.up(drawNextFillPath);
           } else { // Actually painting...
             if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
-              console.log('Time to go get more paint!');
               getMorePaint(fillQueue[fillGroupIndex][fillIndex-1], function(){
-                console.log('Resuming fill painting');
                 drawNextFillPath();
               });
             } else {

@@ -22,38 +22,71 @@
     <progress title="Current progress" max="100" value="0"></progress><button id="cancel">Cancel</button>
   </div>
 </div>
-<nav id="control">
-  <h3>Bot Controls</h3>
-  <button id="pen-up">Brush Up</button>
-  <button id="pen-down">Brush Down</button>
-  <button id="movefirst" disabled>Move to First point</button>
-  <button id="draw" disabled>Draw Path</button>
-  <button id="park">Park</button>
-  <button id="disable">Unlock/Disable Motors</button>
-  <button id="zero">Zero Motor Position</button>
-  <select id="precision" title="Trace precision: Default is 'Fine'">
-    <option value="1">Super-fine (1)</option>
-    <option value="3">Very Fine (3)</option>
-    <option value="5" selected>Fine* (5)</option>
-    <option value="8">Coarse (8)</option>
-    <option value="10">Very Coarse (10)</option>
-  </select>
-  <nav id="fills">
-    <button id="fill-build" disabled>Build Fill</button>
-    <select>
-      <option value="horizontal">Horizontal</option>
-      <option value="vertical">Vertical</option>
-      <option value="path">Spiral</option>
-    </select>
-    <button id="fill-paint" disabled>Paint Fill</button>
-    <progress max="100" value="0"></progress>
-  </nav>
-</nav>
+
+
+<fieldset id="control">
+  <legend>WaterColorBot Controls</legend>
+  <fieldset class="collapsable open">
+    <legend>Automatic</legend>
+    <nav>
+      <button id="auto-paint" title="Paint the entire drawing automatically. Verifies colors by running auto color first.">Auto Paint</button>
+      <button id="auto-color" title="Pick the closest match for existing colors in the drawing. Click again to UNDO.">Auto Color</button>
+    </nav>
+  </fieldset>
+
+  <fieldset class="collapsable closed">
+    <legend>Color</legend>
+    <nav id="color-action">
+      <label id="color-action-label" for="color-action">Color action:</label>
+      <input id="color-action-bot" value="bot" checked name="color-action" type="radio"/>
+        <label for="color-action-bot" title="Clicking the paint will have the bot pick up that color.">Bot Control</label>
+      <input id="color-action-fill" value="fill" name="color-action" type="radio"/>
+        <label for="color-action-fill" title="Clicking the paint will change a selected path's fill color.">Path Fill</label>
+      <input id="color-action-stroke" value="stroke" name="color-action" type="radio"/>
+        <label for="color-action-stroke" title="Clicking the paint will change a selected path's outline color.">Path Stroke</label>
+    </nav>
+  </fieldset>
+
+  <fieldset class="collapsable closed">
+    <legend>Manual</legend>
+    <nav>
+      <button id="pen">Brush</button>
+      <button id="draw" title="Draw the selected Path">Draw Path</button>
+      <button id="fill">Paint Line Fill</button>
+      <select>
+        <option value="horizontal">Horizontal</option>
+        <option value="vertical">Vertical</option>
+        <option value="path">Spiral</option>
+      </select>
+
+      <select id="precision" title="Trace precision: Default is 'Fine'">
+        <option value="1">Super-fine (1)</option>
+        <option value="3">Very Fine (3)</option>
+        <option value="5" selected>Fine* (5)</option>
+        <option value="8">Coarse (8)</option>
+        <option value="10">Very Coarse (10)</option>
+      </select>
+    </nav>
+  </fieldset>
+
+  <fieldset class="collapsable closed">
+    <legend>Machine</legend>
+    <nav>
+      <button id="park" title="Tells the server to move the carriage back to the home position">Park Home</button>
+      <button id="disable" title="Unlocks/Disables stepper motors to allow them to be moved by hand">Unlock Motors</button>
+      <button id="zero" title="Resets server relative position to 0">Zero Position</button>
+    </nav>
+  </fieldset>
+
+
+</fieldset>
 
 <nav id="tools">
-  <a id="water0" class="water" href="#">Water 1</a>
-  <a id="water1" class="water" href="#">Water 2</a>
-  <a id="water2" class="water" href="#">Water 3</a>
+  <nav id="waters">
+    <a id="water0" title="Water 1" class="water" href="#">Water 1</a>
+    <a id="water1" title="Water 2" class="water" href="#">Water 2</a>
+    <a id="water2" title="Water 3" class="water" href="#">Water 3</a>
+  </nav>
   <nav id="colors">
     <a id="color0" class="color colorset1" href="#">Brown</a>
     <a id="color1" class="color colorset1" href="#">Violet</a>
@@ -63,6 +96,10 @@
     <a id="color5" class="color colorset1" href="#">Orange</a>
     <a id="color6" class="color colorset1" href="#">Red</a>
     <a id="color7" class="color colorset1 selected" href="#">Black</a>
+    <div class="static">
+      <a id="colorx" title="Wash Brush / Clear color fill or stroke" href="#">X</a>
+      <a id="colornone" title="Only setting path color to solid white/paper color" href="#">Paper</a>
+    </div>
   </nav>
 </nav>
 
