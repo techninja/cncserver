@@ -45,6 +45,7 @@ svg#main {
   position: absolute;
   top: 80px;
   transform-origin: 0 0 0;
+  -webkit-transform-origin: 0 0 0;
 }
 
 svg#main *.selected {

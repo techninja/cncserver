@@ -529,7 +529,8 @@ $(function() {
     // Use the shorter of the two
     cncserver.canvas.scale = scale.x < scale.y ? scale.x : scale.y;
 
-    $('svg#main').css('transform', 'scale(' + cncserver.canvas.scale + ')');
+    $svg.css('transform', 'scale(' + cncserver.canvas.scale + ')');
+    $svg.css('-webkit-transform', 'scale(' + cncserver.canvas.scale + ')');
   }
 
 });
