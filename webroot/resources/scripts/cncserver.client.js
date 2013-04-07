@@ -86,10 +86,17 @@ $(function() {
   });
 
 
-  // Bind all SVG element click / select
-  $('svg *:not(g)').on('click', function(e){
-    if ($path.length) {
-      $path.removeClass('selected');
+  // Bind SVG element click for $path select/deselect
+  $svg.on('click', function(e){
+    var selected = false;
+
+    // If the target of the click matches the wrapper, deslect
+    if (e.target == this) {
+      if ($path.length) {
+        $path.removeClass('selected');
+        delete($path);
+      }
+    } else { // Otherwise, select
     }
     $path = $(this);
     $path.addClass('selected');
