@@ -13,7 +13,11 @@ var cncserver = {
     }
   },
   state: {
-    pen: {}
+    pen: {},
+    process: {
+      name: 'idle',
+      waiting: false
+    }
   },
   config: {
     precision: 1,
@@ -198,20 +202,27 @@ $(function() {
     point.ignoreTimeout = (cncserver.state.pen.distanceCounter == 0 ? 0 : 1);
 
     // With each coordinate, check to see that the path is visible
-    getPenStatePathCollide($path[0], point, function(){
-      cncserver.api.pen.move(point, function(data){
-
-        // If we've used this one too much, go get more paint!
-        if (data.distanceCounter > cncserver.config.maxPaintDistance) {
-          getMorePaint(point, function(){
-            index-= cncserver.config.precision * 5; // Draw backwards three steps
+    getPenStatePathCollide($path[0], point, function(p){
+      // Pen is up! Ignore movement till it comes back
+      if (!p.state) {
+        cncserver.state.process.waiting = true;
+        drawNextPoint();
+      } else {
+        // Move the pen
+        cncserver.api.pen.move(point, function(data){
+          // If we've used this one too much, go get more paint!
+          if (data.distanceCounter > cncserver.config.maxPaintDistance) {
+            getMorePaint(point, function(){
+              index-= cncserver.config.precision * 5; // Draw backwards three steps
+              drawNextPoint();
+            });
+          } else {
             drawNextPoint();
-          });
-        } else {
-          drawNextPoint();
-        }
+          }
 
-      });
+        });
+      }
+
     });
   }
 
@@ -238,24 +249,33 @@ $(function() {
         // Correct path, visible at this coordinate!!
         // If Pen isn't down, put it down, then continue!
         if (cncserver.state.pen.state == 0){
-          cncserver.api.pen.down(callback);
+          // If we've been waiting for the path to come back, move to the point first
+          if (cncserver.state.process.waiting) {
+            point.ignoreTimeout = 0;
+            cncserver.api.pen.move(point, function(){
+              cncserver.state.process.waiting = false; // Not waiting anymore!
+              cncserver.api.pen.down(callback);
+            })
+          } else {
+            cncserver.api.pen.down(callback);
+          }
         } else{
-          callback();
+          callback(cncserver.state.pen);
         }
       } else {
         // Wrong path!
-        console.log('Path Hidden by ', coordPath.id);
+        //console.log('Path Hidden by ', coordPath.id);
 
         // If Pen is down, put it up, then continue!
         if (cncserver.state.pen.state == 1){
           cncserver.api.pen.up(callback);
         } else {
-          callback();
+          callback(cncserver.state.pen);
         }
       }
     } else {
       console.log('Point not visible!: ', point);
-      callback();
+      callback(cncserver.state.pen);
     }
   }
 
