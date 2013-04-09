@@ -64,7 +64,7 @@ cncserver.wcb = {
   getMorePaint: function(point, callback) {
     var $stat = cncserver.utils.log('Going to get some more paint...')
     cncserver.api.tools.change('water0', function(d){
-      cncserver.api.tools.change($('.color.selected').attr('id'), function(d){
+      cncserver.api.tools.change(cncserver.state.pen.tool, function(d){
         cncserver.api.pen.resetCounter();
         cncserver.api.pen.up(function(d){
           cncserver.api.pen.move(point, function(d) {
