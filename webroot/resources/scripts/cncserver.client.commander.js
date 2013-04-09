@@ -7,6 +7,9 @@
  * finish, handles all API callbacks internally.
  */
 
+// TODO: DO this better!
+var lastlog = {};
+
 cncserver.cmd = {
   // CMD specific callback handler
   cb: function(d) {
@@ -26,10 +29,9 @@ cncserver.cmd = {
     }
   },
 
-
   executeNext: function() {
     if (!cncserver.state.buffer.length) {
-      cncserver.state.process.busy = false;
+      this.cb();
       return;
     } else {
       cncserver.state.process.busy = true;
@@ -53,6 +55,14 @@ cncserver.cmd = {
         break;
       case "down":
         cncserver.api.pen.down(this.cb);
+        break;
+      case "log":
+        lastlog = cncserver.utils.log(next[1]);
+        this.cb(true);
+        break;
+      case "logdone":
+        lastlog.logDone(true);
+        this.cb(true);
         break;
       default:
         console.log('Queue shortcut not found:' + next[0]);
