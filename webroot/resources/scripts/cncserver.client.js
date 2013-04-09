@@ -57,8 +57,8 @@ $(function() {
   if (localStorage["svgedit-default"]){
     $('svg#main g#cncserversvg').append(localStorage["svgedit-default"]);
 
-    // Convert the polys and lines to path after loading
-    cncserver.utils.changeToPaths();
+    // Convert anything not a path into a path for proper tracing
+    cncserver.utils.changeToPaths('svg#main g#cncserversvg');
   }
 
   // Ensure buttons are disabled as we have no selection

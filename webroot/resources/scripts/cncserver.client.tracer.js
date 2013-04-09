@@ -130,46 +130,114 @@ cncserver.utils = {
   },
 
   // Convert all document svg elements capable into paths!
-  changeToPaths: function() {
-    var polys = document.querySelectorAll('polygon,polyline');
-    [].forEach.call(polys, convertPolyToPath);
+  // Adapted from svgcanvas in svg-edit main
+  changeToPaths: function(context) {
+    $('*:not(path,svg,g,title,metadata)', context).each(function(){
+      var elem = this;
+      var $elem = $(this);
 
-    var lines = document.querySelectorAll('line');
-    [].forEach.call(lines, convertLineToPath);
+      // Pass over attributes to new path element
+      var svgNS = elem.ownerSVGElement.namespaceURI;
+      var path = document.createElementNS(svgNS, 'path');
 
-    function convertPolyToPath(poly){
-      var svgNS = poly.ownerSVGElement.namespaceURI;
-      var path = document.createElementNS(svgNS,'path');
-      var points = poly.getAttribute('points').split(/\s+|,/);
-      var x0=points.shift(), y0=points.shift();
-      var pathdata = 'M'+x0+','+y0+'L'+points.join(' ');
-      if (poly.tagName=='polygon') {
-        pathdata+='z';
+      $(path).attr({
+        fill: $elem.attr('fill'),
+        stroke: $elem.attr('stroke'),
+        id: $elem.attr('id')
+      })[0];
+
+      if ($elem.attr('transform')){
+        $(path).attr('transform', $elem.attr('transform'));
       }
-      path.setAttribute('d',pathdata);
 
-      path.setAttribute('stroke', poly.getAttribute('stroke'));
-      path.setAttribute('stroke-width', poly.getAttribute('stroke-width'));
-      path.setAttribute('fill', poly.getAttribute('fill'));
-      path.setAttribute('style', poly.style.cssText);
-      path.setAttribute('id', poly.id);
-      poly.parentNode.replaceChild(path,poly);
-    }
+      var d = '';
 
-    function convertLineToPath(line){
-      var svgNS = line.ownerSVGElement.namespaceURI;
-      var path = document.createElementNS(svgNS,'path');
-      path.setAttribute('d', 'M'+
-        line.getAttribute('x1')+','+
-        line.getAttribute('y1')+' L'+
-        line.getAttribute('x2')+','+
-        line.getAttribute('y2'));
-      path.setAttribute('stroke', line.getAttribute('stroke'));
-      path.setAttribute('stroke-width', line.getAttribute('stroke-width'));
-      path.setAttribute('style', line.style.cssText);
-      path.setAttribute('id', line.id);
-      line.parentNode.replaceChild(path, line);
-    }
+      var joinSegs = function(segs) {
+        $.each(segs, function(j, seg) {
+          var l = seg[0], pts = seg[1];
+          d += l;
+          for(var i=0; i < pts.length; i+=2) {
+            d += (pts[i] +','+pts[i+1]) + ' ';
+          }
+        });
+      }
+
+      // Possibly the cubed root of 6, but 1.81 works best
+      var num = 1.81;
+
+      switch (elem.tagName) {
+      case 'ellipse':
+      case 'circle':
+        var cx = $elem.attr('cx');
+        var cy = $elem.attr('cy');
+        var rx = $elem.attr('rx');
+        var ry = $elem.attr('ry');
+
+        if(elem.tagName == 'circle') {
+          rx = ry = $elem.attr('r');
+        }
+
+        joinSegs([
+          ['M',[(cx-rx),(cy)]],
+          ['C',[(cx-rx),(cy-ry/num), (cx-rx/num),(cy-ry), (cx),(cy-ry)]],
+          ['C',[(cx+rx/num),(cy-ry), (cx+rx),(cy-ry/num), (cx+rx),(cy)]],
+          ['C',[(cx+rx),(cy+ry/num), (cx+rx/num),(cy+ry), (cx),(cy+ry)]],
+          ['C',[(cx-rx/num),(cy+ry), (cx-rx),(cy+ry/num), (cx-rx),(cy)]],
+          ['Z',[]]
+        ]);
+        break;
+      case 'line':
+        d = "M"+$(elem).attr('x1')+","+$(elem).attr('y1')+"L"+$(elem).attr('x2')+","+$(elem).attr('y2');
+        break;
+      case 'polyline':
+      case 'polygon':
+        d = "M" + $elem.attr('points');
+        break;
+      case 'rect':
+        var rx = $elem.attr('rx');
+        var ry = $elem.attr('ry');
+        var b = elem.getBBox();
+        var x = b.x, y = b.y, w = b.width, h = b.height;
+        num = 4-num; // Why? Because!
+
+        if(!rx && !ry) {
+          // Regular rect
+          joinSegs([
+            ['M',[x, y]],
+            ['L',[x+w, y]],
+            ['L',[x+w, y+h]],
+            ['L',[x, y+h]],
+            ['L',[x, y]],
+            ['Z',[]]
+          ]);
+        } else {
+          joinSegs([
+            ['M',[x, y+ry]],
+            ['C',[x,y+ry/num, x+rx/num,y, x+rx,y]],
+            ['L',[x+w-rx, y]],
+            ['C',[x+w-rx/num,y, x+w,y+ry/num, x+w,y+ry]],
+            ['L',[x+w, y+h-ry]],
+            ['C',[x+w, y+h-ry/num, x+w-rx/num,y+h, x+w-rx,y+h]],
+            ['L',[x+rx, y+h]],
+            ['C',[x+rx/num, y+h, x,y+h-ry/num, x,y+h-ry]],
+            ['L',[x, y+ry]],
+            ['Z',[]]
+          ]);
+        }
+        break;
+      default:
+        // Delete non-supported SVG elements
+        elem.parentNode.removeChild(elem);
+        return;
+      }
+
+      if(d) {
+        path.setAttribute('d',d);
+      }
+
+      // Replace the current element with the converted one
+      elem.parentNode.replaceChild(path, elem);
+    });
   },
 
   log: function(msg) {
