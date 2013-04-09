@@ -316,15 +316,6 @@ $(function() {
     });
   }
 
-  // Find out what DOM object is directly below the point given
-  // Will NOT work if point is outside visible screen range!
-  function getPointPathCollide(point) {
-    return document.elementFromPoint(
-      (point.x * cncserver.canvas.scale)+cncserver.canvas.offset.left,
-      (point.y * cncserver.canvas.scale)+cncserver.canvas.offset.top
-    );
-  }
-
   // Set the pen down or up based on visibility of a given path at a given point
   // TODO: Document this function
   function getPenStatePathCollide(path, point, callback) {
