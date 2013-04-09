@@ -203,17 +203,7 @@ $(function() {
   });
   $('#movefirst').click(function(){});
   $('#draw').click(function(){
-    $log = cncserver.utils.log('Moving to first point on path...');
-    cncserver.api.pen.up(function(){
-      console.log($path.getPoint(0));
-      cncserver.api.pen.move($path.getPoint(0), function(d){
-        $log.logDone(d);
-        var steps = Math.round($path.maxLength / cncserver.config.precision) + 1;
-        cncserver.utils.log('Drawing path: ' + steps  + ' steps...');
-        $('progress')[0].max = $path.maxLength;
-        drawNextPoint();
-      });
-    });
+    cncserver.paths.runOutline($path);
   });
 
   $('#pen').click(function(){
@@ -272,96 +262,6 @@ $(function() {
   cncserver.moveDrawPoint = function(point) {
     // Move visible drawpoint
     $('#drawpoint').attr('transform', 'translate(' + point.x + ',' + point.y + ')');
-  }
-
-  // Outlines all visible portions of a given path, one step at a time
-  function drawNextPoint(){
-    index+= cncserver.config.precision;
-    if (index > $path.maxLength || stopDraw) {
-      stopDraw = false;
-      console.log('Path Complete!');
-      $('#draw').text('Draw Path');
-      index = 0;
-      cncserver.api.pen.up();
-      cncserver.state.process.waiting = false;
-      $('progress').val(0);
-      return;
-    }
-
-    $('progress').val(index);
-    var point = $path.getPoint(index);
-
-    // Only ignore the pen timeout if we've been drawing
-    // TODO: This is probably still a bad idea
-    point.ignoreTimeout = (cncserver.state.pen.distanceCounter == 0 ? 0 : 1);
-
-    // With each coordinate, check to see that the path is visible
-    getPenStatePathCollide($path[0], point, function(p){
-      // Pen is up! Ignore movement till it comes back
-      if (!p.state) {
-        cncserver.state.process.waiting = true;
-        setTimeout(drawNextPoint, 1);
-      } else {
-        // Move the pen
-        cncserver.api.pen.move(point, function(data){
-          // If we've used this one too much, go get more paint!
-          if (data.distanceCounter > cncserver.config.maxPaintDistance) {
-            cncserver.wcb.getMorePaint(point, function(){
-              index-= cncserver.config.precision * 5; // Draw backwards three steps
-              drawNextPoint();
-            });
-          } else {
-            drawNextPoint();
-          }
-
-        });
-      }
-
-    });
-  }
-
-  // Set the pen down or up based on visibility of a given path at a given point
-  // TODO: Document this function
-  function getPenStatePathCollide(path, point, callback) {
-    // Drawpoint element can get in the way of elementFromPoint, hide it!
-    $('#drawpoint').hide();
-    var coordPath = getPointPathCollide(point);
-    $('#drawpoint').show();
-
-    if (coordPath) {
-      // Check that the objects are exactly the same
-      if (coordPath == path){
-        // Correct path, visible at this coordinate!!
-        // If Pen isn't down, put it down, then continue!
-        if (cncserver.state.pen.state == 0){
-          // If we've been waiting for the path to come back, move to the point first
-          if (cncserver.state.process.waiting) {
-            point.ignoreTimeout = 0;
-            cncserver.api.pen.move(point, function(){
-              cncserver.state.process.waiting = false; // Not waiting anymore!
-              cncserver.api.pen.down(callback);
-            })
-          } else {
-            cncserver.api.pen.down(callback);
-          }
-        } else{
-          callback(cncserver.state.pen);
-        }
-      } else {
-        // Wrong path!
-        //console.log('Path Hidden by ', coordPath.id);
-
-        // If Pen is down, put it up, then continue!
-        if (cncserver.state.pen.state == 1){
-          cncserver.api.pen.up(callback);
-        } else {
-          callback(cncserver.state.pen);
-        }
-      }
-    } else {
-      console.log('Point not visible!: ', point);
-      callback(cncserver.state.pen);
-    }
   }
 
   // Build all coordinates for filling a path
