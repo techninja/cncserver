@@ -1,5 +1,5 @@
 /**
- * @file Holds all CNC Server path tracing helper functions
+ * @file Holds all CNC Server utility helper functions
  */
 
 /**
@@ -270,5 +270,16 @@ cncserver.utils = {
 
     $logitem.appendTo($('#log'));
     return $logitem;
+  },
+
+  // Easy set for progress!
+  progress: function(options){
+    if (options.val) {
+      $('progress').attr('value', options.val);
+    }
+
+    if (options.max) {
+      $('progress').attr('max', options.max);
+    }
   }
 };
