@@ -302,7 +302,7 @@ $(function() {
         cncserver.api.pen.move(point, function(data){
           // If we've used this one too much, go get more paint!
           if (data.distanceCounter > cncserver.config.maxPaintDistance) {
-            getMorePaint(point, function(){
+            cncserver.wcb.getMorePaint(point, function(){
               index-= cncserver.config.precision * 5; // Draw backwards three steps
               drawNextPoint();
             });
@@ -367,23 +367,6 @@ $(function() {
       console.log('Point not visible!: ', point);
       callback(cncserver.state.pen);
     }
-  }
-
-  // Wet the brush and get more of selected paint color, then return to
-  // point given and trigger callback
-  function getMorePaint(point, callback) {
-    var $stat = cncserver.utils.log('Running low! Getting some more paint...')
-    cncserver.api.tools.change('water0', function(d){
-      cncserver.api.tools.change($('.color.selected').attr('id'), function(d){
-        cncserver.api.pen.resetCounter();
-        cncserver.api.pen.up(function(d){
-          cncserver.api.pen.move(point, function(d) {
-            $stat.logDone('Done', 'complete');
-            callback(d);
-          });
-        });
-      });
-    });
   }
 
   // Build all coordinates for filling a path
@@ -591,7 +574,7 @@ $(function() {
             cncserver.api.pen.up(drawNextFillPath);
           } else { // Actually painting...
             if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
-              getMorePaint(fillQueue[fillGroupIndex][fillIndex-1], function(){
+              cncserver.wcb.getMorePaint(fillQueue[fillGroupIndex][fillIndex-1], function(){
                 drawNextFillPath();
               });
             } else {
