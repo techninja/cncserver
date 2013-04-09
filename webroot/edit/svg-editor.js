@@ -1568,6 +1568,12 @@
 						// Elements in this array cannot be converted to a path
 						var no_path = ['image', 'text', 'path', 'g', 'use'].indexOf(elname) == -1;
 						$('#tool_topath').toggle(no_path);
+
+            // Force new and selected elements to become paths immediately!
+            if (no_path) {
+              svgCanvas.convertToPath();
+            }
+
 						$('#tool_reorient').toggle(elname == 'path');
 						$('#tool_reorient').toggleClass('disabled', angle == 0);
 					} else {
@@ -1620,12 +1626,14 @@
 						$('#g_panel').show();
 					}
 
-					if(elem.parentNode.tagName === 'a') {
-						if(!$(elem).siblings().length) {
-							$('#a_panel').show();
-							link_href = svgCanvas.getHref(elem.parentNode);
-						}
-					}
+          if (elem.parentNode) {
+            if(elem.parentNode.tagName === 'a') {
+              if(!$(elem).siblings().length) {
+                $('#a_panel').show();
+                link_href = svgCanvas.getHref(elem.parentNode);
+              }
+            }
+          }
 
 					// Hide/show the make_link buttons
 					$('#tool_make_link, #tool_make_link').toggle(!link_href);
