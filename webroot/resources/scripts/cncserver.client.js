@@ -115,7 +115,8 @@ $(function() {
       $path.addClass('selected');
       $path.transformMatrix = $path[0].getTransformToElement($path[0].ownerSVGElement);
       $path.getPoint = function(distance){ // Handy helper function for gPAL
-        return this[0].getPointAtLength(distance).matrixTransform(this.transformMatrix);
+        var p = this[0].getPointAtLength(distance).matrixTransform(this.transformMatrix);
+        return {x: p.x, y: p.y};
       };
       $path.maxLength = $path[0].getTotalLength(); // Shortcut!
       cncserver.path = $path;
