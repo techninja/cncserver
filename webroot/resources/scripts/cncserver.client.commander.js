@@ -9,6 +9,8 @@
 
 // TODO: DO this better!
 var lastlog = {};
+var returnPoints = [];
+var lastPoint = {};
 
 cncserver.cmd = {
   // CMD specific callback handler
@@ -25,7 +27,17 @@ cncserver.cmd = {
         val: cncserver.state.process.max - cncserver.state.buffer.length,
         max: cncserver.state.process.max
       });
-      cncserver.cmd.executeNext();
+
+      // Check for paint refill
+      if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
+        var returnPoint = returnPoints[returnPoints.length-1] ? returnPoints[returnPoints.length-1] : lastPoint;
+        cncserver.wcb.getMorePaint(returnPoint, function(){
+          cncserver.api.pen.down(cncserver.cmd.executeNext);
+        });
+      } else {
+        // Execute next command
+        cncserver.cmd.executeNext();
+      }
     }
   },
 
@@ -45,7 +57,11 @@ cncserver.cmd = {
 
     switch (next[0]) {
       case "move":
-        cncserver.api.pen.move(next[1], this.cb);
+        returnPoints.unshift(next[1]);
+        if (returnPoints.length > 6) {
+          returnPoints.pop();
+        }
+        lastPoint = next[1];
         cncserver.api.pen.move(next[1], cncserver.cmd.cb);
         break;
       case "tool":
