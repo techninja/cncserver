@@ -274,11 +274,11 @@ cncserver.utils = {
 
   // Easy set for progress!
   progress: function(options){
-    if (options.val) {
+    if (typeof options.val !== "undefined") {
       $('progress').attr('value', options.val);
     }
 
-    if (options.max) {
+    if (typeof options.max !== "undefined") {
       $('progress').attr('max', options.max);
     }
   }
