@@ -31,7 +31,7 @@ cncserver.cmd = {
 
   executeNext: function() {
     if (!cncserver.state.buffer.length) {
-      this.cb();
+      cncserver.cmd.cb();
       return;
     } else {
       cncserver.state.process.busy = true;
@@ -46,23 +46,25 @@ cncserver.cmd = {
     switch (next[0]) {
       case "move":
         cncserver.api.pen.move(next[1], this.cb);
+        cncserver.api.pen.move(next[1], cncserver.cmd.cb);
         break;
       case "tool":
-        cncserver.api.tools.change(next[1], this.cb);
+        cncserver.api.tools.change(next[1], cncserver.cmd.cb);
         break;
       case "up":
-        cncserver.api.pen.up(this.cb);
+        returnPoints = [];
+        cncserver.api.pen.up(cncserver.cmd.cb);
         break;
       case "down":
-        cncserver.api.pen.down(this.cb);
+        cncserver.api.pen.down(cncserver.cmd.cb);
         break;
       case "log":
         lastlog = cncserver.utils.log(next[1]);
-        this.cb(true);
+        cncserver.cmd.cb(true);
         break;
       case "logdone":
         lastlog.logDone(true);
-        this.cb(true);
+        cncserver.cmd.cb(true);
         break;
       default:
         console.log('Queue shortcut not found:' + next[0]);
