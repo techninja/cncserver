@@ -117,6 +117,7 @@ cncserver.api = {
         return;
       }
 
+      // Move the visible drawpoint
       cncserver.moveDrawPoint(point);
 
       var percent = {
