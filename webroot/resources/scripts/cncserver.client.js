@@ -14,9 +14,12 @@ var cncserver = {
   },
   state: {
     pen: {},
+    buffer: [], // Hold commands to be interpreted as free operations come
     process: {
       name: 'idle',
-      waiting: false
+      waiting: false,
+      busy: false,
+      max: 0
     }
   },
   config: {
