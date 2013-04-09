@@ -462,8 +462,12 @@ div.palette_item:first-child {
 }
 
 #tool_print a {
- font-weight: bold;
- text-decoration: none;
+  font-weight: bold;
+  margin-left: -29px;
+  margin-top: -10px;
+  padding: 10px 33px 11px 29px;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 
