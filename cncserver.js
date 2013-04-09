@@ -337,6 +337,12 @@ function serialPortReadyCallback() {
     if (inPen.x !== undefined){
       // Input values are given as percentages of working area (not max area)
 
+      // Don't accept bad input
+      if (isNaN(inPen.x) || isNaN(inPen.y) || !isFinite(inPen.x) || !isFinite(inPen.y)) {
+        callback(false);
+        return;
+      }
+
       // Sanity check incoming values
       inPen.x  = inPen.x > 100 ? 100 : inPen.x;
       inPen.x  = inPen.x < 0 ? 0 : inPen.x;
