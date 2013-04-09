@@ -15,6 +15,7 @@ var cncserver = {
   state: {
     pen: {},
     buffer: [], // Hold commands to be interpreted as free operations come
+    color: 'color1', // Default color selection
     process: {
       name: 'idle',
       waiting: false,
@@ -91,7 +92,12 @@ $(function() {
     // Select tool from last machine tool
     if (cncserver.state.pen.tool) {
       $('.color').removeClass('selected');
-      $('#' + cncserver.state.pen.tool).addClass('selected');
+      if (cncserver.state.pen.tool.indexOf('color') !== -1) {
+        $('#' + cncserver.state.pen.tool).addClass('selected');
+      } else {
+        $('#' + cncserver.state.color).addClass('selected');
+      }
+
     }
   });
 
