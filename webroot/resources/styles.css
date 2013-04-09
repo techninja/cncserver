@@ -240,12 +240,13 @@ fieldset#control {
   border-radius: 12px 12px 12px 12px;
   display: block;
   float: left;
-  height: 68px;
+  height: 65px;
   line-height: 1.2em;
   margin-bottom: 2.7em;
   margin-right: 0.7em;
   padding-top: 64px;
   width: 68px;
+  background-repeat: no-repeat;
 }
 
 #control button:hover {
@@ -343,7 +344,7 @@ nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
   border-bottom: medium none;
   border-left: medium none;
   border-right: medium none;
-  height: 0;
+  padding: 8px 1px;
   overflow: hidden;
 }
 
