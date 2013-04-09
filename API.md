@@ -57,7 +57,7 @@ Content-Type: application/json; charset=UTF-8
 ##### Usage Notes
  * All values are reset with server and will not be kept or otherwise stored as
 runtime state.
- * tool will default to 0 if it hasn't been set since server start.
+ * tool will default to first tool in toolset at server start, eg `color0`.
  * distanceCounter must be reset/managed via the client, otherwise it's just a
 handy realtime counter for steps when pen is down.
  * Pen simulation mode means that either the serial connection to the bot never

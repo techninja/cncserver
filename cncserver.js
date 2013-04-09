@@ -126,7 +126,7 @@ var pen  = {
   x: 0, // Assume we start in top left corner
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
-  tool: 0,
+  tool: 'color0',
   lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0 // Fake everything and act like it's working, no serial
