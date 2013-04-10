@@ -13,13 +13,13 @@ cncserver.paths = {
   },
 
   // Run a path outline trace into the work queue
-  runOutline: function($path) {
+  runOutline: function($path, callback) {
     var run = cncserver.cmd.run;
 
     var steps = Math.round($path.maxLength / cncserver.config.precision) + 1;
 
     run([
-      ['log', 'Drawing path ' + $path[0].id + ', ' + steps + ' total steps...'],
+      ['log', 'Drawing path ' + $path[0].id + ' outline, ' + steps + ' total steps...'],
       'up'
     ]);
 
@@ -30,6 +30,9 @@ cncserver.paths = {
     var lastPoint = {};
     var p = {};
     var delta = {};
+
+    runNextPoint();
+
     function runNextPoint() {
       if (i <= $path.maxLength) {
         i+= cncserver.config.precision;
@@ -67,14 +70,16 @@ cncserver.paths = {
           var o = {x: p.x - (delta.x * 5), y: p.y - (delta.y * 5)};
           run('move', o); // Overshoot to make up for brush flexibility
         }
+
         run([
           'up',
           'logdone'
         ]);
-        console.log('Done!');
+        console.log($path[0].id + ' path outline run done!');
+        if (callback) callback();
       }
     }
+  },
 
-    runNextPoint();
   }
 };
