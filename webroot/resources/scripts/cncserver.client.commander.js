@@ -58,7 +58,7 @@ cncserver.cmd = {
     switch (next[0]) {
       case "move":
         returnPoints.unshift(next[1]);
-        if (returnPoints.length > 6) {
+        if (returnPoints.length > 4) {
           returnPoints.pop();
         }
         lastPoint = next[1];
