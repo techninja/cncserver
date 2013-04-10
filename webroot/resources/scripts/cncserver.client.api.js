@@ -173,6 +173,11 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     change: function(toolName, callback){
+      // Store the last changed color state
+      if (toolName.indexOf('color') !== -1) {
+        cncserver.state.color = toolName;
+      }
+
       _put('tools/' + toolName, {
         success: callback,
         error: function(e) {
