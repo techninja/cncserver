@@ -234,7 +234,7 @@ $(function() {
     cncserver.api.motors.unlock(cncserver.utils.log('Unlocking stepper motors...').logDone);
   });
   $('#zero').click(function(){
-    cncserver.api.pen.zero(cncserver.utils.log('Make sure the carriage is parked! Resetting absolute position...').logDone);
+    cncserver.api.pen.zero(cncserver.utils.log('Resetting absolute position...').logDone);
   });
   $('#precision').change(function(){cncserver.config.precision = Number($(this).val());});
 
