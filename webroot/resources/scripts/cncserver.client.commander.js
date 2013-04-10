@@ -83,7 +83,7 @@ cncserver.cmd = {
         cncserver.cmd.cb(true);
         break;
       default:
-        console.log('Queue shortcut not found:' + next[0]);
+        console.debug('Queue shortcut not found:' + next[0]);
     }
   },
 

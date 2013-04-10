@@ -75,7 +75,7 @@ cncserver.paths = {
           'up',
           'logdone'
         ]);
-        console.log($path[0].id + ' path outline run done!');
+        console.info($path[0].id + ' path outline run done!');
         if (callback) callback();
       }
     }
@@ -147,7 +147,7 @@ cncserver.paths = {
           'up',
           'logdone'
         ]);
-        console.log($path[0].id + ' path fill run done!');
+        console.info($path[0].id + ' path fill run done!');
         if (callback) callback();
       }
     }
