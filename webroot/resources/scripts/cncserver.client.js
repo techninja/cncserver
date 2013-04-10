@@ -96,6 +96,7 @@ $(function() {
     if (cncserver.state.pen.tool) {
       $('.color').removeClass('selected');
       if (cncserver.state.pen.tool.indexOf('color') !== -1) {
+        cncserver.state.color = cncserver.state.pen.tool;
         $('#' + cncserver.state.pen.tool).addClass('selected');
       } else {
         $('#' + cncserver.state.color).addClass('selected');
