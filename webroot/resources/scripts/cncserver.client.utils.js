@@ -269,6 +269,7 @@ cncserver.utils = {
     }
 
     $logitem.appendTo($('#log'));
+    $('#log')[0].scrollTop = $('#log')[0].scrollHeight;
     return $logitem;
   },
 
