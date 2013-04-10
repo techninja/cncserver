@@ -296,5 +296,14 @@ cncserver.utils = {
     if (typeof str == "number") str = String(str);
     return str.length < max ? cncserver.utils.pad("0" + str, max) : str;
   },
+
+  // Adds shortcut functions to standard $path selection
+  addShortcuts: function($path) {
+    $path.transformMatrix = $path[0].getTransformToElement($path[0].ownerSVGElement);
+    $path.getPoint = function(distance){ // Handy helper function for gPAL
+      var p = this[0].getPointAtLength(distance).matrixTransform(this.transformMatrix);
+      return {x: p.x, y: p.y};
+    };
+    $path.maxLength = $path[0].getTotalLength(); // Shortcut!
   }
 };
