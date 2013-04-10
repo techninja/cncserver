@@ -84,7 +84,10 @@ $(function() {
   cncserver.config.colorAction = $('input[name=color-action]:radio:checked').val();
 
   // Get initial pen data from server
-  cncserver.api.pen.stat(function(){
+  var $log = cncserver.utils.log('Connecting to the WaterColorBot...');
+  cncserver.api.pen.stat(function(d){
+    $log.logDone(d);
+
     // Set the Pen state button
     $('#pen').addClass(!cncserver.state.pen.state ? 'down' : 'up')
     .text('Brush ' + (!cncserver.state.pen.state ? 'Down' : 'Up'));
