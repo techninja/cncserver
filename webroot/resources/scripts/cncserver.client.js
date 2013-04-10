@@ -218,7 +218,10 @@ $(function() {
   });
   $('#movefirst').click(function(){});
   $('#draw').click(function(){
-    cncserver.paths.runOutline($path);
+    cncserver.cmd.run(['log', 'Drawing path ' + $path[0].id + ' outline...']);
+    cncserver.paths.runOutline($path, function(){
+      cncserver.cmd.run('logdone')
+    });
   });
 
   $('#pen').click(function(){
@@ -254,7 +257,10 @@ $(function() {
 
   // Bind to fill controls
   $('#fill').click(function(){
-    cncserver.paths.runFill($path, $('#fills select').val());
+    cncserver.cmd.run(['log', 'Drawing path ' + $path[0].id + ' fill...']);
+    cncserver.paths.runFill($path, function(){
+      cncserver.cmd.run('logdone');
+    });
   });
 
   // Move the visible draw position indicator

@@ -18,10 +18,8 @@ cncserver.paths = {
 
     var steps = Math.round($path.maxLength / cncserver.config.precision) + 1;
 
-    run([
-      ['log', 'Drawing path ' + $path[0].id + ' outline, ' + steps + ' total steps...'],
-      'up'
-    ]);
+    // Start with brush up
+    run('up');
 
     // We can think of the very first brush down as waiting till we should paint
     cncserver.state.process.waiting = true;
@@ -71,10 +69,7 @@ cncserver.paths = {
           run('move', o); // Overshoot to make up for brush flexibility
         }
 
-        run([
-          'up',
-          'logdone'
-        ]);
+        run('up');
         console.info($path[0].id + ' path outline run done!');
         if (callback) callback();
       }
@@ -87,10 +82,8 @@ cncserver.paths = {
     var pathRect = $path[0].getBBox();
     var $fill = cncserver.config.fillPath;
 
-    run([
-      ['log', 'Filling path ' + $path[0].id + ', spiral fill...'],
-      'up'
-    ]);
+    // Start with brush up
+    run('up');
 
     cncserver.state.process.waiting = true;
 
@@ -143,10 +136,7 @@ cncserver.paths = {
         }
         setTimeout(runNextFill, 1);
       } else { // Done
-        run([
-          'up',
-          'logdone'
-        ]);
+        run('up');
         console.info($path[0].id + ' path fill run done!');
         if (callback) callback();
       }
