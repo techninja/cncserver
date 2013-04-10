@@ -315,10 +315,53 @@ nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
   color: red;
 }
 
-#log span.status {
-  display: inline-block;
-  width: 100px;
+#log {
+  border: 1px solid black;
+  height: 1.2em;
+  overflow: auto;
 }
+
+#log div {
+  overflow: hidden;
+  border-top: 1px dashed #ddd;
+}
+
+#log span {
+  display: block;
+  float: left;
+  font-family: monospace;
+  font-weight: bold;
+  height: 1.5em;
+  line-height: 1.5em;
+}
+
+#log span.time {
+  padding-right: 1em;
+  padding-left: 0.5em;
+}
+
+#log span.status {
+  float: right;
+  padding: 0 1em;
+  min-width: 100px;
+  text-align: center;
+}
+
+#log span.success {
+  background-color: green;
+  color: white;
+}
+
+#log span.error {
+  background-color: red;
+  color: white;
+}
+
+#log span.complete {
+  background-color: blue;
+  color: white;
+}
+
 #log span.loading {
   background-image: url("images/log-loader.gif");
   background-position: center center;
