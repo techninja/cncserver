@@ -52,6 +52,7 @@ cncserver.wcb = {
     cncserver.api.tools.change('water0', function(){
       cncserver.api.tools.change('water1', function(){
         cncserver.api.tools.change('water2', function(d){
+          cncserver.api.pen.resetCounter();
           $log.logDone(d, false, true);
           if (callback) callback(d);
         });
