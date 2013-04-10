@@ -238,6 +238,14 @@ $(function() {
   });
   $('#precision').change(function(){cncserver.config.precision = Number($(this).val());});
 
+  $('#auto-paint').click(function(){
+    // Momentarily hide selection
+    if ($path.length) $path.toggleClass('selected');
+
+    cncserver.wcb.autoPaint($('#cncserversvg'));
+    // TODO: Lock various controls
+  });
+
   $('#auto-color').click(function(){
     // Momentarily hide selection
     if ($path.length) $path.toggleClass('selected');
