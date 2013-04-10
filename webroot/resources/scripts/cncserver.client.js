@@ -24,8 +24,9 @@ var cncserver = {
     }
   },
   config: {
-    precision: 1,
+    precision: 5,
     maxPaintDistance: 6000,
+    fillPath: {},
     colorAction: 'bot',
     colors: [],
     colorsYUV: []
@@ -83,6 +84,9 @@ $(function() {
   })
   cncserver.config.colorAction = $('input[name=color-action]:radio:checked').val();
 
+  // Set Fill Path
+  cncserver.config.fillPath = $('#fill-swirl');
+
   // Get initial pen data from server
   var $log = cncserver.utils.log('Connecting to the WaterColorBot...');
   cncserver.api.pen.stat(function(d){
@@ -101,10 +105,8 @@ $(function() {
       } else {
         $('#' + cncserver.state.color).addClass('selected');
       }
-
     }
   });
-
 
   // Bind SVG element click for $path select/deselect
   $svg.on('click', function(e){
@@ -251,249 +253,14 @@ $(function() {
   });
 
   // Bind to fill controls
-  $('#fill-build').click(function(){
-    // stopBuildFill is 0 if running
-    if (stopBuildFill === 0) {
-      stopBuildFill = true;
-    } else {
-      stopBuildFill = 0;
-      simulatePathFill($('#fills select').val());
-    }
-  });
-
-  $('#fill-paint').click(function(){
-    // stopDraw is 0 if running
-    if (stopDraw === 0) {
-      stopDraw = true;
-    } else {
-      stopdraw = 0;
-      drawFill();
-    }
+  $('#fill').click(function(){
+    cncserver.paths.runFill($path, $('#fills select').val());
   });
 
   // Move the visible draw position indicator
   cncserver.moveDrawPoint = function(point) {
     // Move visible drawpoint
     $('#drawpoint').attr('transform', 'translate(' + point.x + ',' + point.y + ')');
-  }
-
-  // Build all coordinates for filling a path
-  function simulatePathFill(fillStyle) {
-    var point = {};
-    var lastPoint = {};
-    var fillIndex = 0;
-    var fillPrecision = 10;
-    var max = $fillPath[0].getTotalLength();
-    var queueIndex = 0;
-    var fillSpacing = 8; // Only used for horizontal or vertical fillStyle
-    var pathRect = $path[0].getBoundingClientRect();
-
-    pathRect = {
-      top: pathRect.top - cncserver.canvas.offset.top,
-      left: pathRect.left - cncserver.canvas.offset.left,
-      right: pathRect.right - cncserver.canvas.offset.left,
-      bottom: pathRect.bottom - cncserver.canvas.offset.top
-    }
-
-    $('#fill-build').text('STOP Build');
-
-    // Clear canvas and set visual options
-    $('canvas#simulate')[0].width = $('canvas#simulate').width();
-    var can = $('canvas#simulate')[0].getContext('2d');
-    can.strokeStyle = '#999';
-    can.lineWidth  = 6;
-
-    if (!fillStyle) {
-      fillStyle = 'path';
-    }
-
-    // Other fill styles..
-    if (fillStyle == 'horizontal') {
-      max = (cncserver.canvas.height / fillSpacing) * cncserver.canvas.width;
-      fillPrecision = 10;
-
-      // Start the fillIndex at the Bounding Box TOP
-      var top = pathRect.top;
-      fillIndex = (top / fillSpacing) * cncserver.canvas.width;
-    }
-
-    if (fillStyle == 'vertical') {
-      max = (cncserver.canvas.width / fillSpacing) * cncserver.canvas.height;
-      fillPrecision = 10;
-
-      var left = pathRect.left;
-      fillIndex = (left / fillSpacing) * cncserver.canvas.height;
-    }
-
-    fillQueue = [];
-    fillQueue[0] = [];
-
-    $path.removeClass('selected');
-    $('#drawpoint').hide();
-    $('nav#fills progress').attr({max: max, value: 0});
-
-    simulateNextPathFillStep();
-
-    function simulateNextPathFillStep(){
-      // Follow a given selected path to trace to make the fill
-      if (fillStyle == 'path') {
-        point = $fillPath[0].getPointAtLength(fillIndex).matrixTransform($fillPath.transformMatrix);
-      } else if (fillStyle == 'horizontal') {
-        // Hatch back and forth lines across the full width to the bottom
-
-        // Get the number of full widths done so far
-        var fillWidths = parseInt(fillIndex / cncserver.canvas.width);
-
-        // Our fillIndex less any full widths crossed, gives us any leftover
-        point.x = fillIndex - (fillWidths * cncserver.canvas.width);
-
-        // Alternate directions
-        if (fillWidths % 2) {
-          point.x = cncserver.canvas.width - point.x;
-        }
-
-        // How many widths we've gone so far, multiply that by the fillspacing for height
-        point.y = fillWidths * fillSpacing;
-
-        // Short circuit if point is beyond bottom of path
-        if (point.y > pathRect.bottom) {
-          fillIndex = max;
-        }
-
-      } else if (fillStyle == 'vertical') {
-        // Hatch up and down lines the full height to the right
-
-        // Get the number of full heights done so far
-        var fillHeights = parseInt(fillIndex / cncserver.canvas.height);
-
-        // Our fillIndex less any full heights crossed, gives us any leftover
-        point.y = fillIndex - (fillHeights * cncserver.canvas.height);
-
-        // Alternate directions
-        if (fillHeights % 2) {
-          point.y = cncserver.canvas.height - point.y;
-        }
-
-        // How many heights we've gone so far, multiply that by the fillspacing for width
-        point.x = fillHeights * fillSpacing;
-
-        // Short circuit if point is beyond bottom of path
-        if (point.x > pathRect.right) {
-          fillIndex = max;
-        }
-      }
-
-      // Assume it's a good point!
-      var validPoint = true;
-
-      // Simple sanity check to see that point inside the bounds of the
-      if (point.x < pathRect.left || point.x > pathRect.right) {
-        validPoint = false;
-      }
-
-      if (point.y < pathRect.top || point.y > pathRect.bottom) {
-        validPoint = false;
-      }
-
-      // If we still think it's valid, use the slow visual path collision check
-      if (validPoint) {
-        validPoint = getPointPathCollide(point) == $path[0];
-      }
-
-      if (validPoint){
-        if (lastPoint.x) {
-          can.moveTo(lastPoint.x, lastPoint.y);
-          can.lineTo(point.x, point.y);
-          can.stroke();
-        }
-
-        // Add point to queue
-        fillQueue[queueIndex].push({x: point.x, y: point.y});
-
-        lastPoint.x = point.x;
-        lastPoint.y = point.y;
-      } else { // No match! Clear lastPoint
-
-        // Just moved away from a draw point, move to next queue index and clear point
-        if (lastPoint.x) {
-          queueIndex++;
-          fillQueue[queueIndex] = [];
-          lastPoint = {};
-        }
-      }
-      fillIndex+= fillPrecision;
-
-      $('nav#fills progress').attr('value', fillIndex);
-
-      // Done! (or quit)
-      if (fillIndex > max || stopBuildFill) {
-        fillIndex = 0;
-
-        // Bring back these defaults
-        $path.addClass('selected'); // Show selection
-        $('#drawpoint').show(); // Show drawpoint
-        $('#fill-build').text('Build Fill'); // Reset button text
-        stopBuildFill = false;
-        $('nav#fills progress').attr('value', 0); // Clear progress
-
-        if (!stopBuildFill) {
-          console.log('Path fill done!')
-          $path.data('fill', fillQueue); // Pass the draw queue into the element
-          $('#fill').prop('disabled', false); // Enable paint button
-        }
-      } else {
-        // Run Again! Waits 1 ms, lets browser do other things
-        setTimeout(simulateNextPathFillStep, 1);
-      }
-    }
-  }
-
-
-  // Actually draw the pre-built fill path points
-  function drawFill(){
-    var fillQueue = $path.data('fill');
-    var fillGroupIndex = 0;
-    var fillIndex = 0;
-    var point = {};
-
-    $('#fill-paint').text('STOP Draw');
-
-    cncserver.api.pen.up(drawNextFillPath);
-
-    // Iteratively draw next path in queue
-    function drawNextFillPath(){
-
-      // Done Painting! or stopped
-      if (typeof fillQueue[fillGroupIndex] == "undefined" || stopDraw) {
-        stopDraw = false;
-        $('#fill-paint').text('Paint Fill');
-        cncserver.api.pen.up();
-      }
-
-      cncserver.api.pen.move(fillQueue[fillGroupIndex][fillIndex], function(data){
-        cncserver.api.pen.down(function(){
-          fillIndex++;
-
-          // Moved beyond group contents, move to next group
-          if (fillIndex > fillQueue[fillGroupIndex].length -1) {
-            fillIndex = 0;
-            fillGroupIndex++;
-            // Move to next path after raising pen
-            cncserver.api.pen.up(drawNextFillPath);
-          } else { // Actually painting...
-            if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
-              cncserver.wcb.getMorePaint(fillQueue[fillGroupIndex][fillIndex-1], function(){
-                drawNextFillPath();
-              });
-            } else {
-              drawNextFillPath();
-            }
-          }
-        });
-      });
-
-
-    }
   }
 
   // Catch the resize event and fill the main svg element to the screen
