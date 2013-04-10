@@ -420,7 +420,7 @@ function serialPortReadyCallback() {
     // Don't do anything if there's no change
     if (change.x == 0 && change.y == 0) {
       callback(true);
-      return;
+      return 0;
     }
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
