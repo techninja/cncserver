@@ -248,13 +248,13 @@ cncserver.utils = {
     );
 
     // Easy updating!
-    $logitem.logDone = function(msg, classname){
+    $logitem.logDone = function(msg, classname, doHide){
       var $item = $logitem.children('.status');
 
       // Allow direct passing of object for success/error
       if (typeof msg != "string") {
         // If no classname, assume based on msg
-        if (typeof classname == 'undefined') {
+        if (!classname) {
           classname = (msg === false ? 'error' : 'success')
         }
 
@@ -262,10 +262,17 @@ cncserver.utils = {
       }
 
       // If no classname STILL, just make one out of the text
-      if (typeof classname == 'undefined') {
+      if (!classname) {
         classname = msg.toLowerCase();
       }
       $item.removeClass('loading').addClass(classname).text(msg);
+
+      // Hide the element after 5 seconds if requested
+      if (doHide) {
+        setTimeout(function(){
+          $logitem.fadeOut('slow');
+        }, 5000);
+      }
     }
 
     $logitem.appendTo($('#log'));
