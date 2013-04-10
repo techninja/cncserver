@@ -82,6 +82,12 @@ cncserver.cmd = {
         lastlog.logDone(true);
         cncserver.cmd.cb(true);
         break;
+      case "wash":
+        cncserver.wcb.fullWash(cncserver.cmd.cb);
+        break;
+      case "park":
+        cncserver.api.pen.park(cncserver.cmd.cb);
+        break;
       default:
         console.debug('Queue shortcut not found:' + next[0]);
     }
