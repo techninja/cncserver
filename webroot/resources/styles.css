@@ -34,7 +34,7 @@ img.logo {
 
 #status progress {
   margin-right: 10px;
-  width: 89%;
+  width: 87%;
 }
 
 /* Drawing Area */
@@ -231,7 +231,7 @@ fieldset#control {
   padding: 0.3em;
   position: absolute;
   right: 1em;
-  width: 11.5em;
+  width: 12.5em;
   background-color: #DDD;
 }
 
