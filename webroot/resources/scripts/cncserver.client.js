@@ -167,6 +167,7 @@ $(function() {
     if ($(this).is('.color')) {
       if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
         if ($path.length) {
+          $path.attr('style', '');
           $path.attr(cncserver.config.colorAction, $(this).css('background-color'));
         }
         $(this).blur();
@@ -180,6 +181,7 @@ $(function() {
     // X clicked: Do a full brush wash, or clear the stroke/fill of $path
     if ($(this).is('#colorx')) {
       if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
+        $path.attr('style', '');
         $path.attr(cncserver.config.colorAction, 'none');
       } else {
         cncserver.wcb.fullWash();
@@ -191,6 +193,7 @@ $(function() {
     // White/Paper clicked: Set the stroke/fill of $path to white
     if ($(this).is('#colornone')) {
       if (cncserver.config.colorAction == 'fill' || cncserver.config.colorAction == 'stroke'){
+        $path.attr('style', '');
         $path.attr(cncserver.config.colorAction, 'rgb(255,255,255)');
       }
       return false;
