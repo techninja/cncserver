@@ -76,5 +76,26 @@ cncserver.wcb = {
         });
       });
     });
+  },
+
+  // Returns a list of the current colorset, sorted by luminosty, or Y value
+  sortedColors: function() {
+    var colorsort = [];
+
+    // Use JS internal sort by slapping a zero padded value into an array
+    $.each(cncserver.config.colorsYUV, function(index, color){
+      if (index != 8) { // Ignore white
+        colorsort.push(cncserver.utils.pad(color[0], 3) + '|' + 'color' + index);
+      }
+    });
+    colorsort.sort().reverse();
+
+    // Now extract the luminostiy from the array, and leave a clean list of colors
+    for(var i in colorsort){
+      colorsort[i] = colorsort[i].split('|')[1];
+    }
+
+    return colorsort;
+  }
   }
 };

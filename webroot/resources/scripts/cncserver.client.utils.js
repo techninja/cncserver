@@ -289,5 +289,12 @@ cncserver.utils = {
     if (typeof options.max !== "undefined") {
       $('progress').attr('max', options.max);
     }
+  },
+
+  // Pad a string/number with zeros
+  pad: function(str, max) {
+    if (typeof str == "number") str = String(str);
+    return str.length < max ? cncserver.utils.pad("0" + str, max) : str;
+  },
   }
 };
