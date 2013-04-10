@@ -52,7 +52,7 @@ cncserver.wcb = {
     cncserver.api.tools.change('water0', function(){
       cncserver.api.tools.change('water1', function(){
         cncserver.api.tools.change('water2', function(d){
-          $log.logDone('Complete');
+          $log.logDone(d, false, true);
           if (callback) callback(d);
         });
       });
@@ -69,8 +69,8 @@ cncserver.wcb = {
         cncserver.api.pen.resetCounter();
         cncserver.api.pen.up(function(d){
           cncserver.api.pen.move(point, function(d) {
-            $stat.logDone('Done', 'complete');
-            callback(d);
+            $stat.logDone('Done', 'complete', true);
+            if (callback) callback(d);
           });
         });
       });
