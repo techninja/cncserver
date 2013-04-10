@@ -79,7 +79,7 @@ cncserver.cmd = {
         cncserver.cmd.cb(true);
         break;
       case "logdone":
-        lastlog.logDone(true);
+        lastlog.logDone(true, false, next[1]);
         cncserver.cmd.cb(true);
         break;
       case "wash":
