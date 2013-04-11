@@ -213,7 +213,7 @@ $(function() {
   });
   $('#movefirst').click(function(){});
   $('#draw').click(function(){
-    cncserver.cmd.run(['log', 'Drawing path ' + $path[0].id + ' outline...']);
+    cncserver.cmd.run([['log', 'Drawing path ' + $path[0].id + ' outline...']]);
     cncserver.paths.runOutline($path, function(){
       cncserver.cmd.run('logdone')
     });
@@ -260,7 +260,7 @@ $(function() {
 
   // Bind to fill controls
   $('#fill').click(function(){
-    cncserver.cmd.run(['log', 'Drawing path ' + $path[0].id + ' fill...']);
+    cncserver.cmd.run([['log', 'Drawing path ' + $path[0].id + ' fill...']]);
     cncserver.paths.runFill($path, function(){
       cncserver.cmd.run('logdone');
     });
