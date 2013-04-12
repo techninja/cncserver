@@ -5,121 +5,78 @@
  *
  */
 
-var arguments = process.argv.splice(2);
-var port = arguments[0] ? arguments[0] : 4242;
+// REQUIRES ====================================================================
+var nconf = require('nconf');
 var express = require('express');
+var fs = require('fs');
+
+// CONFIGURATION ===============================================================
+var gConf = new nconf.Provider();
+var botConf = new nconf.Provider();
+
+// Pull conf from env, or arguments
+gConf.env().argv();
+
+// Pull conf from file
+gConf.use('file', { file: './config.ini', format: nconf.formats.ini}).load();
+
+// Set Global Config Defaults
+gConf.defaults({
+  httpPort: 4242,
+  invertAxis: {
+    x: true,
+    y: false
+  },
+  serialPath: "{auto}", // Empty for auto-config
+  botType: 'watercolorbot'
+});
+
+// Save Global Conf file defaults if not saved
+if(!fs.existsSync('./config.ini')) {
+  var def = gConf.stores['defaults'].store;
+  for(var key in def) {
+    if (key != 'type'){
+      gConf.set(key, def[key]);
+    }
+  }
+  gConf.save();
+}
+
+// Load bot config file based on botType global config
+var botTypeFile = './machine_types/' + gConf.get('botType') + '.ini';
+if (!fs.existsSync(botTypeFile)){
+  console.log('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
+  process.exit(16);
+} else {
+  botConf.use('file', {
+    file: botTypeFile,
+    format: nconf.formats.ini
+  }).load();
+}
+
+// Hold common bot specific contants (also helps with string conversions)
+var BOT = {
+  workArea: {
+    left: Number(botConf.get('workArea:left')),
+    top: Number(botConf.get('workArea:top'))
+  },
+  maxArea: {
+    width: Number(botConf.get('maxArea:width')),
+    height: Number(botConf.get('maxArea:height'))
+  }
+}
+
+
+// INTIAL SETUP ================================================================
 var app = express();
 var server = require('http').createServer(app);
 
-// Quick change for inverting motors
-var invertX = true;
-var invertY = false;
-
-// Serial port specific setup
-var serialPathArg = arguments[1] ? arguments[1] : "";
-var serialPath = serialPathArg ? serialPathArg : ""; // Allow for var reset on disconnect
+// Serial specific setup
 var serialPort = false;
 var SerialPort = require("serialport").SerialPort;
 
 // Attempt Initial Serial Connection
 connectSerial(true);
-
-// CONFIGURE Data
-var colorX = 810;
-config = {
-  name: 'WaterColorBot',
-  maxArea: {width: 6315, height: 3600}, // Size in steps
-  workArea: {top: 0, left: 1225}, // Size in steps
-  stepPrecision: 2, // 1 = 1/16 steps, 2 = 1/8, 3 = 1/4, 4 = 1/2 & 5 = full steps
-  drawSpeed: 1000, // Drawing (brush down) speed in steps per second
-  moveSpeed: 1500, // Moving (brush up) speed in steps per second
-  servo: {
-    min: 18000, // Brush Lift amount (lower number lifts higher)
-    max: 25000,  // Brush fall (servo arm stays clear)
-    rate: 0, // Servo rate sent to the EBB
-    duration: 200 // Amount of time (in milliseconds) a full movement takes
-  },
-  tools: {
-    water0: {
-      x: 0,
-      y: 0,
-      wiggleAxis: 'y',
-      wiggleTravel: 250,
-      wiggleIterations: 4
-    },
-    water1: {
-      x: 0,
-      y: 1450,
-      wiggleAxis: 'y',
-      wiggleTravel: 250,
-      wiggleIterations: 4
-    },
-    water2: {
-      x: 0,
-      y: 2825,
-      wiggleAxis: 'y',
-      wiggleTravel: 250,
-      wiggleIterations: 4
-    },
-    color0: {
-      x: colorX,
-      y: 0,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color1: {
-      x: colorX,
-      y: 525,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color2: {
-      x: colorX,
-      y: 1000,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color3: {
-      x: colorX,
-      y: 1475,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color4: {
-      x: colorX,
-      y: 1875,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color5: {
-      x: colorX,
-      y: 2375,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color6: {
-      x: colorX,
-      y: 2825,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    },
-    color7: {
-      x: colorX,
-      y: 3275,
-      wiggleAxis: 'xy',
-      wiggleTravel: 250,
-      wiggleIterations: 8
-    }
-  }
-};
-
 
 // STATE Variables
 var pen  = {
@@ -132,25 +89,24 @@ var pen  = {
   simulation: 0 // Fake everything and act like it's working, no serial
 }
 
-
 // No events are bound till we have a real serial connection
 function serialPortReadyCallback() {
 
   // Start express hosting the site from "webroot" folder on the given port
-  server.listen(port);
+  server.listen(gConf.get('httpPort'));
   app.configure(function(){
     app.use("/", express.static(__dirname + '/webroot'));
     app.use(express.bodyParser());
   });
-  console.log('CNC server listening on localhost:' + port);
+  console.log('CNC server listening on localhost:' + gConf.get('httpPort'));
 
   // Set initial EBB values from Config
   // SERVO
   console.log('Sending EBB config...')
-  serialCommand('SC,4,' + config.servo.min);
-  serialCommand('SC,5,' + config.servo.max);
-  serialCommand('SC,10,' + config.servo.rate);
-  serialCommand('EM,' + config.stepPrecision);
+  serialCommand('SC,4,' + botConf.get('servo:min'));
+  serialCommand('SC,5,' + botConf.get('servo:max'));
+  serialCommand('SC,10,' + botConf.get('servo:rate'));
+  serialCommand('EM,' + botConf.get('speed:precision'));
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
@@ -239,7 +195,7 @@ function serialPortReadyCallback() {
 
     var toolName = req.params.tool;
     if (req.route.method == 'get') { // Get list of tools
-      res.status(200).send(JSON.stringify({tools: Object.keys(config.tools)}));
+      res.status(200).send(JSON.stringify({tools: Object.keys(botConf.get('tools'))}));
     } else {
       res.status(405).send(JSON.stringify({
         status: 'Not supported'
@@ -253,7 +209,7 @@ function serialPortReadyCallback() {
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method == 'put') { // Set Tool
-      if (config.tools[toolName]){
+      if (botConf.get('tools:' + toolName)){
         setTool(toolName, function(data){
           pen.tool = toolName;
           res.status(200).send(JSON.stringify({
@@ -326,7 +282,7 @@ function serialPortReadyCallback() {
         if (callback) {
           setTimeout(function(){
             callback(data);
-          }, config.servo.duration);
+          }, botConf.get('servo:duration'));
         }
       });
 
@@ -352,13 +308,13 @@ function serialPortReadyCallback() {
 
       // Convert the percentage values into real absolute and appropriate values
       var absInput = {
-        x: config.workArea.left + ((inPen.x / 100) * (config.maxArea.width - config.workArea.left)),
-        y: config.workArea.top + ((inPen.y / 100) * (config.maxArea.height - config.workArea.top))
+        x: BOT.workArea.left + ((inPen.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
+        y: BOT.workArea.top + ((inPen.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
       }
 
       if (inPen.park) {
-        absInput.x-= config.workArea.left;
-        absInput.y-= config.workArea.top;
+        absInput.x-= BOT.workArea.left;
+        absInput.y-= BOT.workArea.top;
 
         // Don't repark if already parked
         if (pen.x == 0 && pen.y == 0) {
@@ -380,7 +336,7 @@ function serialPortReadyCallback() {
 
   // Tool change
   function setTool(toolName, callback) {
-    var tool = config.tools[toolName];
+    var tool = botConf.get('tools:' + toolName);
 
     console.log('Changing to tool: ' + toolName);
 
@@ -405,12 +361,20 @@ function serialPortReadyCallback() {
   // Move the Pen to an absolute point in the entire work area
   // Returns distance moved, in steps
   function movePenAbs(point, callback, immediate) {
-    // Sanity check absolute position input point
-    point.x = point.x > config.maxArea.width ? config.maxArea.width : point.x;
-    point.x = point.x < 0 ? 0 : point.x;
 
-    point.y = point.y > config.maxArea.height ? height : point.y;
-    point.y = point.y < 0 ? 0 : point.y;
+    // Something reall bad happened here...
+    if (isNaN(point.x) || isNaN(point.y)){
+      console.error('INVALID Move pen input, given:', point);
+      callback(false);
+      return 0;
+    }
+
+    // Sanity check absolute position input point
+    point.x = Number(point.x) > BOT.maxArea.width ? BOT.maxArea.width : point.x;
+    point.x = Number(point.x) < 0 ? 0 : point.x;
+
+    point.y = Number(point.y) > BOT.maxArea.height ? BOT.maxArea.height : point.y;
+    point.y = Number(point.y) < 0 ? 0 : point.y;
 
     var change = {
       x: Math.round(point.x - pen.x),
@@ -424,7 +388,7 @@ function serialPortReadyCallback() {
     }
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-    var speed = pen.state ? config.drawSpeed : config.moveSpeed;
+    var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
     var duration = parseInt(distance / speed * 1000); // How many steps a second?
 
     // Save the duration state
@@ -434,8 +398,8 @@ function serialPortReadyCallback() {
     pen.y = point.y;
 
     // Invert X or Y to match stepper direction
-    change.x = invertX ? change.x * -1 : change.x;
-    change.y = invertY ? change.y * -1 : change.y;
+    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
 
     // Send the final serial command
     serialCommand('SM,' + duration + ',' + change.x + ',' + change.y, function(data){
@@ -454,8 +418,9 @@ function serialPortReadyCallback() {
 
 
   function wigglePen(axis, travel, iterations, callback){
-    var start = {x: pen.x, y: pen.y};
+    var start = {x: Number(pen.x), y: Number(pen.y)};
     var i = 0;
+    travel = Number(travel); // Make sure it's not a string
 
     // Start the wiggle!
     _wiggleSlave(true);
@@ -518,11 +483,11 @@ function serialPortReadyCallback() {
 
 // Event callback for serial close
 function serialPortCloseCallback() {
-  console.log('Serialport connection to "' + serialPath + '" lost!! Did it get unplugged?');
+  console.log('Serialport connection to "' + gConf.get('serialPath') + '" lost!! Did it get unplugged?');
   serialPort = false;
 
-  // Reset to argument serial path, or nothing!
-  serialPath = serialPathArg ? serialPathArg : "";
+  // Assume the last serialport isn't coming back for a while... a long vacation
+  gConf.set('serialPath', '');
   simulationModeInit();
 }
 
@@ -534,41 +499,45 @@ function simulationModeInit() {
 
 // Helper function to manage initial serial connection and reconnection
 function connectSerial(init, callback){
+  var autoDetect = false;
+
   // Attempt to auto detect EBB Board via PNPID
-  if (serialPath == "") {
+  if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
+    autoDetect = true;
     console.log('Finding available serial ports...');
   } else {
-    console.log('Using passed serial port "' + serialPath + '"...');
+    console.log('Using passed serial port "' + gConf.get('serialPath') + '"...');
   }
 
   require("serialport").list(function (err, ports) {
     var portNames = ['None'];
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
-      if (ports[portID].pnpId.indexOf('EiBotBoard') !== -1 && serialPath == "") {
-        serialPath = portNames[portID];
+      if (ports[portID].pnpId.indexOf(botConf.get('controller')) !== -1 && autoDetect) {
+        gConf.set('serialPath', portNames[portID]);
       }
     }
 
     console.log('Available Serial ports: ' + portNames.join(', '));
 
     // Try to connect to serial, or exit with error codes
-    if (!serialPath) {
-      console.log("EiBotBoard not found. Are you sure it's connected? Error #22");
+    if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
+      console.log(botConf.get('controller') + " not found. Are you sure it's connected? Error #22");
       simulationModeInit();
       if (init) serialPortReadyCallback();
       if (callback) callback(false);
     } else {
-      console.log('Attempting to open serial port: "' + serialPath + '"...');
+      console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
-        serialPort = new SerialPort(serialPath, {baudrate : 9600});
+        serialPort = new SerialPort(gConf.get('serialPath'), {baudrate : Number(botConf.get('baudRate'))});
         serialPort.on("open", serialPortReadyCallback);
         serialPort.on("close", serialPortCloseCallback);
-        console.log('Serial connection open at 9600bps');
+        console.log('Serial connection open at ' + botConf.get('baudRate') + 'bps');
         pen.simulation = 0;
         if (callback) callback(true);
       } catch(e) {
         console.log("Serial port failed to connect. Is it busy or in use? Error #10");
+        console.log('SerialPort says:', e);
         simulationModeInit();
         if (init) serialPortReadyCallback();
         if (callback) callback(false);
