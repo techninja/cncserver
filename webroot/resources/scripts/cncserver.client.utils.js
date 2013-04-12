@@ -243,8 +243,8 @@ cncserver.utils = {
   log: function(msg) {
     var $logitem = $('<div>').append(
      $('<span>').addClass('time').text(new Date().toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1")),
-     $('<span>').addClass('message').text(msg),
-     $('<span>').addClass('status loading')
+     $('<span>').addClass('message').text(msg).attr('title', msg),
+     $('<span>').addClass('status loading').html('&nbsp;').attr('title', 'Loading...')
     );
 
     // Easy updating!
@@ -258,7 +258,13 @@ cncserver.utils = {
           classname = (msg === false ? 'error' : 'success')
         }
 
-        msg = (msg === false ? 'Error!' : 'Success');
+        if (msg === false) {
+          msg = 'Error!';
+          $item.attr('title', 'Error: The request failed. Check the bot or the server for problems.');
+        } else {
+          msg = 'Success';
+          $item.attr('title', 'Everything worked great!');
+        }
       }
 
       // If no classname STILL, just make one out of the text

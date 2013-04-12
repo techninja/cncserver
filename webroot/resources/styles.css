@@ -18,11 +18,25 @@ img.logo {
   background-color: whitesmoke;
   border-radius: 12px 0;
   height: 4em;
-  margin-left: 215px;
+  left: 215px;
   margin-top: 0.5em;
   padding: 3px;
   width: 723px;
-  position: relative;
+  position: absolute;
+}
+
+#cancel {
+  color: red;
+}
+
+#pause {
+  color: green;
+}
+
+#status button {
+  float: right;
+  margin-left: 1%;
+  width: 9%;
 }
 
 #status .progress-wrapper {
@@ -33,8 +47,7 @@ img.logo {
 }
 
 #status progress {
-  margin-right: 10px;
-  width: 87%;
+  width: 78%;
 }
 
 /* Drawing Area */
@@ -78,6 +91,8 @@ nav#tools {
   left: 0;
   position: absolute;
   top: 4em;
+  transform-origin: top left;
+  -webkit-transform-origin: top left;
 }
 
 nav#tools #waters {
@@ -311,10 +326,6 @@ nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
 
 
 /* Status Log */
-#cancel {
-  color: red;
-}
-
 #log {
   border: 1px solid black;
   height: 1.2em;
@@ -323,27 +334,32 @@ nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
 
 #log div {
   overflow: hidden;
+  position: relative;
   border-top: 1px dashed #ddd;
-}
-
-#log span {
-  display: block;
-  float: left;
   font-family: monospace;
   font-weight: bold;
   height: 1.5em;
   line-height: 1.5em;
 }
 
+#log span {
+  display: block;
+  position: absolute;
+}
+
+#log span.message {
+  left: 6em;
+}
+
 #log span.time {
-  padding-right: 1em;
   padding-left: 0.5em;
+  color: #777777;
 }
 
 #log span.status {
-  float: right;
+  min-width: 80px;
   padding: 0 1em;
-  min-width: 100px;
+  right: 0;
   text-align: center;
 }
 
@@ -363,6 +379,7 @@ nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
 }
 
 #log span.loading {
+  background-color: #fff;
   background-image: url("images/log-loader.gif");
   background-position: center center;
   background-repeat: no-repeat;

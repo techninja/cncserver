@@ -276,19 +276,66 @@ $(function() {
   $(window).resize(fitSVGSize);
 
   function fitSVGSize(){
-    var offset = $svg.offset();
+    // These value should be static, set originally from central canvas config
+    var svgOffset = {
+      top: 147,
+      left: 235
+    };
+
+    var w = $(window).width();
+    var h = $(window).height();
+
+
     var margin = 40; // TODO: Place this somewhere better
-    var rightMargin = 235; // TODO: This too...
-    var scale = {
-      x: ($(window).width() - offset.left - margin - rightMargin) / cncserver.canvas.width,
-      y: ($(window).height() - offset.top - margin) / cncserver.canvas.height
+    var rightMargin = $(window).width() - $('#control').offset().left;
+    var scale = 0;
+
+    // Tool selection height scale
+    var toolMax = 735;
+    var $tools = $('#tools');
+    if (h < toolMax) {
+      scale = (h - $tools.offset().top - 20) / $tools.height();
+    } else {
+      scale = 1;
+    }
+
+    // Update the global canvas left offset
+    cncserver.canvas.offset.left = svgOffset.left * scale;
+    var offsetDifference = svgOffset.left - cncserver.canvas.offset.left;
+
+    $tools.css({
+      'transform': 'scale(' + scale + ')',
+      '-webkit-transform': 'scale(' + scale + ')'
+    });
+
+    $svg.css('left', cncserver.canvas.offset.left);
+
+    // Scale SVG Canvas
+    scale = {
+      x: (w - svgOffset.left - margin - rightMargin + offsetDifference) / cncserver.canvas.width,
+      y: (h - svgOffset.top - margin) / cncserver.canvas.height
     }
 
     // Use the shorter of the two
     cncserver.canvas.scale = scale.x < scale.y ? scale.x : scale.y;
 
-    $svg.css('transform', 'scale(' + cncserver.canvas.scale + ')');
-    $svg.css('-webkit-transform', 'scale(' + cncserver.canvas.scale + ')');
+    $svg.css({
+      'transform': 'scale(' + cncserver.canvas.scale + ')',
+      '-webkit-transform': 'scale(' + cncserver.canvas.scale + ')'
+    });
+
+    // Log width sizing
+    var statusMax = 723;
+    var statusThreshold = 1211;
+    var $status = $('#status');
+    $status.css('left', cncserver.canvas.offset.left - 10);
+    if (w < statusThreshold) {
+      $status.css('width', statusMax + (w - statusThreshold) + offsetDifference)
+    } else {
+      $status.css('width', statusMax + offsetDifference)
+    }
+
+
   }
 
 });
