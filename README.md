@@ -39,48 +39,63 @@ that with a sudo command on Mac/Linux). For Mac, building `node-serialport`
 requires `make`, which comes with Xcode, a free download.
 
 ## Running
-CNC Server *currently* only supports the late model EBB and its command set, and
-of the devices that use it, ***only*** the WaterColorBot Beta. More devices to
-come soon!
+CNC Server *currently* only supports the late model
+[EBB](http://www.schmalzhaus.com/EBB/) and its command set. Of the devices that
+use it, ***only*** the WaterColorBot Beta, with EggBot support next. More
+devices to come soon!
 
-Plug in your WaterColorBot, ***Always make sure the carriage is in the top left
-park position***, and start the server with the command
-`node cncserver.js [HTTP PORT] [SERIAL PORT]` where "`[HTTP PORT]`" is what port
-you want to access the website from, and "`[SERIAL PORT]`" is the local port
-that the USB connection from the bot supplies.
+Plug in your device, and from the terminal in the cncserver folder, start the
+server with the command `node cncserver.js`, and you've got it!
 
-If you were to pass `8080`, then the website would be available at
-`http://localhost:8080`. Leave it blank and it will default to `4242`. You can
-also leave off the serial port and the server will try its best to detect the
-bot.
+Once the server is up and running, the website should now be available at
+`http://localhost:4242`. The `4242` is the port on the local computer, which you
+can easily change in the configuration shown below.
+
+### Configuration
+By default, CNC Server hosts the client site and API on the localhost port `4242`
+and attempts to autodetect the correct serial port to connect to. If you want to
+tweak these settings or any other global configuration permanently, just edit
+the `config.ini` file that is generated on first run. If you want to make
+temporary config adjustments, just pass the same config names and values when
+executing. Common examples might include:
+```
+# Change the hosting port to HTTP default, and force the serial port
+node cncserver --httpPort 80 --serialPath /dev/ttyUSB1243
+
+# Change bot type to EggBot, and invert the X motor axis
+node cncserver --botType=eggbot --invertAxis:x=true
+```
 
 ## Features
 
-CNC server comes as two component parts, a client application, and a server
+CNC Server comes as two component parts, a client web app, and a server
 application. The server hands over the client via HTTP, but beyond that, the
-client only communicates to the server via a simple RESTful API. These controls
-manifest as an abstracted method of controlling the bot to do what you ask while
-sanity checking and keeping crashes down to a minimum.
+client only communicates to the server via a [simple RESTful API](API.md). These
+controls manifest as an abstracted method of controlling the bot to do what you
+ask while sanity checking and keeping crashes down to a minimum.
 
 ### Client
- * Web application that runs in all modern web browsers.
- * Realtime SVG preview and shape tracing.
- * Three styles of shape fills: Horizontal striping, vertical striping, and
-arbitrary path tracing, allowing for an infinite array of creative path based
-fills.
+ * Web application tested for all modern mobile and desktop web browsers.
+ * Real-time SVG preview and shape tracing, with fully automatic path filling,
+color similarity chooser, and outline manager.
+ * Path tracing for fills, allowing for an infinite array of creative path based
+crosshatches .
  * Uses visual path position checking, ensuring that overlapping or invisible
 portions of paths aren't drawn.
 
 ### Server
  * Fast HTTP server via [Express](http://expressjs.com) allows for full stack
 web application and extensions.
+ * Runs great on even modest hardware. Raspberry Pi verified!
  * Self manages absolute pen position.
  * 3 API endpoints allow full pen control, motor overrides and tool changes.
-Read [the documentation](API.md) to implement *your own* client!
+Read [the documentation](API.md) and implement *your own* client!
  * Accepts direct X/Y absolute pen positions as percentage of total width/height.
  * Client agnostic! We don't care what controls the bot, as long as it follows
 the rules. (iPad app coming soon!)
- * Config file driven, allows for server customization to fit any style of bot.
+ * Configuration file and argument driven (see
+[example here](machine_types/watercolorbot.ini)), allows for server
+customization to fit *almost* any style of bot.
 
 ## Problems?
 ***Stuck on something?*** Submit an issue! Click the
