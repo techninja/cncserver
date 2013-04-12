@@ -23,6 +23,7 @@ gConf.use('file', { file: './config.ini', format: nconf.formats.ini}).load();
 // Set Global Config Defaults
 gConf.defaults({
   httpPort: 4242,
+  swapMotors: false,
   invertAxis: {
     x: true,
     y: false
@@ -400,6 +401,14 @@ function serialPortReadyCallback() {
     // Invert X or Y to match stepper direction
     change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
     change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+
+    // Swap motor positions
+    if (gConf.get('swapMotors')) {
+      change = {
+        x: change.y,
+        y: change.x
+      }
+    }
 
     // Send the final serial command
     serialCommand('SM,' + duration + ',' + change.x + ',' + change.y, function(data){
