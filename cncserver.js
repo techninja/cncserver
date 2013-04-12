@@ -53,6 +53,7 @@ if (!fs.existsSync(botTypeFile)){
     file: botTypeFile,
     format: nconf.formats.ini
   }).load();
+  console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
 }
 
 // Hold common bot specific contants (also helps with string conversions)
