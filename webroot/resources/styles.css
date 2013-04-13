@@ -70,7 +70,7 @@ svg#main #cncserversvg path.selected {
   stroke-width: 10 !important;
 }
 
-svg#main path:hover {
+svg#main g path:hover {
   stroke: red !important;
 }
 
