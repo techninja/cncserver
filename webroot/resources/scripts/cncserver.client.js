@@ -28,6 +28,7 @@ var cncserver = {
     maxPaintDistance: 6000,
     fillPath: {},
     colorAction: 'bot',
+    colorsets: {},
     colors: [],
     colorsYUV: []
   }
@@ -41,6 +42,8 @@ $(function() {
   serverConnect(); // "Connect", and get the initial pen state
   bindControls(); // Bind all clickable controls
   loadSVG(); // Load the default SVG
+
+  getColorsets(); // Get & Load the colorsets, then cache the default
 
   // Store the canvas size
   cncserver.canvas.height = $svg.height();
@@ -56,6 +59,8 @@ $(function() {
   cncserver.config.colorAction = $('input[name=color-action]:radio:checked').val();
   cncserver.config.fillPath = $('#fill-swirl'); // Set Fill Path
 
+
+  // Initial server connection handler
   function serverConnect() {
     // Get initial pen data from server
     var $log = cncserver.utils.log('Connecting to the server...');
@@ -79,8 +84,66 @@ $(function() {
     });
   }
 
+  function getColorsets() {
+    $.getJSON('/resources/colorsets/colorsets.json', function(sets){
+      cncserver.config.colorsets['ALL'] = sets;
+      $.each(sets, function(i, set){
+        var setDir = '/resources/colorsets/' + set + '/';
+
+        $.getJSON(setDir + set + '.json', function(c){
+          cncserver.config.colorsets[set] = {
+            name: c.name,
+            baseClass: c.styles.baseClass,
+            colors: c.colors
+          };
+
+          // Add the stylesheet so it can load
+          $('<link>').attr({rel: 'stylesheet', href: setDir + c.styles.src}).appendTo('head');
+
+          // If we've got all of them, go load them in
+          if (Object.keys(cncserver.config.colorsets).length == sets.length + 1) {
+
+            loadColorsets();
+          }
+        });
+      });
+    });
+  }
+
+  function loadColorsets() {
+    for(var i in cncserver.config.colorsets['ALL']) {
+      var id = cncserver.config.colorsets['ALL'][i];
+      $('<option>')
+        .val(id)
+        .text(cncserver.config.colorsets[id].name)
+        .appendTo('#colorsets');
+    }
+
+    // Bind change for colors
+    $('#colorsets').change(function(){
+      var id = $(this).val();
+      var set = cncserver.config.colorsets[id];
+      $('#colors').attr('class', '').addClass(set.baseClass);
+      for (var i in set.colors) {
+        $('#color' + i).text(set.colors[i]);
+      }
+
+      cacheColors();
+    }).change();
+  }
+
   function cacheColors() {
     // Cache the current colorset config for measuring against as HSL
+    cncserver.config.colors = [];
+    cncserver.config.colorsYUV = [];
+
+    // Check to see if CSS is loaded...
+    if ($('#color0').css('background-color') == "transparent") {
+      setTimeout(cacheColors, 500);
+      console.info('css still loading...');
+      return;
+    }
+
     $('a.color').each(function(){
       cncserver.config.colors.push(
         cncserver.utils.colorStringToArray($(this).css('background-color'))

@@ -1,0 +1,17 @@
+{
+  "name": "Prang Glitter",
+  "styles" : {
+    "src" : "prang_glitter.css",
+    "baseClass": "prang-glitter"
+  },
+  "colors": [
+    "Ruby",
+    "Tangerine",
+    "Canary",
+    "Emerald",
+    "Sapphire",
+    "Lilac",
+    "Silver",
+    "Gold"
+  ]
+}

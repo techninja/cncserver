@@ -95,6 +95,12 @@ nav#tools {
   -webkit-transform-origin: top left;
 }
 
+nav#tools #colorsets {
+  left: 83px;
+  position: absolute;
+  top: -31px;
+}
+
 nav#tools #waters {
   left: -96px;
   overflow: hidden;
@@ -313,17 +319,6 @@ nav#color-action label {
 nav#color-action input[type="radio"]:checked + label {
  background-color:#bbb;
 }
-
-/* Color Set 1 */
-nav#tools #color0.colorset1 { background-color: #844B35; } /* Brown */
-nav#tools #color1.colorset1 { background-color: #907DBD; } /* Violet */
-nav#tools #color2.colorset1 { background-color: #353AAA; } /* Blue */
-nav#tools #color3.colorset1 { background-color: #2E6F3A; } /* Green */
-nav#tools #color4.colorset1 { background-color: #F7F756; color: black;} /* Yellow */
-nav#tools #color5.colorset1 { background-color: #FF6A00; } /* Orange */
-nav#tools #color6.colorset1 { background-color: #A72611; } /* Red */
-nav#tools #color7.colorset1 { background-color: #3E3A39; } /* Black */
-
 
 /* Status Log */
 #log {

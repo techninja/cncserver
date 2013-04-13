@@ -1,0 +1,17 @@
+{
+  "name": "Crayola Classic",
+  "styles" : {
+    "src" : "crayola_classic.css",
+    "baseClass": "crayola-classic"
+  },
+  "colors": [
+    "Brown",
+    "Violet",
+    "Blue",
+    "Green",
+    "Yellow",
+    "Orange",
+    "Red",
+    "Black"
+  ]
+}
