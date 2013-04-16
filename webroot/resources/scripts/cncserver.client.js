@@ -138,7 +138,8 @@ $(function() {
     cncserver.config.colorsYUV = [];
 
     // Check to see if CSS is loaded...
-    if ($('#color0').css('background-color') == "transparent") {
+    var colorTest = $('#color0').css('background-color');
+    if (colorTest == "transparent" || colorTest == "rgba(0, 0, 0, 0)") {
       setTimeout(cacheColors, 500);
       console.info('css still loading...');
       return;
