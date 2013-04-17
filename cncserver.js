@@ -9,6 +9,7 @@
 var nconf = require('nconf');
 var express = require('express');
 var fs = require('fs');
+var path = require('path');
 
 // CONFIGURATION ===============================================================
 var gConf = new nconf.Provider();
@@ -18,7 +19,11 @@ var botConf = new nconf.Provider();
 gConf.env().argv();
 
 // Pull conf from file
-gConf.use('file', { file: './config.ini', format: nconf.formats.ini}).load();
+var configPath = path.resolve(__dirname, 'config.ini');
+gConf.use('file', {
+  file: configPath,
+  format: nconf.formats.ini
+}).load();
 
 // Set Global Config Defaults
 gConf.defaults({
@@ -33,7 +38,7 @@ gConf.defaults({
 });
 
 // Save Global Conf file defaults if not saved
-if(!fs.existsSync('./config.ini')) {
+if(!fs.existsSync(configPath)) {
   var def = gConf.stores['defaults'].store;
   for(var key in def) {
     if (key != 'type'){
@@ -44,7 +49,7 @@ if(!fs.existsSync('./config.ini')) {
 }
 
 // Load bot config file based on botType global config
-var botTypeFile = './machine_types/' + gConf.get('botType') + '.ini';
+var botTypeFile = path.resolve(__dirname, 'machine_types', gConf.get('botType') + '.ini');
 if (!fs.existsSync(botTypeFile)){
   console.log('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
   process.exit(16);
