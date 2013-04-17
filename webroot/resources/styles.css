@@ -33,6 +33,21 @@ img.logo {
   color: green;
 }
 
+#pause.active {
+  font-weight: bold;
+  margin-left: -1%;
+  margin-right: -1%;
+  width: 10.5%;
+
+  animation-name: pause-active;
+  animation-duration: 500ms;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-name: pause-active;
+  -webkit-animation-duration: 500ms;
+  -webkit-animation-iteration-count: infinite;
+}
+
 #status button {
   float: right;
   margin-left: 1%;
@@ -165,6 +180,18 @@ nav#tools a:hover, nav#tools a:focus {
   0%   { box-shadow: 0 0 2px 8px #33F; }
   50%  { box-shadow: 0 0 6px 8px #33F; }
   100%  { box-shadow: 0 0 2px 8px #33F; }
+}
+
+@keyframes pause-active {
+  0%   { box-shadow: 0 0 0 18px yellow; }
+  50%  { box-shadow: 0 0 0 5px yellow; }
+  100%  { box-shadow: 0 0 0 18px yellow; }
+}
+
+@-webkit-keyframes pause-active {
+  0%   { box-shadow: 0 0 0 18px yellow; }
+  50%  { box-shadow: 0 0 0 5px yellow; }
+  100%  { box-shadow: 0 0 0 18px yellow; }
 }
 
 nav#tools div.static {

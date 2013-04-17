@@ -29,14 +29,18 @@ cncserver.cmd = {
       });
 
       // Check for paint refill
-      if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
-        var returnPoint = returnPoints[returnPoints.length-1] ? returnPoints[returnPoints.length-1] : lastPoint;
-        cncserver.wcb.getMorePaint(returnPoint, function(){
-          cncserver.api.pen.down(cncserver.cmd.executeNext);
-        });
+      if (!cncserver.state.process.paused) {
+        if (cncserver.state.pen.distanceCounter > cncserver.config.maxPaintDistance) {
+          var returnPoint = returnPoints[returnPoints.length-1] ? returnPoints[returnPoints.length-1] : lastPoint;
+          cncserver.wcb.getMorePaint(returnPoint, function(){
+            cncserver.api.pen.down(cncserver.cmd.executeNext);
+          });
+        } else {
+          // Execute next command
+          cncserver.cmd.executeNext();
+        }
       } else {
-        // Execute next command
-        cncserver.cmd.executeNext();
+        cncserver.state.process.pauseCallback();
       }
     }
   },
@@ -111,7 +115,8 @@ cncserver.cmd = {
 // Wait around for the buffer to contain elements, and for us to not be
 // currently processing the buffer queue
 setInterval(function(){
-  if (!cncserver.state.process.busy && cncserver.state.buffer.length) {
+  if (!cncserver.state.process.busy && cncserver.state.buffer.length && !cncserver.state.process.paused) {
+    cncserver.state.process.cancel = false;
     cncserver.cmd.executeNext();
   }
 }, 10);

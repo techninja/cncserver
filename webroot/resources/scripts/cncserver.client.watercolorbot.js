@@ -186,6 +186,11 @@ cncserver.wcb = {
     var runColor = cncserver.state.color;
 
     function doNextJob() {
+      // Long process kill
+      if (!cncserver.state.process.cancel) {
+        return;
+      }
+
       var job = finalJobs[jobIndex];
       var run = cncserver.cmd.run;
 

@@ -20,6 +20,8 @@ var cncserver = {
       name: 'idle',
       waiting: false,
       busy: false,
+      cancel: false,
+      paused: false,
       max: 0
     }
   },
@@ -202,6 +204,73 @@ $(function() {
     // Ensure buttons are disabled as we have no selection
     $('#draw').prop('disabled', true);
     $('#fill').prop('disabled', true);
+
+    // Pause management
+    var pauseLog = {};
+    var pauseText = 'Click to pause current operations';
+    var resumeText = 'Click to resume previous operations';
+    var pausePenState = 0;
+    $('#pause').click(function(){
+      function _resumeDone() {
+        pausePenState = 0;
+        pauseLog.fadeOut('slow');
+        cncserver.state.process.paused = false;
+        cncserver.cmd.executeNext();
+        $('#pause').removeClass('active').attr('title', pauseText).text('Pause');
+      }
+
+      if (!cncserver.state.process.paused && cncserver.state.buffer.length) {
+        pauseLog = cncserver.utils.log('Pausing current process...');
+        cncserver.state.process.paused = true;
+      } else {
+        // If the pen was down before, put it down now.
+        if (pausePenState) {
+          cncserver.api.pen.down(_resumeDone);
+        } else {
+          _resumeDone();
+        }
+      }
+    });
+
+    // Pause callback
+    cncserver.state.process.pauseCallback = function(){
+      // Remember the state, and then make sure it's up
+      pausePenState = cncserver.state.pen.state;
+      if (pausePenState == 1) {
+        cncserver.api.pen.up(_pauseDone);
+      } else {
+        _pauseDone();
+      }
+
+      function _pauseDone() {
+        pauseLog.logDone('Done', 'complete');
+        $('#pause').addClass('active').attr('title', resumeText).text('Resume');
+      }
+    }
+
+    // Cancel Management
+    $('#cancel').click(function(){
+
+      if (!cncserver.state.process.cancel && cncserver.state.buffer.length) {
+        cncserver.state.process.cancel = true;
+
+        cncserver.state.process.busy = false;
+        cncserver.state.process.max = 0;
+        cncserver.utils.progress({val: 0, max: 0});
+
+        cncserver.state.buffer = []; // Kill the buffer
+        cncserver.api.pen.park(); // Park
+        // Clear all loading logs into cancelled state
+        $('#log > div:visible').each(function(){
+          if ($(this).children('.loading').length) {
+            $(this).children('.loading')
+            .removeClass('loading').text('Canceled')
+            .addClass('error');
+          }
+        })
+      }
+    })
+
 
     // Bind color action config set and set initial
     $('input[name=color-action]:radio').change(function(e){

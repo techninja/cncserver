@@ -32,6 +32,11 @@ cncserver.paths = {
     runNextPoint();
 
     function runNextPoint() {
+      // Long process kill
+      if (cncserver.state.process.cancel) {
+        return;
+      }
+
       if (i <= $path.maxLength) {
         i+= cncserver.config.precision;
 
@@ -107,6 +112,11 @@ cncserver.paths = {
     runNextFill();
 
     function runNextFill() {
+      // Long process kill
+      if (cncserver.state.process.cancel) {
+        return;
+      }
+
       i+= cncserver.config.precision * 2;
       p = $fill.getPoint(i);
 
