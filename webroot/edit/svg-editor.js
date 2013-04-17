@@ -4399,6 +4399,8 @@
 				}
 			};
 
+      // Fix for iPad unload catch
+      window.onunload = window.onbeforeunload;
 			Editor.openPrep = function(func) {
 				$('#main_menu').hide();
 				if(undoMgr.getUndoStackSize() === 0) {
