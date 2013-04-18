@@ -34,7 +34,10 @@ gConf.defaults({
     y: false
   },
   serialPath: "{auto}", // Empty for auto-config
-  botType: 'watercolorbot'
+  botType: 'watercolorbot',
+  botOverride: {
+    info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234",
+  }
 });
 
 // Save Global Conf file defaults if not saved
@@ -60,6 +63,14 @@ if (!fs.existsSync(botTypeFile)){
   }).load();
   console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
 }
+
+// Mesh in bot overrides from main config
+var overrides = gConf.get('botOverride')[gConf.get('botType')];
+for(var key in overrides) {
+  botConf.set(key, overrides[key]);
+}
+console.log(botConf.get('servo:max'));
+process.exit(1);
 
 // Hold common bot specific contants (also helps with string conversions)
 var BOT = {
