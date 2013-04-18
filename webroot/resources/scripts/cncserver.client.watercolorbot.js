@@ -187,7 +187,7 @@ cncserver.wcb = {
 
     function doNextJob() {
       // Long process kill
-      if (!cncserver.state.process.cancel) {
+      if (cncserver.state.process.cancel) {
         return;
       }
 
