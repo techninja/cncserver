@@ -69,8 +69,6 @@ var overrides = gConf.get('botOverride')[gConf.get('botType')];
 for(var key in overrides) {
   botConf.set(key, overrides[key]);
 }
-console.log(botConf.get('servo:max'));
-process.exit(1);
 
 // Hold common bot specific contants (also helps with string conversions)
 var BOT = {
