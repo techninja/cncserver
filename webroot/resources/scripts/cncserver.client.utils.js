@@ -60,6 +60,11 @@ cncserver.utils = {
 
   // Converts a jQuery rgb or hex color string to a proper array [r,g,b]
   colorStringToArray: function(string) {
+    // Quick sanity check
+    if (typeof string != 'string') {
+      return null;
+    }
+
     // If it's already RGB, use it!
     if (string.indexOf('rgb') !== -1){
       var color = string.slice(4, -1).split(', ');
@@ -69,7 +74,7 @@ cncserver.utils = {
       })
 
       return color;
-    } else {
+    } else if(string.indexOf('#') !== -1) {
       // Otherwise, parse the hex triplet
       // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
       var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -83,6 +88,9 @@ cncserver.utils = {
         parseInt(result[2], 16),
         parseInt(result[3], 16)
       ] : null;
+    } else {
+      // If the string doesn't contain "#" or "rgb" then it's outta there!
+      return null;
     }
 
   },

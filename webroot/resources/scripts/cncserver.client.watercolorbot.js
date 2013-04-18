@@ -110,18 +110,16 @@ cncserver.wcb = {
     // Holds all jobs keyed by color
     var jobs = {};
     var colorMatch = cncserver.utils.closestColor;
+    var convert = cncserver.utils.colorStringToArray;
 
     $('path', context).each(function(){
       var $p = $(this);
-      var stroke = $p.attr('stroke');
-      var fill = $p.attr('fill');
+      var stroke = convert($p.attr('stroke'));
+      var fill = convert($p.attr('fill'));
 
       // Occasionally, these come back undefined
-      if (typeof stroke == 'undefined') stroke = 'none';
-      if (typeof fill == 'undefined') fill = 'none';
-
-      stroke = (stroke == 'none') ? false : 'color' + colorMatch(stroke);
-      fill = (fill == 'none') ? false : 'color' + colorMatch(fill);
+      stroke = (stroke == null) ? false : 'color' + colorMatch(stroke);
+      fill = (fill == null) ? false : 'color' + colorMatch(fill);
 
       // Don't actually fill or stroke for white... (color8)
       if (fill == 'color8') fill = false;
