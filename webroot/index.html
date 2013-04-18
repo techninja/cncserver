@@ -32,7 +32,7 @@
 
 
 <fieldset id="control">
-  <legend>WaterColorBot Controls</legend>
+  <h2>WaterColorBot Controls</h2>
   <fieldset class="collapsable open">
     <legend>Automatic</legend>
     <nav>
@@ -41,31 +41,12 @@
     </nav>
   </fieldset>
 
-  <fieldset class="collapsable closed">
-    <legend>Color</legend>
-    <nav id="color-action">
-      <label id="color-action-label" for="color-action">Color action:</label>
-      <input id="color-action-bot" value="bot" checked name="color-action" type="radio"/>
-        <label for="color-action-bot" title="Clicking the paint will have the bot pick up that color.">Bot Control</label>
-      <input id="color-action-fill" value="fill" name="color-action" type="radio"/>
-        <label for="color-action-fill" title="Clicking the paint will change a selected path's fill color.">Path Fill</label>
-      <input id="color-action-stroke" value="stroke" name="color-action" type="radio"/>
-        <label for="color-action-stroke" title="Clicking the paint will change a selected path's outline color.">Path Stroke</label>
-    </nav>
-  </fieldset>
-
-  <fieldset class="collapsable closed">
+  <fieldset>
     <legend>Manual</legend>
     <nav>
       <button id="pen">Brush</button>
-      <button id="draw" title="Draw the selected Path">Draw Path</button>
-      <button id="fill">Paint Line Fill</button>
-      <select>
-        <option value="horizontal">Horizontal</option>
-        <option value="vertical">Vertical</option>
-        <option value="path">Spiral</option>
-      </select>
-
+      <button id="draw" title="Draw the selected Path">Draw Outline</button>
+      <button id="fill">Draw Fill</button>
       <select id="precision" title="Trace precision: Default is 'Fine'">
         <option value="1">Super-fine (1)</option>
         <option value="3">Very Fine (3)</option>
@@ -95,7 +76,12 @@
     <a id="water2" title="Water 3" class="water" title="Water 3" href="#"></a>
   </nav>
 
-  <select title="Click to select another paint set" id="colorsets"></select>
+  <select title="Select another paint set" id="colorsets"></select>
+  <select title="Change what clicking the paint ovals will do" id="coloraction">
+    <option title="Clicking the paint will have the bot pick up that color." value="bot">Get Paint</option>
+    <option title="Clicking the paint will change a selected path's fill color." value="fill">Fill Path</option>
+    <option title="Clicking the paint will change a selected path's outline color." value="stroke">Stroke Path</option>
+  </select>
   <nav id="colors">
     <a id="color0" class="color" href="#"></a>
     <a id="color1" class="color selected" href="#"></a>

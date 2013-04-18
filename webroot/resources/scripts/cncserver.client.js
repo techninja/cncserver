@@ -58,7 +58,7 @@ $(function() {
 
   // Set initial values (as page reloads can save form values)
   cncserver.config.precision = Number($('#precision').val());
-  cncserver.config.colorAction = $('input[name=color-action]:radio:checked').val();
+  cncserver.config.colorAction = $('#coloraction').val();
   cncserver.config.fillPath = $('#fill-swirl'); // Set Fill Path
 
 
@@ -273,7 +273,7 @@ $(function() {
 
 
     // Bind color action config set and set initial
-    $('input[name=color-action]:radio').change(function(e){
+    $('#coloraction').change(function(e){
       cncserver.config.colorAction = $(this).val();
     })
 
@@ -341,20 +341,6 @@ $(function() {
       // Move visible drawpoint
       $('#drawpoint').attr('transform', 'translate(' + point.x + ',' + point.y + ')');
     }
-
-    // Bind click for sliding fieldsets
-    $('#control fieldset').click(function(e){
-      if ($(this).is('.closed')){
-        var $open = $('#control fieldset.open');
-        var $close = $(this);
-
-        // Open one to closed
-        $open.removeClass('open').addClass('closed');
-
-        // Closed to open
-        $close.removeClass('closed').addClass('open');
-      }
-    });
 
     // Bind to Tool Change nav items
     $('nav#tools a').click(function(e){
@@ -455,6 +441,9 @@ $(function() {
       'transform': 'scale(' + cncserver.canvas.scale + ')',
       '-webkit-transform': 'scale(' + cncserver.canvas.scale + ')'
     });
+
+    // Fix body background height (html tag backgrounds are weird!)
+    $('body').height(h);
 
     // Log width sizing
     var statusMax = 723;

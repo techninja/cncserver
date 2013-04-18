@@ -2,10 +2,15 @@
   @file
 */
 
-body {
-  font-family: sans-serif;
-  background-color: #E3BC83;
+html {
   background-image:url('images/seamless-wood.jpg');
+  background-color: #E3BC83;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-image:url('images/watercolor-stains.png');
 }
 
 img.logo {
@@ -108,6 +113,13 @@ nav#tools {
   top: 4em;
   transform-origin: top left;
   -webkit-transform-origin: top left;
+}
+
+nav#tools #coloraction {
+  left: 83px;
+  position: absolute;
+  top: -53px;
+  width: 9em;
 }
 
 nav#tools #colorsets {
@@ -276,25 +288,25 @@ nav#tools .color.selected {
 
 /* Nav Controls & Button Graphics */
 fieldset#control {
-  padding: 0.3em;
+  background-image: url("images/seamless-wood.jpg");
+  border: 1px solid #C9A165;
+  border-radius: 0.5em 0.5em 0.5em 0.5em;
+  box-shadow: 0 0 8px 2px #EBC089 inset, 1px 1px 3px rgba(0, 0, 0, 0.2);
+  padding: 0.75em;
   position: absolute;
   right: 1em;
   width: 12.5em;
-  background-color: #DDD;
 }
 
 #control button {
-  background-color: #FFFFFF;
-  border-radius: 12px 12px 12px 12px;
   display: block;
   float: left;
-  height: 65px;
-  line-height: 1.2em;
-  margin-bottom: 2.7em;
-  margin-right: 0.7em;
-  padding-top: 64px;
-  width: 68px;
-  background-repeat: no-repeat;
+}
+
+#control h2 {
+  font-size: 1em;
+  margin: 0 0 0.5em;
+  text-shadow: 0 2px 1px #EEEEEE;
 }
 
 #control button:hover {
@@ -307,23 +319,16 @@ fieldset#control {
   -webkit-animation-iteration-count: infinite;
 }
 
+#control fieldset {
+  border: 1px solid #C9A165;
+  margin: 0.5em 0;
+}
+
 #control button:disabled, #control button:disabled:hover {
   opacity: 0.5;
   animation: none;
   -webkit-animation: none;
 }
-
-#control button#pen.up { background-image: url("images/icon_brush_up.png"); }
-#control button#pen.down { background-image: url("images/icon_brush_down.png"); }
-#control button#draw { background-image: url("images/icon_draw_path.png"); }
-#control button#fill { background-image: url("images/icon_fill.png"); }
-#control button#disable { background-image: url("images/icon_unlock.png"); }
-#control button#zero { background-image: url("images/icon_zero.png"); }
-#control button#park { background-image: url("images/icon_home.png"); }
-#control button#auto-paint { background-image: url("images/icon_auto_paint.png"); }
-#control button#auto-color { background-image: url("images/icon_auto_color.png"); }
-#control button#auto-color.undo { background-image: url("images/icon_auto_color_undo.png"); }
-
 
 /* Color Action selection */
 nav#color-action #color-action-label {
@@ -405,40 +410,4 @@ nav#color-action input[type="radio"]:checked + label {
   background-image: url("images/log-loader.gif");
   background-position: center center;
   background-repeat: no-repeat;
-}
-
-
-/* Collapsable fieldsets */
-#control fieldset {
-  padding: 0;
-}
-
-#control fieldset legend {
-  margin-left: 6px;
-}
-
-#control fieldset nav {
-  overflow: hidden;
-  padding: 10px;
-}
-
-#control fieldset.closed {
-  border-bottom: medium none;
-  border-left: medium none;
-  border-right: medium none;
-  padding: 8px 1px;
-  overflow: hidden;
-}
-
-#control fieldset.closed, fieldset.closed legend, fieldset.open legend {
-  cursor: pointer;
-}
-
-#control fieldset.closed:hover, fieldset.closed legend:hover {
-  background-color: turquoise;
-}
-
-#control fieldset.closed nav {
-  height: 0;
-  padding: 0;
 }
