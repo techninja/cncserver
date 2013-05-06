@@ -1,11 +1,21 @@
 CNC server
 =========
-A node.js web server based serial interface control for plotters, built for
-[Super Awesome Sylvia's WaterColorBot](http://watercolorbot.com), built and
-produced by the incredible staff at
-[Evil Mad Scientist](http://http://www.evilmadscientist.com).
+A node.js API RESTful api to serial interface control for plotters, originally
+created for [Super Awesome Sylvia's WaterColorBot](http://watercolorbot.com),
+an awesome pen plotter that paints with watercolors, thought up by
+[MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
+staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
 
 ## Installation
+
+#### Preamble: User or Developer?
+CNC Server provides the API used by the WaterColorBot, but **if you're looking to
+just get your bot up and running, you should head over to the main
+[WaterColorBot page](http://github.com/techninja/watercolorbot) and download the
+installer for your system.**
+
+If you're a developer looking to make your own API client or interface, then
+continue on!
 
 #### Install Node.js
 CNC Server runs on node.js!  Download
@@ -47,55 +57,45 @@ devices to come soon!
 Plug in your device, and from the terminal in the cncserver folder, start the
 server with the command `node cncserver.js`, and you've got it!
 
-Once the server is up and running, the website should now be available at
+Once the server is up and running, the API should now be available at
 `http://localhost:4242`. The `4242` is the port on the local computer, which you
 can easily change in the configuration shown below.
 
 ### Configuration
-By default, CNC Server hosts the client site and API on the localhost port `4242`
+By default, CNC Server hosts the API on the localhost port `4242`
 and attempts to autodetect the correct serial port to connect to. If you want to
 tweak these settings or any other global configuration permanently, just edit
-the `config.ini` file that is generated on first run. If you want to make
-temporary config adjustments, just pass the same config names and values when
-executing. Common examples might include:
+the `config.ini` file that is generated on first run and stored in the same
+folder as `cncserver.js`. If you want to make temporary config adjustments, just
+pass the same config names and values when executing. Common examples might
+include:
 ```
-# Change the hosting port to HTTP default, and force the serial port
+# Change the hosting port to HTTP default, and force the serial port (no equals)
 node cncserver --httpPort 80 --serialPath /dev/ttyUSB1243
 
-# Change bot type to EggBot, and invert the X motor axis
+# Change bot type to EggBot, and invert the X motor axis (with equals)
 node cncserver --botType=eggbot --invertAxis:x=true
 ```
 
 ## Features
 
-CNC Server comes as two component parts, a client web app, and a server
-application. The server hands over the client via HTTP, but beyond that, the
-client only communicates to the server via a [simple RESTful API](API.md). These
-controls manifest as an abstracted method of controlling the bot to do what you
-ask while sanity checking and keeping crashes down to a minimum.
+CNC Server is an application that sits on a computer connected to your serial
+based CNC peripheral and provides a [simple RESTful API](API.md) to access
+common CNC/plotter functions. These controls manifest as an abstracted method of
+controlling the bot to do what you ask while sanity checking and keeping crashes
+down to a minimum.
 
-### Client
- * Web application tested for all modern mobile and desktop web browsers.
- * Real-time SVG preview and shape tracing, with fully automatic path filling,
-color similarity chooser, and outline manager.
- * Path tracing for fills, allowing for an infinite array of creative path based
-crosshatches .
- * Uses visual path position checking, ensuring that overlapping or invisible
-portions of paths aren't drawn.
-
-### Server
- * Fast HTTP server via [Express](http://expressjs.com) allows for full stack
-web application and extensions.
+ * Fast HTTP server via [Express](http://expressjs.com)
  * Runs great on even modest hardware. Raspberry Pi verified!
  * Self manages absolute pen position.
- * 3 API endpoints allow full pen control, motor overrides and tool changes.
+ * 4 API endpoints allow full control, motor overrides and "tool" changes.
 Read [the documentation](API.md) and implement *your own* client!
  * Accepts direct X/Y absolute pen positions as percentage of total width/height.
  * Client agnostic! We don't care what controls the bot, as long as it follows
-the rules. (iPad app coming soon!)
+the rules. See it in use by [US President Barack Obama on an iPad](http://www.youtube.com/watch?v=2HfgGDOZPCQ&feature=player_embedded#t=1992s)!
  * Configuration file and argument driven (see
 [example here](machine_types/watercolorbot.ini)), allows for server
-customization to fit *almost* any style of bot.
+customization to fit *almost* any style of bot using the EBB.
 
 ## Problems?
 ***Stuck on something?*** Submit an issue! Click the
