@@ -99,6 +99,7 @@ var pen  = {
   x: 0, // Assume we start in top left corner
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
+  busy: false,
   tool: 'color0',
   lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
@@ -111,10 +112,9 @@ function serialPortReadyCallback() {
   // Start express hosting the site from "webroot" folder on the given port
   server.listen(gConf.get('httpPort'));
   app.configure(function(){
-    app.use("/", express.static(__dirname + '/webroot'));
     app.use(express.bodyParser());
   });
-  console.log('CNC server listening on localhost:' + gConf.get('httpPort'));
+  console.log('CNC server API listening on localhost:' + gConf.get('httpPort'));
 
   // Set initial EBB values from Config
   // SERVO
@@ -485,7 +485,7 @@ function serialPortReadyCallback() {
     }
   }
 
-  // BLOCKING SERIAL READ/WRITE ================================================
+  // SERIAL READ/WRITE ================================================
   function serialCommand(command, callback){
     console.log('Executing serial command: ' + command);
     if (!pen.simulation) {
