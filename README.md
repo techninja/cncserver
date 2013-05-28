@@ -9,9 +9,9 @@ staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
 ## Installation
 
 #### Preamble: User or Developer?
-CNC Server provides the API used by the WaterColorBot, but **if you're looking to
-just get your bot up and running, you should head over to the main
-[WaterColorBot page](http://github.com/techninja/watercolorbot) and download the
+CNC Server provides the API used by the WaterColorBot and its program RoboPaint,
+but **if you're looking to just get your bot up and running, you should head over
+to the main [RoboPaint page](http://github.com/techninja/robopaint) and download the
 installer for your system.**
 
 If you're a developer looking to make your own API client or interface, then
@@ -116,5 +116,5 @@ will be merged into the project!
 
 All code MIT licensed. Created by TechNinja, with support and collaboration from
 [Evil Mad Scientist](http://evilmadscientist.com). Don't forget, you can
-discover more crazy more maker fun with
+discover more crazy maker fun with
 [Sylvia's Super-Awesome Maker Show](http://sylviashow.com)!
