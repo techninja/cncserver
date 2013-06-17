@@ -138,7 +138,6 @@ if (!module.parent) {
   exports.start = function(options) {
     connectSerial({
       success: function() { // Successfully connected
-        serialPortReadyCallback();
         if (options.success) options.success();
       },
       error: function(info) { // Error during connection attempt
@@ -165,12 +164,10 @@ if (!module.parent) {
   exports.continueSimulation = simulationModeInit;
 
   // Get available serial ports
-  exports.getPorts = function() {
-    var p = {};
+  exports.getPorts = function(cb) {
     require("serialport").list(function (err, ports) {
-      p = ports;
+      cb(ports);
     });
-    return p;
   }
 
 
