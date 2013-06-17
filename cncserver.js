@@ -3,6 +3,22 @@
  * Supports EiBotBoart for Eggbot, Ostrich Eggbot and Sylvia's Super-Awesome
  * WaterColorBot
  *
+ * This script can be run standalone via 'node cncserver.js' with command line
+ * options as described in the readme, or as a module: example shown:
+ *
+ * var cncserver = require('cncserver');
+ *
+ * cncserver.conf.global.overrides({
+ *   httpPort: 1234,
+ *   swapMotors: true
+ * });
+ *
+ * cncserver.start({
+ *   error: function callback(err){ // ERROR! },
+ *   success: function callback(){ // SUCCESS! },
+ *   disconnect: function callback(){ //BOT DISCONNECTED! }
+ * };
+ *
  */
 
 // REQUIRES ====================================================================
@@ -18,6 +34,17 @@ var botConf = new nconf.Provider();
 // Pull conf from env, or arguments
 gConf.env().argv();
 
+// STATE Variables
+var pen  = {
+  x: 0, // Assume we start in top left corner
+  y: 0,
+  state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
+  busy: false,
+  tool: 'color0',
+  lastDuration: 0, // Holds the last movement timing in milliseconds
+  distanceCounter: 0, // Holds a running tally of distance travelled
+  simulation: 0 // Fake everything and act like it's working, no serial
+}
 // Pull conf from file
 var configPath = path.resolve(__dirname, 'config.ini');
 gConf.use('file', {
@@ -86,43 +113,94 @@ var BOT = {
 // INTIAL SETUP ================================================================
 var app = express();
 var server = require('http').createServer(app);
-
-// Serial specific setup
 var serialPort = false;
 var SerialPort = require("serialport").SerialPort;
 
-// Attempt Initial Serial Connection
-connectSerial(true);
 
-// STATE Variables
-var pen  = {
-  x: 0, // Assume we start in top left corner
-  y: 0,
-  state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
-  busy: false,
-  tool: 'color0',
-  lastDuration: 0, // Holds the last movement timing in milliseconds
-  distanceCounter: 0, // Holds a running tally of distance travelled
-  simulation: 0 // Fake everything and act like it's working, no serial
+// Only if we're running standalone... try to start the server immediately!
+if (!module.parent) {
+  // Attempt Initial Serial Connection
+  connectSerial({
+    error: function() {
+      console.log('CONNECTSERIAL ERROR!');
+      simulationModeInit();
+      serialPortReadyCallback();
+    },
+    connect: function(){
+      //console.log('CONNECTSERIAL CONNECT!');
+      serialPortReadyCallback();
+    },
+    disconnect: serialPortCloseCallback
+  });
+
+} else { // Export the module's useful API functions!
+  // Connect to serial and start server
+  exports.start = function(options) {
+    connectSerial({
+      success: function() { // Successfully connected
+        serialPortReadyCallback();
+        if (options.success) options.success();
+      },
+      error: function(info) { // Error during connection attempt
+        if (options.error) options.error(info);
+      },
+      connect: function() { // Callback for first serial connect, or re-connect
+        serialPortReadyCallback();
+        if (options.connect) options.connect();
+      },
+      disconnect: function() { // Callback for serial disconnect
+        serialPortCloseCallback();
+        if (options.disconnect) options.disconnect();
+      }
+    });
+  }
+
+  // Direct configuration access (use the getters and override setters!)
+  exports.conf = {
+    bot: botConf,
+    global: gConf
+  }
+
+  // Continue with simulation mode
+  exports.continueSimulation = simulationModeInit;
+
+  // Get available serial ports
+  exports.getPorts = function() {
+    var p = {};
+    require("serialport").list(function (err, ports) {
+      p = ports;
+    });
+    return p;
+  }
+
+
 }
 
-// No events are bound till we have a real serial connection
-function serialPortReadyCallback() {
-
-  // Start express hosting the site from "webroot" folder on the given port
-  server.listen(gConf.get('httpPort'));
-  app.configure(function(){
-    app.use(express.bodyParser());
-  });
-  console.log('CNC server API listening on localhost:' + gConf.get('httpPort'));
-
-  // Set initial EBB values from Config
-  // SERVO
+// Grouping function to send off the initial EBB configuration for the bot
+function sendBotConfig() {
   console.log('Sending EBB config...')
   serialCommand('SC,4,' + botConf.get('servo:min'));
   serialCommand('SC,5,' + botConf.get('servo:max'));
   serialCommand('SC,10,' + botConf.get('servo:rate'));
   serialCommand('EM,' + botConf.get('speed:precision'));
+}
+
+// Start express HTTP server for API on the given port
+function startServer() {
+  // TODO: Add callbacks for errors like eAddrInUse
+  server.listen(gConf.get('httpPort'));
+  app.configure(function(){
+    app.use(express.bodyParser());
+  });
+}
+
+// No events are bound till we have attempted a serial connection
+function serialPortReadyCallback() {
+
+  console.log('CNC server API listening on localhost:' + gConf.get('httpPort'));
+
+  sendBotConfig();
+  startServer();
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
@@ -267,7 +345,7 @@ function serialPortReadyCallback() {
       }
 
       if (inPen.simulation == 0) { // Attempt to connect to serial
-        connectSerial(false, callback);
+        connectSerial({complete: callback});
       } else {  // Turn off serial!
         // TODO: Actually nullify connection.. no use case worth it yet
         simulationModeInit();
@@ -487,13 +565,14 @@ function serialPortReadyCallback() {
 
   // SERIAL READ/WRITE ================================================
   function serialCommand(command, callback){
-    console.log('Executing serial command: ' + command);
+    var word = !pen.simulation ? 'Executing' : 'Simulating';
+    console.log(word + ' serial command: ' + command);
     if (!pen.simulation) {
       serialPort.write(command + "\r", function(err, results) {
         // TODO: Better Error Handling
         if (err) {
           // What kind of error is this anyways? :P
-          console.log('err ' + err);
+          console.log('Serial Execution Error!!: ' + err);
           if (callback) callback(false);
         } else {
           if (callback) callback(true);
@@ -503,7 +582,7 @@ function serialPortReadyCallback() {
       if (callback) callback(true);
     }
   }
-};
+}
 
 // Event callback for serial close
 function serialPortCloseCallback() {
@@ -522,8 +601,9 @@ function simulationModeInit() {
 }
 
 // Helper function to manage initial serial connection and reconnection
-function connectSerial(init, callback){
+function connectSerial(options){
   var autoDetect = false;
+  var stat = false;
 
   // Attempt to auto detect EBB Board via PNPID
   if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
@@ -547,25 +627,26 @@ function connectSerial(init, callback){
     // Try to connect to serial, or exit with error codes
     if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
       console.log(botConf.get('controller') + " not found. Are you sure it's connected? Error #22");
-      simulationModeInit();
-      if (init) serialPortReadyCallback();
-      if (callback) callback(false);
+      if (options.error) options.error('Port not found.');
     } else {
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
         serialPort = new SerialPort(gConf.get('serialPath'), {baudrate : Number(botConf.get('baudRate'))});
-        serialPort.on("open", serialPortReadyCallback);
-        serialPort.on("close", serialPortCloseCallback);
+
+        if (options.connect) serialPort.on("open", options.connect);
+        if (options.disconnect) serialPort.on("close", options.disconnect);
+
         console.log('Serial connection open at ' + botConf.get('baudRate') + 'bps');
         pen.simulation = 0;
-        if (callback) callback(true);
+        if (options.success) options.success();
       } catch(e) {
         console.log("Serial port failed to connect. Is it busy or in use? Error #10");
         console.log('SerialPort says:', e);
-        simulationModeInit();
-        if (init) serialPortReadyCallback();
-        if (callback) callback(false);
+        if (options.error) options.error(e);
       }
     }
+
+    // Complete callback
+    if (options.complete) options.complete(stat)
   });
 }
