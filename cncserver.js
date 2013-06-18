@@ -163,6 +163,9 @@ if (!module.parent) {
   // Continue with simulation mode
   exports.continueSimulation = simulationModeInit;
 
+  // Export Serial Ready Init (starts webserver)
+  exports.serialReadyInit = serialPortReadyCallback;
+
   // Get available serial ports
   exports.getPorts = function(cb) {
     require("serialport").list(function (err, ports) {
