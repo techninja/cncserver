@@ -184,11 +184,14 @@ function sendBotConfig() {
 
 // Start express HTTP server for API on the given port
 function startServer() {
-  // TODO: Add callbacks for errors like eAddrInUse
   server.listen(gConf.get('httpPort'));
   app.configure(function(){
     app.use(express.bodyParser());
   });
+
+  // Properly close down server on fail/close
+  process.on('uncaughtException', function(err){ server.close() });
+  process.on('SIGTERM', function(err){ server.close() });
 }
 
 // No events are bound till we have attempted a serial connection
