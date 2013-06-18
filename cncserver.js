@@ -559,25 +559,25 @@ function serialPortReadyCallback() {
       })
     }
   }
+}
 
-  // SERIAL READ/WRITE ================================================
-  function serialCommand(command, callback){
-    var word = !pen.simulation ? 'Executing' : 'Simulating';
-    console.log(word + ' serial command: ' + command);
-    if (!pen.simulation) {
-      serialPort.write(command + "\r", function(err, results) {
-        // TODO: Better Error Handling
-        if (err) {
-          // What kind of error is this anyways? :P
-          console.log('Serial Execution Error!!: ' + err);
-          if (callback) callback(false);
-        } else {
-          if (callback) callback(true);
-        }
-      });
-    } else {
-      if (callback) callback(true);
-    }
+// SERIAL READ/WRITE ================================================
+function serialCommand(command, callback){
+  var word = !pen.simulation ? 'Executing' : 'Simulating';
+  console.log(word + ' serial command: ' + command);
+  if (!pen.simulation) {
+    serialPort.write(command + "\r", function(err, results) {
+      // TODO: Better Error Handling
+      if (err) {
+        // What kind of error is this anyways? :P
+        console.log('Serial Execution Error!!: ' + err);
+        if (callback) callback(false);
+      } else {
+        if (callback) callback(true);
+      }
+    });
+  } else {
+    if (callback) callback(true);
   }
 }
 
