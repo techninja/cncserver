@@ -616,6 +616,9 @@ function connectSerial(options){
       portNames[portID] = ports[portID].comName;
       if (ports[portID].pnpId.indexOf(botConf.get('controller')) !== -1 && autoDetect) {
         gConf.set('serialPath', portNames[portID]);
+      } else if (portNames[portID].indexOf('usbmodem') !== -1 && autoDetect) {
+        // Cheap hack to detect on Mac!
+        gConf.set('serialPath', portNames[portID]);
       }
     }
 
