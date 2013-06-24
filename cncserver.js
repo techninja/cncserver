@@ -197,15 +197,37 @@ function sendBotConfig() {
 }
 
 // Start express HTTP server for API on the given port
+var serverStarted = false;
 function startServer() {
-  server.listen(gConf.get('httpPort'));
+  // Only run start server once...
+  if (serverStarted) return;
+  serverStarted = true;
+
+  // Catch Addr in Use Error
+  server.on('error', function (e) {
+    if (e.code == 'EADDRINUSE') {
+      console.log('Address in use, retrying...');
+      setTimeout(function () {
+        try {
+          server.close();
+        } catch(e) {
+          console.log("Whoops, server wasn't running.. Oh well.")
+        }
+
+        server.listen(gConf.get('httpPort'));
+      }, 1000);
+    }
+  });
+
+
+  server.listen(gConf.get('httpPort'), function(){
+    // Properly close down server on fail/close
+    process.on('uncaughtException', function(err){ server.close() });
+    process.on('SIGTERM', function(err){ server.close() });
+  });
   app.configure(function(){
     app.use(express.bodyParser());
   });
-
-  // Properly close down server on fail/close
-  process.on('uncaughtException', function(err){ server.close() });
-  process.on('SIGTERM', function(err){ server.close() });
 }
 
 // No events are bound till we have attempted a serial connection
