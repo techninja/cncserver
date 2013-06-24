@@ -173,6 +173,17 @@ if (!module.parent) {
     });
   }
 
+  // Send direct setup var command
+  exports.sendSetup = function(id, value) {
+    serialCommand('SC,' + id + ',' + value);
+  }
+
+  // Set pen direct command
+  exports.setPen = function(value) {
+    pen.state = value;
+    serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
+  }
+
 
 }
 
