@@ -57,7 +57,7 @@ gConf.defaults({
   httpPort: 4242,
   swapMotors: false,
   invertAxis: {
-    x: true,
+    x: false,
     y: false
   },
   serialPath: "{auto}", // Empty for auto-config
