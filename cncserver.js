@@ -658,6 +658,9 @@ function connectSerial(options){
       } else if (portNames[portID].indexOf('usbmodem') !== -1 && autoDetect) {
         // Cheap hack to detect on Mac!
         gConf.set('serialPath', portNames[portID]);
+      } else if (portNames[portID].indexOf('COM') !== -1 && autoDetect && portID != 0) {
+        // Cheap hack to detect on PC. What the heck? The hacks are multiplying!
+        gConf.set('serialPath', portNames[portID]);
       }
     }
 
