@@ -519,7 +519,10 @@ function serialPortReadyCallback() {
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
     var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
-    var duration = parseInt(distance / speed * 1000); // How many steps a second?
+    var duration = Math.abs(Math.round(distance / speed * 1000)); // How many steps a second?
+
+    // Don't pass a duration of 0! Makes the EBB DIE!
+    if (duration == 0) duration = 1;
 
     // Save the duration state
     pen.lastDuration = duration;
