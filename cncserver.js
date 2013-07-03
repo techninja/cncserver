@@ -63,7 +63,7 @@ gConf.defaults({
   serialPath: "{auto}", // Empty for auto-config
   botType: 'watercolorbot',
   botOverride: {
-    info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234",
+    info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
 });
 
@@ -492,7 +492,7 @@ function serialPortReadyCallback() {
   // Returns distance moved, in steps
   function movePenAbs(point, callback, immediate) {
 
-    // Something reall bad happened here...
+    // Something really bad happened here...
     if (isNaN(point.x) || isNaN(point.y)){
       console.error('INVALID Move pen input, given:', point);
       callback(false);
