@@ -411,9 +411,13 @@ function serialPortReadyCallback() {
 
         // Pen lift / drop
         if (callback) {
+          var servoDur = botConf.get('servo:duration');
+
+          // Force the EBB to "wait" (block buffer) for the pen change state
+          serialCommand('SM,' + servoDur + ',0,0');
           setTimeout(function(){
             callback(data);
-          }, botConf.get('servo:duration'));
+          }, Math.max(servoDur - gConf.get('bufferLatencyOffset'), 0));
         }
       });
 
