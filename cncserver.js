@@ -61,6 +61,7 @@ gConf.defaults({
     y: false
   },
   serialPath: "{auto}", // Empty for auto-config
+  bufferLatencyOffset: 50, // Number of ms to move each command closer together
   botType: 'watercolorbot',
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
@@ -548,9 +549,12 @@ function serialPortReadyCallback() {
       if (immediate == 1) {
         callback(data);
       } else {
+        // Set the timeout to occur sooner so the next command will execute
+        // before the other is actually complete. This will push into the buffer
+        // and allow for far smoother move runs.
         setTimeout(function(){
           callback(data);
-        }, duration);
+        }, Math.max(duration - gConf.get('bufferLatencyOffset'), 0));
       }
     });
 
