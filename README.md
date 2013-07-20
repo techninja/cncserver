@@ -6,6 +6,15 @@ the awesome pen plotter that paints with watercolors, thought up by
 [MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
 staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
 
+
+
+IMPORTANT NOTE: **** THIS IS PRE-RELEASE SOFTWARE ****
+Features, specifications, and interfaces may change frequently and without
+warning or remorse prior to our first official release.  
+First official release is currently estimated at mid-September, 2013.
+
+
+
 ## Installation
 
 #### Preamble: User or Developer?
