@@ -1,4 +1,4 @@
-# CNC Server API
+# CNC Server API v1
 
 This file defines and documents all the available RESTful API resources and
 configuration for [`cncserver.js`](cncserver.js). RESTful practices are all HTTP
@@ -35,7 +35,7 @@ pen, so it will include x,y absolute step position, which you should ignore.
 
 #### Request
 ```
-GET /pen
+GET /v1/pen
 ```
 
 #### Response
@@ -70,7 +70,7 @@ position and state in separate requests. See issue #16 for status.***
 
 #### Request Example (set state)
 ```
-PUT /pen
+PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -81,7 +81,7 @@ Content-Type: application/json; charset=UTF-8
 
 #### Request Example (set position)
 ```
-PUT /pen
+PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -93,7 +93,7 @@ Content-Type: application/json; charset=UTF-8
 
 #### Request Example (reset distance counter)
 ```
-PUT /pen
+PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -133,7 +133,7 @@ Parks the pen, as you cannot move pen outside of draw area using PUT.
 
 #### Request
 ```
-DELETE /pen
+DELETE /v1/pen
 ```
 
 #### Response
@@ -161,7 +161,7 @@ Lists all tools machine names in the device's tool configuration list.
 
 #### Request
 ```
-GET /tools
+GET /v1/tools
 ```
 
 ### Response
@@ -188,7 +188,7 @@ given device, request finishes when toolchange is complete. Will return a
 
 #### Request
 ```
-PUT /tools/color1
+PUT /v1/tools/color1
 ```
 
 ### Response
@@ -217,7 +217,7 @@ until this is called.
 
 #### Request
 ```
-DELETE /motors
+DELETE /v1/motors
 ```
 
 #### Response
@@ -241,7 +241,7 @@ relative offset reset without needing to restart the server.
 
 #### Request
 ```
-PUT /motors
+PUT /v1/motors
 Content-Type: application/json; charset=UTF-8
 
 {

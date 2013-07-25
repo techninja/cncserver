@@ -241,7 +241,7 @@ function serialPortReadyCallback() {
 
   // CNC Server API ============================================================
   // Return/Set PEN state  API =================================================
-  app.all("/pen", function(req, res){
+  app.all("/v1/pen", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
     if (req.route.method == 'get') {
@@ -283,7 +283,7 @@ function serialPortReadyCallback() {
   });
 
   // Return/Set Motor state API ================================================
-  app.all("/motors", function(req, res){
+  app.all("/v1/motors", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
     // Disable/unlock motors
@@ -321,7 +321,7 @@ function serialPortReadyCallback() {
   });
 
   // Get/Change Tool API ================================================
-  app.all("/tools", function(req, res){
+  app.all("/v1/tools", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
     var toolName = req.params.tool;
@@ -334,7 +334,7 @@ function serialPortReadyCallback() {
     }
   });
 
-  app.all("/tools/:tool", function(req, res){
+  app.all("/v1/tools/:tool", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
 
     var toolName = req.params.tool;
