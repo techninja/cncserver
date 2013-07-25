@@ -66,7 +66,7 @@ worked, or has been lost. Put a value of 0 to attempt to reconnect.
 
 ### PUT /pen
 Allows for direct setting of state and position. ***Currently, you must set
-position and state in separate requests. See issue #16 for status.***
+position and state in separate requests. See issue [#16](https://github.com/techninja/cncserver/issues/16) for status.***
 
 #### Request Example (set state)
 ```
@@ -116,7 +116,7 @@ Content-Type: application/json; charset=UTF-8
 size, as long as the aspect ratio matches the output, you shouldn't get any
 stretching in the final image.
  * Pen state will eventually support a range of values between 0 and 1
-(see issue #18), but for now it will be forced to either 0 or 1 based on input.
+(see issue [#18](https://github.com/techninja/cncserver/issues/18)), but for now it will be forced to either 0 or 1 based on input.
  * Returns full pen status on success, no matter what was sent or changed.
  * Tools can't be changed here. See `/tools` resource below.
  * Request will not complete until movement is actually complete, though you can
