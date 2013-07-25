@@ -182,9 +182,9 @@ Content-Type: application/json; charset=UTF-8
 
 
 ### PUT /tools/{toolname}
-Sets the tool for the pen. Will make all movements required to do so for the
-given device, request finishes when toolchange is complete. Will return a
-`404 Not Found` if tool machine name isn't valid.
+Sets the tool for the pen. Will make all ***required movements**** for the given
+device's tool change operation, request finishes when tool change is complete.
+Will return a `404 Not Found` if tool machine name isn't valid.
 
 #### Request
 ```
@@ -201,8 +201,13 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 ##### Usage Notes
+ * **"required movements"** for each tool change depend on server configuration
+for each tool. For example, WaterColorBot tool changes all follow exactly this
+pattern: "pen up, move to position, pen down, wiggle, pen up". The ability to
+change this is planned in issue [#39](https://github.com/techninja/cncserver/issues/39)
  * Consecutive requests to the same tool will ***not*** act any differently than
-a request to change to a new tool.
+a request to change to a new tool, and will therefore repeat all required
+movements.
 
 
 
