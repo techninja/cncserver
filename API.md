@@ -22,7 +22,7 @@ It allows for easy testing of any RESTful HTTP method to even remote servers.
 ![f1a930d0641920f074aeb32ebc512408](https://f.cloud.github.com/assets/320747/920613/894669a2-fee1-11e2-8349-dc6ad8cd805d.png)
 
 An easy to use Postman JSON config file is now available in the repo for
-[here]('https://raw.github.com/techninja/cncserver/master/cncserver_api.postman.json').
+[here](https://raw.github.com/techninja/cncserver/master/cncserver_api.postman.json).
 This supplies all the current API resources in a simple click and send test
 environment, just import, and setup two global variables `cncserver-host` and
 `cncserver-port`. If running on just one computer, these will be by default
