@@ -1,4 +1,4 @@
-# CNC Server API v1
+# CNC Server API [v1]
 
 This file defines and documents all the available RESTful API resources and
 configuration for [`cncserver.js`](cncserver.js). RESTful practices are all HTTP
@@ -18,18 +18,27 @@ port of `4242`.
 If you want to test any of these, try out
 [Postman for Google Chrome](https://chrome.google.com/webstore/detail/postman-rest-client/fdmmgilgnpjigdojojpjoooidkmcomcm).
 It allows for easy testing of any RESTful HTTP method to even remote servers.
-Postman JSON config file for cncserver API coming soon!
 
-***NOTE** Any comments visible in responses in the documentation below are just
-to help make it easier to understand what's being sent. Comments are
-*not allowed* in JSON data and will not exist in returned data.
+![f1a930d0641920f074aeb32ebc512408](https://f.cloud.github.com/assets/320747/920613/894669a2-fee1-11e2-8349-dc6ad8cd805d.png)
+
+An easy to use Postman JSON config file is now available in the repo for
+[here]('https://raw.github.com/techninja/cncserver/master/cncserver_api.postman.json').
+This supplies all the current API resources in a simple click and send test
+environment, just import, and setup two global variables `cncserver-host` and
+`cncserver-port`. If running on just one computer, these will be by default
+`localhost` and `4242` respectively.
+
+
+***NOTE:*** *Any comments visible in responses/JSON payload in the documentation
+below are just to help make it easier to understand what's being sent. Comments
+are *not allowed* in JSON data and will not exist in returned data.*
 
 ## 1. Pen
 The `pen` resource is meant to act as the input/output for anything having
 directly to do with drawing or interacting with the "pen". For the
 WaterColorBot, it could be a paintbrush, or a pencil, or even an actual pen.
 
-### GET /pen
+### GET /v1/pen
 Gets the current pen status. This is a direct dump of the internal state of the
 pen, so it will include x,y absolute step position, which you should ignore.
 
@@ -64,7 +73,7 @@ handy realtime counter for steps when pen is down.
 worked, or has been lost. Put a value of 0 to attempt to reconnect.
 
 
-### PUT /pen
+### PUT /v1/pen
 Allows for direct setting of state and position. ***Currently, you must set
 position and state in separate requests. See issue [#16](https://github.com/techninja/cncserver/issues/16) for status.***
 
@@ -128,7 +137,7 @@ position. In those cases, the response will return a `202 Accepted` instead of a
  * `lastDuration` in return data can be used in conjunction with ignoreTimeout
 to allow the client to manage timings instead of waiting on the server.
 
-### DELETE /pen
+### DELETE /v1/pen
 Parks the pen, as you cannot move pen outside of draw area using PUT.
 
 #### Request
@@ -156,7 +165,7 @@ or colors for the WaterColorBot. The server may not know what exact type of tool
 its using as tool sets can be changed out, as long as tool positions don't
 change, they can stay configured server-side.
 
-### GET /tools
+### GET /v1/tools
 Lists all tools machine names in the device's tool configuration list.
 
 #### Request
@@ -181,7 +190,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 
-### PUT /tools/{toolname}
+### PUT /v1/tools/{toolname}
 Sets the tool for the pen. Will make all ***required movements**** for the given
 device's tool change operation, request finishes when tool change is complete.
 Will return a `404 Not Found` if tool machine name isn't valid.
@@ -215,7 +224,7 @@ movements.
 Provides **low level** access to stepper motor driver, and is placeholder for
 more low level functions in the future.
 
-### DELETE /motors
+### DELETE /v1/motors
 Turn off/unlock the motors. This allows for the motors to be moved by hand.
 After having moved programmatically, the motors are locked to that position
 until this is called.
@@ -239,7 +248,7 @@ Content-Type: application/json; charset=UTF-8
  * Motors will be enabled again as soon as any command that moves them is run.
 
 
-### PUT /motors
+### PUT /v1/motors
 Allows direct setting of motor details, currently only supports resetting motor
 offsets. Use after disabling the motors and parking by hand to ensure proper
 relative offset reset without needing to restart the server.
