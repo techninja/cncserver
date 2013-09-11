@@ -227,6 +227,7 @@ function startServer() {
     process.on('SIGTERM', function(err){ server.close() });
   });
   app.configure(function(){
+    app.use("/", express.static(__dirname + '/example'));
     app.use(express.bodyParser());
   });
 }

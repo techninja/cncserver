@@ -1,0 +1,59 @@
+<html>
+  <head>
+    <script src="jquery.js"></script>
+    <script src="cncserver.client.api.js"></script>
+    <script src="cncserver.client.commander.js"></script>
+  </head>
+<body>
+
+  <button id="diagtest">Run Diag Test</button>
+  <button id="unlock">Unlock</button>
+
+<script>
+  var runningTest = false;
+
+
+  $('button').click(function(){
+    var id = this.id;
+    switch(id) {
+      case 'diagtest':
+        runningTest = !runningTest;
+        runTest();
+        break;
+      case 'unlock':
+        cncserver.api.motors.unlock();
+        break;
+    }
+  });
+
+
+  function runTest(){
+    if (!runningTest) return;
+    cncserver.api.pen.move({x:75,y:75}, function(){
+      cncserver.api.pen.move({x:65,y:0}, function(){
+        cncserver.api.pen.move({x:75,y:100}, function(){
+          cncserver.api.pen.move({x:100,y:0}, function(){
+            cncserver.api.pen.park(function(){
+              runTest();
+            });
+          });
+        });
+      });
+    });
+  }
+
+  /*var run = cncserver.cmd.run;
+
+  run([
+    "up",
+    "down",
+  ]);
+  */
+
+
+</script>
+
+
+</body>
+</html>
+
