@@ -55,6 +55,7 @@ gConf.use('file', {
 // Set Global Config Defaults
 gConf.defaults({
   httpPort: 4242,
+  httpLocalOnly: true,
   swapMotors: false,
   invertAxis: {
     x: false,
@@ -204,6 +205,8 @@ function startServer() {
   if (serverStarted) return;
   serverStarted = true;
 
+  var hostname = gConf.get('httpLocalOnly') ? 'localhost' : null;
+
   // Catch Addr in Use Error
   server.on('error', function (e) {
     if (e.code == 'EADDRINUSE') {
@@ -215,17 +218,18 @@ function startServer() {
           console.log("Whoops, server wasn't running.. Oh well.")
         }
 
-        server.listen(gConf.get('httpPort'));
+        server.listen(gConf.get('httpPort'), hostname);
       }, 1000);
     }
   });
 
 
-  server.listen(gConf.get('httpPort'), function(){
+  server.listen(gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
     process.on('uncaughtException', function(err){ server.close() });
     process.on('SIGTERM', function(err){ server.close() });
   });
+
   app.configure(function(){
     app.use("/", express.static(__dirname + '/example'));
     app.use(express.bodyParser());
@@ -235,7 +239,10 @@ function startServer() {
 // No events are bound till we have attempted a serial connection
 function serialPortReadyCallback() {
 
-  console.log('CNC server API listening on localhost:' + gConf.get('httpPort'));
+  console.log('CNC server API listening on ' +
+    (gConf.get('httpLocalOnly') ? 'localhost' : '*') +
+    ':' + gConf.get('httpPort')
+  );
 
   sendBotConfig();
   startServer();
