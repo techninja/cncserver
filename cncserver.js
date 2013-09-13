@@ -621,6 +621,11 @@ function serialPortReadyCallback() {
 
 // SERIAL READ/WRITE ================================================
 function serialCommand(command, callback){
+  if (!serialPort.write && !pen.simulation) { // Not ready to write to serial!
+    if (callback) callback(true);
+    return;
+  }
+
   var word = !pen.simulation ? 'Executing' : 'Simulating';
   console.log(word + ' serial command: ' + command);
   if (!pen.simulation) {
