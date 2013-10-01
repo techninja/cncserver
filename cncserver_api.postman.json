@@ -6,6 +6,8 @@
         "cfd1b0a7-6b78-5120-fe2e-fcfba5c3b09a",
         "72b33574-693f-cf8d-0aef-d14b4ba06162",
         "e85829d1-c897-636a-687f-41c659f12ee8",
+        "89941fd0-9ccd-1b1a-3b81-13112ae7c917",
+        "d7d4c368-2f3b-c666-ff86-3d91b4aca87d",
         "77c30fc7-8884-e099-f535-d354429b3ad5",
         "cb9638bb-94a1-9fd9-c910-8eb97a8f95e9",
         "12044a31-0d86-f367-26d2-96d7a0d918d6",
@@ -131,6 +133,20 @@
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "89941fd0-9ccd-1b1a-3b81-13112ae7c917",
+            "name": "Pen: Up Halfway",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/pen",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"state\": 0.50\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1380610903028
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
             "id": "8bd9b3dd-fb3a-bf4d-0e79-5835ad987b86",
             "name": "Tools: Change",
             "description": "",
@@ -170,6 +186,20 @@
             "timestamp": 0,
             "version": 2,
             "time": 1375823851308
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "d7d4c368-2f3b-c666-ff86-3d91b4aca87d",
+            "name": "Pen: Down to Wash",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/pen",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"state\": \"wash\"\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1380610973747
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
