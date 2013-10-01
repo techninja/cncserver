@@ -39,6 +39,7 @@ var pen  = {
   x: 0, // Assume we start in top left corner
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
+  height: 0, // Last set pen height in output servo value
   busy: false,
   tool: 'color0',
   lastDuration: 0, // Holds the last movement timing in milliseconds
@@ -175,25 +176,17 @@ if (!module.parent) {
     });
   }
 
-  // Send direct setup var command
-  exports.sendSetup = function(id, value) {
-    serialCommand('SC,' + id + ',' + value);
-  }
-
   // Set pen direct command
   exports.setPen = function(value) {
     pen.state = value;
     serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
   }
-
-
+ exports.directSetPen=function(){};
 }
 
 // Grouping function to send off the initial EBB configuration for the bot
 function sendBotConfig() {
   console.log('Sending EBB config...')
-  serialCommand('SC,4,' + botConf.get('servo:min'));
-  serialCommand('SC,5,' + botConf.get('servo:max'));
   serialCommand('SC,10,' + botConf.get('servo:rate'));
   serialCommand('EM,' + botConf.get('speed:precision'));
 }
@@ -273,7 +266,7 @@ function serialPortReadyCallback() {
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       console.log('Parking Pen...');
-      setPen({state: 0});
+      setHeight('up');
       setPen({x: 0, y:0, park: true}, function(stat){
         if (!stat) {
           res.status(500).send(JSON.stringify({
@@ -369,6 +362,13 @@ function serialPortReadyCallback() {
 
 
   // UTILITY FUNCTIONS =======================================================
+
+  // Send direct setup var command
+  exports.sendSetup = sendSetup;
+  function sendSetup(id, value) {
+    serialCommand('SC,' + id + ',' + value);
+  }
+
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
     pen.distanceCounter = Number(pen.distanceCounter);
@@ -399,37 +399,13 @@ function serialPortReadyCallback() {
       return;
     }
 
-    // Validate inPen (just force invalid to be valid for now)
-    if (inPen.state !== undefined){
-      // Future will support non-integers, but for now, 0 or 1
-      // TODO: Add support for pen up/down percentage
-      inPen.state = Math.abs(parseInt(inPen.state));
-      inPen.state = inPen.state > 1 ?  1 : inPen.state;
-    } else {
-      inPen.state = pen.state;
-    }
 
     // State has changed
-    if (inPen.state != pen.state) {
-      // Flop state value on write
-      serialCommand('SP,' + (pen.state == 1 ? 1 : 0), function(data){
-        if (data) {
-          pen.state = inPen.state;
-        }
-
-        // Pen lift / drop
-        if (callback) {
-          var servoDur = botConf.get('servo:duration');
-
-          // Force the EBB to "wait" (block buffer) for the pen change state
-          serialCommand('SM,' + servoDur + ',0,0');
-          setTimeout(function(){
-            callback(data);
-          }, Math.max(servoDur - gConf.get('bufferLatencyOffset'), 0));
-        }
-      });
-
-      return;
+    if (typeof inPen.state != "undefined") {
+      if (inPen.state != pen.state) {
+        setHeight(inPen.state, callback);
+        return;
+      }
     }
 
     // Absolute positions are set
@@ -477,22 +453,99 @@ function serialPortReadyCallback() {
     if (callback) callback(true);
   }
 
+  // Set servo position
+  exports.setHeight = setHeight;
+  function setHeight(height, callback) {
+    var fullRange = false; // Whether to use the full min/max range
+    var min = parseInt(botConf.get('servo:min'));
+    var max = parseInt(botConf.get('servo:max'));
+    var range = max - min;
+    var stateValue = null; // Placeholder for what to set pen state to
+    var p = botConf.get('servo:presets');
+    var servoDuration = botConf.get('servo:duration');
+
+    // Validate Height, and conform to a bottom to top based percentage 0 to 100
+    if (isNaN(parseInt(height))){ // Textual position!
+      if (p[height]) {
+        stateValue = height;
+        height = parseFloat(p[height]);
+      } else { // Textual expression not found, default to UP
+        height = p.up;
+        stateValue = 'up';
+      }
+      fullRange = true;
+    } else { // Numerical position (0 to 1), moves between up (0) and paint (1)
+      height = Math.abs(parseFloat(height));
+      height = height > 1 ?  1 : height; // Limit to 1
+      stateValue = height;
+
+      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
+      height = parseInt((1 - height) * 1000) / 10;
+    }
+
+    // Lower the range when using 0 to 1 values
+    if (!fullRange) {
+      min = ((p.paint / 100) * range) + min;
+      max = ((p.up / 100) * range) + parseInt(botConf.get('servo:min'));
+
+      range = max - min;
+    }
+
+    // Sanity check incoming height value to 0 to 100
+    height = height > 100 ? 100 : height;
+    height = height < 0 ? 0 : height;
+
+    // Calculate the servo value from percentage
+    height = ((height / 100) * range) + min;
+
+
+    // Pro-rate the duration depending on amount of change
+    if (pen.height) {
+      range = parseInt(botConf.get('servo:max')) - parseInt(botConf.get('servo:min'));
+      servoDuration = Math.round((Math.abs(height - pen.height) / range) * servoDuration)+1;
+    }
+
+    // Store the sent height in the global pen state var
+    pen.height = height;
+
+    // Send a new setup value for the the up position, then trigger "pen up"
+    sendSetup(5, height);
+    serialCommand('SP,0', function(data){
+      if (data) {
+        pen.state = stateValue;
+      }
+
+      // Pen lift / drop
+      if (callback) {
+        // Force the EBB to "wait" (block buffer) for the pen change state
+        serialCommand('SM,' + servoDuration + ',0,0');
+        setTimeout(function(){
+          callback(data);
+        }, Math.max(servoDuration - gConf.get('bufferLatencyOffset'), 0));
+      }
+    });
+  }
+
   // Tool change
   function setTool(toolName, callback) {
     var tool = botConf.get('tools:' + toolName);
 
     console.log('Changing to tool: ' + toolName);
 
+    // Set the height based on what kind of tool it is
+    // TODO: fold this into bot specific tool change logic
+    var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'paint';
+
     // Pen Up
-    setPen({state: 0}, function(){
+    setHeight('up', function(){
       // Move to the tool
       movePenAbs(tool, function(data){
         // Pen down
-        setPen({state: 1}, function(){
+        setHeight(downHeight, function(){
           // Wiggle the brush a bit
           wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations, function(){
             // Put the pen back up when done!
-            setPen({state: 0}, function(){
+            setHeight('up', function(){
               callback(data);
             });
           });

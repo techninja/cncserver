@@ -11,7 +11,7 @@ form encoded, or any other well-known standard, as long as you set the
 `Content-Type` header to match.
 
 In each request example below, the server is assumed to be added to the
-beginning of each resource, E.G.: `GET http://localhost:4242/pen` will `GET` the
+beginning of each resource, E.G.: `GET http://localhost:4242/v1/pen` will `GET` the
 status of the pen from a server plugged into the local computer, at the default
 port of `4242`.
 
@@ -55,11 +55,12 @@ Content-Type: application/json; charset=UTF-8
 {
     "x": 2344,               // Coordinates of drawing position, in steps
     "y: 281,
-    "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)
+    "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)*
+    "height": 12372,         // The last sent servo position height value
     "tool": color2,          // Machine name of last tool
     "lastDuration": 1288     // The duration of the last movement
     "distanceCounter": 231,  // Distance traveled in steps with pen down
-    "simulation": 0      // 0 = pen is real/ready, 1 = Pen is virtual/not connected to bot
+    "simulation": 0          // 0 = pen is real/ready, 1 = Pen is virtual/not connected to bot
 }
 ```
 
@@ -69,21 +70,32 @@ runtime state.
  * tool will default to first tool in toolset at server start, eg `color0`.
  * distanceCounter must be reset/managed via the client, otherwise it's just a
 handy realtime counter for steps when pen is down.
- * Pen simulation mode means that either the serial connection to the bot never
-worked, or has been lost. Put a value of 0 to attempt to reconnect.
+ * Pen simulation mode of 1 means that either the serial connection to the bot
+never worked, or has been lost. `PUT` a value of 0 to attempt to reconnect.
 
 
 ### PUT /v1/pen
 Allows for direct setting of state and position. ***Currently, you must set
 position and state in separate requests. See issue [#16](https://github.com/techninja/cncserver/issues/16) for status.***
 
-#### Request Example (set state)
+#### Request Example (set state #1)
 ```
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
 {
-    "state": 1  // Pen state is from 0 (Up/Off) to 1 (Down/On)
+    "state": 0.75  // Pen state is from 0 (Up/Off) to 1 (Down/On)
+}
+
+```
+
+#### Request Example (set state #2)
+```
+PUT /v1/pen
+Content-Type: application/json; charset=UTF-8
+
+{
+    "state": "wash"  // OR use named presets for simpler use, see list below for more.
 }
 
 ```
@@ -124,8 +136,15 @@ Content-Type: application/json; charset=UTF-8
 & height respectively. This means that you can have your input canvas be any
 size, as long as the aspect ratio matches the output, you shouldn't get any
 stretching in the final image.
- * Pen state will eventually support a range of values between 0 and 1
-(see issue [#18](https://github.com/techninja/cncserver/issues/18)), but for now it will be forced to either 0 or 1 based on input.
+ * Pen state supports any value from 0 to 1 (E.G. `0.75`) that sets the servo as
+a percentage of the range between the nominal use position, and "up".
+ * Pen state named presets are also available as setup in the bot ini file.
+Included with [watercolorbot.ini](machine_types/watercolorbot.ini) are:
+  * `up`, equivalent to a state of 0
+  * `paint`, equivalent to a state of 1 (for painting and getting paint)
+  * `wipe`, default equivalent to a state of ~0.9 (for wiping the brush on water dishes)
+  * `wash`, default equivalent to a state of ~1.2, a height impossible to move to
+via the API without this named preset. Used to squash the bristles down to clean them.
  * Returns full pen status on success, no matter what was sent or changed.
  * Tools can't be changed here. See `/tools` resource below.
  * Request will not complete until movement is actually complete, though you can
