@@ -734,6 +734,7 @@ function connectSerial(options){
 
   require("serialport").list(function (err, ports) {
     var portNames = ['None'];
+    console.log('Full Available Port Data:', ports);
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
       if (ports[portID].pnpId.indexOf(botConf.get('controller')) !== -1 && autoDetect) {
