@@ -737,13 +737,11 @@ function connectSerial(options){
     console.log('Full Available Port Data:', ports);
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
+      // Specific board detect for linux
       if (ports[portID].pnpId.indexOf(botConf.get('controller')) !== -1 && autoDetect) {
         gConf.set('serialPath', portNames[portID]);
-      } else if (portNames[portID].indexOf('usbmodem') !== -1 && autoDetect) {
-        // Cheap hack to detect on Mac!
-        gConf.set('serialPath', portNames[portID]);
-      } else if (portNames[portID].indexOf('COM') !== -1 && autoDetect && portID != 0) {
-        // Cheap hack to detect on PC. What the heck? The hacks are multiplying!
+      // All other OS detect
+      } else if (ports[portID].manufacturer.indexOf(botConf.get('manufacturer')) !== -1 && autoDetect) {
         gConf.set('serialPath', portNames[portID]);
       }
     }
