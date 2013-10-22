@@ -64,6 +64,7 @@ gConf.defaults({
   },
   serialPath: "{auto}", // Empty for auto-config
   bufferLatencyOffset: 50, // Number of ms to move each command closer together
+  debug: false,
   botType: 'watercolorbot',
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
@@ -680,8 +681,11 @@ function serialCommand(command, callback){
     return;
   }
 
-  var word = !pen.simulation ? 'Executing' : 'Simulating';
-  console.log(word + ' serial command: ' + command);
+  if (gConf.get('debug')) {
+    var word = !pen.simulation ? 'Executing' : 'Simulating';
+    console.log(word + ' serial command: ' + command);
+  }
+
   if (!pen.simulation) {
     serialPort.write(command + "\r", function(err, results) {
       // TODO: Better Error Handling
