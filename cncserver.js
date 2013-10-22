@@ -537,13 +537,8 @@ function serialPortReadyCallback() {
     // TODO: fold this into bot specific tool change logic
     var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'paint';
 
-    // If the last tool was water, give it a wipe
-    // TODO: This is left annoying AT wipe height between tool changes, and
-    // should be heavily refactored before being used.
-    var moveHeight = pen.tool.indexOf('water') != -1 ? 'wipe' : 'up';
-
     // Pen Up
-    setHeight(moveHeight, function(){
+    setHeight('up', function(){
       // Move to the tool
       movePenAbs(tool, function(data){
         // Pen down
