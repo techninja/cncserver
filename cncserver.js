@@ -496,7 +496,7 @@ function serialPortReadyCallback() {
     height = height < 0 ? 0 : height;
 
     // Calculate the servo value from percentage
-    height = ((height / 100) * range) + min;
+    height = Math.round(((height / 100) * range) + min);
 
 
     // Pro-rate the duration depending on amount of change
