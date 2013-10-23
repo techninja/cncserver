@@ -210,12 +210,7 @@ function startServer() {
     if (e.code == 'EADDRINUSE') {
       console.log('Address in use, retrying...');
       setTimeout(function () {
-        try {
-          server.close();
-        } catch(e) {
-          console.log("Whoops, server wasn't running.. Oh well.")
-        }
-
+        closeServer();
         server.listen(gConf.get('httpPort'), hostname);
       }, 1000);
     }
@@ -224,14 +219,22 @@ function startServer() {
 
   server.listen(gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
-    process.on('uncaughtException', function(err){ server.close() });
-    process.on('SIGTERM', function(err){ server.close() });
+    process.on('uncaughtException', function(err){ console.log(err); closeServer(); });
+    process.on('SIGTERM', function(err){ console.log(err); closeServer(); });
   });
 
   app.configure(function(){
     app.use("/", express.static(__dirname + '/example'));
     app.use(express.bodyParser());
   });
+}
+
+function closeServer() {
+  try {
+    server.close();
+  } catch(e) {
+    console.log("Whoops, server wasn't running.. Oh well.")
+  }
 }
 
 // No events are bound till we have attempted a serial connection
