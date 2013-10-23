@@ -373,7 +373,7 @@ function serialPortReadyCallback() {
 
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
-    pen.distanceCounter = Number(pen.distanceCounter);
+    pen.distanceCounter = parseInt(pen.distanceCounter);
 
     // Counter Reset
     if (inPen.resetCounter) {
@@ -447,7 +447,7 @@ function serialPortReadyCallback() {
       // Actually move the pen!
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
       if (pen.state) {
-        pen.distanceCounter = Number(Number(distance) + Number(pen.distanceCounter));
+        pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
       return;
     }
