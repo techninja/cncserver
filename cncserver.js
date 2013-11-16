@@ -686,20 +686,12 @@ function serialCommand(command, callback){
     console.log(word + ' serial command: ' + command);
   }
 
+  // Not much error catching.. but.. really, when does that happen?!
   if (!pen.simulation) {
-    serialPort.write(command + "\r", function(err, results) {
-      // TODO: Better Error Handling
-      if (err) {
-        // What kind of error is this anyways? :P
-        console.log('Serial Execution Error!!: ' + err);
-        if (callback) callback(false);
-      } else {
-        if (callback) callback(true);
-      }
-    });
-  } else {
-    if (callback) callback(true);
+    serialPort.write(command + "\r");
   }
+
+  if (callback) callback(true);
 }
 
 // Event callback for serial close
