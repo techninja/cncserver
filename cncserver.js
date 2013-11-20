@@ -242,6 +242,67 @@ function serialPortReadyCallback() {
   startServer();
 
   // CNC Server API ============================================================
+  // Return/Set CNCServer Configuration ========================================
+  app.all("/v1/settings", function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+    if (req.route.method == 'get') { // Get list of tools
+      res.status(200).send(JSON.stringify({
+        global: '/v1/settings/global',
+        bot: '/v1/settings/bot'
+      }));
+    } else {
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    }
+  });
+
+  app.all("/v1/settings/:type", function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+
+    // Sanity check type
+    var setType = req.params.type;
+    if (setType !== 'global' && setType !== 'bot'){
+      res.status(404).send(JSON.stringify({
+        status: 'Settings group not found'
+      }));
+      return;
+    }
+
+    var conf = setType == 'global' ? gConf : botConf;
+
+    function getSettingsJSON() {
+      var out = {};
+      // Clean the output for global as it contains all commandline env vars!
+      if (setType == 'global') {
+        var g = conf.get();
+        for (var i in g) {
+          if (i == "botOverride") {
+            break;
+          }
+          out[i] = g[i];
+        }
+      } else {
+        out = conf.get();
+      }
+      return JSON.stringify(out);
+    }
+
+    // Get the full list for the type
+    if (req.route.method == 'get') {
+      res.status(200).send(getSettingsJSON());
+    } else if (req.route.method == 'put') {
+      for (var i in req.body) {
+        conf.set(i, req.body[i]);
+      }
+      res.status(200).send(getSettingsJSON());
+    } else {
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    }
+  });
+
   // Return/Set PEN state  API =================================================
   app.all("/v1/pen", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');

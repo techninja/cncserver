@@ -295,3 +295,161 @@ Content-Type: application/json; charset=UTF-8
     "status": "Motor offset zeroed"
 }
 ```
+
+## 4. Settings
+The `settings` resource give you handy, low level access to all the INI and
+command line options currently in use by CNC Server, giving you the ability to
+change height presets, servo duration, tool settings and anything else controlled
+via nconf.
+
+### GET /v1/settings
+Gets the list of available settings types, handing the relative URI over for each.
+
+#### Request
+```
+GET /v1/settings
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "global": "/v1/settings/global",
+    "bot": "/v1/settings/bot"
+}
+```
+
+### GET /v1/settings/{settings type}
+Gets a full dump of all settings for the given settings type, 404 not found if
+settings type not found. Listed values are pulled from environment, then ini file,
+then user set overrides.
+
+#### Request
+```
+GET /v1/settings/global
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "httpPort": "4242",
+    "httpLocalOnly": false,
+    "swapMotors": false,
+    "invertAxis": {
+        "x": false,
+        "y": false
+    },
+    "serialPath": "/dev/ttyACM0",
+    "bufferLatencyOffset": "50",
+    "debug": false,
+    "botType": "watercolorbot"
+}
+```
+
+* * *
+
+### PUT /v1/settings/{settings type}
+Set root or sub level values for *any* settings on the given type.
+
+#### Request
+```
+PUT /v1/settings/global
+Content-Type: application/json; charset=UTF-8
+
+{
+  "debug": true
+}
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "httpPort": "4242",
+    "httpLocalOnly": false,
+    "swapMotors": false,
+    "invertAxis": {
+        "x": false,
+        "y": false
+    },
+    "serialPath": "/dev/ttyACM0",
+    "bufferLatencyOffset": "50",
+    "debug": true,                // This value was previously false
+    "botType": "watercolorbot"
+}
+```
+
+* * *
+
+#### Request Example (replace entire subtree)
+```
+PUT /v1/settings/bot
+Content-Type: application/json; charset=UTF-8
+
+{
+    "tools": {
+        "inkwell": {             // ALL tools will be replaced with this entry
+            "x": 0,
+            "y": 0,
+            "wiggleAxis": "y",
+            "wiggleTravel": 300,
+            "wiggleIterations": 4
+        }
+    }
+}
+
+```
+
+#### Request Example (specific sub-level override)
+```
+PUT /v1/settings/bot
+Content-Type: application/json; charset=UTF-8
+
+{
+    "servo:duration": 450  // Only duration will be set when using nconf collapsed JSON format
+}
+
+```
+
+#### Request Example (new sub-level entry and value)
+```
+PUT /v1/pen
+Content-Type: application/json; charset=UTF-8
+
+{
+    "servo:presets:foo": 42  // Creates new height preset named "foo" under servo:presets with a value of 42%
+}
+
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+( RETURNS FULL SETTINGS VALUE OUTPUT, SEE ABOVE EXAMPLE IN: GET /v1/settings/{settings type} RESPONSE )
+```
+
+##### Usage Notes
+ * This interface allows for changing every single setting, but in its current
+implementation *no callbacks are triggered* for certain changes like
+`serialPath` or `botType`, therefore there will only be a real effect if CNC
+Server references the setting value in an operation after it's been changed.
+ * Settings change callbacks could be added if there were a clear need
+with examples. Looking for something like this? Submit a pull request or an issue!
+ * All settings are reset to defaults/INI/environment on server restart.
+ * As illustrated in the latter examples, you must either use the compressed
+JSON notation to replace sub-level items like `servo:duration`, or you can
+reference the exact structure, but doing so will replace the entire item and all
+its children.
+ * If experimenting, make sure that the output returned matches your expectations
+ * There's currently no sanity checks for data ranges or variable types, and all
+storage through INI files defaults to strings, so play nice and double check the
+validity of your settings or you'll be chasing down ***very*** strange issues.
