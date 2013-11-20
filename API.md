@@ -21,7 +21,7 @@ It allows for easy testing of any RESTful HTTP method to even remote servers.
 
 ![f1a930d0641920f074aeb32ebc512408](https://f.cloud.github.com/assets/320747/920613/894669a2-fee1-11e2-8349-dc6ad8cd805d.png)
 
-An easy to use Postman JSON config file is now available in the repo for
+An easy to use Postman JSON config file is now available in the repo
 [here](https://raw.github.com/techninja/cncserver/master/cncserver_api.postman.json).
 This supplies all the current API resources in a simple click and send test
 environment, just import, and setup two global variables `cncserver-host` and
@@ -31,7 +31,7 @@ environment, just import, and setup two global variables `cncserver-host` and
 
 ***NOTE:*** *Any comments visible in responses/JSON payload in the documentation
 below are just to help make it easier to understand what's being sent. Comments
-are *not allowed* in JSON data and will not exist in returned data.*
+are* ***not allowed*** *in JSON data and will not exist in returned data.*
 
 ## 1. Pen
 The `pen` resource is meant to act as the input/output for anything having
@@ -73,6 +73,7 @@ handy realtime counter for steps when pen is down.
  * Pen simulation mode of 1 means that either the serial connection to the bot
 never worked, or has been lost. `PUT` a value of 0 to attempt to reconnect.
 
+* * *
 
 ### PUT /v1/pen
 Allows for direct setting of state and position. ***Currently, you must set
@@ -128,7 +129,7 @@ Content-Type: application/json; charset=UTF-8
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
-(RETURNS FULL PEN STATUS, SEE ABOVE EXAMPLE IN GET /pen RESPONSE)
+( RETURNS FULL PEN STATUS, SEE ABOVE EXAMPLE IN: GET /v1/pen RESPONSE )
 ```
 
 ##### Usage Notes
@@ -156,6 +157,8 @@ position. In those cases, the response will return a `202 Accepted` instead of a
  * `lastDuration` in return data can be used in conjunction with ignoreTimeout
 to allow the client to manage timings instead of waiting on the server.
 
+* * *
+
 ### DELETE /v1/pen
 Parks the pen, as you cannot move pen outside of draw area using PUT.
 
@@ -169,13 +172,12 @@ DELETE /v1/pen
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
-(RETURNS FULL PEN STATUS, SEE ABOVE EXAMPLE IN GET /pen RESPONSE)
+( RETURNS FULL PEN STATUS, SEE ABOVE EXAMPLE IN: GET /v1/pen RESPONSE )
 ```
 
 ##### Usage Notes
  * Relies on the original parking position being correct in the first place,
 obviously.
-
 
 
 ## 2. Tools
@@ -208,6 +210,7 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+* * *
 
 ### PUT /v1/tools/{toolname}
 Sets the tool for the pen. Will make all ***required movements**** for the given
@@ -266,6 +269,7 @@ Content-Type: application/json; charset=UTF-8
 ##### Usage Notes
  * Motors will be enabled again as soon as any command that moves them is run.
 
+* * *
 
 ### PUT /v1/motors
 Allows direct setting of motor details, currently only supports resetting motor
