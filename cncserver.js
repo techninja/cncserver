@@ -186,18 +186,23 @@ if (!module.parent) {
 
   // ReST Server endpoint creation utility
   exports.createServerEndpoint = function(path, callback){
+    var what = Object.prototype.toString;
     app.all(path, function(req, res){
       res.set('Content-Type', 'application/json; charset=UTF-8');
 
       var cbStat = callback(req, res);
-      if (cbStat === false) {
+
+      if (cbStat === false) { // Super simple "not supported"
         res.status(405).send(JSON.stringify({
           status: 'Not supported'
         }));
-      } else if(cbStat === 0) {
-        res.status(404).send(JSON.stringify({
-          status: 'Not found'
+      } else if(what.call(cbStat) === '[object Array]') { // Simple return message
+        // Array format: [/http code/, /status message/]
+        res.status(cbStat[0]).send(JSON.stringify({
+          status: cbStat[1]
         }));
+      } else if(what.call(cbStat) === '[object Object]') { // Full message
+        res.status(cbStat.code).send(JSON.stringify(cbStat.body));
       }
     });
   }

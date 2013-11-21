@@ -1,4 +1,4 @@
-# CNC Server API [v1]
+# CNC Server HTTP API [v1]
 
 This file defines and documents all the available RESTful API resources and
 configuration for [`cncserver.js`](cncserver.js). RESTful practices are all HTTP
