@@ -182,7 +182,25 @@ if (!module.parent) {
     pen.state = value;
     serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
   }
- exports.directSetPen=function(){};
+  exports.directSetPen=function(){};
+
+  // ReST Server endpoint creation utility
+  exports.createServerEndpoint = function(path, callback){
+    app.all(path, function(req, res){
+      res.set('Content-Type', 'application/json; charset=UTF-8');
+
+      var cbStat = callback(req, res);
+      if (cbStat === false) {
+        res.status(405).send(JSON.stringify({
+          status: 'Not supported'
+        }));
+      } else if(cbStat === 0) {
+        res.status(404).send(JSON.stringify({
+          status: 'Not found'
+        }));
+      }
+    });
+  }
 }
 
 // Grouping function to send off the initial EBB configuration for the bot
