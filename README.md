@@ -6,22 +6,14 @@ the awesome pen plotter that paints with watercolors, thought up by
 [MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
 staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
 
-
-
-IMPORTANT NOTE: **** THIS IS PRE-RELEASE SOFTWARE ****
-Features, specifications, and interfaces may change frequently and without
-warning or remorse prior to our first official release.  
-First official release is currently estimated at mid-September, 2013.
-
-
-
 ## Installation
 
 #### Preamble: User or Developer?
-CNC Server provides the API used by the WaterColorBot and its program RoboPaint,
-but **if you're looking to just get your bot up and running, you should head over
-to the main [RoboPaint page](http://github.com/techninja/robopaint) and download the
-installer for your system.**
+CNC Server provides the API used by the WaterColorBot and the RoboPaint
+application, but **if you're looking to just get your bot up and running, you
+should head over to the main
+[RoboPaint page](http://github.com/evil-mad/robopaint) and download the installer
+for your system.**
 
 If you're a developer looking to make your own API client or interface, then
 continue on!

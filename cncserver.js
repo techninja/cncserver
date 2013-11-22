@@ -183,7 +183,30 @@ if (!module.parent) {
     pen.state = value;
     serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
   }
- exports.directSetPen=function(){};
+  exports.directSetPen=function(){};
+
+  // ReST Server endpoint creation utility
+  exports.createServerEndpoint = function(path, callback){
+    var what = Object.prototype.toString;
+    app.all(path, function(req, res){
+      res.set('Content-Type', 'application/json; charset=UTF-8');
+
+      var cbStat = callback(req, res);
+
+      if (cbStat === false) { // Super simple "not supported"
+        res.status(405).send(JSON.stringify({
+          status: 'Not supported'
+        }));
+      } else if(what.call(cbStat) === '[object Array]') { // Simple return message
+        // Array format: [/http code/, /status message/]
+        res.status(cbStat[0]).send(JSON.stringify({
+          status: cbStat[1]
+        }));
+      } else if(what.call(cbStat) === '[object Object]') { // Full message
+        res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+      }
+    });
+  }
 }
 
 // Grouping function to send off the initial EBB configuration for the bot
@@ -249,6 +272,67 @@ function serialPortReadyCallback() {
   startServer();
 
   // CNC Server API ============================================================
+  // Return/Set CNCServer Configuration ========================================
+  app.all("/v1/settings", function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+    if (req.route.method == 'get') { // Get list of tools
+      res.status(200).send(JSON.stringify({
+        global: '/v1/settings/global',
+        bot: '/v1/settings/bot'
+      }));
+    } else {
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    }
+  });
+
+  app.all("/v1/settings/:type", function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+
+    // Sanity check type
+    var setType = req.params.type;
+    if (setType !== 'global' && setType !== 'bot'){
+      res.status(404).send(JSON.stringify({
+        status: 'Settings group not found'
+      }));
+      return;
+    }
+
+    var conf = setType == 'global' ? gConf : botConf;
+
+    function getSettingsJSON() {
+      var out = {};
+      // Clean the output for global as it contains all commandline env vars!
+      if (setType == 'global') {
+        var g = conf.get();
+        for (var i in g) {
+          if (i == "botOverride") {
+            break;
+          }
+          out[i] = g[i];
+        }
+      } else {
+        out = conf.get();
+      }
+      return JSON.stringify(out);
+    }
+
+    // Get the full list for the type
+    if (req.route.method == 'get') {
+      res.status(200).send(getSettingsJSON());
+    } else if (req.route.method == 'put') {
+      for (var i in req.body) {
+        conf.set(i, req.body[i]);
+      }
+      res.status(200).send(getSettingsJSON());
+    } else {
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    }
+  });
+
   // Return/Set PEN state  API =================================================
   app.all("/v1/pen", function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
@@ -743,20 +827,12 @@ function serialCommand(command, callback){
     console.log(word + ' serial command: ' + command);
   }
 
+  // Not much error catching.. but.. really, when does that happen?!
   if (!pen.simulation) {
-    serialPort.write(command + "\r", function(err, results) {
-      // TODO: Better Error Handling
-      if (err) {
-        // What kind of error is this anyways? :P
-        console.log('Serial Execution Error!!: ' + err);
-        if (callback) callback(false);
-      } else {
-        if (callback) callback(true);
-      }
-    });
-  } else {
-    if (callback) callback(true);
+    serialPort.write(command + "\r");
   }
+
+  if (callback) callback(true);
 }
 
 // Event callback for serial close

@@ -16,7 +16,12 @@
         "8bd9b3dd-fb3a-bf4d-0e79-5835ad987b86",
         "018053b5-0a68-4027-0c8a-182f7206e0bb",
         "1efab236-e56a-1268-ca00-2e8938a2054a",
-        "199a3586-8ac1-bae8-0c50-2671fd17a34a"
+        "199a3586-8ac1-bae8-0c50-2671fd17a34a",
+        "7c10785d-134d-1a4a-6f94-c1308915a3b2",
+        "b131cd64-cac4-08ee-7908-599de452765f",
+        "899a0cc6-8e2c-1952-482e-8947610fb873",
+        "746528c7-47f2-c0ff-09ff-17d6f9ceec03",
+        "b8dbd92e-91d4-9a88-3bc0-38b60dcb730a"
     ],
     "requests": [
         {
@@ -119,6 +124,20 @@
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "746528c7-47f2-c0ff-09ff-17d6f9ceec03",
+            "name": "Settings: Enable Debug Mode",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/settings/global",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"debug\": true\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1384933117223
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
             "id": "77c30fc7-8884-e099-f535-d354429b3ad5",
             "name": "Pen: Go to 0,0",
             "description": "",
@@ -130,6 +149,20 @@
             "timestamp": 0,
             "version": 2,
             "time": 1375824101642
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "7c10785d-134d-1a4a-6f94-c1308915a3b2",
+            "name": "Settings: Get All Settings",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/settings",
+            "method": "GET",
+            "headers": "",
+            "data": "",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1384932946112
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
@@ -147,6 +180,20 @@
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "899a0cc6-8e2c-1952-482e-8947610fb873",
+            "name": "Settings: Change Servo Duration",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/settings/bot",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"servo:duration\": 400\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
             "id": "8bd9b3dd-fb3a-bf4d-0e79-5835ad987b86",
             "name": "Tools: Change",
             "description": "",
@@ -158,6 +205,34 @@
             "timestamp": 0,
             "version": 2,
             "time": 1375823762939
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "b131cd64-cac4-08ee-7908-599de452765f",
+            "name": "Settings: Get Global Settings",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/settings/global",
+            "method": "GET",
+            "headers": "",
+            "data": "",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1384932986222
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "b8dbd92e-91d4-9a88-3bc0-38b60dcb730a",
+            "name": "Settings: Add height preset",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/settings/bot",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"servo:presets:foo\": 42\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
