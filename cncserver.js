@@ -116,8 +116,10 @@ var BOT = {
 // INTIAL SETUP ================================================================
 var app = express();
 var server = require('http').createServer(app);
+
+var serialport = require("serialport");
 var serialPort = false;
-var SerialPort = require("serialport").SerialPort;
+var SerialPort = serialport.SerialPort;
 var buffer = [];
 var bufferRunning = false;
 
@@ -267,6 +269,8 @@ function serialPortReadyCallback() {
     (gConf.get('httpLocalOnly') ? 'localhost' : '*') +
     ':' + gConf.get('httpPort')
   );
+
+  serialPort.on("data", serialReadline);
 
   sendBotConfig();
   startServer();
@@ -632,7 +636,9 @@ function serialPortReadyCallback() {
     // Put the pen back up when done!
     setHeight('up');
 
-    callback(1);
+    if (callback){
+      run('callback', callback);
+    }
   }
 
   // Move the Pen to an absolute point in the entire work area
@@ -660,7 +666,7 @@ function serialPortReadyCallback() {
 
     // Don't do anything if there's no change
     if (change.x == 0 && change.y == 0) {
-      callback(true);
+      if (callback) callback(true);
       return 0;
     }
 
@@ -756,6 +762,11 @@ function serialPortReadyCallback() {
 
 // COMMAND RUN QUEUE UTILS ==========================================
 
+// Holds the MS time of the "current" command sent, as this should be limited
+// by the run queue, this should only ever refer to what's being sent through.
+// the following command will be delayed by this much time.
+var commandDuration = 0;
+
 // Add command to serial command runner
 function run(command, data, duration) {
   var c = '';
@@ -771,7 +782,8 @@ function run(command, data, duration) {
     case 'height':
       // Send a new setup value for the the up position, then trigger "pen up"
       run('custom', 'SC,5,' + data);
-      run('custom', 'SP,0', duration);
+      run('custom', 'SP,0');
+      run('wait', '', duration);
       return;
       break;
     case 'wait':
@@ -779,6 +791,9 @@ function run(command, data, duration) {
       c = 'SM,' + duration + ',0,0';
       break;
     case 'custom':
+      c = data;
+      break;
+    case 'callback': // Custom callback runner for API return triggering
       c = data;
       break;
     default:
@@ -794,13 +809,20 @@ function executeNext() {
   if (buffer.length) {
     var cmd = buffer.pop();
 
-    //console.log('executing: ', cmd);
+    if (typeof cmd[0] === "function") {
+      // Run custom callback in the queue. Timing for this should be correct
+      // because of commandDuration below! (Here's hoping)
+      cmd[0]();
+      executeNext();
+    } else {
+      // Set the duration of this command so when the board returns "OK",
+      // will delay next command send
+      commandDuration = Math.max(cmd[1] - gConf.get('bufferLatencyOffset'), 0);
 
-    // Actually send the command out to serial
-    serialCommand(cmd[0]);
+      // Actually send the command out to serial
+      serialCommand(cmd[0]);
+    }
 
-    // Wait for the given duration
-    setTimeout(executeNext, cmd[1] - 2);
   } else {
     bufferRunning = false;
   }
@@ -833,6 +855,17 @@ function serialCommand(command, callback){
   }
 
   if (callback) callback(true);
+}
+
+// READ (Initialized on connect)
+function serialReadline(data) {
+  if (data.trim() == 'OK') {
+    // Trigger the next buffered command (after its intended duration)
+    setTimeout(executeNext, commandDuration);
+  } else {
+    console.error('Error sending data: ' + data);
+    executeNext(); // Error, but continue anyways
+  }
 }
 
 // Event callback for serial close
@@ -887,7 +920,10 @@ function connectSerial(options){
     } else {
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
-        serialPort = new SerialPort(gConf.get('serialPath'), {baudrate : Number(botConf.get('baudRate'))});
+        serialPort = new SerialPort(gConf.get('serialPath'), {
+          baudrate : Number(botConf.get('baudRate')),
+          parser: serialport.parsers.readline("\r")
+        });
 
         if (options.connect) serialPort.on("open", options.connect);
         if (options.disconnect) serialPort.on("close", options.disconnect);
