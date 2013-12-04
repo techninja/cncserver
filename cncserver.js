@@ -270,7 +270,11 @@ function serialPortReadyCallback() {
     ':' + gConf.get('httpPort')
   );
 
-  serialPort.on("data", serialReadline);
+  // Is the serialport ready? Start reading
+  if (!pen.simulation) {
+    serialPort.on("data", serialReadline);
+  }
+
 
   sendBotConfig();
   startServer();
