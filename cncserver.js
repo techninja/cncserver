@@ -538,7 +538,7 @@ function serialPortReadyCallback() {
 
       // Actually move the pen!
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
-      if (pen.state) {
+      if (pen.state === 'paint' || pen.state === 1) {
         pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
       return;
