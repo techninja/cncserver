@@ -816,7 +816,7 @@ function executeNext() {
     if (typeof cmd[0] === "function") {
       // Run custom callback in the queue. Timing for this should be correct
       // because of commandDuration below! (Here's hoping)
-      cmd[0]();
+      cmd[0](1);
       executeNext();
     } else {
       // Set the duration of this command so when the board returns "OK",
