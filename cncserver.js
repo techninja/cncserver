@@ -113,12 +113,15 @@ var BOT = {
   }
 }
 
-
 // INTIAL SETUP ================================================================
 var app = express();
 var server = require('http').createServer(app);
+
+var serialport = require("serialport");
 var serialPort = false;
-var SerialPort = require("serialport").SerialPort;
+var SerialPort = serialport.SerialPort;
+var buffer = [];
+var bufferRunning = false;
 
 
 // Only if we're running standalone... try to start the server immediately!
@@ -211,8 +214,11 @@ if (!module.parent) {
 // Grouping function to send off the initial EBB configuration for the bot
 function sendBotConfig() {
   console.log('Sending EBB config...')
-  serialCommand('SC,10,' + botConf.get('servo:rate'));
-  serialCommand('EM,' + botConf.get('speed:precision'));
+  run('custom', 'EM,' + botConf.get('speed:precision'));
+
+  // Send twice for good measure
+  run('custom', 'SC,10,' + botConf.get('servo:rate'));
+  run('custom', 'SC,10,' + botConf.get('servo:rate'));
 }
 
 // Start express HTTP server for API on the given port
@@ -229,12 +235,7 @@ function startServer() {
     if (e.code == 'EADDRINUSE') {
       console.log('Address in use, retrying...');
       setTimeout(function () {
-        try {
-          server.close();
-        } catch(e) {
-          console.log("Whoops, server wasn't running.. Oh well.")
-        }
-
+        closeServer();
         server.listen(gConf.get('httpPort'), hostname);
       }, 1000);
     }
@@ -243,14 +244,22 @@ function startServer() {
 
   server.listen(gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
-    process.on('uncaughtException', function(err){ server.close() });
-    process.on('SIGTERM', function(err){ server.close() });
+    process.on('uncaughtException', function(err){ console.log(err); closeServer(); });
+    process.on('SIGTERM', function(err){ console.log(err); closeServer(); });
   });
 
   app.configure(function(){
     app.use("/", express.static(__dirname + '/example'));
     app.use(express.bodyParser());
   });
+}
+
+function closeServer() {
+  try {
+    server.close();
+  } catch(e) {
+    console.log("Whoops, server wasn't running.. Oh well.")
+  }
 }
 
 // No events are bound till we have attempted a serial connection
@@ -260,6 +269,12 @@ function serialPortReadyCallback() {
     (gConf.get('httpLocalOnly') ? 'localhost' : '*') +
     ':' + gConf.get('httpPort')
   );
+
+  // Is the serialport ready? Start reading
+  if (!pen.simulation) {
+    serialPort.on("data", serialReadline);
+  }
+
 
   sendBotConfig();
   startServer();
@@ -374,20 +389,14 @@ function serialPortReadyCallback() {
 
     // Disable/unlock motors
     if (req.route.method == 'delete') {
-      console.log('Disabling motors');
-      serialCommand('EM,0,0', function(data){
-        if (data) {
-          res.status(200).send(JSON.stringify({
-            status: 'Disabled'
-          }));
-        } else {
-          res.status(500).send(JSON.stringify({
-            status: 'Error'
-          }));
-        }
-      });
+      run('custom', 'EM,0,0');
+      res.status(201).send(JSON.stringify({
+        status: 'Disable Queued'
+      }));
     } else if (req.route.method == 'put') {
       if (req.body.reset == 1) {
+        // TODO: This could totally break queueing as movements are queued with
+        // offsets that break if the relative position doesn't match!
         pen.x = 0;
         pen.y = 0;
         console.log('Motor offset reset to zero')
@@ -451,12 +460,12 @@ function serialPortReadyCallback() {
   // Send direct setup var command
   exports.sendSetup = sendSetup;
   function sendSetup(id, value) {
-    serialCommand('SC,' + id + ',' + value);
+    run('custom', 'SC,' + id + ',' + value);
   }
 
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
-    pen.distanceCounter = Number(pen.distanceCounter);
+    pen.distanceCounter = parseInt(pen.distanceCounter);
 
     // Counter Reset
     if (inPen.resetCounter) {
@@ -529,8 +538,8 @@ function serialPortReadyCallback() {
 
       // Actually move the pen!
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
-      if (pen.state) {
-        pen.distanceCounter = Number(Number(distance) + Number(pen.distanceCounter));
+      if (pen.state === 'paint' || pen.state === 1) {
+        pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
       return;
     }
@@ -590,25 +599,19 @@ function serialPortReadyCallback() {
       servoDuration = Math.round((Math.abs(height - pen.height) / range) * servoDuration)+1;
     }
 
-    // Store the sent height in the global pen state var
     pen.height = height;
+    pen.state = stateValue;
 
-    // Send a new setup value for the the up position, then trigger "pen up"
-    sendSetup(5, height);
-    serialCommand('SP,0', function(data){
-      if (data) {
-        pen.state = stateValue;
-      }
+    // Run the height into the command buffer
+    run('height', height, servoDuration);
 
-      // Pen lift / drop
-      if (callback) {
-        // Force the EBB to "wait" (block buffer) for the pen change state
-        serialCommand('SM,' + servoDuration + ',0,0');
-        setTimeout(function(){
-          callback(data);
-        }, Math.max(servoDuration - gConf.get('bufferLatencyOffset'), 0));
-      }
-    });
+    // Pen lift / drop
+    if (callback) {
+      // Force the EBB block buffer for the pen change state
+      setTimeout(function(){
+        callback(1);
+      }, Math.max(servoDuration - gConf.get('bufferLatencyOffset'), 0));
+    }
   }
 
   // Tool change
@@ -623,21 +626,23 @@ function serialPortReadyCallback() {
     var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'paint';
 
     // Pen Up
-    setHeight('up', function(){
-      // Move to the tool
-      movePenAbs(tool, function(data){
-        // Pen down
-        setHeight(downHeight, function(){
-          // Wiggle the brush a bit
-          wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations, function(){
-            // Put the pen back up when done!
-            setHeight('up', function(){
-              callback(data);
-            });
-          });
-        });
-      });
-    });
+    setHeight('up');
+
+    // Move to the tool
+    movePenAbs(tool);
+
+    // Pen down
+    setHeight(downHeight);
+
+    // Wiggle the brush a bit
+    wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations);
+
+    // Put the pen back up when done!
+    setHeight('up');
+
+    if (callback){
+      run('callback', callback);
+    }
   }
 
   // Move the Pen to an absolute point in the entire work area
@@ -647,7 +652,7 @@ function serialPortReadyCallback() {
     // Something really bad happened here...
     if (isNaN(point.x) || isNaN(point.y)){
       console.error('INVALID Move pen input, given:', point);
-      callback(false);
+      if (callback) callback(false);
       return 0;
     }
 
@@ -665,7 +670,7 @@ function serialPortReadyCallback() {
 
     // Don't do anything if there's no change
     if (change.x == 0 && change.y == 0) {
-      callback(true);
+      if (callback) callback(true);
       return 0;
     }
 
@@ -694,26 +699,33 @@ function serialPortReadyCallback() {
       }
     }
 
-    // Send the final serial command
-    serialCommand('SM,' + duration + ',' + change.x + ',' + change.y, function(data){
-      // Can't trust this to callback when move is done, so trust duration
+    // Queue the final serial command
+    run('move', change.x + ',' + change.y, duration);
+
+    if (callback) {
       if (immediate == 1) {
-        callback(data);
+        callback(1);
       } else {
         // Set the timeout to occur sooner so the next command will execute
         // before the other is actually complete. This will push into the buffer
         // and allow for far smoother move runs.
-        setTimeout(function(){
-          callback(data);
-        }, Math.max(duration - gConf.get('bufferLatencyOffset'), 0));
+
+        var cmdDuration = Math.max(duration - gConf.get('bufferLatencyOffset'), 0);
+
+        if (cmdDuration < 2) {
+          callback(1);
+        } else {
+          setTimeout(function(){callback(1);}, cmdDuration);
+        }
+
       }
-    });
+    }
 
     return distance;
   }
 
 
-  function wigglePen(axis, travel, iterations, callback){
+  function wigglePen(axis, travel, iterations){
     var start = {x: Number(pen.x), y: Number(pen.y)};
     var i = 0;
     travel = Number(travel); // Make sure it's not a string
@@ -745,18 +757,95 @@ function serialPortReadyCallback() {
         point[axis]+= (toggle ? travel : travel * -1);
       }
 
-      movePenAbs(point, function(){
-        i++;
+      movePenAbs(point);
 
-        if (i <= iterations){ // Wiggle again!
-          _wiggleSlave(!toggle);
-        } else { // Done wiggling, go back to start
-          movePenAbs(start, callback);
-        }
-      })
+      i++;
+
+      if (i <= iterations){ // Wiggle again!
+        _wiggleSlave(!toggle);
+      } else { // Done wiggling, go back to start
+        movePenAbs(start);
+      }
     }
   }
 }
+
+// COMMAND RUN QUEUE UTILS ==========================================
+
+// Holds the MS time of the "current" command sent, as this should be limited
+// by the run queue, this should only ever refer to what's being sent through.
+// the following command will be delayed by this much time.
+var commandDuration = 0;
+
+// Add command to serial command runner
+function run(command, data, duration) {
+  var c = '';
+
+  // Sanity check duration to minimum of 1, int only
+  duration = !duration ? 1 : Math.abs(parseInt(duration));
+  duration = duration <= 0 ? 1 : duration;
+
+  switch (command) {
+    case 'move':
+      c = 'SM,' + duration + ',' + data;
+      break;
+    case 'height':
+      // Send a new setup value for the the up position, then trigger "pen up"
+      run('custom', 'SC,5,' + data);
+      run('custom', 'SP,0');
+      run('wait', '', duration);
+      return;
+      break;
+    case 'wait':
+      // Send movement to nowhere, blocking buffer
+      c = 'SM,' + duration + ',0,0';
+      break;
+    case 'custom':
+      c = data;
+      break;
+    case 'callback': // Custom callback runner for API return triggering
+      c = data;
+      break;
+    default:
+      return false;
+  }
+
+  // Add final command and duration to end of queue
+  buffer.unshift([c, duration]);
+}
+
+// Buffer self-runner
+function executeNext() {
+  if (buffer.length) {
+    var cmd = buffer.pop();
+
+    if (typeof cmd[0] === "function") {
+      // Run custom callback in the queue. Timing for this should be correct
+      // because of commandDuration below! (Here's hoping)
+      cmd[0](1);
+      executeNext();
+    } else {
+      // Set the duration of this command so when the board returns "OK",
+      // will delay next command send
+      commandDuration = Math.max(cmd[1] - gConf.get('bufferLatencyOffset'), 0);
+
+      // Actually send the command out to serial
+      serialCommand(cmd[0]);
+    }
+
+  } else {
+    bufferRunning = false;
+  }
+}
+
+// Buffer interval catcher, starts running the buffer as soon as items exist in it
+setInterval(function(){
+  if (buffer.length && !bufferRunning) {
+    bufferRunning = true;
+    executeNext();
+  }
+}, 10);
+
 
 // SERIAL READ/WRITE ================================================
 function serialCommand(command, callback){
@@ -776,6 +865,22 @@ function serialCommand(command, callback){
   }
 
   if (callback) callback(true);
+}
+
+// READ (Initialized on connect)
+function serialReadline(data) {
+  if (data.trim() == 'OK') {
+    // Trigger the next buffered command (after its intended duration)
+    if (commandDuration < 2) {
+      executeNext();
+    } else {
+      setTimeout(executeNext, commandDuration);
+    }
+
+  } else {
+    console.error('Error sending data: ' + data);
+    executeNext(); // Error, but continue anyways
+  }
 }
 
 // Event callback for serial close
@@ -830,7 +935,10 @@ function connectSerial(options){
     } else {
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
-        serialPort = new SerialPort(gConf.get('serialPath'), {baudrate : Number(botConf.get('baudRate'))});
+        serialPort = new SerialPort(gConf.get('serialPath'), {
+          baudrate : Number(botConf.get('baudRate')),
+          parser: serialport.parsers.readline("\r")
+        });
 
         if (options.connect) serialPort.on("open", options.connect);
         if (options.disconnect) serialPort.on("close", options.disconnect);
