@@ -709,9 +709,15 @@ function serialPortReadyCallback() {
         // Set the timeout to occur sooner so the next command will execute
         // before the other is actually complete. This will push into the buffer
         // and allow for far smoother move runs.
-        setTimeout(function(){
+
+        var cmdDuration = Math.max(duration - gConf.get('bufferLatencyOffset'), 0);
+
+        if (cmdDuration < 2) {
           callback(1);
-        }, Math.max(duration - gConf.get('bufferLatencyOffset'), 0));
+        } else {
+          setTimeout(function(){callback(1);}, cmdDuration);
+        }
+
       }
     }
 
@@ -865,7 +871,12 @@ function serialCommand(command, callback){
 function serialReadline(data) {
   if (data.trim() == 'OK') {
     // Trigger the next buffered command (after its intended duration)
-    setTimeout(executeNext, commandDuration);
+    if (commandDuration < 2) {
+      executeNext();
+    } else {
+      setTimeout(executeNext, commandDuration);
+    }
+
   } else {
     console.error('Error sending data: ' + data);
     executeNext(); // Error, but continue anyways
