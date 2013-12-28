@@ -862,6 +862,9 @@ function serialCommand(command, callback){
   // Not much error catching.. but.. really, when does that happen?!
   if (!pen.simulation) {
     serialPort.write(command + "\r");
+  } else {
+    // Trigger next command as we're simulating and would never receive the ACK
+    serialReadline('OK');
   }
 
   if (callback) callback(true);
