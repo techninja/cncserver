@@ -82,6 +82,11 @@ if(!fs.existsSync(configPath)) {
   gConf.save();
 }
 
+// Output if debug mode is on
+if (gConf.get('debug')) {
+  console.log('== CNCServer Debug mode is ON ==');
+}
+
 // Load bot config file based on botType global config
 var botTypeFile = path.resolve(__dirname, 'machine_types', gConf.get('botType') + '.ini');
 if (!fs.existsSync(botTypeFile)){
