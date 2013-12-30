@@ -128,6 +128,7 @@ var serialPort = false;
 var SerialPort = serialport.SerialPort;
 var buffer = [];
 var bufferRunning = false;
+var bufferPaused = false;
 
 
 // Only if we're running standalone... try to start the server immediately!
@@ -640,17 +641,35 @@ function serialPortReadyCallback() {
     // Move to the tool
     movePenAbs(tool);
 
-    // Pen down
-    setHeight(downHeight);
+    // "wait" tools need user feedback to let cncserver know that it can continue
+    if (typeof tool.wait != "undefined") {
 
-    // Wiggle the brush a bit
-    wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations);
+      if (callback){
+        run('callback', callback);
+      }
 
-    // Put the pen back up when done!
-    setHeight('up');
+      // Pause or resume continued execution based on tool.wait value
+      // In theory: a wait tool has a complementary resume tool to bring it back
+      if (tool.wait) {
+        bufferPaused = true;
+      } else {
+        bufferPaused = false;
+        executeNext();
+      }
 
-    if (callback){
-      run('callback', callback);
+    } else { // "Standard" WaterColorBot toolchange
+      // Pen down
+      setHeight(downHeight);
+
+      // Wiggle the brush a bit
+      wigglePen(tool.wiggleAxis, tool.wiggleTravel, tool.wiggleIterations);
+
+      // Put the pen back up when done!
+      setHeight('up');
+
+      if (callback){
+        run('callback', callback);
+      }
     }
   }
 
@@ -853,6 +872,9 @@ function cmdstr(name, values) {
 
 // Buffer self-runner
 function executeNext() {
+  // Don't continue execution if paused
+  if (bufferPaused) return;
+
   if (buffer.length) {
     var cmd = buffer.pop();
 
@@ -877,7 +899,7 @@ function executeNext() {
 
 // Buffer interval catcher, starts running the buffer as soon as items exist in it
 setInterval(function(){
-  if (buffer.length && !bufferRunning) {
+  if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
     executeNext();
   }
