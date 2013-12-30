@@ -543,7 +543,7 @@ function serialPortReadyCallback() {
 
       // Actually move the pen!
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
-      if (pen.state === 'paint' || pen.state === 1) {
+      if (pen.state === 'draw' || pen.state === 1) {
         pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
       return;
@@ -573,7 +573,7 @@ function serialPortReadyCallback() {
         stateValue = 'up';
       }
       fullRange = true;
-    } else { // Numerical position (0 to 1), moves between up (0) and paint (1)
+    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
       height = Math.abs(parseFloat(height));
       height = height > 1 ?  1 : height; // Limit to 1
       stateValue = height;
@@ -584,7 +584,7 @@ function serialPortReadyCallback() {
 
     // Lower the range when using 0 to 1 values
     if (!fullRange) {
-      min = ((p.paint / 100) * range) + min;
+      min = ((p.draw / 100) * range) + min;
       max = ((p.up / 100) * range) + parseInt(botConf.get('servo:min'));
 
       range = max - min;
@@ -628,7 +628,7 @@ function serialPortReadyCallback() {
 
     // Set the height based on what kind of tool it is
     // TODO: fold this into bot specific tool change logic
-    var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'paint';
+    var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'draw';
 
     // Pen Up
     setHeight('up');
