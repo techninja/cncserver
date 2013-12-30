@@ -115,7 +115,8 @@ var BOT = {
   maxArea: {
     width: Number(botConf.get('maxArea:width')),
     height: Number(botConf.get('maxArea:height'))
-  }
+  },
+  commands : botConf.get('controller').commands
 }
 
 // INTIAL SETUP ================================================================
@@ -216,14 +217,17 @@ if (!module.parent) {
   }
 }
 
-// Grouping function to send off the initial EBB configuration for the bot
+// Grouping function to send off the initial configuration for the bot
 function sendBotConfig() {
-  console.log('Sending EBB config...')
-  run('custom', 'EM,' + botConf.get('speed:precision'));
+  // EBB Specific Config =================================
+  if (botConf.get('controller').name == 'EiBotBoard') {
+    console.log('Sending EBB config...')
+    run('custom', 'EM,' + botConf.get('speed:precision'));
 
-  // Send twice for good measure
-  run('custom', 'SC,10,' + botConf.get('servo:rate'));
-  run('custom', 'SC,10,' + botConf.get('servo:rate'));
+    // Send twice for good measure
+    run('custom', 'SC,10,' + botConf.get('servo:rate'));
+    run('custom', 'SC,10,' + botConf.get('servo:rate'));
+  }
 }
 
 // Start express HTTP server for API on the given port
@@ -692,9 +696,14 @@ function serialPortReadyCallback() {
     pen.x = point.x;
     pen.y = point.y;
 
-    // Invert X or Y to match stepper direction
-    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
-    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+    if (botConf.get('controller').position == "relative") {
+      // Invert X or Y to match stepper direction
+      change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+      change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+    } else { // Absolute! Just use the "new" absolute X & Y locations
+      change.x = pen.x;
+      change.y = pen.y;
+    }
 
     // Swap motor positions
     if (gConf.get('swapMotors')) {
@@ -705,7 +714,7 @@ function serialPortReadyCallback() {
     }
 
     // Queue the final serial command
-    run('move', change.x + ',' + change.y, duration);
+    run('move', {x: change.x, y: change.y}, duration);
 
     if (callback) {
       if (immediate == 1) {
@@ -792,18 +801,28 @@ function run(command, data, duration) {
 
   switch (command) {
     case 'move':
-      c = 'SM,' + duration + ',' + data;
+      c = cmdstr('movexy', {d: duration, x: data.x, y: data.y});
       break;
     case 'height':
       // Send a new setup value for the the up position, then trigger "pen up"
-      run('custom', 'SC,5,' + data);
-      run('custom', 'SP,0');
+      run('custom', cmdstr('movez', {z: data}));
+
+      // If there's a togglez, run it after setting Z
+      if (BOT.commands.togglez) {
+        run('custom', cmdstr('togglez', {t: 0}));
+      }
+
       run('wait', '', duration);
       return;
       break;
     case 'wait':
       // Send movement to nowhere, blocking buffer
-      c = 'SM,' + duration + ',0,0';
+      if (botConf.get('controller').position == "relative") {
+        data = {x: 0, y: 0};
+      } else { // Absolute!
+        data = {x: pen.x, y: pen.y};
+      }
+      c = cmdstr('movexy', {d: duration, x: data.x, y: data.y});
       break;
     case 'custom':
       c = data;
@@ -817,6 +836,19 @@ function run(command, data, duration) {
 
   // Add final command and duration to end of queue
   buffer.unshift([c, duration]);
+}
+
+// Create a bot specific serial command string from values
+function cmdstr(name, values) {
+  if (!name || !BOT.commands[name]) return ''; // Sanity check
+
+  var out = BOT.commands[name];
+
+  for(var v in values) {
+    out = out.replace('%' + v, values[v]);
+  }
+
+  return out;
 }
 
 // Buffer self-runner
@@ -869,7 +901,7 @@ function serialCommand(command, callback){
     serialPort.write(command + "\r");
   } else {
     // Trigger next command as we're simulating and would never receive the ACK
-    serialReadline('OK');
+    serialReadline(botConf.get('controller').ack);
   }
 
   if (callback) callback(true);
@@ -877,7 +909,7 @@ function serialCommand(command, callback){
 
 // READ (Initialized on connect)
 function serialReadline(data) {
-  if (data.trim() == 'OK') {
+  if (data.trim() == botConf.get('controller').ack) {
     // Trigger the next buffered command (after its intended duration)
     if (commandDuration < 2) {
       executeNext();
@@ -925,11 +957,17 @@ function connectSerial(options){
     console.log('Full Available Port Data:', ports);
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
+
+      // Sanity check manufacturer (returns undefined for some devices in Serialport 1.2.5)
+      if (typeof ports[portID].manufacturer != 'string') {
+        ports[portID].manufacturer = '';
+      }
+
       // Specific board detect for linux
-      if (ports[portID].pnpId.indexOf(botConf.get('controller')) !== -1 && autoDetect) {
+      if (ports[portID].pnpId.indexOf(botConf.get('controller').name) !== -1 && autoDetect) {
         gConf.set('serialPath', portNames[portID]);
       // All other OS detect
-      } else if (ports[portID].manufacturer.indexOf(botConf.get('manufacturer')) !== -1 && autoDetect) {
+      } else if (ports[portID].manufacturer.indexOf(botConf.get('controller').manufacturer) !== -1 && autoDetect) {
         gConf.set('serialPath', portNames[portID]);
       }
     }
@@ -938,7 +976,7 @@ function connectSerial(options){
 
     // Try to connect to serial, or exit with error codes
     if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
-      console.log(botConf.get('controller') + " not found. Are you sure it's connected? Error #22");
+      console.log(botConf.get('controller').name + " not found. Are you sure it's connected? Error #22");
       if (options.error) options.error('Port not found.');
     } else {
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
