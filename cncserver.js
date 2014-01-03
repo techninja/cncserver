@@ -835,13 +835,9 @@ function run(command, data, duration) {
       return;
       break;
     case 'wait':
-      // Send movement to nowhere, blocking buffer
-      if (botConf.get('controller').position == "relative") {
-        data = {x: 0, y: 0};
-      } else { // Absolute!
-        data = {x: pen.x, y: pen.y};
-      }
-      c = cmdstr('movexy', {d: duration, x: data.x, y: data.y});
+      // Send wait, blocking buffer
+      if (!BOT.commands.wait) return false;
+      c = cmdstr('wait', {d: duration});
       break;
     case 'custom':
       c = data;
