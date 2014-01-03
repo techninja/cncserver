@@ -936,7 +936,7 @@ function serialReadline(data) {
     }
 
   } else {
-    console.error('Error sending data: ' + data);
+    console.error('Message From Controller: ' + data);
     executeNext(); // Error, but continue anyways
   }
 }
