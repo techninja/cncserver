@@ -1000,14 +1000,14 @@ function connectSerial(options){
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
         serialPort = new SerialPort(gConf.get('serialPath'), {
-          baudrate : Number(botConf.get('baudRate')),
+          baudrate : Number(botConf.get('controller').baudRate),
           parser: serialport.parsers.readline("\r")
         });
 
         if (options.connect) serialPort.on("open", options.connect);
         if (options.disconnect) serialPort.on("close", options.disconnect);
 
-        console.log('Serial connection open at ' + botConf.get('baudRate') + 'bps');
+        console.log('Serial connection open at ' + botConf.get('controller').baudRate + 'bps');
         pen.simulation = 0;
         if (options.success) options.success();
       } catch(e) {
