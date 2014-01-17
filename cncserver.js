@@ -130,6 +130,11 @@ var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
 
+// Express initialization (must run before enpoint creation)
+app.configure(function(){
+  app.use("/", express.static(__dirname + '/example'));
+  app.use(express.bodyParser());
+});
 
 // Only if we're running standalone... try to start the server immediately!
 if (!module.parent) {
@@ -256,11 +261,6 @@ function startServer() {
     // Properly close down server on fail/close
     process.on('uncaughtException', function(err){ console.log(err); closeServer(); });
     process.on('SIGTERM', function(err){ console.log(err); closeServer(); });
-  });
-
-  app.configure(function(){
-    app.use("/", express.static(__dirname + '/example'));
-    app.use(express.bodyParser());
   });
 }
 
