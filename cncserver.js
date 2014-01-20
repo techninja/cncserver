@@ -995,7 +995,7 @@ function connectSerial(options){
     // Try to connect to serial, or exit with error codes
     if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
       console.log(botConf.get('controller').name + " not found. Are you sure it's connected? Error #22");
-      if (options.error) options.error('Port not found.');
+      if (options.error) options.error(botConf.get('controller').name + ' not found.');
     } else {
       console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
       try {
