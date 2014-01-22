@@ -88,17 +88,25 @@ if (gConf.get('debug')) {
 }
 
 // Load bot config file based on botType global config
-var botTypeFile = path.resolve(__dirname, 'machine_types', gConf.get('botType') + '.ini');
-if (!fs.existsSync(botTypeFile)){
-  console.log('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
-  process.exit(16);
-} else {
-  botConf.use('file', {
-    file: botTypeFile,
-    format: nconf.formats.ini
-  }).load();
-  console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
+function loadBotConfig(botType) {
+  if (!botType) botType = gConf.get('botType');
+
+  var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
+  if (!fs.existsSync(botTypeFile)){
+    console.log('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
+    process.exit(16);
+  } else {
+    botConf.reset();
+    botConf.use('file', {
+      file: botTypeFile,
+      format: nconf.formats.ini
+    }).load();
+    console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
+  }
 }
+
+// TODO: DO this in a different place to allow node applications to select this
+loadBotConfig();
 
 // Mesh in bot overrides from main config
 var overrides = gConf.get('botOverride')[gConf.get('botType')];
@@ -179,6 +187,9 @@ if (!module.parent) {
     global: gConf
   }
 
+  // Export to reset or load different bot config
+  exports.loadBotConfig = loadBotConfig;
+
   // Continue with simulation mode
   exports.continueSimulation = simulationModeInit;
 
@@ -255,7 +266,6 @@ function startServer() {
       }, 1000);
     }
   });
-
 
   server.listen(gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
