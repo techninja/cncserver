@@ -714,6 +714,12 @@ function serialPortReadyCallback() {
 
     var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
     var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
+      speed = (speed/100) * botConf.get('speed:max'); // Convert to steps from percentage
+
+      // Sanity check speed value
+      speed = speed > botConf.get('speed:max') ? botConf.get('speed:max') : speed;
+      speed = speed < botConf.get('speed:min') ? botConf.get('speed:min') : speed;
+
     var duration = Math.abs(Math.round(distance / speed * 1000)); // How many steps a second?
 
     // Don't pass a duration of 0! Makes the EBB DIE!
