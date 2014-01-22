@@ -46,46 +46,54 @@ var pen  = {
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0 // Fake everything and act like it's working, no serial
 }
-// Pull conf from file
-var configPath = path.resolve(__dirname, 'config.ini');
-gConf.use('file', {
-  file: configPath,
-  format: nconf.formats.ini
-}).load();
 
-// Set Global Config Defaults
-gConf.defaults({
-  httpPort: 4242,
-  httpLocalOnly: true,
-  swapMotors: false,
-  invertAxis: {
-    x: false,
-    y: false
-  },
-  serialPath: "{auto}", // Empty for auto-config
-  bufferLatencyOffset: 50, // Number of ms to move each command closer together
-  debug: false,
-  botType: 'watercolorbot',
-  botOverride: {
-    info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
-  }
-});
+// Initialize global config
+function loadGlobalConfig() {
+  // Pull conf from file
+  var configPath = path.resolve(__dirname, 'config.ini');
+  gConf.reset();
+  gConf.use('file', {
+    file: configPath,
+    format: nconf.formats.ini
+  }).load();
 
-// Save Global Conf file defaults if not saved
-if(!fs.existsSync(configPath)) {
-  var def = gConf.stores['defaults'].store;
-  for(var key in def) {
-    if (key != 'type'){
-      gConf.set(key, def[key]);
+  // Set Global Config Defaults
+  gConf.defaults({
+    httpPort: 4242,
+    httpLocalOnly: true,
+    swapMotors: false,
+    invertAxis: {
+      x: false,
+      y: false
+    },
+    serialPath: "{auto}", // Empty for auto-config
+    bufferLatencyOffset: 50, // Number of ms to move each command closer together
+    debug: false,
+    botType: 'watercolorbot',
+    botOverride: {
+      info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
     }
-  }
-  gConf.save();
-}
+  });
 
-// Output if debug mode is on
-if (gConf.get('debug')) {
-  console.log('== CNCServer Debug mode is ON ==');
-}
+  // Save Global Conf file defaults if not saved
+  if(!fs.existsSync(configPath)) {
+    var def = gConf.stores['defaults'].store;
+    for(var key in def) {
+      if (key != 'type'){
+        gConf.set(key, def[key]);
+      }
+    }
+    gConf.save();
+  }
+
+  // Output if debug mode is on
+  if (gConf.get('debug')) {
+    console.log('== CNCServer Debug mode is ON ==');
+  }
+};
+
+// TODO: Find this call a new home
+loadGlobalConfig();
 
 // Load bot config file based on botType global config
 function loadBotConfig(botType) {
@@ -186,6 +194,9 @@ if (!module.parent) {
     bot: botConf,
     global: gConf
   }
+
+  // Export to reset global config
+  exports.loadGlobalConfig = loadGlobalConfig;
 
   // Export to reset or load different bot config
   exports.loadBotConfig = loadBotConfig;
