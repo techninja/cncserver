@@ -25,38 +25,37 @@ var cncserver = {};
         });
       },
 
-    /**
-      * Set pen position up (not drawing)
-      * @param {function} callback
-      *   Function to callback when done, including data from response body
-      * @param {boolean} flop
-      *   Set to true to swap pen position state to 1 (down/draw)
-      */
-      up: function(callback, flop){
-        // Short circuit if state already matches local state
-        if (cncserver.state.pen.state == flop ? 1 : 0) {
-          callback(cncserver.state.pen);
-          return;
+   /**
+    * Set pen position height
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    * @param {float|string} value
+    *   0 to 1 float, and named constants
+    */
+    height: function(value, callback){
+      _put('pen', {
+        data: { state: value},
+        success: function(d){
+          cncserver.state.updatePen(d);
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
         }
+      });
+    },
 
-        _put('pen', {
-          data: { state: flop ? 1 : 0}, // 0 is off (no draw), 1 is on (do draw)
-          success: function(d){
-            cncserver.state.pen = d;
-            if (callback) callback(d);
-          },
-          error: function(e) {
-            callback(false);
-          }
-        });
-      },
+    // Shortcut call to the above with flop set to false
+    up: function(callback) {
+      this.height(0, callback);
+    },
 
-      // Shortcut call to the above with flop set to true
-      down: function(callback) {
-        this.up(callback, true);
-      },
+    // Shortcut call to the above with flop set to true
+    down: function(callback) {
+      this.height(1, callback);
+    },
 
-    /**
+     /**
       * Reset server state for distanceCounter
       * @param {function} callback
       *   Function to callback when done, including data from response body
@@ -74,7 +73,7 @@ var cncserver = {};
         });
       },
 
-    /**
+     /**
       * Move pen to parking position outside drawing canvas
       * @param {function} callback
       *   Function to callback when done, including data from response body

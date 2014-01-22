@@ -6,8 +6,28 @@
   </head>
 <body>
 
-  <button id="diagtest">Run Diag Test</button>
-  <button id="unlock">Unlock</button>
+  <fieldset><legend>General</legend>
+    <button id="unlock">Unlock</button>
+  </fieldset>
+
+  <fieldset><legend>X,Y Movement</legend>
+    <button id="park">PARK</button>
+    <button id="move1">0,0</button>
+    <button id="move2">25,25</button>
+    <button id="move3">50,50</button>
+    <button id="move4">75,75</button>
+    <button id="move5">100,100</button>
+  </fieldset>
+
+  <fieldset><legend>Z/Servo Control</legend>
+    <button id="up">Up</button>
+    <button id="draw">Draw</button>
+  </fieldset>
+
+  <fieldset><legend>Composite Functions</legend>
+    <button id="diagtest">Run Diag Test</button>
+    <button id="circle">Draw Circle</button>
+  </fieldset>
 
 <script>
   var runningTest = false;
@@ -22,6 +42,21 @@
         break;
       case 'unlock':
         cncserver.api.motors.unlock();
+        break;
+      case 'park':
+        cncserver.api.pen.park();
+        break;
+      case 'up':
+      case 'draw':
+        cncserver.api.pen.height(id);
+        break;
+      case 'move1':
+      case 'move2':
+      case 'move3':
+      case 'move4':
+      case 'move5':
+        var pos = $('#' + id).text().split(',');
+        cncserver.api.pen.move({x: pos[0], y: pos[1]});
         break;
     }
   });
