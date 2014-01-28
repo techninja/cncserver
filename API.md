@@ -43,12 +43,12 @@ Gets the current pen status. This is a direct dump of the internal state of the
 pen, so it will include x,y absolute step position, which you should ignore.
 
 #### Request
-```
+```javascript
 GET /v1/pen
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -80,7 +80,7 @@ Allows for direct setting of state and position. ***Currently, you must set
 position and state in separate requests. See issue [#16](https://github.com/techninja/cncserver/issues/16) for status.***
 
 #### Request Example (set state #1)
-```
+```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
@@ -91,7 +91,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (set state #2)
-```
+```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
@@ -102,7 +102,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (set position)
-```
+```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
@@ -114,7 +114,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (reset distance counter)
-```
+```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
@@ -125,7 +125,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -163,12 +163,12 @@ to allow the client to manage timings instead of waiting on the server.
 Parks the pen, as you cannot move pen outside of draw area using PUT.
 
 #### Request
-```
+```javascript
 DELETE /v1/pen
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -190,12 +190,12 @@ change, they can stay configured server-side.
 Lists all tools machine names in the device's tool configuration list.
 
 #### Request
-```
+```javascript
 GET /v1/tools
 ```
 
 ### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -218,12 +218,12 @@ device's tool change operation, request finishes when tool change is complete.
 Will return a `404 Not Found` if tool machine name isn't valid.
 
 #### Request
-```
+```javascript
 PUT /v1/tools/color1
 ```
 
 ### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -252,12 +252,12 @@ After having moved programmatically, the motors are locked to that position
 until this is called.
 
 #### Request
-```
+```javascript
 DELETE /v1/motors
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -277,7 +277,7 @@ offsets. Use after disabling the motors and parking by hand to ensure proper
 relative offset reset without needing to restart the server.
 
 #### Request
-```
+```javascript
 PUT /v1/motors
 Content-Type: application/json; charset=UTF-8
 
@@ -287,7 +287,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -306,12 +306,12 @@ via nconf.
 Gets the list of available settings types, handing the relative URI over for each.
 
 #### Request
-```
+```javascript
 GET /v1/settings
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -327,12 +327,12 @@ settings type not found. Listed values are pulled from environment, then ini fil
 then user set overrides.
 
 #### Request
-```
+```javascript
 GET /v1/settings/global
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -357,7 +357,7 @@ Content-Type: application/json; charset=UTF-8
 Set root or sub level values for *any* settings on the given type.
 
 #### Request
-```
+```javascript
 PUT /v1/settings/global
 Content-Type: application/json; charset=UTF-8
 
@@ -367,7 +367,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
@@ -389,7 +389,7 @@ Content-Type: application/json; charset=UTF-8
 * * *
 
 #### Request Example (replace entire subtree)
-```
+```javascript
 PUT /v1/settings/bot
 Content-Type: application/json; charset=UTF-8
 
@@ -408,7 +408,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (specific sub-level override)
-```
+```javascript
 PUT /v1/settings/bot
 Content-Type: application/json; charset=UTF-8
 
@@ -419,7 +419,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (new sub-level entry and value)
-```
+```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
 
@@ -430,7 +430,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
-```
+```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
