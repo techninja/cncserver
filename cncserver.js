@@ -68,6 +68,7 @@ function loadGlobalConfig() {
     },
     serialPath: "{auto}", // Empty for auto-config
     bufferLatencyOffset: 50, // Number of ms to move each command closer together
+    corsDomain: '*', // Start as open to CORs enabled browser clients
     debug: false,
     botType: 'watercolorbot',
     botOverride: {
@@ -152,6 +153,30 @@ app.configure(function(){
   app.use(express.bodyParser());
 });
 
+// Utility wrapper for creating and managing standard responses and headers for endpoints
+function createServerEndpoint(path, callback){
+  var what = Object.prototype.toString;
+  app.all(path, function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+    res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
+
+    var cbStat = callback(req, res);
+
+    if (cbStat === false) { // Super simple "not supported"
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    } else if(what.call(cbStat) === '[object Array]') { // Simple return message
+      // Array format: [/http code/, /status message/]
+      res.status(cbStat[0]).send(JSON.stringify({
+        status: cbStat[1]
+      }));
+    } else if(what.call(cbStat) === '[object Object]') { // Full message
+      res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+    }
+  });
+}
+
 // Only if we're running standalone... try to start the server immediately!
 if (!module.parent) {
   // Attempt Initial Serial Connection
@@ -221,28 +246,8 @@ if (!module.parent) {
   }
   exports.directSetPen=function(){};
 
-  // ReST Server endpoint creation utility
-  exports.createServerEndpoint = function(path, callback){
-    var what = Object.prototype.toString;
-    app.all(path, function(req, res){
-      res.set('Content-Type', 'application/json; charset=UTF-8');
-
-      var cbStat = callback(req, res);
-
-      if (cbStat === false) { // Super simple "not supported"
-        res.status(405).send(JSON.stringify({
-          status: 'Not supported'
-        }));
-      } else if(what.call(cbStat) === '[object Array]') { // Simple return message
-        // Array format: [/http code/, /status message/]
-        res.status(cbStat[0]).send(JSON.stringify({
-          status: cbStat[1]
-        }));
-      } else if(what.call(cbStat) === '[object Object]') { // Full message
-        res.status(cbStat.code).send(JSON.stringify(cbStat.body));
-      }
-    });
-  }
+  // Export ReST Server endpoint creation utility
+  exports.createServerEndpoint = createServerEndpoint;
 }
 
 // Grouping function to send off the initial configuration for the bot
