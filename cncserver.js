@@ -317,35 +317,27 @@ function serialPortReadyCallback() {
 
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
-  app.all("/v1/settings", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
+  createServerEndpoint("/v1/settings", function(req, res){
     if (req.route.method == 'get') { // Get list of tools
-      res.status(200).send(JSON.stringify({
+      return {code: 200, body: {
         global: '/v1/settings/global',
         bot: '/v1/settings/bot'
-      }));
+      }};
     } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+      return false;
     }
   });
 
-  app.all("/v1/settings/:type", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-
+  createServerEndpoint("/v1/settings/:type", function(req, res){
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){
-      res.status(404).send(JSON.stringify({
-        status: 'Settings group not found'
-      }));
-      return;
+      return [404, 'Settings group not found'];
     }
 
     var conf = setType == 'global' ? gConf : botConf;
 
-    function getSettingsJSON() {
+    function getSettings() {
       var out = {};
       // Clean the output for global as it contains all commandline env vars!
       if (setType == 'global') {
@@ -359,43 +351,32 @@ function serialPortReadyCallback() {
       } else {
         out = conf.get();
       }
-      return JSON.stringify(out);
+      return out;
     }
 
     // Get the full list for the type
     if (req.route.method == 'get') {
-      res.status(200).send(getSettingsJSON());
+      return {code: 200, body: getSettings()};
     } else if (req.route.method == 'put') {
       for (var i in req.body) {
         conf.set(i, req.body[i]);
       }
-      res.status(200).send(getSettingsJSON());
+      return {code: 200, body: getSettings()};
     } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+      return false;
     }
   });
 
   // Return/Set PEN state  API =================================================
-  app.all("/v1/pen", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-
-    if (req.route.method == 'get') {
-      // GET pen state
-      res.send(JSON.stringify(pen));
-    } else if (req.route.method == 'put') {
+  createServerEndpoint("/v1/pen", function(req, res){
+    if (req.route.method == 'put') {
       // SET/UPDATE pen status
       setPen(req.body, function(stat){
         if (!stat) {
-          res.status(500).send(JSON.stringify({
-            status: 'Error'
-          }));
+          return [500, "Error setting pen!"];
         } else {
           if (req.body.ignoreTimeout){
-            res.status(202).send(JSON.stringify(pen));
-          } else {
-            res.status(200).send(JSON.stringify(pen));
+            return {code: 202, body: pen};
           }
         }
       });
@@ -405,30 +386,23 @@ function serialPortReadyCallback() {
       setHeight('up');
       setPen({x: 0, y:0, park: true}, function(stat){
         if (!stat) {
-          res.status(500).send(JSON.stringify({
-            status: 'Error'
-          }));
-        } else {
-          res.status(200).send(JSON.stringify(pen));
+          return [500, "Error parking pen!"];
         }
       });
-    } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+    } else if (req.route.method !== 'get') {
+      return false;
     }
+
+    // Default return, just return the pen!
+    return {code: 200, body: pen};
   });
 
   // Return/Set Motor state API ================================================
-  app.all("/v1/motors", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-
+  createServerEndpoint("/v1/motors", function(req, res){
     // Disable/unlock motors
     if (req.route.method == 'delete') {
       run('custom', 'EM,0,0');
-      res.status(201).send(JSON.stringify({
-        status: 'Disable Queued'
-      }));
+      return [201, 'Disable Queued'];
     } else if (req.route.method == 'put') {
       if (req.body.reset == 1) {
         // TODO: This could totally break queueing as movements are queued with
@@ -436,57 +410,39 @@ function serialPortReadyCallback() {
         pen.x = 0;
         pen.y = 0;
         console.log('Motor offset reset to zero')
-        res.status(200).send(JSON.stringify({
-          status: 'Motor offset zeroed'
-        }));
+        return [200, 'Motor offset zeroed'];
       } else {
-        res.status(406).send(JSON.stringify({
-          status: 'Input not acceptable, see API spec for details.'
-        }));
+        return [406, 'Input not acceptable, see API spec for details.'];
       }
     } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+      return false;
     }
   });
 
   // Get/Change Tool API ================================================
-  app.all("/v1/tools", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-
+  createServerEndpoint("/v1/tools", function(req, res){
     var toolName = req.params.tool;
     if (req.route.method == 'get') { // Get list of tools
-      res.status(200).send(JSON.stringify({tools: Object.keys(botConf.get('tools'))}));
+      return {code: 200, body:{tools: Object.keys(botConf.get('tools'))}};
     } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+      return false;
     }
   });
 
-  app.all("/v1/tools/:tool", function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-
+  createServerEndpoint("/v1/tools/:tool", function(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method == 'put') { // Set Tool
       if (botConf.get('tools:' + toolName)){
         setTool(toolName, function(data){
           pen.tool = toolName;
-          res.status(200).send(JSON.stringify({
-            status: 'Tool changed to ' + toolName
-          }));
+          return [200, 'Tool changed to ' + toolName];
         })
       } else {
-        res.status(404).send(JSON.stringify({
-          status: 'Tool not found'
-        }));
+        return [404, "Tool: '" + toolName + "' not found"];
       }
     } else {
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
+      return false;
     }
   });
 
