@@ -436,8 +436,11 @@ function serialPortReadyCallback() {
       if (botConf.get('tools:' + toolName)){
         setTool(toolName, function(data){
           pen.tool = toolName;
-          return [200, 'Tool changed to ' + toolName];
-        })
+          res.status(200).send(JSON.stringify({
+            status: 'Tool changed to ' + toolName
+          }));
+        });
+        return true; // Tell endpoint wrapper we'll handle the response
       } else {
         return [404, "Tool: '" + toolName + "' not found"];
       }
