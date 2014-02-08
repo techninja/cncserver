@@ -73,6 +73,12 @@ var BOT = {}; // Set after botConfig is loaded
 var app = express();
 var server = require('http').createServer(app);
 
+// Global express initialization (must run before any endpoint creation)
+app.configure(function(){
+  app.use("/", express.static(__dirname + '/example'));
+  app.use(express.bodyParser());
+});
+
 var serialport = require("serialport");
 var serialPort = false;
 var SerialPort = serialport.SerialPort;
@@ -80,107 +86,89 @@ var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
 
-// Express initialization (must run before enpoint creation)
-app.configure(function(){
-  app.use("/", express.static(__dirname + '/example'));
-  app.use(express.bodyParser());
-});
-
-// Utility wrapper for creating and managing standard responses and headers for endpoints
-function createServerEndpoint(path, callback){
-  var what = Object.prototype.toString;
-  app.all(path, function(req, res){
-    res.set('Content-Type', 'application/json; charset=UTF-8');
-    res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
-
-    var cbStat = callback(req, res);
-
-    if (cbStat === false) { // Super simple "not supported"
-      res.status(405).send(JSON.stringify({
-        status: 'Not supported'
-      }));
-    } else if(what.call(cbStat) === '[object Array]') { // Simple return message
-      // Array format: [/http code/, /status message/]
-      res.status(cbStat[0]).send(JSON.stringify({
-        status: cbStat[1]
-      }));
-    } else if(what.call(cbStat) === '[object Object]') { // Full message
-      res.status(cbStat.code).send(JSON.stringify(cbStat.body));
-    }
-  });
-}
+// Load the Global Configuration (from config, defaults & CL vars)
+loadGlobalConfig(standaloneOrModuleInit);
 
 // Only if we're running standalone... try to start the server immediately!
-if (!module.parent) {
-  // Attempt Initial Serial Connection
-  connectSerial({
-    error: function() {
-      console.log('CONNECTSERIAL ERROR!');
-      simulationModeInit();
-      serialPortReadyCallback();
-    },
-    connect: function(){
-      //console.log('CONNECTSERIAL CONNECT!');
-      serialPortReadyCallback();
-    },
-    disconnect: serialPortCloseCallback
-  });
+function standaloneOrModuleInit() {
+  if (!module.parent) {
+    // Load the bot specific configuration, defaulting to gConf bot type
+    loadBotConfig(function(){
+      // Attempt Initial Serial Connection
+      connectSerial({
+        error: function() {
+          console.error('CONNECTSERIAL ERROR!');
+          simulationModeInit();
+          serialPortReadyCallback();
+        },
+        connect: function(){
+          //console.log('CONNECTSERIAL CONNECT!');
+          serialPortReadyCallback();
+        },
+        disconnect: serialPortCloseCallback
+      });
+    });
 
-} else { // Export the module's useful API functions!
-  // Connect to serial and start server
-  exports.start = function(options) {
-    connectSerial({
-      success: function() { // Successfully connected
-        if (options.success) options.success();
-      },
-      error: function(info) { // Error during connection attempt
-        if (options.error) options.error(info);
-      },
-      connect: function() { // Callback for first serial connect, or re-connect
-        serialPortReadyCallback();
-        if (options.connect) options.connect();
-      },
-      disconnect: function() { // Callback for serial disconnect
-        serialPortCloseCallback();
-        if (options.disconnect) options.disconnect();
+  } else { // Export the module's useful API functions! ========================
+    // Connect to serial and start server
+    exports.start = function(options) {
+      loadBotConfig(function(){
+        connectSerial({
+          success: function() { // Successfully connected
+            if (options.success) options.success();
+          },
+          error: function(info) { // Error during connection attempt
+            if (options.error) options.error(info);
+          },
+          connect: function() { // Callback for first serial connect, or re-connect
+            serialPortReadyCallback();
+            if (options.connect) options.connect();
+          },
+          disconnect: function() { // Callback for serial disconnect
+            serialPortCloseCallback();
+            if (options.disconnect) options.disconnect();
+          }
+        });
+      }, options.botType);
+    }
+
       }
-    });
+
+    // Direct configuration access (use the getters and override setters!)
+    exports.conf = {
+      bot: botConf,
+      global: gConf
+    }
+
+    // Export to reset global config
+    exports.loadGlobalConfig = loadGlobalConfig;
+
+    // Export to reset or load different bot config
+    exports.loadBotConfig = loadBotConfig;
+
+    // Continue with simulation mode
+    exports.continueSimulation = simulationModeInit;
+
+    // Export Serial Ready Init (starts webserver)
+    exports.serialReadyInit = serialPortReadyCallback;
+
+    // Get available serial ports
+    exports.getPorts = function(cb) {
+      require("serialport").list(function (err, ports) {
+        cb(ports);
+      });
+    }
+
+    // Set pen direct command
+    exports.setPen = function(value) {
+      pen.state = value;
+      serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
+    }
+    exports.directSetPen=function(){};
+
+    // Export ReST Server endpoint creation utility
+    exports.createServerEndpoint = createServerEndpoint;
   }
-
-  // Direct configuration access (use the getters and override setters!)
-  exports.conf = {
-    bot: botConf,
-    global: gConf
-  }
-
-  // Export to reset global config
-  exports.loadGlobalConfig = loadGlobalConfig;
-
-  // Export to reset or load different bot config
-  exports.loadBotConfig = loadBotConfig;
-
-  // Continue with simulation mode
-  exports.continueSimulation = simulationModeInit;
-
-  // Export Serial Ready Init (starts webserver)
-  exports.serialReadyInit = serialPortReadyCallback;
-
-  // Get available serial ports
-  exports.getPorts = function(cb) {
-    require("serialport").list(function (err, ports) {
-      cb(ports);
-    });
-  }
-
-  // Set pen direct command
-  exports.setPen = function(value) {
-    pen.state = value;
-    serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
-  }
-  exports.directSetPen=function(){};
-
-  // Export ReST Server endpoint creation utility
-  exports.createServerEndpoint = createServerEndpoint;
 }
 
 // Grouping function to send off the initial configuration for the bot
