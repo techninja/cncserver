@@ -194,6 +194,8 @@ function sendBotConfig() {
     run('custom', 'SC,10,' + botConf.get('servo:rate'));
     run('custom', 'SC,10,' + botConf.get('servo:rate'));
   }
+
+  console.info('---=== ' + botConf.get('name') + ' is ready to receive commands ===---');
 }
 
 // Start express HTTP server for API on the given port
