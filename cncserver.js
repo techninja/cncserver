@@ -47,94 +47,27 @@ var pen  = {
   simulation: 0 // Fake everything and act like it's working, no serial
 }
 
-// Initialize global config
-function loadGlobalConfig() {
-  // Pull conf from file
-  var configPath = path.resolve(__dirname, 'config.ini');
-  gConf.reset();
-  gConf.use('file', {
-    file: configPath,
-    format: nconf.formats.ini
-  }).load();
-
-  // Set Global Config Defaults
-  gConf.defaults({
-    httpPort: 4242,
-    httpLocalOnly: true,
-    swapMotors: false,
-    invertAxis: {
-      x: false,
-      y: false
-    },
-    serialPath: "{auto}", // Empty for auto-config
-    bufferLatencyOffset: 50, // Number of ms to move each command closer together
-    corsDomain: '*', // Start as open to CORs enabled browser clients
-    debug: false,
-    botType: 'watercolorbot',
-    botOverride: {
-      info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
-    }
-  });
-
-  // Save Global Conf file defaults if not saved
-  if(!fs.existsSync(configPath)) {
-    var def = gConf.stores['defaults'].store;
-    for(var key in def) {
-      if (key != 'type'){
-        gConf.set(key, def[key]);
-      }
-    }
-    gConf.save();
-  }
-
-  // Output if debug mode is on
-  if (gConf.get('debug')) {
-    console.log('== CNCServer Debug mode is ON ==');
+// Global Defaults (also used to write the initial config.ini)
+var globalConfigDefaults = {
+  httpPort: 4242,
+  httpLocalOnly: true,
+  swapMotors: false,
+  invertAxis: {
+    x: false,
+    y: false
+  },
+  serialPath: "{auto}", // Empty for auto-config
+  bufferLatencyOffset: 50, // Number of ms to move each command closer together
+  corsDomain: '*', // Start as open to CORs enabled browser clients
+  debug: false,
+  botType: 'watercolorbot',
+  botOverride: {
+    info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
 };
 
-// TODO: Find this call a new home
-loadGlobalConfig();
-
-// Load bot config file based on botType global config
-function loadBotConfig(botType) {
-  if (!botType) botType = gConf.get('botType');
-
-  var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
-  if (!fs.existsSync(botTypeFile)){
-    console.log('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
-    process.exit(16);
-  } else {
-    botConf.reset();
-    botConf.use('file', {
-      file: botTypeFile,
-      format: nconf.formats.ini
-    }).load();
-    console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
-  }
-}
-
-// TODO: DO this in a different place to allow node applications to select this
-loadBotConfig();
-
-// Mesh in bot overrides from main config
-var overrides = gConf.get('botOverride')[gConf.get('botType')];
-for(var key in overrides) {
-  botConf.set(key, overrides[key]);
-}
-
 // Hold common bot specific contants (also helps with string conversions)
-var BOT = {
-  workArea: {
-    left: Number(botConf.get('workArea:left')),
-    top: Number(botConf.get('workArea:top'))
-  },
-  maxArea: {
-    width: Number(botConf.get('maxArea:width')),
-    height: Number(botConf.get('maxArea:height'))
-  },
-  commands : botConf.get('controller').commands
-}
+var BOT = {}; // Set after botConfig is loaded
 
 // INTIAL SETUP ================================================================
 var app = express();
@@ -792,6 +725,96 @@ function serialPortReadyCallback() {
       }
     }
   }
+}
+
+// Initialize global config
+function loadGlobalConfig(cb) {
+  // Pull conf from file
+  var configPath = path.resolve(__dirname, 'config.ini');
+  gConf.reset();
+  gConf.use('file', {
+    file: configPath,
+    format: nconf.formats.ini
+  }).load(cb);
+
+  // Set Global Config Defaults
+  gConf.defaults();
+
+  // Save Global Conf file defaults if not saved
+  if(!fs.existsSync(configPath)) {
+    var def = gConf.stores['defaults'].store;
+    for(var key in def) {
+      if (key != 'type'){
+        gConf.set(key, def[key]);
+      }
+    }
+    gConf.save();
+  }
+
+  // Output if debug mode is on
+  if (gConf.get('debug')) {
+    console.info('== CNCServer Debug mode is ON ==');
+  }
+};
+
+// Load bot config file based on botType global config
+function loadBotConfig(cb, botType) {
+  if (!botType) botType = gConf.get('botType');
+
+  var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
+  if (!fs.existsSync(botTypeFile)){
+    console.error('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
+    process.exit(16);
+  } else {
+    botConf.reset();
+    botConf.use('file', {
+      file: botTypeFile,
+      format: nconf.formats.ini
+    }).load(cb);
+    console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
+  }
+
+  // Mesh in bot overrides from main config
+  var overrides = gConf.get('botOverride')[gConf.get('botType')];
+  for(var key in overrides) {
+    botConf.set(key, overrides[key]);
+  }
+
+  BOT = {
+    workArea: {
+      left: Number(botConf.get('workArea:left')),
+      top: Number(botConf.get('workArea:top'))
+    },
+    maxArea: {
+      width: Number(botConf.get('maxArea:width')),
+      height: Number(botConf.get('maxArea:height'))
+    },
+    commands : botConf.get('controller').commands
+  }
+}
+
+// Utility wrapper for creating and managing standard responses and headers for endpoints
+function createServerEndpoint(path, callback){
+  var what = Object.prototype.toString;
+  app.all(path, function(req, res){
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+    res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
+
+    var cbStat = callback(req, res);
+
+    if (cbStat === false) { // Super simple "not supported"
+      res.status(405).send(JSON.stringify({
+        status: 'Not supported'
+      }));
+    } else if(what.call(cbStat) === '[object Array]') { // Simple return message
+      // Array format: [/http code/, /status message/]
+      res.status(cbStat[0]).send(JSON.stringify({
+        status: cbStat[1]
+      }));
+    } else if(what.call(cbStat) === '[object Object]') { // Full message
+      res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+    }
+  });
 }
 
 // COMMAND RUN QUEUE UTILS ==========================================
