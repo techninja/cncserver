@@ -388,6 +388,7 @@ function serialPortReadyCallback() {
   // Send direct setup var command
   exports.sendSetup = sendSetup;
   function sendSetup(id, value) {
+    // TODO: Make this WCB specific, or refactor to be general
     run('custom', 'SC,' + id + ',' + value);
   }
 
@@ -681,7 +682,7 @@ function serialPortReadyCallback() {
     return distance;
   }
 
-
+  // Wiggle Pen for WCB toolchanges
   function wigglePen(axis, travel, iterations){
     var start = {x: Number(pen.x), y: Number(pen.y)};
     var i = 0;
@@ -1032,6 +1033,6 @@ function connectSerial(options){
     }
 
     // Complete callback
-    if (options.complete) options.complete(stat)
+    if (options.complete) options.complete(stat);
   });
 }
