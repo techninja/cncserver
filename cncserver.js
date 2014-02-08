@@ -132,7 +132,21 @@ function standaloneOrModuleInit() {
       }, options.botType);
     }
 
+    // Retreieve list of bot configs
+    exports.getSupportedBots = function() {
+      var ini = require('ini');
+      var list = fs.readdirSync(path.resolve(__dirname, 'machine_types'));
+      var out = {};
+      for(var i in list) {
+        var data = ini.parse(fs.readFileSync(path.resolve(__dirname, 'machine_types', list[i]), 'utf-8'));
+        var type = list[i].split('.')[0];
+        out[type] = {
+          name: data.name,
+          data: data
+        };
       }
+      return out;
+    }
 
     // Direct configuration access (use the getters and override setters!)
     exports.conf = {
