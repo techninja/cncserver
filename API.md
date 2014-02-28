@@ -297,7 +297,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 ## 4. Settings
-The `settings` resource give you handy, low level access to all the INI and
+The `settings` resource gives you handy, low level access to all the INI and
 command line options currently in use by CNC Server, giving you the ability to
 change height presets, servo duration, tool settings and anything else controlled
 via nconf.
@@ -453,3 +453,100 @@ its children.
  * There's currently no sanity checks for data ranges or variable types, and all
 storage through INI files defaults to strings, so play nice and double check the
 validity of your settings or you'll be chasing down ***very*** strange issues.
+
+## 5. Buffer
+The `buffer` resource gives you insight into the command buffer used to
+internally queue work to be done by the hardware. Any commands meant to require
+action from bot hardware write to the command buffer, other commands write to
+the servers variables directly and are "instant". The most common use case for
+this resource is to pause or resume command running on a low level.
+
+### GET /v1/buffer
+Gets the current buffer status, length of buffer and even the low level items to
+be run next.
+
+#### Request
+```javascript
+GET /v1/buffer
+```
+
+#### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "running": false, // Whether or not the buffer is currently processing
+    "paused": false,  // True if Paused, false if ready
+    "count": 0,       // Length of buffer
+    "buffer": []      // Full buffer output
+}
+```
+
+##### Usage Notes
+ * The buffer is checked every 10ms, and processes that with short timing
+intervals below a given threshold happen in an "instant" next-run blocking
+fashion to ensure they occur without jitters or gaps.
+ * The buffer output format is an array or low level serial commands specific to
+the bot. These may **eventually** be abstracted to allow importing of rendered
+commands directly into the buffer.
+
+
+* * *
+
+### PUT /v1/buffer
+Set elements of the buffer state. Currently only supports `paused` state.
+
+#### Request
+```javascript
+PUT /v1/buffer
+Content-Type: application/json; charset=UTF-8
+
+{
+  "paused": true
+}
+```
+
+#### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "running": false,
+    "paused": true,
+    "count": 0,
+    "buffer": []
+}
+```
+
+##### Usage Notes
+ * The data given is always the same as the GET method, but current as of the
+last change.
+
+
+* * *
+
+### DELETE /v1/buffer
+Immediately clear the entire buffer of further commands.
+
+#### Request
+```javascript
+DELETE /v1/buffer
+Content-Type: application/json; charset=UTF-8
+
+```
+
+#### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "status": "Buffer cleared"
+}
+```
+
+##### Usage Notes
+ * No wait is given, buffer is immediately cleared and no waiting callbacks are
+called. This might have to change though...

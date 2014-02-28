@@ -355,7 +355,35 @@ function serialPortReadyCallback() {
     }
   });
 
-  // Get/Change Tool API ================================================
+  // Command buffer API ========================================================
+  createServerEndpoint("/v1/buffer", function(req, res){
+    if (req.route.method == 'get' || req.route.method == 'put') {
+
+      // Pause/resume
+      if (typeof req.body.paused == "boolean") {
+        if (req.body.paused != bufferPaused) {
+          bufferPaused = req.body.paused;
+          console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
+          bufferRunning = false; // Force a followup check as the paused var has changed
+        }
+      }
+
+      return {code: 200, body: {
+        running: bufferRunning,
+        paused: bufferPaused,
+        count: buffer.length,
+        buffer: buffer
+      }};
+    } else if (req.route.method == 'delete') {
+      buffer = [];
+      console.log('Run buffer cleared!')
+      return [200, 'Buffer Cleared'];
+    } else {
+      return false;
+    }
+  });
+
+  // Get/Change Tool API =======================================================
   createServerEndpoint("/v1/tools", function(req, res){
     var toolName = req.params.tool;
     if (req.route.method == 'get') { // Get list of tools
