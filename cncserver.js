@@ -385,7 +385,6 @@ function serialPortReadyCallback() {
 
   // Get/Change Tool API =======================================================
   createServerEndpoint("/v1/tools", function(req, res){
-    var toolName = req.params.tool;
     if (req.route.method == 'get') { // Get list of tools
       return {code: 200, body:{tools: Object.keys(botConf.get('tools'))}};
     } else {
