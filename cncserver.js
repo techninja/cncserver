@@ -319,7 +319,6 @@ function serialPortReadyCallback() {
       });
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
-      console.log('Parking Pen...');
       setHeight('up');
       setPen({x: 0, y:0, park: true}, function(stat){
         if (!stat) {
