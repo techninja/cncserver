@@ -804,6 +804,10 @@ function createServerEndpoint(path, callback){
     res.set('Content-Type', 'application/json; charset=UTF-8');
     res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
 
+    if (gConf.get('debug')) {
+      console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
+    }
+
     var cbStat = callback(req, res);
 
     if (cbStat === false) { // Super simple "not supported"
