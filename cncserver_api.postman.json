@@ -21,7 +21,11 @@
         "b131cd64-cac4-08ee-7908-599de452765f",
         "899a0cc6-8e2c-1952-482e-8947610fb873",
         "746528c7-47f2-c0ff-09ff-17d6f9ceec03",
-        "b8dbd92e-91d4-9a88-3bc0-38b60dcb730a"
+        "b8dbd92e-91d4-9a88-3bc0-38b60dcb730a",
+        "e241fb57-9c0c-baa0-4222-b0eb487bc4ef",
+        "b6825285-5a48-444a-7f36-408013f86af4",
+        "4ce5e190-7d00-9be4-703e-e4f5d3201ef6",
+        "d72fb956-4f95-ae22-7f12-545f746d6fd3"
     ],
     "requests": [
         {
@@ -79,6 +83,20 @@
             "timestamp": 0,
             "version": 2,
             "time": 1375824504090
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "4ce5e190-7d00-9be4-703e-e4f5d3201ef6",
+            "name": "Buffer: Pause operations",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/buffer",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"paused\": true\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
@@ -222,6 +240,20 @@
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "b6825285-5a48-444a-7f36-408013f86af4",
+            "name": "Buffer: Clear buffer",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/buffer",
+            "method": "DELETE",
+            "headers": "",
+            "data": [],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
             "id": "b8dbd92e-91d4-9a88-3bc0-38b60dcb730a",
             "name": "Settings: Add height preset",
             "description": "",
@@ -264,6 +296,20 @@
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "d72fb956-4f95-ae22-7f12-545f746d6fd3",
+            "name": "Buffer: Resume operations",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/buffer",
+            "method": "PUT",
+            "headers": "Content-Type: application/json; charset=UTF-8\n",
+            "data": "{\n  \"paused\": false\n}",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
             "id": "d7d4c368-2f3b-c666-ff86-3d91b4aca87d",
             "name": "Pen: Down to Wash",
             "description": "",
@@ -275,6 +321,31 @@
             "timestamp": 0,
             "version": 2,
             "time": 1380610973747
+        },
+        {
+            "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
+            "id": "e241fb57-9c0c-baa0-4222-b0eb487bc4ef",
+            "name": "Buffer: Get status",
+            "description": "",
+            "url": "http://{{cncserver-host}}:{{cncserver-port}}/v1/buffer",
+            "method": "GET",
+            "headers": "",
+            "data": [
+                {
+                    "key": "name",
+                    "value": "api-tauntonstore",
+                    "type": "text"
+                },
+                {
+                    "key": "cleartext",
+                    "value": "T@unton1",
+                    "type": "text"
+                }
+            ],
+            "dataMode": "urlencoded",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         },
         {
             "collectionId": "6ed2f056-f044-da06-28aa-6025b812dab8",
