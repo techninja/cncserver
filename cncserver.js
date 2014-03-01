@@ -965,7 +965,6 @@ function executeNext() {
     }
 
   } else {
-    console.log('Command buffer empty. Ready for commands.,,');
     bufferRunning = false;
   }
 }
