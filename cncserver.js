@@ -85,6 +85,8 @@ var SerialPort = serialport.SerialPort;
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
+var bufferNewlyPaused = false; // Trigger for pause callback on executeNext()
+var bufferPauseCallback = null;
 
 // Load the Global Configuration (from config, defaults & CL vars)
 loadGlobalConfig(standaloneOrModuleInit);
@@ -365,15 +367,36 @@ function serialPortReadyCallback() {
           bufferPaused = req.body.paused;
           console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
           bufferRunning = false; // Force a followup check as the paused var has changed
+
+          bufferNewlyPaused = bufferPaused; // Changed to paused!
         }
       }
 
-      return {code: 200, body: {
-        running: bufferRunning,
-        paused: bufferPaused,
-        count: buffer.length,
-        buffer: buffer
-      }};
+      if (!bufferNewlyPaused || buffer.length === 0) {
+        return {code: 200, body: {
+          running: bufferRunning,
+          paused: bufferPaused,
+          count: buffer.length,
+          buffer: buffer
+        }};
+      } else { // Buffer isn't empty and we're newly paused
+        // Wait until last item has finished before returning
+        console.log('Waiting for last item to finish...');
+
+        bufferPauseCallback = function(){
+          res.status(200).send(JSON.stringify({
+            running: bufferRunning,
+            paused: bufferPaused,
+            count: buffer.length,
+            buffer: buffer
+          }));
+
+          bufferNewlyPaused = false;
+        };
+
+        return true; // Don't finish the response till later
+      }
+
     } else if (req.route.method == 'delete') {
       buffer = [];
       console.log('Run buffer cleared!')
@@ -918,6 +941,10 @@ function cmdstr(name, values) {
 // Buffer self-runner
 function executeNext() {
   // Don't continue execution if paused
+  if (bufferNewlyPaused) {
+    bufferPauseCallback();
+  }
+
   if (bufferPaused) return;
 
   if (buffer.length) {
