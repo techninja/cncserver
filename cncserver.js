@@ -312,27 +312,36 @@ function serialPortReadyCallback() {
       // SET/UPDATE pen status
       setPen(req.body, function(stat){
         if (!stat) {
-          return [500, "Error setting pen!"];
+          res.status(500).send(JSON.stringify({
+            status: "Error setting pen!"
+          }));
         } else {
           if (req.body.ignoreTimeout){
-            return {code: 202, body: pen};
+            res.status(202).send(JSON.stringify(pen));
           }
+          res.status(200).send(JSON.stringify(pen));
         }
       });
+
+      return true; // Tell endpoint wrapper we'll handle the response
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       setHeight('up');
       setPen({x: 0, y:0, park: true}, function(stat){
         if (!stat) {
-          return [500, "Error parking pen!"];
+          res.status(500).send(JSON.stringify({
+            status: "Error parking pen!"
+          }));
         }
+        res.status(200).send(JSON.stringify(pen));
       });
-    } else if (req.route.method !== 'get') {
+
+      return true; // Tell endpoint wrapper we'll handle the response
+    } else if (req.route.method == 'get'){
+      return {code: 200, body: pen};
+    } else  {
       return false;
     }
-
-    // Default return, just return the pen!
-    return {code: 200, body: pen};
   });
 
   // Return/Set Motor state API ================================================
