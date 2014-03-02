@@ -52,6 +52,15 @@ var pen = {
   simulation: 0 // Fake everything and act like it's working, no serial
 }
 
+// actualPen: This is set to the state of the pen variable as it passes through
+// the buffer queue and into the robot, meant to reflect the actual position and
+// state of the robot, and will be where the pen object is reset to when the
+// buffer is cleared and the future state is lost.
+var actualPen = {
+  x: 0,
+  y: 0
+}
+
 // Global Defaults (also used to write the initial config.ini)
 var globalConfigDefaults = {
   httpPort: 4242,
@@ -413,6 +422,12 @@ function serialPortReadyCallback() {
 
     } else if (req.route.method == 'delete') {
       buffer = [];
+
+      // Reset the state of the buffer tip pen to the state of the actual robot.
+      // If this isn't done, it will be assumed to be a state that was deleted
+      // and never sent out in the line above.
+      pen = extend({}, actualPen);
+
       console.log('Run buffer cleared!')
       return [200, 'Buffer Cleared'];
     } else {
@@ -935,8 +950,9 @@ function run(command, data, duration) {
       return false;
   }
 
-  // Add final command and duration to end of queue
-  buffer.unshift([c, duration]);
+  // Add final command and duration to end of queue, along with a copy of the
+  // pen state at this point in time to be copied to actualPen after execution
+  buffer.unshift([c, duration, extend({}, pen)]);
 }
 
 // Create a bot specific serial command string from values
@@ -954,11 +970,12 @@ function cmdstr(name, values) {
 
 // Buffer self-runner
 function executeNext() {
-  // Don't continue execution if paused
+  // Run the paused callback if applicable
   if (bufferNewlyPaused) {
     bufferPauseCallback();
   }
 
+  // Don't continue execution if paused
   if (bufferPaused) return;
 
   if (buffer.length) {
@@ -977,6 +994,10 @@ function executeNext() {
       // Actually send the command out to serial
       serialCommand(cmd[0]);
     }
+
+    // Set the actualPen state to match the state assumed at the time the buffer
+    // item was created
+    actualPen = extend({}, cmd[2]);
 
   } else {
     bufferRunning = false;
