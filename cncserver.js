@@ -22,10 +22,11 @@
  */
 
 // REQUIRES ====================================================================
-var nconf = require('nconf');
-var express = require('express');
-var fs = require('fs');
-var path = require('path');
+var nconf = require('nconf');         // Configuration and INI file
+var express = require('express');     // Webserver
+var fs = require('fs');               // File System management
+var path = require('path');           // Path management and normalization
+var extend = require('util')._extend; // Util for cloning objects
 
 // CONFIGURATION ===============================================================
 var gConf = new nconf.Provider();
@@ -35,7 +36,11 @@ var botConf = new nconf.Provider();
 gConf.env().argv();
 
 // STATE Variables
-var pen  = {
+
+// The pen: this holds the state of the pen at the "latest tip" of the buffer,
+// meaning that as soon as an instruction is received, this variable is updated
+// to reflect the intention of the buffered item.
+var pen = {
   x: 0, // Assume we start in top left corner
   y: 0,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
