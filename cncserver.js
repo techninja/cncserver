@@ -93,11 +93,14 @@ app.configure(function(){
 var serialport = require("serialport");
 var serialPort = false;
 var SerialPort = serialport.SerialPort;
+
+// Buffer State variables
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
 var bufferNewlyPaused = false; // Trigger for pause callback on executeNext()
 var bufferPauseCallback = null;
+var bufferPausePen = null; // Hold the state when paused to return to for resuming
 
 // Load the Global Configuration (from config, defaults & CL vars)
 loadGlobalConfig(standaloneOrModuleInit);
@@ -338,7 +341,7 @@ function serialPortReadyCallback() {
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       setHeight('up');
-      setPen({x: 0, y:0, park: true}, function(stat){
+      setPen({x: 0, y:0, park: true, skipBuffer: req.body.skipBuffer}, function(stat){
         if (!stat) {
           res.status(500).send(JSON.stringify({
             status: "Error parking pen!"
@@ -389,7 +392,34 @@ function serialPortReadyCallback() {
           bufferRunning = false; // Force a followup check as the paused var has changed
 
           bufferNewlyPaused = bufferPaused; // Changed to paused!
+
+          // Hold on to both pen states to return to!
+          if (bufferPaused) {
+            bufferPausePen = [extend({}, actualPen), extend({}, pen)];
+          }
         }
+      }
+
+      // Resuming? Move back to starting position
+      // TODO: This is far too complicated and broken for more than one skipBuffer
+      // request, and should probably be changed
+      if (!bufferPaused && bufferPausePen) {
+        bufferPaused = true; // Pause for a bit until we move back to last pos
+        console.log('Moving back to pre-pause position...')
+        movePenAbs(bufferPausePen[0], function(){
+          // Put the pen back to where it was
+          pen = extend({}, bufferPausePen[1]);
+
+          bufferPaused = false;
+          bufferPausePen = null;
+          res.status(200).send(JSON.stringify({
+            running: bufferRunning,
+            paused: bufferPaused,
+            count: buffer.length,
+            buffer: buffer
+          }));
+        }, false, true);
+        return true; // Don't finish the response till after move back ^^^
       }
 
       if (!bufferNewlyPaused || buffer.length === 0) {
@@ -507,7 +537,7 @@ function serialPortReadyCallback() {
     // State has changed
     if (typeof inPen.state != "undefined") {
       if (inPen.state != pen.state) {
-        setHeight(inPen.state, callback);
+        setHeight(inPen.state, callback, inPen.skipBuffer);
         return;
       }
     }
@@ -547,7 +577,7 @@ function serialPortReadyCallback() {
       }
 
       // Actually move the pen!
-      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
+      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
       if (pen.state === 'draw' || pen.state === 1) {
         pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
@@ -559,7 +589,7 @@ function serialPortReadyCallback() {
 
   // Set servo position
   exports.setHeight = setHeight;
-  function setHeight(height, callback) {
+  function setHeight(height, callback, skipBuffer) {
     var fullRange = false; // Whether to use the full min/max range
     var min = parseInt(botConf.get('servo:min'));
     var max = parseInt(botConf.get('servo:max'));
@@ -613,7 +643,7 @@ function serialPortReadyCallback() {
     pen.state = stateValue;
 
     // Run the height into the command buffer
-    run('height', height, servoDuration);
+    run('height', height, servoDuration, skipBuffer);
 
     // Pen lift / drop
     if (callback) {
@@ -675,7 +705,10 @@ function serialPortReadyCallback() {
 
   // Move the Pen to an absolute point in the entire work area
   // Returns distance moved, in steps
-  function movePenAbs(point, callback, immediate) {
+  function movePenAbs(point, callback, immediate, skipBuffer) {
+
+    // If skipping the buffer, we have to start the pen off at its actual state
+    if (skipBuffer) pen = extend({}, actualPen);
 
     // Something really bad happened here...
     if (isNaN(point.x) || isNaN(point.y)){
@@ -739,7 +772,7 @@ function serialPortReadyCallback() {
     }
 
     // Queue the final serial command
-    run('move', {x: change.x, y: change.y}, duration);
+    run('move', {x: change.x, y: change.y}, duration, skipBuffer);
 
     if (callback) {
       if (immediate == 1) {
@@ -880,7 +913,8 @@ function createServerEndpoint(path, callback){
   var what = Object.prototype.toString;
   app.all(path, function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
-    res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
+    res.set('Access-Control-Allow-Origin', '*'); // gConf.get('corsDomain')
+    // TODO: Why isn't gConf setup yet??   ^^^
 
     if (gConf.get('debug')) {
       console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
@@ -911,7 +945,7 @@ function createServerEndpoint(path, callback){
 var commandDuration = 0;
 
 // Add command to serial command runner
-function run(command, data, duration) {
+function run(command, data, duration, skipBuffer) {
   var c = '';
 
   // Sanity check duration to minimum of 1, int only
@@ -924,14 +958,14 @@ function run(command, data, duration) {
       break;
     case 'height':
       // Send a new setup value for the the up position, then trigger "pen up"
-      run('custom', cmdstr('movez', {z: data}));
+      run('custom', cmdstr('movez', {z: data}), null, skipBuffer);
 
       // If there's a togglez, run it after setting Z
       if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: 0}));
+        run('custom', cmdstr('togglez', {t: 0}), null, skipBuffer);
       }
 
-      run('wait', '', duration);
+      run('wait', '', duration, skipBuffer);
       return;
       break;
     case 'wait':
@@ -949,9 +983,17 @@ function run(command, data, duration) {
       return false;
   }
 
-  // Add final command and duration to end of queue, along with a copy of the
-  // pen state at this point in time to be copied to actualPen after execution
-  buffer.unshift([c, duration, extend({}, pen)]);
+  // Give the option to completely skip the buffer
+  if (skipBuffer && typeof c == 'string') {
+    // Set the actualPen state to match the state assumed at the time the buffer
+    // item was created
+    actualPen = extend({}, pen);
+    serialCommand(c);
+  } else {
+    // Add final command and duration to end of queue, along with a copy of the
+    // pen state at this point in time to be copied to actualPen after execution
+    buffer.unshift([c, duration, extend({}, pen)]);
+  }
 }
 
 // Create a bot specific serial command string from values
