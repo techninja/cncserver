@@ -393,6 +393,8 @@ function serialPortReadyCallback() {
       }
 
       if (!bufferNewlyPaused || buffer.length === 0) {
+        bufferNewlyPaused = false; // In case paused with 0 items in buffer
+
         return {code: 200, body: {
           running: bufferRunning,
           paused: bufferPaused,
