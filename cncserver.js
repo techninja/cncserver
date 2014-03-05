@@ -56,10 +56,7 @@ var pen = {
 // the buffer queue and into the robot, meant to reflect the actual position and
 // state of the robot, and will be where the pen object is reset to when the
 // buffer is cleared and the future state is lost.
-var actualPen = {
-  x: 0,
-  y: 0
-}
+var actualPen = extend({}, pen);
 
 // Global Defaults (also used to write the initial config.ini)
 var globalConfigDefaults = {
