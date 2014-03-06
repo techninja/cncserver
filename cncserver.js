@@ -857,9 +857,13 @@ function loadBotConfig(cb, botType) {
   }
 
   // Mesh in bot overrides from main config
-  var overrides = gConf.get('botOverride')[gConf.get('botType')];
-  for(var key in overrides) {
-    botConf.set(key, overrides[key]);
+  var overrides = gConf.get('botOverride');
+  if (overrides) {
+    if (overrides[botType]) {
+      for(var key in overrides[botType]) {
+        botConf.set(key, overrides[botType][key]);
+      }
+    }
   }
 
   BOT = {
