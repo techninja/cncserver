@@ -820,7 +820,7 @@ function loadGlobalConfig(cb) {
   }).load(cb);
 
   // Set Global Config Defaults
-  gConf.defaults();
+  gConf.defaults(globalConfigDefaults);
 
   // Save Global Conf file defaults if not saved
   if(!fs.existsSync(configPath)) {
