@@ -1035,6 +1035,19 @@ setInterval(function(){
 
 // SERIAL READ/WRITE ================================================
 function serialCommand(command, callback){
+
+  if (botConf.get('controller').name == 'SparkCore') {
+    if (sparkServer.connectedSocket) {
+      if (gConf.get('debug')) {
+        var word = !pen.simulation ? 'Sending' : 'Simulating';
+        console.log(word + ' spark socket command: ' + command);
+      }
+      sparkServer.connectedSocket.write(command + "\r");
+    }
+    if (callback) callback(true);
+    return; // Don't execute anything for standard serial below this
+  }
+
   if (!serialPort.write && !pen.simulation) { // Not ready to write to serial!
     if (callback) callback(true);
     return;
