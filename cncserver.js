@@ -201,7 +201,7 @@ function standaloneOrModuleInit() {
 // Grouping function to send off the initial configuration for the bot
 function sendBotConfig() {
   // EBB Specific Config =================================
-  if (botConf.get('controller').name == 'EiBotBoard') {
+  if (botConf.get('controller').manufacturer == 'SchmalzHaus') {
     console.log('Sending EBB config...')
     run('custom', 'EM,' + botConf.get('speed:precision'));
 
