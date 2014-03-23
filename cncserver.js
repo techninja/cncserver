@@ -1093,6 +1093,18 @@ function connectSerial(options){
   var autoDetect = false;
   var stat = false;
 
+  // Is this a SparkCore Wifi? Use their API to skip serial!
+  if (botConf.get('controller').name == 'SparkCore') {
+    // Check required extra config for Spark...
+    if (!botConf.get('controller').device || !botConf.get('controller').token) {
+      console.error("For SparkCore support, both controller device and token need to be set correctly in the config.");
+      console.error("Configuration error #16, exiting");
+      process.exit(18);
+    }
+    connectSparkSerial(options);
+    return; // Don't execute anything for standard serial below this
+  }
+
   // Attempt to auto detect EBB Board via PNPID
   if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
     autoDetect = true;
@@ -1150,5 +1162,61 @@ function connectSerial(options){
 
     // Complete callback
     if (options.complete) options.complete(stat);
+  });
+}
+
+function connectSparkSerial(options) {
+  // Setup socket serial server
+  sparkServer = net.createServer(function(socket){
+    // Socket connected callback...
+    console.log(
+      botConf.get('controller').device + " successfully connected from " +
+      socket.remoteAddress + ":" + socket.remotePort + "!"
+    );
+    sparkServer.connectedSocket = socket;
+
+    if (options.connect) options.connect(1);
+    if (options.disconnect) socket.on('close', options.disconnect);
+
+    // Handle return data: build full line strings via line buffer from stream chunks
+    socket.on('readable', read);
+
+    var line = "";
+    function read() {
+      var chunk;
+      while (chunk = socket.read()) {
+        var chr = chunk.toString('utf-8');
+        if (gConf.get('debug')) console.log('Data:', chr, chunk.length);
+        line+= chr;
+
+        if (line.slice(-1) == "\n") {
+          if (gConf.get('debug')) {
+            console.log('SPARK SOCKET RETURN: ' + line);
+          }
+          serialReadline(line);
+          line = "";
+        }
+      }
+    }
+  });
+  sparkServer.listen(sparkServerPort);
+
+  console.log('SparkCore device socket listening on ', ip + ':' + sparkServerPort + '...');
+
+  // Build request to send to SparkCore to point to this server
+  var data = {
+    token: botConf.get('controller').token,
+    connect: ip + ':' + sparkServerPort + '@' + botConf.get('controller').baudRate
+  }
+
+  if (gConf.get('debug')) console.log('Posting to API:', data);
+
+  // Send Spark API request to let the core know our server details
+  request.post({
+    headers: {'content-type': 'application/x-www-form-urlencoded'},
+    url: 'https://api.spark.io/v1/devices/' + botConf.get('controller').device + '/connect',
+    body: 'access_token=' + data.token + '&connect=' + data.connect
+  }, function(error, response, body){
+    console.log(body); // TODO: Check for errors in connecting
   });
 }
