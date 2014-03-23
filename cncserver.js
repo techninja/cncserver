@@ -27,6 +27,9 @@ var express = require('express');     // Webserver
 var fs = require('fs');               // File System management
 var path = require('path');           // Path management and normalization
 var extend = require('util')._extend; // Util for cloning objects
+var os = require('os');               // For grabbing local IP address
+var net = require('net');             // For creating simple socket server
+var request = require('request');     // For running external Spark API calls
 
 // CONFIGURATION ===============================================================
 var gConf = new nconf.Provider();
