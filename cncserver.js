@@ -274,7 +274,7 @@ function serialPortReadyCallback() {
   );
 
   // Is the serialport ready? Start reading
-  if (!pen.simulation) {
+  if (!pen.simulation && botConf.get('controller').name != 'SparkCore') {
     serialPort.on("data", serialReadline);
   }
 
