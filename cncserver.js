@@ -39,6 +39,20 @@ var botConf = new nconf.Provider();
 gConf.env().argv();
 
 // STATE Variables
+var sparkServerPort = 9042;
+var sparkServer = null; // Global scope place-holder
+var ip = null;
+var save_first_ipv4 = function (iface) {
+  if (!ip && !iface.internal && 'IPv4' === iface.family) {
+    ip = iface.address;
+  }
+};
+var interfaces = os.networkInterfaces();
+for (var ifName in interfaces) {
+  if (!ip) {
+    interfaces[ifName].forEach(save_first_ipv4);
+  }
+}
 
 // The pen: this holds the state of the pen at the "latest tip" of the buffer,
 // meaning that as soon as an instruction is received, this variable is updated
