@@ -338,7 +338,7 @@ function serialPortReadyCallback() {
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       setHeight('up');
-      setPen({x: 0, y:0, park: true}, function(stat){
+      setPen({x: BOT.park.x, y: BOT.park.y, park: true}, function(stat){
         if (!stat) {
           res.status(500).send(JSON.stringify({
             status: "Error parking pen!"
@@ -530,17 +530,16 @@ function serialPortReadyCallback() {
       inPen.y  = inPen.y < 0 ? 0 : inPen.y;
 
       // Convert the percentage values into real absolute and appropriate values
-      var absInput = {
-        x: BOT.workArea.left + ((inPen.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
-        y: BOT.workArea.top + ((inPen.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
-      }
+      var absInput = centToSteps(inPen);
 
       if (inPen.park) {
         absInput.x-= BOT.workArea.left;
         absInput.y-= BOT.workArea.top;
 
         // Don't repark if already parked
-        if (pen.x == 0 && pen.y == 0) {
+        var park = centToSteps(BOT.park);
+        console.log(park, pen);
+        if (pen.x == park.x && pen.y == park.y) {
           callback(false);
           return;
         }
@@ -555,6 +554,14 @@ function serialPortReadyCallback() {
     }
 
     if (callback) callback(true);
+  }
+
+  // Util function, convert a percent into steps
+  function centToSteps(point) {
+    return {
+      x: BOT.workArea.left + ((point.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
+      y: BOT.workArea.top + ((point.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
+    };
   }
 
   // Set servo position
@@ -874,6 +881,10 @@ function loadBotConfig(cb, botType) {
     maxArea: {
       width: Number(botConf.get('maxArea:width')),
       height: Number(botConf.get('maxArea:height'))
+    },
+    park: {
+      x: Number(botConf.get('park:x')),
+      y: Number(botConf.get('park:y'))
     },
     commands : botConf.get('controller').commands
   }
