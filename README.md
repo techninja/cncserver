@@ -1,7 +1,7 @@
 CNC server
 =========
 A node.js based RESTful API to serial interface control for plotters, originally
-created for [Super Awesome Sylvia's WaterColorBot](http://watercolorbot.com),
+created for ["Super-Awesome" Sylvia's WaterColorBot](http://watercolorbot.com),
 the awesome pen plotter that paints with watercolors, thought up by
 [MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
 staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
@@ -25,23 +25,23 @@ the instructions, and you should be up and running with node! To run a node
 application, simply type `node filename.js` into a command line or terminal.
 
 #### Install npm
-**npm** is the **n**ode **p**ackage **m**anager, and it makes installing stuff
+**npm** is the **N** ode **P** ackage **M** anager, and it makes installing stuff
 *really* easy. If you used the node installer for Windows or Mac, you should
 already have it! On Linux, (with curl installed), as an admin, simply run
 `curl https://npmjs.org/install.sh | sh` in a terminal. If you're having
 trouble read [here](https://npmjs.org/doc/README.html).
 
 #### CNC server files
- * **For easy updating during alpha phase:** Use the handy GUI! Click the
+ * **For easy updating from master:** Use the handy GUI! Click the
 "Clone in Mac/Windows" button at the top of the
 [GitHub repo homepage](https://github.com/techninja/cncserver). When new code
 updates come along, just click the refresh/sync button and you'll be up to date!
  * **For quick use:** Download the files
 [here](https://github.com/techninja/cncserver/archive/master.zip), unzip them to
 a handy folder, and you're ready to run!
- * **For Devs:** clone the repo via the usual way to a handy folder, or fork the
-repo and submit a pull request, we're always looking for contributions that make
-things better for everyone!
+ * **For developers looking to improve it:** Fork the repo, make your changes in
+a branch, and submit a pull request! We're always looking for contributions that
+make things better for everyone, fix issues, or add features!
 
 #### Installing NPM Dependencies
 With your system setup and everything else installed, open a terminal and make your
@@ -52,7 +52,7 @@ requires `make`, which comes with Xcode, a free download.
 ## Running
 CNC Server *currently* only supports the late model
 [EBB](http://www.schmalzhaus.com/EBB/) and its command set. Of the devices that
-use it, ***only*** the WaterColorBot Beta, with EggBot support next. More
+use it, ***only*** the WaterColorBot and the EggBot have reliable support. More
 devices to come soon!
 
 Plug in your device, and from the terminal in the cncserver folder, start the
@@ -64,12 +64,12 @@ can easily change in the configuration shown below.
 
 ### Configuration
 By default, CNC Server hosts the API on the localhost port `4242`
-and attempts to autodetect the correct serial port to connect to. If you want to
-tweak these settings or any other global configuration permanently, just edit
-the `config.ini` file that is generated on first run and stored in the same
-folder as `cncserver.js`. If you want to make temporary config adjustments, just
-pass the same config names and values when executing. Common examples might
-include:
+and attempts to autodetect the correct serial port to connect to for the given
+bot configuration. If you want to tweak these settings or any other global
+configuration permanently, just edit the `config.ini` file that is generated on
+first run and stored in the same folder as `cncserver.js`. If you want to make
+temporary config adjustments, just pass the same config names and values when
+executing. Common examples might include:
 ```
 # Change the hosting port to HTTP default, and force the serial port (no equals)
 node cncserver --httpPort 80 --serialPath /dev/ttyUSB1243
@@ -85,18 +85,17 @@ based CNC peripheral and provides a [simple RESTful API](API.md) to access
 common CNC/plotter functions. These controls manifest as an abstracted method of
 controlling the bot to do what you ask while sanity checking and keeping crashes
 down to a minimum.
-
  * Fast HTTP server via [Express](http://expressjs.com)
  * Runs great on even modest hardware. Raspberry Pi verified!
- * Self manages absolute pen position.
- * 4 API endpoints allow full control, motor overrides and "tool" changes.
+ * Self manages absolute pen position for relative motion plotter controllers.
+ * Multiple API endpoints allow full control, motor overrides and "tool" changes.
 Read [the documentation](API.md) and implement *your own* client!
  * Accepts direct X/Y absolute pen positions as percentage of total width/height.
  * Client agnostic! We don't care what controls the bot, as long as it follows
 the rules. See it in use by [US President Barack Obama on an iPad](http://www.youtube.com/watch?v=2HfgGDOZPCQ&feature=player_embedded#t=1992s)!
  * Configuration file and argument driven (see
 [example here](machine_types/watercolorbot.ini)), allows for server
-customization to fit *almost* any style of bot using the EBB.
+customization to fit *almost* any style of bot using a supported controller.
 
 ## Problems?
 ***Stuck on something?*** Submit an issue! Click the
