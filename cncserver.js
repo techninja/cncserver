@@ -41,8 +41,8 @@ gConf.env().argv();
 // meaning that as soon as an instruction is received, this variable is updated
 // to reflect the intention of the buffered item.
 var pen = {
-  x: 0, // Assume we start in top left corner
-  y: 0,
+  x: null, // XY to be set by bot defined park position (assumed initial location)
+  y: null,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
   height: 0, // Last set pen height in output servo value
   busy: false,
@@ -365,10 +365,12 @@ function serialPortReadyCallback() {
       if (req.body.reset == 1) {
         // TODO: This could totally break queueing as movements are queued with
         // offsets that break if the relative position doesn't match!
-        pen.x = 0;
-        pen.y = 0;
-        console.log('Motor offset reset to zero')
-        return [200, 'Motor offset zeroed'];
+        var park = centToSteps(BOT.park, true);
+        pen.x = park.x;
+        pen.y = park.y;
+
+        console.log('Motor offset reset to park position')
+        return [200, 'Motor offset reset to park position'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
       }
@@ -532,17 +534,18 @@ function serialPortReadyCallback() {
       // Convert the percentage values into real absolute and appropriate values
       var absInput = centToSteps(inPen);
 
+      // Are we parking?
       if (inPen.park) {
-        absInput.x-= BOT.workArea.left;
-        absInput.y-= BOT.workArea.top;
-
         // Don't repark if already parked
-        var park = centToSteps(BOT.park);
-        console.log(park, pen);
+        var park = centToSteps(BOT.park, true);
         if (pen.x == park.x && pen.y == park.y) {
           callback(false);
           return;
         }
+
+        // Set Absolute input value to park position in steps
+        absInput.x = park.x;
+        absInput.y = park.y;
       }
 
       // Actually move the pen!
@@ -554,14 +557,6 @@ function serialPortReadyCallback() {
     }
 
     if (callback) callback(true);
-  }
-
-  // Util function, convert a percent into steps
-  function centToSteps(point) {
-    return {
-      x: BOT.workArea.left + ((point.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
-      y: BOT.workArea.top + ((point.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
-    };
   }
 
   // Set servo position
@@ -816,6 +811,21 @@ function serialPortReadyCallback() {
   }
 }
 
+// Util function, convert a percent into steps
+function centToSteps(point, inMaxArea) {
+  if (!inMaxArea) { // Calculate based on workArea
+    return {
+      x: BOT.workArea.left + ((point.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
+      y: BOT.workArea.top + ((point.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
+    };
+  } else { // Calculate based on ALL area
+    return {
+      x: (point.x / 100) * BOT.maxArea.width,
+      y: (point.y / 100) * BOT.maxArea.height
+    };
+  }
+}
+
 // Initialize global config
 function loadGlobalConfig(cb) {
   // Pull conf from file
@@ -888,6 +898,11 @@ function loadBotConfig(cb, botType) {
         commands : botConf.get('controller').commands
       }
 
+      // Set initial pen position at park position
+      var park = centToSteps(BOT.park, true);
+      pen.x = park.x;
+      pen.y = park.y;
+
       // Set global override for swapMotors if set by bot config
       if (typeof botConf.get('controller:swapMotors') !== 'undefined') {
         gConf.set('swapMotors', botConf.get('controller:swapMotors'));
@@ -954,7 +969,7 @@ function run(command, data, duration) {
 
       // If there's a togglez, run it after setting Z
       if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: 0}));
+        run('custom', cmdstr('togglez', {t: 1}));
       }
 
       run('wait', '', duration);

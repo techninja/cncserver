@@ -292,7 +292,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "status": "Motor offset zeroed"
+    "status": "Motor offset reset to park position"
 }
 ```
 
