@@ -859,34 +859,40 @@ function loadBotConfig(cb, botType) {
     botConf.use('file', {
       file: botTypeFile,
       format: nconf.formats.ini
-    }).load(cb);
-    console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
-  }
+    }).load(function(){
 
-  // Mesh in bot overrides from main config
-  var overrides = gConf.get('botOverride');
-  if (overrides) {
-    if (overrides[botType]) {
-      for(var key in overrides[botType]) {
-        botConf.set(key, overrides[botType][key]);
+      // Mesh in bot overrides from main config
+      var overrides = gConf.get('botOverride');
+      if (overrides) {
+        if (overrides[botType]) {
+          for(var key in overrides[botType]) {
+            botConf.set(key, overrides[botType][key]);
+          }
+        }
       }
-    }
-  }
 
-  BOT = {
-    workArea: {
-      left: Number(botConf.get('workArea:left')),
-      top: Number(botConf.get('workArea:top'))
-    },
-    maxArea: {
-      width: Number(botConf.get('maxArea:width')),
-      height: Number(botConf.get('maxArea:height'))
-    },
-    park: {
-      x: Number(botConf.get('park:x')),
-      y: Number(botConf.get('park:y'))
-    },
-    commands : botConf.get('controller').commands
+      // Handy bot constant for easy number from string conversion
+      BOT = {
+        workArea: {
+          left: Number(botConf.get('workArea:left')),
+          top: Number(botConf.get('workArea:top'))
+        },
+        maxArea: {
+          width: Number(botConf.get('maxArea:width')),
+          height: Number(botConf.get('maxArea:height'))
+        },
+        park: {
+          x: Number(botConf.get('park:x')),
+          y: Number(botConf.get('park:y'))
+        },
+        commands : botConf.get('controller').commands
+      }
+
+      console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
+
+      // Trigger the callback once we're done
+      if (cb) cb();
+    });
   }
 }
 
