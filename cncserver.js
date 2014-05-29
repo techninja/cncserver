@@ -62,7 +62,7 @@ var actualPen = extend({}, pen);
 var globalConfigDefaults = {
   httpPort: 4242,
   httpLocalOnly: true,
-  swapMotors: false,
+  swapMotors: false, // Global setting for bots that don't have it configured
   invertAxis: {
     x: false,
     y: false
@@ -886,6 +886,11 @@ function loadBotConfig(cb, botType) {
           y: Number(botConf.get('park:y'))
         },
         commands : botConf.get('controller').commands
+      }
+
+      // Set global override for swapMotors if set by bot config
+      if (typeof botConf.get('controller:swapMotors') !== 'undefined') {
+        gConf.set('swapMotors', botConf.get('controller:swapMotors'));
       }
 
       console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
