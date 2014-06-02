@@ -927,6 +927,14 @@ function createServerEndpoint(path, callback){
       console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
     }
 
+    // Handle CORS Pre-flight OPTIONS request ourselves
+    // TODO: Allow implementers to define options return data and allowed methods
+    if (req.route.method === 'options') {
+      res.set('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE');
+      res.status(200).send();
+      return;
+    }
+
     var cbStat = callback(req, res);
 
     if (cbStat === false) { // Super simple "not supported"
