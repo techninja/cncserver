@@ -12,10 +12,12 @@
  * }
  */
 
+// Initialize wrapper object is this library is being used elsewhere
+if (typeof cncserver === 'undefined') var cncserver = {};
+
 /**
  * Restful API wrappers
  */
-if (typeof cncserver === 'undefined') var cncserver = {};
 
 cncserver.api = {
   pen: {
@@ -175,6 +177,20 @@ cncserver.api = {
   },
 
   tools: {
+   /**
+    * List the available tools for the current bot type
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    list: function(callback){
+      _get('tools', {
+        success: callback,
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
    /**
     * Change to a given tool
     * @param {string} toolName
