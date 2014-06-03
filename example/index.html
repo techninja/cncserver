@@ -8,15 +8,48 @@
 
   <fieldset><legend>General</legend>
     <button id="unlock">Unlock</button>
+    <button id="zero">Zero</button>
   </fieldset>
 
   <fieldset><legend>X,Y Movement</legend>
     <button id="park">PARK</button>
-    <button id="move1">0,0</button>
-    <button id="move2">25,25</button>
-    <button id="move3">50,50</button>
-    <button id="move4">75,75</button>
-    <button id="move5">100,100</button>
+    <table>
+      <tr>
+        <td><button class="move">0,0</button></td>
+        <td><button class="move">25,0</button></td>
+        <td><button class="move">50,0</button></td>
+        <td><button class="move">75,0</button></td>
+        <td><button class="move">100,0</button></td>
+      </tr>
+      <tr>
+        <td><button class="move">0,25</button></td>
+        <td><button class="move">25,25</button></td>
+        <td><button class="move">50,25</button></td>
+        <td><button class="move">75,25</button></td>
+        <td><button class="move">100,25</button></td>
+      </tr>
+      <tr>
+        <td><button class="move">0,50</button></td>
+        <td><button class="move">25,50</button></td>
+        <td><button class="move">50,50</button></td>
+        <td><button class="move">75,50</button></td>
+        <td><button class="move">100,50</button></td>
+      </tr>
+      <tr>
+        <td><button class="move">0,75</button></td>
+        <td><button class="move">25,75</button></td>
+        <td><button class="move">50,75</button></td>
+        <td><button class="move">75,75</button></td>
+        <td><button class="move">100,75</button></td>
+      </tr>
+      <tr>
+        <td><button class="move">0,100</button></td>
+        <td><button class="move">25,100</button></td>
+        <td><button class="move">50,100</button></td>
+        <td><button class="move">75,100</button></td>
+        <td><button class="move">100,100</button></td>
+      </tr>
+    </table>
   </fieldset>
 
   <fieldset><legend>Z/Servo Control</legend>
@@ -26,11 +59,21 @@
 
   <fieldset><legend>Composite Functions</legend>
     <button id="diagtest">Run Diag Test</button>
-    <button id="circle">Draw Circle</button>
   </fieldset>
 
 <script>
   var runningTest = false;
+
+  // Initialize CNC Server connection details
+  // (thanks to CORS support, this should be fully portable)
+  cncserver.api.server = {
+    domain: document.domain,
+    port: location.port ? location.port : 80,
+    protocol: 'http',
+    version: '1'
+  };
+
+  var run = cncserver.cmd.run; // Shortcut!
 
 
   $('button').click(function(){
@@ -38,53 +81,51 @@
     switch(id) {
       case 'diagtest':
         runningTest = !runningTest;
-        runTest();
+        if (!runningTest) {
+          $(this).text('Run Diag Test');
+          cncserver.cmd.clear();
+          run('park');
+        } else {
+          $(this).text('STOP Diag Test');
+          runTest();
+        }
+
         break;
       case 'unlock':
         cncserver.api.motors.unlock();
         break;
+      case 'zero':
+        cncserver.api.pen.zero();
+        break;
       case 'park':
-        cncserver.api.pen.park();
+        //cncserver.api.pen.park(); // << Direct method
+        run('park');                // << Queue method
         break;
       case 'up':
       case 'draw':
         cncserver.api.pen.height(id);
         break;
-      case 'move1':
-      case 'move2':
-      case 'move3':
-      case 'move4':
-      case 'move5':
-        var pos = $('#' + id).text().split(',');
-        cncserver.api.pen.move({x: pos[0], y: pos[1]});
-        break;
+    }
+
+    // One of the move button array
+    if ($(this).is('.move')) {
+      var pos = $(this).text().split(',');
+      cncserver.api.pen.move({x: pos[0], y: pos[1]});
     }
   });
 
 
   function runTest(){
-    if (!runningTest) return;
-    cncserver.api.pen.move({x:75,y:75}, function(){
-      cncserver.api.pen.move({x:65,y:0}, function(){
-        cncserver.api.pen.move({x:75,y:100}, function(){
-          cncserver.api.pen.move({x:100,y:0}, function(){
-            cncserver.api.pen.park(function(){
-              runTest();
-            });
-          });
-        });
-      });
-    });
+    run('move', {x:75,y:75});
+    run('move', {x:65,y:0});
+    run('move', {x:75,y:100});
+    run('move', {x:100,y:0});
+    run('move', {x:0,y:100});
+    run('move', {x:0,y:0});
+    run('move', {x:100,y:100});
+    run('park');
+    run('custom', runTest);
   }
-
-  /*var run = cncserver.cmd.run;
-
-  run([
-    "up",
-    "down",
-  ]);
-  */
-
 
 </script>
 
