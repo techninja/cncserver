@@ -931,6 +931,7 @@ function createServerEndpoint(path, callback){
     // TODO: Allow implementers to define options return data and allowed methods
     if (req.route.method === 'options') {
       res.set('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE');
+      res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-Width, Content-Type, Accept');
       res.status(200).send();
       return;
     }
