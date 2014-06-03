@@ -7,55 +7,42 @@
  * finish, handles all API callbacks internally.
  */
 
-// TODO: DO this better!
-var returnPoints = [];
-var lastPoint = {};
-cncserver.buffer=[];
-cncserver.state.process = {};
-
-
 cncserver.cmd = {
+  // Command buffer list
+  buffer: [],
+
+  // Processing state
+  process: {
+    paused: false,
+    busy: false,
+    max: 0
+  },
+
   // CMD specific callback handler
   cb: function(d) {
-    // TODO: check for errors
-
-    if (!cncserver.state.buffer.length) {
-      cncserver.state.process.busy = false;
-      cncserver.state.process.max = 0;
-      cncserver.utils.progress({val: 0, max: 0});
+    if (!cncserver.cmd.buffer.length) {
+      cncserver.cmd.process.busy = false;
+      cncserver.cmd.process.max = 0;
     } else {
-      // Update the progress bar
-      cncserver.utils.progress({
-        val: cncserver.state.process.max - cncserver.state.buffer.length,
-        max: cncserver.state.process.max
-      });
-
       // Check for paint refill
-      if (!cncserver.state.process.paused) {
-        if (cncserver.state.pen.distanceCounter > cncserver.settings.maxpaintdistance) {
-          var returnPoint = returnPoints[returnPoints.length-1] ? returnPoints[returnPoints.length-1] : lastPoint;
-          cncserver.wcb.getMorePaint(returnPoint, function(){
-            cncserver.api.pen.down(cncserver.cmd.executeNext);
-          });
-        } else {
-          // Execute next command
-          cncserver.cmd.executeNext();
-        }
+      if (!cncserver.cmd.process.paused) {
+        // Execute next command
+        cncserver.cmd.executeNext();
       } else {
-        cncserver.state.process.pauseCallback();
+        cncserver.cmd.process.pauseCallback();
       }
     }
   },
 
   executeNext: function(executeCallback) {
-    if (!cncserver.state.buffer.length) {
+    if (!cncserver.cmd.buffer.length) {
       cncserver.cmd.cb();
       return;
     } else {
-      cncserver.state.process.busy = true;
+      cncserver.cmd.process.busy = true;
     };
 
-    var next = cncserver.state.buffer.pop();
+    var next = cncserver.cmd.buffer.pop();
 
     if (typeof next == "string"){
       next = [next];
@@ -63,22 +50,12 @@ cncserver.cmd = {
 
     switch (next[0]) {
       case "move":
-        returnPoints.unshift(next[1]);
-        if (returnPoints.length > 4) {
-          returnPoints.pop();
-        }
-        lastPoint = next[1];
         cncserver.api.pen.move(next[1], cncserver.cmd.cb);
         break;
       case "tool":
-        // Reflect color selection
-        $('#tools .selected').removeClass('selected');
-        $('#' + next[1]).addClass('selected');
-
         cncserver.api.tools.change(next[1], cncserver.cmd.cb);
         break;
       case "up":
-        returnPoints = [];
         cncserver.api.pen.up(cncserver.cmd.cb);
         break;
       case "down":
@@ -94,6 +71,10 @@ cncserver.cmd = {
       case "park":
         cncserver.api.pen.park(cncserver.cmd.cb);
         break;
+      case "custom":
+        cncserver.cmd.cb();
+        if (next[1]) next[1](); // Run custom passed callback
+        break;
       default:
         console.debug('Queue shortcut not found:' + next[0]);
     }
@@ -103,22 +84,26 @@ cncserver.cmd = {
   // Add a command to the queue! format is cmd short name, arguments
   run: function(){
     if (typeof arguments[0] == "object") {
-      cncserver.state.process.max+= arguments.length;
+      cncserver.cmd.process.max+= arguments.length;
       $.each(arguments[0], function(i, args){
-        cncserver.state.buffer.unshift(args);
+        cncserver.cmd.buffer.unshift(args);
       });
     } else {
-      cncserver.state.process.max++;
-      cncserver.state.buffer.unshift(arguments);
+      cncserver.cmd.process.max++;
+      cncserver.cmd.buffer.unshift(arguments);
     }
+  },
 
+  // Clear out the buffer
+  clear: function() {
+    cncserver.cmd.buffer = [];
   }
 };
 
 // Wait around for the buffer to contain elements, and for us to not be
 // currently processing the buffer queue
 setInterval(function(){
-  if (!cncserver.state.process.busy && cncserver.state.buffer.length && !cncserver.state.process.paused) {
+  if (!cncserver.cmd.process.busy && cncserver.cmd.buffer.length && !cncserver.cmd.process.paused) {
     cncserver.cmd.executeNext();
   }
 }, 10);
