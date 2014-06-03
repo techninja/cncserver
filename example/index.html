@@ -65,6 +65,10 @@
     <button id="draw">Draw</button>
   </fieldset>
 
+  <fieldset id="tools"><legend>Available Tools</legend>
+    <h4>Loading tool set...</h4>
+  </fieldset>
+
   <fieldset><legend>Composite Functions</legend>
     <button id="diagtest">Run Diag Test</button>
   </fieldset>
@@ -83,7 +87,7 @@
 
   var run = cncserver.cmd.run; // Shortcut!
 
-
+  // Bind button action click
   $('button').click(function(){
     var id = this.id;
     switch(id) {
@@ -122,7 +126,22 @@
     }
   });
 
+  // Populate tool buttons
+  cncserver.api.tools.list(function(data){
+    if (data) {
+      $('#tools h4').remove();
+      for (var i in data.tools) {
+        $('<button>').text(data.tools[i]).appendTo('#tools');
+      }
+      $('#tools button').click(function(){
+        run('tool', $(this).text());
+      });
+    } else {
+      $('#tools h4').text('Failed to load tools :(');
+    }
+  });
 
+  // Test runner function
   function runTest(){
     run('move', {x:75,y:75});
     run('move', {x:65,y:0});
