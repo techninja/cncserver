@@ -72,6 +72,7 @@ var globalConfigDefaults = {
   corsDomain: '*', // Start as open to CORs enabled browser clients
   debug: false,
   botType: 'watercolorbot',
+  scratchSupport: false,
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
@@ -261,9 +262,95 @@ function serialPortReadyCallback() {
     serialPort.on("data", serialReadline);
   }
 
-
   sendBotConfig();
   startServer();
+
+  // Scratch v2 endpoint & API =================================================
+  if (gConf.get('scratchSupport')) {
+    console.info('Scratch v2 Programming support ENABLED');
+    var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
+
+    pollData.render = function() {
+      var out = "";
+
+      // Loop through all existing/static pollData
+      for (var key in this) {
+        if (typeof this[key] == 'object') {
+          var v = (typeof this[key] == 'string') ?  this[key] : this[key].join(' ');
+
+          if (v !== '') {
+            out += key + ' ' + v + "\n";
+          }
+        }
+      }
+
+      // Throw in full pen data as well
+      for (var key in pen) {
+        out += key + ' ' + pen[key] + "\n";
+      }
+      return out;
+    }
+
+    // Helper function to add/remove busy watchers
+    pollData.busy = function(id, destroy) {
+      if (!pollData['_busy']) pollData['_busy'] = []; // Add busy placeholder)
+
+      var index = pollData['_busy'].indexOf(id);
+
+      if (destroy && index > -1) { // Remove
+        pollData['_busy'].splice(index, 1);
+      } else if (!destroy && index === -1) { // Add!
+        pollData['_busy'].push(id);
+      }
+    }
+
+
+    // SCRATCH v2 Specific endpoints =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // Central poll returner (Queried ~30hz)
+    createServerEndpoint("/poll", function(req, res){
+      return {code: 200, body: pollData.render()};
+    });
+
+    // Flash crossdomain helper
+    createServerEndpoint("/crossdomain.xml", function(req, res){
+      return {code: 200, body: '<?xml version="1.0" ?><cross-domain-policy><allow-access-from domain="*" to-ports="' + gConf.get('httpPort') + '"/></cross-domain-policy>'};
+    });
+
+    // Initialize/reset status
+    createServerEndpoint("/reset_all", function(req, res){
+      // TODO: Park bot
+      pollData["_busy"] = []; // Clear busy indicators
+      return {code: 200, body: ''};
+    });
+
+    // SCRATCH v2 Specific endpoints =^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=
+
+    // Move Endpoint(s)
+    createServerEndpoint("/move/:busyid", moveRequest);
+    createServerEndpoint("/move/:busyid/:op", moveRequest);
+    createServerEndpoint("/move/:busyid/:op/:arg", moveRequest);
+
+    // Move request endpoint handler function
+    function moveRequest(req, res){
+      console.log(req.params);
+      pollData.busy(req.params.busyid);
+
+      // DEBUG ==================
+      setTimeout(function(){
+        pollData.busy(req.params.busyid, true);
+      }, 5000);
+
+      return {code: 200, body: ''};
+    }
+
+    // Pen endpoint... exists, but does nothing
+    createServerEndpoint("/pen", function(req, res){
+      return {code: 200, body: ''};
+    });
+
+    // TODO: Implement get pen, set tool
+  }
+
 
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
@@ -923,7 +1010,7 @@ function createServerEndpoint(path, callback){
     res.set('Content-Type', 'application/json; charset=UTF-8');
     res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
 
-    if (gConf.get('debug')) {
+    if (gConf.get('debug') && path !== '/poll') {
       console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
     }
 
@@ -948,7 +1035,13 @@ function createServerEndpoint(path, callback){
         status: cbStat[1]
       }));
     } else if(what.call(cbStat) === '[object Object]') { // Full message
-      res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+      if (typeof cbStat.body == "string") { // Send plaintext if body is string
+        res.set('Content-Type', 'text/plain; charset=UTF-8');
+        res.status(cbStat.code).send(cbStat.body);
+      } else {
+        res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+      }
+
     }
   });
 }
@@ -1161,11 +1254,11 @@ function connectSerial(options){
       try {
         serialPort = new SerialPort(gConf.get('serialPath'), {
           baudrate : Number(botConf.get('controller').baudRate),
-          parser: serialport.parsers.readline("\r")
+          parser: serialport.parsers.readline("\r"),
+          disconnectedCallback: function() {console.log('You pulled the plug!');} //options.disconnect
         });
 
         if (options.connect) serialPort.on("open", options.connect);
-        if (options.disconnect) serialPort.on("close", options.disconnect);
 
         console.log('Serial connection open at ' + botConf.get('controller').baudRate + 'bps');
         pen.simulation = 0;

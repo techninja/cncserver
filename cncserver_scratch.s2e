@@ -1,0 +1,15 @@
+{
+"extensionName": "CNCServer",
+  "extensionPort": 4242,
+  "blockSpecs": [
+    ["w", "park", "move", "park"],
+    ["w", "move %m.coord axis to %n", "move", "x", 50],
+    ["w", "select tool %d.tools", "tool", "color0"],
+    ["r", "get pen %m.penData", "pen"]
+  ],
+  "menus": {
+    "tools": ["water0", "water1", "water2", "color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7"],
+    "penData": ["x", "y", "state", "height", "tool", "lastDuration", "distanceCounter", "simulation"],
+    "coord": ["x", "y", "z"]
+  }
+}
