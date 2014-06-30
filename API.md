@@ -54,11 +54,11 @@ Content-Type: application/json; charset=UTF-8
 
 {
     "x": 2344,               // Coordinates of drawing position, in steps
-    "y: 281,
+    "y": 281,
     "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)*
     "height": 12372,         // The last sent servo position height value
     "tool": color2,          // Machine name of last tool
-    "lastDuration": 1288     // The duration of the last movement
+    "lastDuration": 1288,    // The duration of the last movement
     "distanceCounter": 231,  // Distance traveled in steps with pen down
     "simulation": 0          // 0 = pen is real/ready, 1 = Pen is virtual/not connected to bot
 }
