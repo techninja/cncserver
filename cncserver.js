@@ -269,6 +269,12 @@ function serialPortReadyCallback() {
   if (gConf.get('scratchSupport')) {
     console.info('Scratch v2 Programming support ENABLED');
     var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
+    var sizeMultiplier = 20; // Amount to increase size of steps
+    var turtle = { // Helper turtle for relative movement
+      x: BOT.workArea.left,
+      y: BOT.workArea.top,
+      degrees: 0
+    };
 
     pollData.render = function() {
       var out = "";
@@ -318,7 +324,17 @@ function serialPortReadyCallback() {
 
     // Initialize/reset status
     createServerEndpoint("/reset_all", function(req, res){
-      // TODO: Park bot
+      turtle = { // Reset to default
+        x: BOT.workArea.left,
+        y: BOT.workArea.top,
+        degrees: 0
+      };
+
+      // Clear Run Buffer
+      // @see /v1/buffer/ DELETE
+      buffer = [];
+      pen = extend({}, actualPen);
+
       pollData["_busy"] = []; // Clear busy indicators
       return {code: 200, body: ''};
     });
@@ -326,31 +342,121 @@ function serialPortReadyCallback() {
     // SCRATCH v2 Specific endpoints =^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=
 
     // Move Endpoint(s)
-    createServerEndpoint("/move/:busyid", moveRequest);
-    createServerEndpoint("/move/:busyid/:op", moveRequest);
-    createServerEndpoint("/move/:busyid/:op/:arg", moveRequest);
+    createServerEndpoint("/park", moveRequest);
+    createServerEndpoint("/coord/:x/:y", moveRequest);
+    createServerEndpoint("/move/:op", moveRequest);
+    createServerEndpoint("/move/:op/:arg", moveRequest);
+    createServerEndpoint("/move/:op/:arg/:arg2", moveRequest);
 
     // Move request endpoint handler function
     function moveRequest(req, res){
-      console.log(req.params);
-      pollData.busy(req.params.busyid);
+      //pollData.busy(req.params.busyid);
 
-      // DEBUG ==================
-      setTimeout(function(){
-        pollData.busy(req.params.busyid, true);
-      }, 5000);
+      var op = req.params.op;
+      var arg = req.params.arg;
+      var arg2 = req.params.arg2;
 
+      // Park
+      if (req.url == '/park') {
+        setHeight('up');
+        setPen({x: BOT.park.x, y: BOT.park.y, park: true});
+        return {code: 200, body: ''};
+      }
+
+      // Rotating Pointer? (just rotate)
+      if (op == 'left' || op == 'right') {
+        arg = parseInt(arg);
+        turtle.degrees = op == 'right' ? turtle.degrees + arg : turtle.degrees - arg;
+        if (turtle.degrees > 360) turtle.degrees -= 360;
+        if (turtle.degrees < 0) turtle.degrees += 360;
+        console.log('Rotate pen to ' + turtle.degrees + ' degrees');
+        return {code: 200, body: ''};
+      }
+
+      // Move Pointer? Actually move!
+      if (arg == 'forward' || arg == 'reverse') {
+        op = parseInt(op);
+
+        // Reverse direction
+        if (arg == 'reverse') op = -op;
+
+        console.log('Move pen ' + arg + ' by ' + op + ' steps');
+        var radians = turtle.degrees * (Math.PI / 180);
+        turtle.x = Math.round(turtle.x + Math.cos(radians) * op * sizeMultiplier);
+        turtle.y = Math.round(turtle.y + Math.sin(radians) * op * sizeMultiplier);
+      }
+
+      // Move x, y or both
+      if (op == 'x' || op == 'y' || typeof req.params.x != 'undefined') {
+        arg = parseInt(arg);
+
+        if (op == 'x' || op == 'y') {
+          turtle[op] = arg * sizeMultiplier;
+        } else {
+          turtle.x = parseInt(req.params.x) * sizeMultiplier;
+          turtle.y = parseInt(req.params.y) * sizeMultiplier;
+        }
+
+        console.log('Move pen to coord ' + turtle.x + ' ' + turtle.y);
+      }
+
+      // Sanity check values
+      if (turtle.x > BOT.workArea.left + BOT.maxArea.width) {
+        turtle.x = BOT.workArea.left + BOT.maxArea.width;
+      }
+
+      if (turtle.x < BOT.workArea.left) {
+        turtle.x = BOT.workArea.left;
+      }
+
+      if (turtle.y > BOT.workArea.top + BOT.maxArea.height) {
+        turtle.y = BOT.workArea.top + BOT.maxArea.height;
+      }
+
+      if (turtle.y < BOT.workArea.top) {
+        turtle.y = BOT.workArea.top;
+      }
+
+      // Actually move pen
+      movePenAbs(turtle);
       return {code: 200, body: ''};
     }
 
-    // Pen endpoint... exists, but does nothing
-    createServerEndpoint("/pen", function(req, res){
+    // Pen endpoints
+    createServerEndpoint("/pen", penRequest);
+    createServerEndpoint("/pen/:op", penRequest);
+
+    function penRequest(req, res){
+      var op = req.params.op;
+
+      if (op == 'up' || op == "down") {
+        if (op == 'down') {
+          op = 'draw';
+        }
+
+        setHeight(op);
+      }
       return {code: 200, body: ''};
-    });
+    }
 
-    // TODO: Implement get pen, set tool
+    // Tool set endpoints
+    createServerEndpoint("/tool/:tool", toolRequest);
+    createServerEndpoint("/tool/:type/:id", toolRequest);
+
+    function toolRequest(req, res) {
+      // Direct set tool
+      if (req.params.tool) {
+        setTool(req.params.tool);
+      }
+
+      // Set by ID (water/color)
+      if (req.params.type) {
+        setTool(req.params.type + parseInt(req.params.id));
+      }
+
+      return {code: 200, body: ''};
+    }
   }
-
 
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================

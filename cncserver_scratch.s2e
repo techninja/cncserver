@@ -2,14 +2,23 @@
 "extensionName": "CNCServer",
   "extensionPort": 4242,
   "blockSpecs": [
-    ["w", "park", "move", "park"],
-    ["w", "move %m.coord axis to %n", "move", "x", 50],
-    ["w", "select tool %d.tools", "tool", "color0"],
-    ["r", "get pen %m.penData", "pen"]
+    [" ", "park", "park"],
+    [" ", "pen up", "pen/up"],
+    [" ", "pen down", "pen/down"],
+    [" ", "move to x: %n y: %n", "coord", 0, 0],
+    [" ", "select color %d.colors", "tool/color", 0],
+    [" ", "select water %d.waters", "tool/water", 0],
+    [" ", "select tool %d.tools", "tool", "color0"],
+    [" ", "move pen %n steps %m.direction", "move", 10, "forward"],
+    [" ", "turn %m.rotate %d.angle degrees", "move", "right", "90"],
   ],
   "menus": {
     "tools": ["water0", "water1", "water2", "color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7"],
+    "colors": [0, 1, 2, 3, 4, 5, 6, 7],
+    "waters": [0, 1, 2],
     "penData": ["x", "y", "state", "height", "tool", "lastDuration", "distanceCounter", "simulation"],
-    "coord": ["x", "y", "z"]
+    "direction": ["forward", "reverse"],
+    "rotate": ["left", "right"],
+    "angle": ["15", "45", "90", "135", "180"]
   }
 }
