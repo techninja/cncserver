@@ -824,6 +824,12 @@ function serialPortReadyCallback() {
   function setTool(toolName, callback) {
     var tool = botConf.get('tools:' + toolName);
 
+    // No tool found with that name? Augh! Run AWAY!
+    if (!tool) {
+      if (callback) run('callback', callback);
+      return false;
+    }
+
     console.log('Changing to tool: ' + toolName);
 
     // Set the height based on what kind of tool it is
