@@ -732,7 +732,7 @@ function serialPortReadyCallback() {
         // Don't repark if already parked
         var park = centToSteps(BOT.park, true);
         if (pen.x == park.x && pen.y == park.y) {
-          callback(false);
+          if (callback) callback(false);
           return;
         }
 
