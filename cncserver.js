@@ -416,8 +416,9 @@ function serialPortReadyCallback() {
         arg = parseInt(arg);
 
         if (op == 'x' || op == 'y') {
-          turtle[op] = arg * sizeMultiplier;
-        } else {
+          turtle[op] = arg * sizeMultiplier; 
+        } else { 
+        
           // Word positions? convert to actual coordinates
           var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
           var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
@@ -428,7 +429,7 @@ function serialPortReadyCallback() {
           } else {
             // Convert input X/Y to steps via multiplier
             turtle.x = parseInt(req.params.x) * sizeMultiplier;
-            turtle.y = parseInt(req.params.y) * sizeMultiplier;
+            turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;  // In Scratch, positive Y is up on the page. :(
 
             // When directly setting XY position, offset by half for center 0,0
             turtle.x+= BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2;
