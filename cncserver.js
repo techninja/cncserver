@@ -271,8 +271,8 @@ function serialPortReadyCallback() {
     var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
     var sizeMultiplier = 20; // Amount to increase size of steps
     var turtle = { // Helper turtle for relative movement
-      x: BOT.workArea.left,
-      y: BOT.workArea.top,
+      x: BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2,
+      y: BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2,
       degrees: 0
     };
 
@@ -325,8 +325,8 @@ function serialPortReadyCallback() {
     // Initialize/reset status
     createServerEndpoint("/reset_all", function(req, res){
       turtle = { // Reset to default
-        x: BOT.workArea.left,
-        y: BOT.workArea.top,
+        x: BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2,
+        y: BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2,
         degrees: 0
       };
 
@@ -363,6 +363,20 @@ function serialPortReadyCallback() {
         return {code: 200, body: ''};
       }
 
+      // Arbitrary Wait
+      if (op == 'wait') {
+        arg = parseFloat(arg) * 1000;
+        run('wait', false, arg);
+        return {code: 200, body: ''};
+      }
+
+      // Speed setting
+      if (op == 'speed') {
+        arg = parseFloat(arg) * 10;
+        botConf.set('speed:drawing', arg);
+        botConf.set('speed:moving', arg);
+      }
+
       // Rotating Pointer? (just rotate)
       if (op == 'left' || op == 'right') {
         arg = parseInt(arg);
@@ -373,17 +387,20 @@ function serialPortReadyCallback() {
         return {code: 200, body: ''};
       }
 
+      // Rotate pointer directly
+      if (op == 'absturn') {
+        turtle.degrees = parseInt(arg);
+        return {code: 200, body: ''};
+      }
+
       // Move Pointer? Actually move!
-      if (arg == 'forward' || arg == 'reverse') {
-        op = parseInt(op);
+      if (op == 'forward') {
+        arg = parseInt(arg);
 
-        // Reverse direction
-        if (arg == 'reverse') op = -op;
-
-        console.log('Move pen ' + arg + ' by ' + op + ' steps');
+        console.log('Move pen by ' + arg + ' steps');
         var radians = turtle.degrees * (Math.PI / 180);
-        turtle.x = Math.round(turtle.x + Math.cos(radians) * op * sizeMultiplier);
-        turtle.y = Math.round(turtle.y + Math.sin(radians) * op * sizeMultiplier);
+        turtle.x = Math.round(turtle.x + Math.cos(radians) * arg * sizeMultiplier);
+        turtle.y = Math.round(turtle.y + Math.sin(radians) * arg * sizeMultiplier);
       }
 
       // Move x, y or both
@@ -393,8 +410,22 @@ function serialPortReadyCallback() {
         if (op == 'x' || op == 'y') {
           turtle[op] = arg * sizeMultiplier;
         } else {
-          turtle.x = parseInt(req.params.x) * sizeMultiplier;
-          turtle.y = parseInt(req.params.y) * sizeMultiplier;
+          // Word positions? convert to actual coordinates
+          var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
+          var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
+          if (wordX > -1) {
+            var steps = centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
+            turtle.x = steps.x;
+            turtle.y = steps.y;
+          } else {
+            // Convert input X/Y to steps via multiplier
+            turtle.x = parseInt(req.params.x) * sizeMultiplier;
+            turtle.y = parseInt(req.params.y) * sizeMultiplier;
+
+            // When directly setting XY position, offset by half for center 0,0
+            turtle.x+= BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2;
+            turtle.y+= BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2;
+          }
         }
 
         console.log('Move pen to coord ' + turtle.x + ' ' + turtle.y);
@@ -429,12 +460,30 @@ function serialPortReadyCallback() {
     function penRequest(req, res){
       var op = req.params.op;
 
+      // Set Pen up/down
       if (op == 'up' || op == "down") {
         if (op == 'down') {
           op = 'draw';
         }
-
         setHeight(op);
+      }
+
+      // Run simple wash
+      if (op == 'wash'){
+        setTool('water0');
+        setTool('water1');
+        setTool('water2');
+      }
+
+      // Turn off motors and zero to park pos
+      if (op == 'off'){
+        // Run in buffer to ensure correct timing
+        run('callback', function(){
+          run('custom', 'EM,0,0');
+          var park = centToSteps(BOT.park, true);
+          pen.x = park.x;
+          pen.y = park.y;
+        });
       }
       return {code: 200, body: ''};
     }

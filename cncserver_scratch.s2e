@@ -3,22 +3,29 @@
   "extensionPort": 4242,
   "blockSpecs": [
     [" ", "park", "park"],
-    [" ", "pen up", "pen/up"],
-    [" ", "pen down", "pen/down"],
+    [" ", "wash brush", "pen/wash"],
+    [" ", "brush up", "pen/up"],
+    [" ", "brush down", "pen/down"],
+    [" ", "wait %d.time seconds", "move/wait", 0.5],
     [" ", "move to x: %n y: %n", "coord", 0, 0],
-    [" ", "select color %d.colors", "tool/color", 0],
-    [" ", "select water %d.waters", "tool/water", 0],
-    [" ", "select tool %d.tools", "tool", "color0"],
-    [" ", "move pen %n steps %m.direction", "move", 10, "forward"],
-    [" ", "turn %m.rotate %d.angle degrees", "move", "right", "90"],
+    [" ", "move to %m.positionY %m.positionX", "coord", "center", "center"],
+    [" ", "get color %d.colors", "tool/color", 0],
+    [" ", "get water %d.waters", "tool/water", 0],
+    [" ", "move brush %n steps", "move/forward", 10],
+    [" ", "turn brush @turnRight %d.angle degrees", "move/right", "15"],
+    [" ", "turn brush @turnLeft %d.angle degrees", "move/left", "15"],
+    [" ", "turn to %d.angle degrees", "move/absturn", "0"],
+    [" ", "set move speed to %d.speed", "move/speed", "7"],
+    [" ", "motors off & zero", "pen/off"]
   ],
   "menus": {
-    "tools": ["water0", "water1", "water2", "color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7"],
     "colors": [0, 1, 2, 3, 4, 5, 6, 7],
+    "speed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     "waters": [0, 1, 2],
     "penData": ["x", "y", "state", "height", "tool", "lastDuration", "distanceCounter", "simulation"],
-    "direction": ["forward", "reverse"],
-    "rotate": ["left", "right"],
-    "angle": ["15", "45", "90", "135", "180"]
+    "positionX": ["left", "center", "right"],
+    "positionY": ["top", "center", "bottom"],
+    "angle": [0, 5, 15, 30, 45, 90, 135, 180, 270],
+    "time": [0.25, 0.5, 0.75, 1, 2, 5, 10]
   }
 }
