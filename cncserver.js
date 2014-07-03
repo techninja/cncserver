@@ -270,7 +270,7 @@ function serialPortReadyCallback() {
   if (gConf.get('scratchSupport')) {
     console.info('Scratch v2 Programming support ENABLED');
     var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
-    var sizeMultiplier = 20; // Amount to increase size of steps
+    var sizeMultiplier = 10; // Amount to increase size of steps
     var turtle = { // Helper turtle for relative movement
       x: BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2,
       y: BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2,
