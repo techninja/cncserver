@@ -16,13 +16,15 @@
     [" ", "turn brush @turnLeft %d.angle degrees", "move/left", "15"],
     [" ", "turn to %d.angle degrees", "move/absturn", "0"],
     [" ", "set move speed to %d.speed", "move/speed", "7"],
-    [" ", "motors off & zero", "pen/off"]
+    [" ", "motors off & zero", "pen/off"],
+    ["r", "get brush x", "x"],
+    ["r", "get brush y", "y"],
+    ["r", "get brush angle", "angle"]
   ],
   "menus": {
     "colors": [0, 1, 2, 3, 4, 5, 6, 7],
     "speed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     "waters": [0, 1, 2],
-    "penData": ["x", "y", "state", "height", "tool", "lastDuration", "distanceCounter", "simulation"],
     "positionX": ["left", "center", "right"],
     "positionY": ["top", "center", "bottom"],
     "angle": [0, 5, 15, 30, 45, 90, 135, 180, 270],
