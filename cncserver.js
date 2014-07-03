@@ -73,6 +73,7 @@ var globalConfigDefaults = {
   debug: false,
   botType: 'watercolorbot',
   scratchSupport: false,
+  flipZToggleBit: false,
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
@@ -1232,7 +1233,7 @@ function run(command, data, duration) {
 
       // If there's a togglez, run it after setting Z
       if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: 1}));
+        run('custom', cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}));
       }
 
       run('wait', '', duration);
