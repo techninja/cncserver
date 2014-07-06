@@ -72,7 +72,7 @@ var globalConfigDefaults = {
   corsDomain: '*', // Start as open to CORs enabled browser clients
   debug: false,
   botType: 'watercolorbot',
-  scratchSupport: false,
+  scratchSupport: true,
   flipZToggleBit: false,
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
