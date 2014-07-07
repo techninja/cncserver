@@ -25,6 +25,7 @@
     ["r", "brush x", "x"],
     ["r", "brush y", "y"],
     ["r", "brush z", "z"],
+    ["r", "brush paintDistance", "paintDistance"],
     ["r", "is sleeping?", "sleeping"],
     ["r", "brush angle", "angle"]
   ],
