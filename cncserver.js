@@ -297,6 +297,7 @@ function serialPortReadyCallback() {
           out += 'x ' + (turtle.x - BOT.workArea.left -(BOT.maxArea.width - BOT.workArea.left)/2) / sizeMultiplier  + "\n";
         }else if (key == 'y') {
           out += 'y ' + (turtle.y - BOT.workArea.top -(BOT.maxArea.height - BOT.workArea.top)/2) / sizeMultiplier + "\n";
+          out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
           out += 'angle ' + turtle.degrees + "\n";
         } else {
           out += key + ' ' + pen[key] + "\n";

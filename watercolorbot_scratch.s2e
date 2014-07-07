@@ -19,6 +19,7 @@
     [" ", "motors off & zero", "pen/off"],
     ["r", "get brush x", "x"],
     ["r", "get brush y", "y"],
+    ["r", "get brush z", "z"],
     ["r", "get brush angle", "angle"]
   ],
   "menus": {
