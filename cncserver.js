@@ -416,9 +416,9 @@ function serialPortReadyCallback() {
         arg = parseInt(arg);
 
         if (op == 'x' || op == 'y') {
-          turtle[op] = arg * sizeMultiplier; 
-        } else { 
-        
+          turtle[op] = arg * sizeMultiplier;
+        } else {
+
           // Word positions? convert to actual coordinates
           var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
           var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
