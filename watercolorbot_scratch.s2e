@@ -1,5 +1,5 @@
 {
-"extensionName": "CNCServer",
+"extensionName": "WaterColorBot",
   "extensionPort": 4242,
   "blockSpecs": [
     [" ", "park", "park"],
