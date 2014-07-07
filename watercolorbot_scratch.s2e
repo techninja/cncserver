@@ -20,11 +20,11 @@
     [" ", "motors off & zero", "pen/off"],
     [" ", "put brush to sleep", "pen/sleep/1"],
     [" ", "wake up brush!", "pen/sleep/0"],
-    ["r", "get brush x", "x"],
-    ["r", "get brush y", "y"],
-    ["r", "get brush z", "z"],
-    ["r", "get brush angle", "angle"]
+    ["r", "brush x", "x"],
+    ["r", "brush y", "y"],
+    ["r", "brush z", "z"],
     ["r", "is sleeping?", "sleeping"],
+    ["r", "brush angle", "angle"]
   ],
   "menus": {
     "colors": [0, 1, 2, 3, 4, 5, 6, 7],
