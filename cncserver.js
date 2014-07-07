@@ -396,6 +396,23 @@ function serialPortReadyCallback() {
         return {code: 200, body: ''};
       }
 
+      // Rotate pointer towards turtle relative X/Y
+      if (op == 'toward') {
+        // Convert input X/Y from scratch coordinates
+        var point = {
+          x: (parseInt(arg) * sizeMultiplier) + BOT.workArea.absCenter.x,
+          y: (-parseInt(arg2) * sizeMultiplier) + BOT.workArea.absCenter.y
+        }
+
+        var theta = Math.atan2(turtle.y - point.y, point.x - turtle.x);
+        turtle.degrees = Math.round(theta * 180 / Math.PI);
+          if (turtle.degrees > 360) turtle.degrees -= 360;
+          if (turtle.degrees < 0) turtle.degrees += 360;
+
+        console.log('Move relative towards ', point, ' from ', turtle);
+        return {code: 200, body: ''};
+      }
+
       // Rotate pointer directly
       if (op == 'absturn') {
         turtle.degrees = parseInt(arg);

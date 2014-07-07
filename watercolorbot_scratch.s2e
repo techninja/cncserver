@@ -15,6 +15,7 @@
     [" ", "turn brush @turnRight %d.angle degrees", "move/right", "15"],
     [" ", "turn brush @turnLeft %d.angle degrees", "move/left", "15"],
     [" ", "point brush towards %d.angle degrees", "move/absturn", "0"],
+    [" ", "point brush towards x: %n y: %n", "move/toward", "0", "0"],
     [" ", "set move speed to %d.speed", "move/speed", "7"],
     [" ", "motors off & zero", "pen/off"],
     ["r", "get brush x", "x"],
