@@ -274,6 +274,7 @@ function serialPortReadyCallback() {
     var turtle = { // Helper turtle for relative movement
       x: BOT.workArea.absCenter.x,
       y: BOT.workArea.absCenter.y,
+      sleeping: false,
       degrees: 0
     };
 
@@ -297,8 +298,12 @@ function serialPortReadyCallback() {
           out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
         }else if (key == 'y') {
           out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
+
+          // Add some other stuff while we're at it
+          // TODO: Should probably automate all this output :P
           out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
           out += 'angle ' + turtle.degrees + "\n";
+          out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
         } else {
           out += key + ' ' + pen[key] + "\n";
         }
@@ -336,6 +341,7 @@ function serialPortReadyCallback() {
       turtle = { // Reset to default
         x: BOT.workArea.absCenter.x,
         y: BOT.workArea.absCenter.y,
+        sleeping: false,
         degrees: 0
       };
 
@@ -360,6 +366,12 @@ function serialPortReadyCallback() {
     // Move request endpoint handler function
     function moveRequest(req, res){
       //pollData.busy(req.params.busyid);
+
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
 
       var op = req.params.op;
       var arg = req.params.arg;
@@ -483,9 +495,24 @@ function serialPortReadyCallback() {
     // Pen endpoints
     createServerEndpoint("/pen", penRequest);
     createServerEndpoint("/pen/:op", penRequest);
+    createServerEndpoint("/pen/:op/:arg", penRequest);
 
     function penRequest(req, res){
       var op = req.params.op;
+      var arg = req.params.arg;
+
+      // Toggle sleep/simulation mode
+      if (op == 'sleep') {
+        arg = parseInt(arg);
+        turtle.sleeping = !!arg; // Convert integer to true boolean
+        return {code: 200, body: ''};
+      }
+
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
 
       // Set Pen up/down
       if (op == 'up' || op == "down") {
@@ -520,6 +547,12 @@ function serialPortReadyCallback() {
     createServerEndpoint("/tool/:type/:id", toolRequest);
 
     function toolRequest(req, res) {
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
+
       // Direct set tool
       if (req.params.tool) {
         setTool(req.params.tool);
