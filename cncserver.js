@@ -272,8 +272,8 @@ function serialPortReadyCallback() {
     var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
     var sizeMultiplier = 10; // Amount to increase size of steps
     var turtle = { // Helper turtle for relative movement
-      x: BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2,
-      y: BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2,
+      x: BOT.workArea.absCenter.x,
+      y: BOT.workArea.absCenter.y,
       degrees: 0
     };
 
@@ -294,9 +294,9 @@ function serialPortReadyCallback() {
       // Throw in full pen data as well
       for (var key in pen) {
         if (key == 'x') {
-          out += 'x ' + (turtle.x - BOT.workArea.left -(BOT.maxArea.width - BOT.workArea.left)/2) / sizeMultiplier  + "\n";
+          out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
         }else if (key == 'y') {
-          out += 'y ' + (turtle.y - BOT.workArea.top -(BOT.maxArea.height - BOT.workArea.top)/2) / sizeMultiplier + "\n";
+          out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
           out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
           out += 'angle ' + turtle.degrees + "\n";
         } else {
@@ -334,8 +334,8 @@ function serialPortReadyCallback() {
     // Initialize/reset status
     createServerEndpoint("/reset_all", function(req, res){
       turtle = { // Reset to default
-        x: BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2,
-        y: BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2,
+        x: BOT.workArea.absCenter.x,
+        y: BOT.workArea.absCenter.y,
         degrees: 0
       };
 
@@ -433,8 +433,8 @@ function serialPortReadyCallback() {
             turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;  // In Scratch, positive Y is up on the page. :(
 
             // When directly setting XY position, offset by half for center 0,0
-            turtle.x+= BOT.workArea.left + (BOT.maxArea.width - BOT.workArea.left)/2;
-            turtle.y+= BOT.workArea.top + (BOT.maxArea.height - BOT.workArea.top)/2;
+            turtle.x+= BOT.workArea.absCenter.x;
+            turtle.y+= BOT.workArea.absCenter.y;
           }
         }
 
@@ -442,16 +442,16 @@ function serialPortReadyCallback() {
       }
 
       // Sanity check values
-      if (turtle.x > BOT.workArea.left + BOT.maxArea.width) {
-        turtle.x = BOT.workArea.left + BOT.maxArea.width;
+      if (turtle.x > BOT.maxArea.width) {
+        turtle.x = BOT.maxArea.width;
       }
 
       if (turtle.x < BOT.workArea.left) {
         turtle.x = BOT.workArea.left;
       }
 
-      if (turtle.y > BOT.workArea.top + BOT.maxArea.height) {
-        turtle.y = BOT.workArea.top + BOT.maxArea.height;
+      if (turtle.y > BOT.maxArea.height) {
+        turtle.y = BOT.maxArea.height;
       }
 
       if (turtle.y < BOT.workArea.top) {
@@ -1073,8 +1073,8 @@ function serialPortReadyCallback() {
 function centToSteps(point, inMaxArea) {
   if (!inMaxArea) { // Calculate based on workArea
     return {
-      x: BOT.workArea.left + ((point.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
-      y: BOT.workArea.top + ((point.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
+      x: BOT.workArea.left + ((point.x / 100) * BOT.workArea.width),
+      y: BOT.workArea.top + ((point.y / 100) * BOT.workArea.height)
     };
   } else { // Calculate based on ALL area
     return {
@@ -1155,6 +1155,21 @@ function loadBotConfig(cb, botType) {
         },
         commands : botConf.get('controller').commands
       }
+
+      // Store assumed constants
+      BOT.workArea.width = BOT.maxArea.width - BOT.workArea.left;
+      BOT.workArea.height = BOT.maxArea.height - BOT.workArea.top;
+
+      BOT.workArea.relCenter = {
+        x: BOT.workArea.width / 2,
+        y: BOT.workArea.height / 2
+      };
+
+      BOT.workArea.absCenter = {
+        x: BOT.workArea.relCenter.x + BOT.workArea.left,
+        y: BOT.workArea.relCenter.y + BOT.workArea.top
+      }
+
 
       // Set initial pen position at park position
       var park = centToSteps(BOT.park, true);
