@@ -12,6 +12,8 @@
     [" ", "get color %d.colors", "tool/color", 0],
     [" ", "get water %d.waters", "tool/water", 0],
     [" ", "move brush %n steps", "move/forward", 10],
+    [" ", "move brush x %n steps", "move/nudge/x", 10],
+    [" ", "move brush y %n steps", "move/nudge/y", 10],
     [" ", "turn brush @turnRight %d.angle degrees", "move/right", "15"],
     [" ", "turn brush @turnLeft %d.angle degrees", "move/left", "15"],
     [" ", "point brush towards %d.angle degrees", "move/absturn", "0"],

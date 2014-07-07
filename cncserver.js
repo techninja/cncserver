@@ -431,6 +431,11 @@ function serialPortReadyCallback() {
         return {code: 200, body: ''};
       }
 
+      // Simple Nudge X/Y
+      if (op == 'nudge') {
+        turtle[arg] += parseInt(arg2) * sizeMultiplier;
+      }
+
       // Move Pointer? Actually move!
       if (op == 'forward') {
         arg = parseInt(arg);
