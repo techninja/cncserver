@@ -302,7 +302,12 @@ function serialPortReadyCallback() {
           // Add some other stuff while we're at it
           // TODO: Should probably automate all this output :P
           out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
-          out += 'angle ' + turtle.degrees + "\n";
+          
+          var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
+          if (angleTemp > 360) {
+	        angleTemp -= 360;
+          }
+          out += 'angle ' + angleTemp + "\n";
           out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
         } else {
           out += key + ' ' + pen[key] + "\n";
@@ -416,7 +421,7 @@ function serialPortReadyCallback() {
           y: (-parseInt(arg2) * sizeMultiplier) + BOT.workArea.absCenter.y
         }
 
-        var theta = Math.atan2(turtle.y - point.y, point.x - turtle.x);
+        var theta = Math.atan2(point.y - turtle.y, point.x - turtle.x);
         turtle.degrees = Math.round(theta * 180 / Math.PI);
           if (turtle.degrees > 360) turtle.degrees -= 360;
           if (turtle.degrees < 0) turtle.degrees += 360;
@@ -427,13 +432,17 @@ function serialPortReadyCallback() {
 
       // Rotate pointer directly
       if (op == 'absturn') {
-        turtle.degrees = parseInt(arg);
+        turtle.degrees = parseInt(arg) - 90; // correct for "standard" Turtle orientation in Scratch
         return {code: 200, body: ''};
       }
 
       // Simple Nudge X/Y
       if (op == 'nudge') {
-        turtle[arg] += parseInt(arg2) * sizeMultiplier;
+        if (arg == 'y') {
+          turtle[arg] += -1 * parseInt(arg2) * sizeMultiplier;
+        } else {
+          turtle[arg] += parseInt(arg2) * sizeMultiplier;
+        }
       }
 
       // Move Pointer? Actually move!
