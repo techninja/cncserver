@@ -502,7 +502,12 @@ function serialPortReadyCallback() {
       }
 
       // Actually move pen
-      movePenAbs(turtle);
+      var distance = movePenAbs(turtle);
+
+      // Add up distance counter
+      if (pen.state === 'draw' || pen.state === 1) {
+        pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
+      }
       return {code: 200, body: ''};
     }
 
