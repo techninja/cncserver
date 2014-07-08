@@ -303,10 +303,10 @@ function serialPortReadyCallback() {
           // Add some other stuff while we're at it
           // TODO: Should probably automate all this output :P
           out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
-          
+
           var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
           if (angleTemp > 360) {
-	        angleTemp -= 360;
+            angleTemp -= 360;
           }
           out += 'angle ' + angleTemp + "\n";
           out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
