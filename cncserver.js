@@ -275,7 +275,8 @@ function serialPortReadyCallback() {
       x: BOT.workArea.absCenter.x,
       y: BOT.workArea.absCenter.y,
       sleeping: false,
-      degrees: 0
+      degrees: 0,
+      distanceCounter: 0
     };
 
     pollData.render = function() {
@@ -309,6 +310,8 @@ function serialPortReadyCallback() {
           }
           out += 'angle ' + angleTemp + "\n";
           out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
+        }else if (key == 'distanceCounter') {
+          out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
         } else {
           out += key + ' ' + pen[key] + "\n";
         }
@@ -347,7 +350,8 @@ function serialPortReadyCallback() {
         x: BOT.workArea.absCenter.x,
         y: BOT.workArea.absCenter.y,
         sleeping: false,
-        degrees: 0
+        degrees: 0,
+        distanceCounter: 0
       };
 
       // Clear Run Buffer
@@ -506,7 +510,7 @@ function serialPortReadyCallback() {
 
       // Add up distance counter
       if (pen.state === 'draw' || pen.state === 1) {
-        pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
+        turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
       }
       return {code: 200, body: ''};
     }
@@ -519,6 +523,12 @@ function serialPortReadyCallback() {
     function penRequest(req, res){
       var op = req.params.op;
       var arg = req.params.arg;
+
+      // Reset internal counter
+      if (op == 'resetDistance') {
+        turtle.distanceCounter = 0;
+        return {code: 200, body: ''};
+      }
 
       // Toggle sleep/simulation mode
       if (op == 'sleep') {
