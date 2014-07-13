@@ -1,0 +1,42 @@
+{
+"extensionName": "WaterColorBot",
+  "extensionPort": 4242,
+  "blockSpecs": [
+    [" ", "park", "park"],
+    [" ", "wash brush", "pen/wash"],
+    [" ", "brush up", "pen/up"],
+    [" ", "brush down", "pen/down"],
+    [" ", "wait %d.time seconds", "move/wait", 0.5],
+    [" ", "move to x: %n y: %n", "coord", 0, 0],
+    [" ", "move to %m.positionY %m.positionX", "coord", "center", "center"],
+    [" ", "get color %d.colors", "tool/color", 0],
+    [" ", "get water %d.waters", "tool/water", 0],
+    [" ", "move brush %n steps", "move/forward", 10],
+    [" ", "move brush x %n steps", "move/nudge/x", 10],
+    [" ", "move brush y %n steps", "move/nudge/y", 10],
+    [" ", "turn brush @turnRight %d.angle degrees", "move/right", "15"],
+    [" ", "turn brush @turnLeft %d.angle degrees", "move/left", "15"],
+    [" ", "point brush towards %d.angle degrees", "move/absturn", "0"],
+    [" ", "point brush towards x: %n y: %n", "move/toward", "0", "0"],
+    [" ", "set move speed to %d.speed", "move/speed", "7"],
+    [" ", "motors off & zero", "pen/off"],
+    [" ", "reset paint distance", "pen/resetDistance"],
+    [" ", "put brush to sleep", "pen/sleep/1"],
+    [" ", "wake up brush!", "pen/sleep/0"],
+    ["r", "brush x", "x"],
+    ["r", "brush y", "y"],
+    ["r", "brush z", "z"],
+    ["r", "brush paint distance", "distanceCounter"],
+    ["r", "is sleeping?", "sleeping"],
+    ["r", "brush angle", "angle"]
+  ],
+  "menus": {
+    "colors": [0, 1, 2, 3, 4, 5, 6, 7],
+    "speed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "waters": [0, 1, 2],
+    "positionX": ["left", "center", "right"],
+    "positionY": ["top", "center", "bottom"],
+    "angle": [0, 5, 15, 30, 45, 90, 135, 180, 270],
+    "time": [0.25, 0.5, 0.75, 1, 2, 5, 10]
+  }
+}

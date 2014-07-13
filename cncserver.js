@@ -72,6 +72,8 @@ var globalConfigDefaults = {
   corsDomain: '*', // Start as open to CORs enabled browser clients
   debug: false,
   botType: 'watercolorbot',
+  scratchSupport: true,
+  flipZToggleBit: false,
   botOverride: {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
@@ -261,9 +263,338 @@ function serialPortReadyCallback() {
     serialPort.on("data", serialReadline);
   }
 
-
   sendBotConfig();
   startServer();
+
+  // Scratch v2 endpoint & API =================================================
+  if (gConf.get('scratchSupport')) {
+    console.info('Scratch v2 Programming support ENABLED');
+    var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
+    var sizeMultiplier = 10; // Amount to increase size of steps
+    var turtle = { // Helper turtle for relative movement
+      x: BOT.workArea.absCenter.x,
+      y: BOT.workArea.absCenter.y,
+      sleeping: false,
+      degrees: 0,
+      distanceCounter: 0
+    };
+
+    pollData.render = function() {
+      var out = "";
+
+      // Loop through all existing/static pollData
+      for (var key in this) {
+        if (typeof this[key] == 'object') {
+          var v = (typeof this[key] == 'string') ?  this[key] : this[key].join(' ');
+
+          if (v !== '') {
+            out += key + ' ' + v + "\n";
+          }
+        }
+      }
+
+      // Throw in full pen data as well
+      for (var key in pen) {
+        if (key == 'x') {
+          out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
+        }else if (key == 'y') {
+          out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
+
+          // Add some other stuff while we're at it
+          // TODO: Should probably automate all this output :P
+          out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
+
+          var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
+          if (angleTemp > 360) {
+            angleTemp -= 360;
+          }
+          out += 'angle ' + angleTemp + "\n";
+          out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
+        }else if (key == 'distanceCounter') {
+          out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
+        } else {
+          out += key + ' ' + pen[key] + "\n";
+        }
+      }
+      return out;
+    }
+
+    // Helper function to add/remove busy watchers
+    pollData.busy = function(id, destroy) {
+      if (!pollData['_busy']) pollData['_busy'] = []; // Add busy placeholder)
+
+      var index = pollData['_busy'].indexOf(id);
+
+      if (destroy && index > -1) { // Remove
+        pollData['_busy'].splice(index, 1);
+      } else if (!destroy && index === -1) { // Add!
+        pollData['_busy'].push(id);
+      }
+    }
+
+
+    // SCRATCH v2 Specific endpoints =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // Central poll returner (Queried ~30hz)
+    createServerEndpoint("/poll", function(req, res){
+      return {code: 200, body: pollData.render()};
+    });
+
+    // Flash crossdomain helper
+    createServerEndpoint("/crossdomain.xml", function(req, res){
+      return {code: 200, body: '<?xml version="1.0" ?><cross-domain-policy><allow-access-from domain="*" to-ports="' + gConf.get('httpPort') + '"/></cross-domain-policy>'};
+    });
+
+    // Initialize/reset status
+    createServerEndpoint("/reset_all", function(req, res){
+      turtle = { // Reset to default
+        x: BOT.workArea.absCenter.x,
+        y: BOT.workArea.absCenter.y,
+        sleeping: false,
+        degrees: 0,
+        distanceCounter: 0
+      };
+
+      // Clear Run Buffer
+      // @see /v1/buffer/ DELETE
+      buffer = [];
+      pen = extend({}, actualPen);
+
+      pollData["_busy"] = []; // Clear busy indicators
+      return {code: 200, body: ''};
+    });
+
+    // SCRATCH v2 Specific endpoints =^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=
+
+    // Move Endpoint(s)
+    createServerEndpoint("/park", moveRequest);
+    createServerEndpoint("/coord/:x/:y", moveRequest);
+    createServerEndpoint("/move/:op", moveRequest);
+    createServerEndpoint("/move/:op/:arg", moveRequest);
+    createServerEndpoint("/move/:op/:arg/:arg2", moveRequest);
+
+    // Move request endpoint handler function
+    function moveRequest(req, res){
+      //pollData.busy(req.params.busyid);
+
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
+
+      var op = req.params.op;
+      var arg = req.params.arg;
+      var arg2 = req.params.arg2;
+
+      // Park
+      if (req.url == '/park') {
+        setHeight('up');
+        setPen({x: BOT.park.x, y: BOT.park.y, park: true});
+        return {code: 200, body: ''};
+      }
+
+      // Arbitrary Wait
+      if (op == 'wait') {
+        arg = parseFloat(arg) * 1000;
+        run('wait', false, arg);
+        return {code: 200, body: ''};
+      }
+
+      // Speed setting
+      if (op == 'speed') {
+        arg = parseFloat(arg) * 10;
+        botConf.set('speed:drawing', arg);
+        botConf.set('speed:moving', arg);
+      }
+
+      // Rotating Pointer? (just rotate)
+      if (op == 'left' || op == 'right') {
+        arg = parseInt(arg);
+        turtle.degrees = op == 'right' ? turtle.degrees + arg : turtle.degrees - arg;
+        if (turtle.degrees > 360) turtle.degrees -= 360;
+        if (turtle.degrees < 0) turtle.degrees += 360;
+        console.log('Rotate pen to ' + turtle.degrees + ' degrees');
+        return {code: 200, body: ''};
+      }
+
+      // Rotate pointer towards turtle relative X/Y
+      if (op == 'toward') {
+        // Convert input X/Y from scratch coordinates
+        var point = {
+          x: (parseInt(arg) * sizeMultiplier) + BOT.workArea.absCenter.x,
+          y: (-parseInt(arg2) * sizeMultiplier) + BOT.workArea.absCenter.y
+        }
+
+        var theta = Math.atan2(point.y - turtle.y, point.x - turtle.x);
+        turtle.degrees = Math.round(theta * 180 / Math.PI);
+          if (turtle.degrees > 360) turtle.degrees -= 360;
+          if (turtle.degrees < 0) turtle.degrees += 360;
+
+        console.log('Move relative towards ', point, ' from ', turtle);
+        return {code: 200, body: ''};
+      }
+
+      // Rotate pointer directly
+      if (op == 'absturn') {
+        turtle.degrees = parseInt(arg) - 90; // correct for "standard" Turtle orientation in Scratch
+        return {code: 200, body: ''};
+      }
+
+      // Simple Nudge X/Y
+      if (op == 'nudge') {
+        if (arg == 'y') {
+          turtle[arg] += -1 * parseInt(arg2) * sizeMultiplier;
+        } else {
+          turtle[arg] += parseInt(arg2) * sizeMultiplier;
+        }
+      }
+
+      // Move Pointer? Actually move!
+      if (op == 'forward') {
+        arg = parseInt(arg);
+
+        console.log('Move pen by ' + arg + ' steps');
+        var radians = turtle.degrees * (Math.PI / 180);
+        turtle.x = Math.round(turtle.x + Math.cos(radians) * arg * sizeMultiplier);
+        turtle.y = Math.round(turtle.y + Math.sin(radians) * arg * sizeMultiplier);
+      }
+
+      // Move x, y or both
+      if (op == 'x' || op == 'y' || typeof req.params.x != 'undefined') {
+        arg = parseInt(arg);
+
+        if (op == 'x' || op == 'y') {
+          turtle[op] = arg * sizeMultiplier;
+        } else {
+
+          // Word positions? convert to actual coordinates
+          var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
+          var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
+          if (wordX > -1) {
+            var steps = centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
+            turtle.x = steps.x;
+            turtle.y = steps.y;
+          } else {
+            // Convert input X/Y to steps via multiplier
+            turtle.x = parseInt(req.params.x) * sizeMultiplier;
+            turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;  // In Scratch, positive Y is up on the page. :(
+
+            // When directly setting XY position, offset by half for center 0,0
+            turtle.x+= BOT.workArea.absCenter.x;
+            turtle.y+= BOT.workArea.absCenter.y;
+          }
+        }
+
+        console.log('Move pen to coord ' + turtle.x + ' ' + turtle.y);
+      }
+
+      // Sanity check values
+      if (turtle.x > BOT.maxArea.width) {
+        turtle.x = BOT.maxArea.width;
+      }
+
+      if (turtle.x < BOT.workArea.left) {
+        turtle.x = BOT.workArea.left;
+      }
+
+      if (turtle.y > BOT.maxArea.height) {
+        turtle.y = BOT.maxArea.height;
+      }
+
+      if (turtle.y < BOT.workArea.top) {
+        turtle.y = BOT.workArea.top;
+      }
+
+      // Actually move pen
+      var distance = movePenAbs(turtle);
+
+      // Add up distance counter
+      if (pen.state === 'draw' || pen.state === 1) {
+        turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
+      }
+      return {code: 200, body: ''};
+    }
+
+    // Pen endpoints
+    createServerEndpoint("/pen", penRequest);
+    createServerEndpoint("/pen/:op", penRequest);
+    createServerEndpoint("/pen/:op/:arg", penRequest);
+
+    function penRequest(req, res){
+      var op = req.params.op;
+      var arg = req.params.arg;
+
+      // Reset internal counter
+      if (op == 'resetDistance') {
+        turtle.distanceCounter = 0;
+        return {code: 200, body: ''};
+      }
+
+      // Toggle sleep/simulation mode
+      if (op == 'sleep') {
+        arg = parseInt(arg);
+        turtle.sleeping = !!arg; // Convert integer to true boolean
+        return {code: 200, body: ''};
+      }
+
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
+
+      // Set Pen up/down
+      if (op == 'up' || op == "down") {
+        if (op == 'down') {
+          op = 'draw';
+        }
+        setHeight(op);
+      }
+
+      // Run simple wash
+      if (op == 'wash'){
+        setTool('water0');
+        setTool('water1');
+        setTool('water2');
+      }
+
+      // Turn off motors and zero to park pos
+      if (op == 'off'){
+        // Run in buffer to ensure correct timing
+        run('callback', function(){
+          run('custom', 'EM,0,0');
+          var park = centToSteps(BOT.park, true);
+          pen.x = park.x;
+          pen.y = park.y;
+        });
+      }
+      return {code: 200, body: ''};
+    }
+
+    // Tool set endpoints
+    createServerEndpoint("/tool/:tool", toolRequest);
+    createServerEndpoint("/tool/:type/:id", toolRequest);
+
+    function toolRequest(req, res) {
+      // Do nothing if sleeping
+      if (turtle.sleeping) {
+        // TODO: Do we care about running the math?
+        return {code: 200, body: ''};
+      }
+
+      // Direct set tool
+      if (req.params.tool) {
+        setTool(req.params.tool);
+      }
+
+      // Set by ID (water/color)
+      if (req.params.type) {
+        setTool(req.params.type + parseInt(req.params.id));
+      }
+
+      return {code: 200, body: ''};
+    }
+  }
 
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
@@ -539,7 +870,7 @@ function serialPortReadyCallback() {
         // Don't repark if already parked
         var park = centToSteps(BOT.park, true);
         if (pen.x == park.x && pen.y == park.y) {
-          callback(false);
+          if (callback) callback(false);
           return;
         }
 
@@ -630,6 +961,12 @@ function serialPortReadyCallback() {
   exports.setTool = setTool;
   function setTool(toolName, callback) {
     var tool = botConf.get('tools:' + toolName);
+
+    // No tool found with that name? Augh! Run AWAY!
+    if (!tool) {
+      if (callback) run('callback', callback);
+      return false;
+    }
 
     console.log('Changing to tool: ' + toolName);
 
@@ -815,8 +1152,8 @@ function serialPortReadyCallback() {
 function centToSteps(point, inMaxArea) {
   if (!inMaxArea) { // Calculate based on workArea
     return {
-      x: BOT.workArea.left + ((point.x / 100) * (BOT.maxArea.width - BOT.workArea.left)),
-      y: BOT.workArea.top + ((point.y / 100) * (BOT.maxArea.height - BOT.workArea.top))
+      x: BOT.workArea.left + ((point.x / 100) * BOT.workArea.width),
+      y: BOT.workArea.top + ((point.y / 100) * BOT.workArea.height)
     };
   } else { // Calculate based on ALL area
     return {
@@ -898,6 +1235,21 @@ function loadBotConfig(cb, botType) {
         commands : botConf.get('controller').commands
       }
 
+      // Store assumed constants
+      BOT.workArea.width = BOT.maxArea.width - BOT.workArea.left;
+      BOT.workArea.height = BOT.maxArea.height - BOT.workArea.top;
+
+      BOT.workArea.relCenter = {
+        x: BOT.workArea.width / 2,
+        y: BOT.workArea.height / 2
+      };
+
+      BOT.workArea.absCenter = {
+        x: BOT.workArea.relCenter.x + BOT.workArea.left,
+        y: BOT.workArea.relCenter.y + BOT.workArea.top
+      }
+
+
       // Set initial pen position at park position
       var park = centToSteps(BOT.park, true);
       pen.x = park.x;
@@ -923,7 +1275,7 @@ function createServerEndpoint(path, callback){
     res.set('Content-Type', 'application/json; charset=UTF-8');
     res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
 
-    if (gConf.get('debug')) {
+    if (gConf.get('debug') && path !== '/poll') {
       console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
     }
 
@@ -948,7 +1300,13 @@ function createServerEndpoint(path, callback){
         status: cbStat[1]
       }));
     } else if(what.call(cbStat) === '[object Object]') { // Full message
-      res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+      if (typeof cbStat.body == "string") { // Send plaintext if body is string
+        res.set('Content-Type', 'text/plain; charset=UTF-8');
+        res.status(cbStat.code).send(cbStat.body);
+      } else {
+        res.status(cbStat.code).send(JSON.stringify(cbStat.body));
+      }
+
     }
   });
 }
@@ -978,7 +1336,7 @@ function run(command, data, duration) {
 
       // If there's a togglez, run it after setting Z
       if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: 1}));
+        run('custom', cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}));
       }
 
       run('wait', '', duration);
@@ -1161,11 +1519,11 @@ function connectSerial(options){
       try {
         serialPort = new SerialPort(gConf.get('serialPath'), {
           baudrate : Number(botConf.get('controller').baudRate),
-          parser: serialport.parsers.readline("\r")
+          parser: serialport.parsers.readline("\r"),
+          disconnectedCallback: function() {console.log('You pulled the plug!');} //options.disconnect
         });
 
         if (options.connect) serialPort.on("open", options.connect);
-        if (options.disconnect) serialPort.on("close", options.disconnect);
 
         console.log('Serial connection open at ' + botConf.get('controller').baudRate + 'bps');
         pen.simulation = 0;
