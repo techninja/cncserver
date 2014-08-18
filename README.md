@@ -6,6 +6,25 @@ the awesome pen plotter that paints with watercolors, thought up by
 [MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
 staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
 
+## Features
+CNC Server is an application that sits on a computer connected to your serial
+based CNC peripheral and provides a [simple RESTful API](API.md) to access
+common CNC/plotter functions. These controls manifest as an abstracted method of
+controlling the bot to do what you ask while sanity checking and keeping crashes
+down to a minimum.
+ * Fast HTTP server via [Express](http://expressjs.com)
+ * Runs great on even modest hardware. Raspberry Pi verified!
+ * Self manages absolute pen position for relative motion plotter controllers.
+ * Multiple API endpoints allow full control, motor overrides and "tool" changes.
+Read [the documentation](API.md) and implement *your own* client!
+ * An even simpler [API](SCRATCH.API.md) allows for Scratch programming support, with [examples](https://github.com/evil-mad/watercolorblocks).
+ * Accepts direct X/Y absolute pen positions as percentage of total width/height.
+ * Client agnostic! We don't care what controls the bot, as long as it follows
+the rules. See it in use by [US President Barack Obama on an iPad](http://www.youtube.com/watch?v=2HfgGDOZPCQ&feature=player_embedded#t=1992s)!
+ * Configuration file and argument driven (see
+[example here](machine_types/watercolorbot.ini)), allows for server
+customization to fit *almost* any style of bot using a supported controller.
+
 ## Installation
 
 #### Preamble: User or Developer?
@@ -77,25 +96,6 @@ node cncserver --httpPort 80 --serialPath /dev/ttyUSB1243
 # Change bot type to EggBot, and invert the X motor axis (with equals)
 node cncserver --botType=eggbot --invertAxis:x=true
 ```
-
-## Features
-
-CNC Server is an application that sits on a computer connected to your serial
-based CNC peripheral and provides a [simple RESTful API](API.md) to access
-common CNC/plotter functions. These controls manifest as an abstracted method of
-controlling the bot to do what you ask while sanity checking and keeping crashes
-down to a minimum.
- * Fast HTTP server via [Express](http://expressjs.com)
- * Runs great on even modest hardware. Raspberry Pi verified!
- * Self manages absolute pen position for relative motion plotter controllers.
- * Multiple API endpoints allow full control, motor overrides and "tool" changes.
-Read [the documentation](API.md) and implement *your own* client!
- * Accepts direct X/Y absolute pen positions as percentage of total width/height.
- * Client agnostic! We don't care what controls the bot, as long as it follows
-the rules. See it in use by [US President Barack Obama on an iPad](http://www.youtube.com/watch?v=2HfgGDOZPCQ&feature=player_embedded#t=1992s)!
- * Configuration file and argument driven (see
-[example here](machine_types/watercolorbot.ini)), allows for server
-customization to fit *almost* any style of bot using a supported controller.
 
 ## Problems?
 ***Stuck on something?*** Submit an issue! Click the
