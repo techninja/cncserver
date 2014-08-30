@@ -1496,7 +1496,7 @@ function connectSerial(options){
 
   require("serialport").list(function (err, ports) {
     var portNames = ['None'];
-    console.log('Full Available Port Data:', ports);
+    if (gConf.get('debug')) console.log('Full Available Port Data:', ports);
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
 
