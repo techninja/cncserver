@@ -1171,27 +1171,32 @@ function loadGlobalConfig(cb) {
   gConf.use('file', {
     file: configPath,
     format: nconf.formats.ini
-  }).load(cb);
+  }).load(function (){
+    // Set Global Config Defaults
+    gConf.defaults(globalConfigDefaults);
 
-  // Set Global Config Defaults
-  gConf.defaults(globalConfigDefaults);
-
-  // Save Global Conf file defaults if not saved
-  if(!fs.existsSync(configPath)) {
-    var def = gConf.stores['defaults'].store;
-    for(var key in def) {
-      if (key != 'type'){
-        gConf.set(key, def[key]);
+    // Save Global Conf file defaults if not saved
+    if(!fs.existsSync(configPath)) {
+      var def = gConf.stores['defaults'].store;
+      for(var key in def) {
+        if (key != 'type'){
+          gConf.set(key, def[key]);
+        }
       }
-    }
-    gConf.save();
-  }
 
-  // Output if debug mode is on
-  if (gConf.get('debug')) {
-    console.info('== CNCServer Debug mode is ON ==');
-  }
-};
+      gConf.save(function (err) {
+        if (cb) cb();
+      });
+    } else { // Config file already exists
+      if (cb) cb(); // Trigger the callback
+    }
+
+    // Output if debug mode is on
+    if (gConf.get('debug')) {
+      console.info('== CNCServer Debug mode is ON ==');
+    }
+  });
+}
 
 // Load bot config file based on botType global config
 function loadBotConfig(cb, botType) {

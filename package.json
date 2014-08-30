@@ -8,7 +8,7 @@
   "dependencies" : {
     "express": "~3.0.0",
     "serialport" : "1.2.5",
-    "nconf": "~0.6.7",
+    "nconf": "0.6.9",
     "ini": "1.1.0"
   },
   "repository": {
