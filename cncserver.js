@@ -1526,7 +1526,7 @@ function connectSerial(options){
         serialPort = new SerialPort(gConf.get('serialPath'), {
           baudrate : Number(botConf.get('controller').baudRate),
           parser: serialport.parsers.readline("\r"),
-          disconnectedCallback: function() {console.log('You pulled the plug!');} //options.disconnect
+          disconnectedCallback: options.disconnect
         });
 
         if (options.connect) serialPort.on("open", options.connect);
