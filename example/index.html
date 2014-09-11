@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.5, maximum-scale=1.5, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
     <script src="jquery.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="cncserver.client.api.js"></script>
@@ -10,15 +10,36 @@
       body {
         font-family: sans-serif;
       }
+
+      #buffer {
+        width: 200px;
+        height: 200px;
+        float: right;
+      }
+
+      #drawarea {
+        border: 1px solid black;
+        width: 94%;
+        max-width: 600px;
+        max-height: 400px;
+        margin:1em;
+        display: block;
+      }
     </style>
   </head>
   <title>CNC Server Controller</title>
 <body>
   <h3>CNC Server example Controller</h3>
 
-  <fieldset><legend>Live Status</legend>
+  <fieldset id="bot"><legend>Live Status</legend>
+    <canvas id="drawarea"></canvas>
     <textarea id="pendata"></textarea>
-    <select size="10" id="buffer"></select>
+    <fieldset><legend>Buffer</legend>
+      <select size="10" id="buffer"></select>
+      <div><label for="bufrun">Running: </label><b id="bufrun">false</b></div>
+      <div><label for="bufpause">Paused: </label><b id="bufpause">false</b></div>
+      <div><label for="bufcount">Items: </label><b id="bufcount">0</b></div>
+    </fieldset>
   </fieldset>
 
   <fieldset><legend>General</legend>
@@ -83,6 +104,12 @@
 <script>
   var socket = io();
   var runningTest = false;
+  var $draw = $('#drawarea');
+  var pen = {};
+  var lastPen = {};
+
+  var viewScale = 1; // The scale to adjust bot steps by for viewing
+  var viewMax = {x: 600, y: 400}; // The maximum view size to constrain to
 
   // Initialize CNC Server connection details
   // (thanks to CORS support, this should be fully portable)
@@ -94,24 +121,112 @@
   };
 
 
-
   // Socket.io stream data events =========================
-  socket.on('pen update', function(pen){
-    var d = 'x:' + pen.x;
-    d+= ' y:' + pen.y;
+  socket.on('pen update', function(data){
+    var animPen = {};
+    pen = $.extend({}, data);
+    var d = "Status =-=-=-=" + "\n";
+    d+= 'draw pos: ' + pen.state + '/' + pen.height + "\n";
+    d+= 'tool: ' + pen.tool + "\n";
     $('#pendata').text(d);
+
+    if (pen.lastDuration - 30 > 0) {
+      animPen = $.extend({}, lastPen);
+      $(lastPen).animate({ x:pen.x, y: pen.y  }, {
+        duration: pen.lastDuration - 30,
+        easing: 'linear',
+        step: function(val, fx) {
+          animPen[fx.prop] = val;
+          $draw.update(animPen, pen);
+        }
+      });
+    } else {
+      $draw.update(pen);
+    }
+
+    lastPen = $.extend({}, pen);
   });
 
   socket.on('buffer update', function(b){
+    $('#bufrun').text(b.bufferRunning);
+    $('#bufpause').text(b.bufferPaused);
+    $('#bufcount').text(b.buffer.length);
+
+    // Populate buffer list of items
     var $b = $('#buffer');
     $b.find('option').remove();
-
     for (var i in b.buffer) {
-      console.log();
-      $('#buffer').prepend(
-        $('<option>').text(b.buffer[i][0])
-      );
+      $b.prepend( $('<option>').text(b.buffer[i][0]) );
     }
+  });
+
+
+  // Setup live display box
+  cncserver.api.settings.bot(function(bot) {
+    $('#bot legend:first').text('Live Status: ' + bot.name);
+
+    // Find the view scale
+    if (bot.maxArea.width > bot.maxArea.height) {
+      viewScale = viewMax.x / bot.maxArea.width;
+    }else {
+      viewScale = viewMax.y / bot.maxArea.height;
+    }
+
+    $draw.attr({
+      width: bot.maxArea.width * viewScale,
+      height: bot.maxArea.height * viewScale
+    });
+
+    $draw.update = function(current, dest) {
+      var ctx = $draw[0].getContext('2d');
+      // Clear it out
+      ctx.clearRect(0, 0, $draw[0].width, $draw[0].height);
+
+    // Red outline the work area
+      ctx.beginPath();
+      ctx.lineWidth = '1';
+      ctx.strokeStyle = 'red';
+      ctx.rect(
+        bot.workArea.left * viewScale,
+        bot.workArea.top * viewScale,
+        bot.maxArea.width * viewScale,
+        bot.maxArea.height * viewScale
+      );
+      ctx.stroke();
+      ctx.closePath();
+
+
+      if (dest) drawCrosshair(10, 'orange', dest); // Draw destination
+      drawCrosshair(20, 'black', current); // Draw Current Position
+
+      // Util function for drawing crosshairs
+      function drawCrosshair(size, color, pos) {
+        ctx.beginPath();
+        ctx.lineWidth = '2';
+        ctx.strokeStyle = color;
+        var x = pos.x * viewScale;
+        var y = pos.y * viewScale;
+
+        ctx.arc(x, y, size/2, 0, 2*Math.PI); // Circle
+
+        // Cross lines
+        ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
+        ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
+
+        ctx.stroke();
+        ctx.closePath();
+      }
+
+
+
+    };
+
+    // Initially set the pen from the bot
+    cncserver.api.pen.stat(function(data){
+      pen = data;
+      lastPen = $.extend({}, data);
+      $draw.update(data);
+    });
   });
 
 
