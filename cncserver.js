@@ -750,6 +750,7 @@ function serialPortReadyCallback() {
           bufferRunning = false; // Force a followup check as the paused var has changed
 
           bufferNewlyPaused = bufferPaused; // Changed to paused!
+          sendBufferUpdate();
         }
       }
 
@@ -790,6 +791,7 @@ function serialPortReadyCallback() {
 
       console.log('Run buffer cleared!')
       return [200, 'Buffer Cleared'];
+      sendBufferUpdate();
     } else {
       return false;
     }
@@ -814,6 +816,7 @@ function serialPortReadyCallback() {
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
+          sendPenUpdate();
         });
         return true; // Tell endpoint wrapper we'll handle the response
       } else {
@@ -841,6 +844,7 @@ function serialPortReadyCallback() {
     // Counter Reset
     if (inPen.resetCounter) {
       pen.distanceCounter = Number(0);
+      sendPenUpdate();
       callback(true);
       return;
     }
@@ -1024,6 +1028,7 @@ function serialPortReadyCallback() {
         executeNext();
       }
 
+      sendBufferUpdate();
     } else { // "Standard" WaterColorBot toolchange
       // Pen down
       setHeight(downHeight);
