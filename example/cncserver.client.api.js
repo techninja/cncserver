@@ -255,7 +255,37 @@ cncserver.api = {
         }
       });
     }
-  }
+  },
+
+  settings: {
+   /**
+    * Get the cncserver global settings object
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    global: function(callback){
+      _get('settings/global', {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
+    },
+
+   /**
+    * Get the cncserver bot specific settings object
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    bot: function(callback){
+      _get('settings/bot', {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
+    },
+  },
 };
 
 function _get(path, options) {
