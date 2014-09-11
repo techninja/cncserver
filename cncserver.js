@@ -22,11 +22,14 @@
  */
 
 // REQUIRES ====================================================================
-var nconf = require('nconf');         // Configuration and INI file
-var express = require('express');     // Webserver
-var fs = require('fs');               // File System management
-var path = require('path');           // Path management and normalization
-var extend = require('util')._extend; // Util for cloning objects
+var nconf = require('nconf');              // Configuration and INI file
+var express = require('express');          // Express Webserver Requires --=-=-=
+var app = express();
+var server = require('http').createServer(app);
+var fs = require('fs');                    // File System management
+var path = require('path');                // Path management and normalization
+var extend = require('util')._extend;      // Util for cloning objects
+var io = require('socket.io')(server);     // Socket.io for streaming state data
 
 // CONFIGURATION ===============================================================
 var gConf = new nconf.Provider();
@@ -34,6 +37,31 @@ var botConf = new nconf.Provider();
 
 // Pull conf from env, or arguments
 gConf.env().argv();
+
+
+// SOCKET STUFF
+io.on('connection', function(socket){
+  //console.log('a user connected');
+
+  socket.on('disconnect', function(){
+    //console.log('user disconnected');
+  });
+
+});
+
+function sendPenUpdate() {
+  io.emit('pen update', actualPen);
+}
+
+
+function sendBufferUpdate() {
+  io.emit('buffer update', {
+    buffer: buffer,
+    bufferRunning: bufferRunning,
+    bufferPaused: bufferPaused
+  });
+}
+
 
 // STATE Variables
 
@@ -83,8 +111,6 @@ var globalConfigDefaults = {
 var BOT = {}; // Set after botConfig is loaded
 
 // INTIAL SETUP ================================================================
-var app = express();
-var server = require('http').createServer(app);
 
 // Global express initialization (must run before any endpoint creation)
 app.configure(function(){
@@ -189,6 +215,7 @@ function standaloneOrModuleInit() {
     }
 
     // Set pen direct command
+    // TODO: Rewrite this to play nice with the buffer!!!!
     exports.setPen = function(value) {
       pen.state = value;
       serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
@@ -1366,6 +1393,7 @@ function run(command, data, duration) {
   // Add final command and duration to end of queue, along with a copy of the
   // pen state at this point in time to be copied to actualPen after execution
   buffer.unshift([c, duration, extend({}, pen)]);
+  sendBufferUpdate();
 }
 
 // Create a bot specific serial command string from values
@@ -1393,6 +1421,7 @@ function executeNext() {
 
   if (buffer.length) {
     var cmd = buffer.pop();
+    sendBufferUpdate();
 
     if (typeof cmd[0] === "function") {
       // Run custom callback in the queue. Timing for this should be correct
@@ -1411,9 +1440,11 @@ function executeNext() {
     // Set the actualPen state to match the state assumed at the time the buffer
     // item was created
     actualPen = extend({}, cmd[2]);
+    sendPenUpdate();
 
   } else {
     bufferRunning = false;
+    sendBufferUpdate();
   }
 }
 
@@ -1421,6 +1452,7 @@ function executeNext() {
 setInterval(function(){
   if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
+    sendBufferUpdate();
     executeNext();
   }
 }, 10);

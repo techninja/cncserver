@@ -5,11 +5,12 @@
   "main": "cncserver.js",
   "author": "techninja",
   "license": "MIT",
-  "dependencies" : {
+  "dependencies": {
     "express": "~3.0.0",
-    "serialport" : "1.4.5",
+    "ini": "1.1.0",
     "nconf": "0.6.9",
-    "ini": "1.1.0"
+    "serialport": "1.4.5",
+    "socket.io": "^1.1.0"
   },
   "repository": {
     "type": "git",

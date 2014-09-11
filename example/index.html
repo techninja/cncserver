@@ -3,6 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.5, maximum-scale=1.5, user-scalable=no"/>
     <script src="jquery.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="cncserver.client.api.js"></script>
     <script src="cncserver.client.commander.js"></script>
     <style type="text/css">
@@ -14,6 +15,12 @@
   <title>CNC Server Controller</title>
 <body>
   <h3>CNC Server example Controller</h3>
+
+  <fieldset><legend>Live Status</legend>
+    <textarea id="pendata"></textarea>
+    <select size="10" id="buffer"></select>
+  </fieldset>
+
   <fieldset><legend>General</legend>
     <button id="unlock">Unlock</button>
     <button id="zero">Zero</button>
@@ -74,6 +81,7 @@
   </fieldset>
 
 <script>
+  var socket = io();
   var runningTest = false;
 
   // Initialize CNC Server connection details
@@ -84,6 +92,28 @@
     protocol: 'http',
     version: '1'
   };
+
+
+
+  // Socket.io stream data events =========================
+  socket.on('pen update', function(pen){
+    var d = 'x:' + pen.x;
+    d+= ' y:' + pen.y;
+    $('#pendata').text(d);
+  });
+
+  socket.on('buffer update', function(b){
+    var $b = $('#buffer');
+    $b.find('option').remove();
+
+    for (var i in b.buffer) {
+      console.log();
+      $('#buffer').prepend(
+        $('<option>').text(b.buffer[i][0])
+      );
+    }
+  });
+
 
   var run = cncserver.cmd.run; // Shortcut!
 
