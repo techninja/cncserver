@@ -742,7 +742,11 @@ function serialPortReadyCallback() {
   createServerEndpoint("/v1/buffer", function(req, res){
     if (req.route.method == 'get' || req.route.method == 'put') {
 
-      // Pause/resume
+      // Pause/resume (normalize input)
+      if (typeof req.body.paused == "string") {
+        req.body.paused = req.body.paused == "true" ? true : false;
+      }
+
       if (typeof req.body.paused == "boolean") {
         if (req.body.paused != bufferPaused) {
           bufferPaused = req.body.paused;
