@@ -17,13 +17,22 @@
         float: right;
       }
 
-      #drawarea {
+      #simwrap {
+        position: relative;
+      }
+
+      canvas.simcanvas {
         border: 1px solid black;
-        width: 94%;
+        width: 100%;
         max-width: 600px;
         max-height: 400px;
-        margin:1em;
         display: block;
+      }
+
+      #bufferarea {
+        position: absolute;
+        top: 0;
+        left: 0;
       }
     </style>
   </head>
@@ -32,13 +41,19 @@
   <h3>CNC Server example Controller</h3>
 
   <fieldset id="bot"><legend>Live Status</legend>
-    <canvas id="drawarea"></canvas>
+    <div id="simwrap">
+      <canvas class="simcanvas" id="drawarea"></canvas>
+      <canvas class="simcanvas" id="bufferarea"></canvas>
+    </div>
     <textarea id="pendata"></textarea>
     <fieldset><legend>Buffer</legend>
       <select size="10" id="buffer"></select>
       <div><label for="bufrun">Running: </label><b id="bufrun">false</b></div>
       <div><label for="bufpause">Paused: </label><b id="bufpause">false</b></div>
       <div><label for="bufcount">Items: </label><b id="bufcount">0</b></div>
+      <button id="buf_pause">Pause Buffer</button>
+      <button id="buf_resume">Resume Buffer</button>
+      <button id="buf_clear">Clear Buffer</button>
     </fieldset>
   </fieldset>
 
@@ -107,6 +122,7 @@
   var $draw = $('#drawarea');
   var pen = {};
   var lastPen = {};
+  var drawPoints = []; // Array of points from buffer to draw
 
   var viewScale = 1; // The scale to adjust bot steps by for viewing
   var viewMax = {x: 600, y: 400}; // The maximum view size to constrain to
@@ -130,10 +146,10 @@
     d+= 'tool: ' + pen.tool + "\n";
     $('#pendata').text(d);
 
-    if (pen.lastDuration - 30 > 0) {
+    if (pen.lastDuration - 5 > 0) {
       animPen = $.extend({}, lastPen);
       $(lastPen).animate({ x:pen.x, y: pen.y  }, {
-        duration: pen.lastDuration - 30,
+        duration: pen.lastDuration - 5,
         easing: 'linear',
         step: function(val, fx) {
           animPen[fx.prop] = val;
@@ -155,9 +171,43 @@
     // Populate buffer list of items
     var $b = $('#buffer');
     $b.find('option').remove();
+    drawPoints = [];
+
     for (var i in b.buffer) {
-      $b.prepend( $('<option>').text(b.buffer[i][0]) );
+      var cmd = b.buffer[i][0];
+
+      if (typeof cmd == "function") cmd = 'callback';
+
+      if (typeof cmd == "object") {
+        drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
+        cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
+      }
+
+      $b.prepend( $('<option>').text(cmd) );
     }
+
+    var ctx = $('#bufferarea')[0].getContext('2d');
+
+    // Clear it out
+    ctx.clearRect(0, 0, $('#bufferarea')[0].width, $('#bufferarea')[0].height);
+
+    if (drawPoints.length) {
+
+      // Draw forward locations
+      ctx.beginPath();
+      ctx.lineWidth = '4';
+      ctx.strokeStyle = "orange";
+
+      ctx.moveTo(pen.x * viewScale, pen.y * viewScale);
+      //ctx.lineTo(pen.x * viewScale, pen.y * viewScale);
+      for (var i = drawPoints.length - 1; i >= 0; i--) {
+        ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
+      }
+
+      ctx.stroke();
+      ctx.closePath;
+    }
+
   });
 
 
@@ -172,7 +222,7 @@
       viewScale = viewMax.y / bot.maxArea.height;
     }
 
-    $draw.attr({
+    $('.simcanvas').attr({
       width: bot.maxArea.width * viewScale,
       height: bot.maxArea.height * viewScale
     });
@@ -182,7 +232,7 @@
       // Clear it out
       ctx.clearRect(0, 0, $draw[0].width, $draw[0].height);
 
-    // Red outline the work area
+      // Red outline the work area
       ctx.beginPath();
       ctx.lineWidth = '1';
       ctx.strokeStyle = 'red';
@@ -248,6 +298,15 @@
         }
 
         break;
+      case 'buf_pause':
+        cncserver.api.buffer.pause();
+        break;
+      case 'buf_resume':
+        cncserver.api.buffer.resume();
+        break;
+      case 'buf_clear':
+        cncserver.api.buffer.clear();
+        break;
       case 'unlock':
         cncserver.api.motors.unlock();
         break;
@@ -255,8 +314,8 @@
         cncserver.api.pen.zero();
         break;
       case 'park':
-        //cncserver.api.pen.park(); // << Direct method
-        run('park');                // << Queue method
+        cncserver.api.pen.park(); // << Direct method
+        //run('park');                // << Queue method
         break;
       case 'up':
       case 'draw':
