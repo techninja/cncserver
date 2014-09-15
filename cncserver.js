@@ -793,9 +793,9 @@ function serialPortReadyCallback() {
       // and never sent out in the line above.
       pen = extend({}, actualPen);
 
-      console.log('Run buffer cleared!')
-      return [200, 'Buffer Cleared'];
       sendBufferUpdate();
+      console.log('Run buffer cleared!');
+      return [200, 'Buffer Cleared'];
     } else {
       return false;
     }
