@@ -1074,44 +1074,23 @@ function serialPortReadyCallback() {
       return 0;
     }
 
-    var distance = Math.sqrt( Math.pow(change.x, 2) + Math.pow(change.y, 2));
-    var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
-      speed = (speed/100) * botConf.get('speed:max'); // Convert to steps from percentage
-
-      // Sanity check speed value
-      speed = speed > botConf.get('speed:max') ? botConf.get('speed:max') : speed;
-      speed = speed < botConf.get('speed:min') ? botConf.get('speed:min') : speed;
-
-    var duration = Math.abs(Math.round(distance / speed * 1000)); // How many steps a second?
-
-    // Don't pass a duration of 0! Makes the EBB DIE!
-    if (duration == 0) duration = 1;
+    // Duration/distance is only calculated as relative from last assumed point, which
+    // may not actually ever happen, though it is likely to happen. Buffered items
+    // may not be pushed out of order, but previos location may have changed as user
+    // might pause the buffer, and move the actualPen position.
+    // @see executeNext() for more details on how this is handled.
+    var distance = getDistance(change);
+    var duration = getDurationFromDistance(distance);
 
     // Save the duration state
-    pen.lastDuration = duration;
+    //pen.lastDuration = duration;
 
+    // Set pen at new position
     pen.x = point.x;
     pen.y = point.y;
 
-    if (botConf.get('controller').position == "relative") {
-      // Invert X or Y to match stepper direction
-      change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
-      change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
-    } else { // Absolute! Just use the "new" absolute X & Y locations
-      change.x = pen.x;
-      change.y = pen.y;
-    }
-
-    // Swap motor positions
-    if (gConf.get('swapMotors')) {
-      change = {
-        x: change.y,
-        y: change.x
-      }
-    }
-
-    // Queue the final serial command
-    run('move', {x: change.x, y: change.y}, duration);
+    // Queue the final absolute move (serial command generated later)
+    run('move', {x: pen.x, y: pen.y}, duration);
 
     if (callback) {
       if (immediate == 1) {
@@ -1349,6 +1328,59 @@ function createServerEndpoint(path, callback){
   });
 }
 
+
+
+// Given two points, find the difference and duration at current speed between them
+function getPosChangeData(src, dest) {
+   var change = {
+    x: Math.round(dest.x - src.x),
+    y: Math.round(dest.y - src.y)
+  }
+
+  // Calculate distance
+  var duration = getDurationFromDistance(getDistance(change));
+
+  // Adjust change direction/inversion
+  if (botConf.get('controller').position == "relative") {
+    // Invert X or Y to match stepper direction
+    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+  } else { // Absolute! Just use the "new" absolute X & Y locations
+    change.x = pen.x;
+    change.y = pen.y;
+  }
+
+  // Swap motor positions
+  if (gConf.get('swapMotors')) {
+    change = {
+      x: change.y,
+      y: change.x
+    }
+  }
+
+  return {d: duration, x: change.x, y: change.y};
+}
+
+// Get a distance/length of the given vector
+function getDistance(vector) {
+  return Math.sqrt( Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+}
+
+// Calculate the given assumed duration from the number of steps
+function getDurationFromDistance(distance, min) {
+  if (typeof min === "undefined") min = 1;
+
+  // Use given speed over distance to calculate duration
+  var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
+    speed = (speed/100) * botConf.get('speed:max'); // Convert to steps from percentage
+
+    // Sanity check speed value
+    speed = speed > botConf.get('speed:max') ? botConf.get('speed:max') : speed;
+    speed = speed < botConf.get('speed:min') ? botConf.get('speed:min') : speed;
+  return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
+}
+
+
 // COMMAND RUN QUEUE UTILS ==========================================
 
 // Holds the MS time of the "current" command sent, as this should be limited
@@ -1366,7 +1398,8 @@ function run(command, data, duration) {
 
   switch (command) {
     case 'move':
-      c = cmdstr('movexy', {d: duration, x: data.x, y: data.y});
+      // Instead of a string command, this is buffered as an object
+      c = {type: 'absmove', x: data.x, y: data.y};
       break;
     case 'height':
       // Send a new setup value for the the up position, then trigger "pen up"
@@ -1428,15 +1461,29 @@ function executeNext() {
     var cmd = buffer.pop();
     sendBufferUpdate();
 
-    if (typeof cmd[0] === "function") {
-      // Run custom callback in the queue. Timing for this should be correct
-      // because of commandDuration below! (Here's hoping)
+    // Process a single line of the buffer =======================================
+    // ===========================================================================
+
+    if (typeof cmd[0] === "function") { // Custom Callback buffer item
+      // Timing for this should be correct because of commandDuration below!
       cmd[0](1);
       executeNext();
+    } else if (typeof cmd[0] === "object") { // Detailed object with special needs
+      if (cmd[0].type = "absmove") {
+        // Get the amount of change/duration from difference between actualPen and
+        // absolute position in buffered item request.
+        var change = getPosChangeData(actualPen, cmd[0]);
+        serialCommand(cmdstr('movexy', change)); // Send the X, Y an Duration
+
+        // Pass along the correct duration through to actualPen, via the buffer
+        // pen object being inherited.
+        cmd[2].lastDuration = change.d;
+        commandDuration = Math.max(change.d, 0);
+      }
     } else {
       // Set the duration of this command so when the board returns "OK",
       // will delay next command send
-      commandDuration = Math.max(cmd[1] - gConf.get('bufferLatencyOffset'), 0);
+      commandDuration = Math.max(cmd[1], 0);
 
       // Actually send the command out to serial
       serialCommand(cmd[0]);
