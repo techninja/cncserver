@@ -760,7 +760,7 @@ function serialPortReadyCallback() {
 
       if (!bufferNewlyPaused || buffer.length === 0) {
         bufferNewlyPaused = false; // In case paused with 0 items in buffer
-
+        sendBufferUpdate();
         return {code: 200, body: {
           running: bufferRunning,
           paused: bufferPaused,
@@ -778,7 +778,7 @@ function serialPortReadyCallback() {
             count: buffer.length,
             buffer: buffer
           }));
-
+          sendBufferUpdate();
           bufferNewlyPaused = false;
         };
 
@@ -820,7 +820,6 @@ function serialPortReadyCallback() {
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
-          sendPenUpdate();
         });
         return true; // Tell endpoint wrapper we'll handle the response
       } else {
@@ -848,7 +847,6 @@ function serialPortReadyCallback() {
     // Counter Reset
     if (inPen.resetCounter) {
       pen.distanceCounter = Number(0);
-      sendPenUpdate();
       callback(true);
       return;
     }
