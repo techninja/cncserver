@@ -118,14 +118,18 @@ app.configure(function(){
   app.use(express.bodyParser());
 });
 
+// Various serial initialization variables
 var serialport = require("serialport");
 var serialPort = false;
 var SerialPort = serialport.SerialPort;
+
+// Buffer State variables
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
 var bufferNewlyPaused = false; // Trigger for pause callback on executeNext()
 var bufferPauseCallback = null;
+var bufferPausePen = null; // Hold the state when paused initiated for resuming
 
 // Load the Global Configuration (from config, defaults & CL vars)
 loadGlobalConfig(standaloneOrModuleInit);
@@ -755,8 +759,31 @@ function serialPortReadyCallback() {
 
           bufferNewlyPaused = bufferPaused; // Changed to paused!
           sendBufferUpdate();
+
+          // Hold on the current actualPen to return to before resuming
+          if (bufferPaused) {
+            bufferPausePen = extend({}, actualPen);
+          }
         }
       }
+
+      // Resuming? Move back to position we paused at
+      if (!bufferPaused && bufferPausePen) {
+        bufferPaused = true; // Pause for a bit until we move back to last pos
+        console.log('Moving back to pre-pause position...')
+        actuallyMove(bufferPausePen, function(){
+          bufferPaused = false;
+          bufferPausePen = null;
+          res.status(200).send(JSON.stringify({
+            running: bufferRunning,
+            paused: bufferPaused,
+            count: buffer.length,
+            buffer: buffer
+          }));
+        });
+        return true; // Don't finish the response till after move back ^^^
+      }
+
 
       if (!bufferNewlyPaused || buffer.length === 0) {
         bufferNewlyPaused = false; // In case paused with 0 items in buffer
@@ -874,7 +901,7 @@ function serialPortReadyCallback() {
     // State has changed
     if (typeof inPen.state != "undefined") {
       if (inPen.state != pen.state) {
-        setHeight(inPen.state, callback);
+        setHeight(inPen.state, callback, inPen.skipBuffer);
         return;
       }
     }
@@ -914,7 +941,7 @@ function serialPortReadyCallback() {
       }
 
       // Actually move the pen!
-      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout);
+      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
       if (pen.state === 'draw' || pen.state === 1) {
         pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
       }
@@ -926,7 +953,7 @@ function serialPortReadyCallback() {
 
   // Set servo position
   exports.setHeight = setHeight;
-  function setHeight(height, callback) {
+  function setHeight(height, callback, skipBuffer) {
     var fullRange = false; // Whether to use the full min/max range
     var min = parseInt(botConf.get('servo:min'));
     var max = parseInt(botConf.get('servo:max'));
@@ -980,7 +1007,7 @@ function serialPortReadyCallback() {
     pen.state = stateValue;
 
     // Run the height into the command buffer
-    run('height', height, servoDuration);
+    run('height', height, servoDuration, skipBuffer);
 
     // Pen lift / drop
     if (callback) {
@@ -1049,7 +1076,7 @@ function serialPortReadyCallback() {
 
   // Move the Pen to an absolute point in the entire work area
   // Returns distance moved, in steps
-  function movePenAbs(point, callback, immediate) {
+  function movePenAbs(point, callback, immediate, skipBuffer) {
 
     // Something really bad happened here...
     if (isNaN(point.x) || isNaN(point.y)){
@@ -1092,7 +1119,7 @@ function serialPortReadyCallback() {
     pen.y = point.y;
 
     // Queue the final absolute move (serial command generated later)
-    run('move', {x: pen.x, y: pen.y}, duration);
+    run('move', {x: pen.x, y: pen.y}, duration, skipBuffer);
 
     if (callback) {
       if (immediate == 1) {
@@ -1330,8 +1357,6 @@ function createServerEndpoint(path, callback){
   });
 }
 
-
-
 // Given two points, find the difference and duration at current speed between them
 function getPosChangeData(src, dest) {
    var change = {
@@ -1382,6 +1407,31 @@ function getDurationFromDistance(distance, min) {
   return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
 }
 
+// A DRY function for actually sending out an absolute movement command from anywhere
+function actuallyMove(dest, callback) {
+  // Get the amount of change/duration from difference between actualPen and
+  // absolute position in given destination
+  var change = getPosChangeData(actualPen, dest);
+  commandDuration = Math.max(change.d, 0);
+
+  // Pass along the correct duration through to actualPen
+  actualPen.lastDuration = change.d;
+  actualPen.x = dest.x;
+  actualPen.y = dest.y;
+
+  // Trigger an update for (possible) buffer loss and actualPen change
+  sendPenUpdate();
+  sendBufferUpdate();
+
+  serialCommand(cmdstr('movexy', change)); // Send the actual X, Y and Duration
+
+  // Delayed callback (if used)
+  if (callback) {
+    setTimeout(function(){
+      callback(1);
+    }, Math.max(commandDuration - gConf.get('bufferLatencyOffset'), 0));
+  }
+}
 
 // COMMAND RUN QUEUE UTILS ==========================================
 
@@ -1391,7 +1441,7 @@ function getDurationFromDistance(distance, min) {
 var commandDuration = 0;
 
 // Add command to serial command runner
-function run(command, data, duration) {
+function run(command, data, duration, skipBuffer) {
   var c = '';
 
   // Sanity check duration to minimum of 1, int only
@@ -1402,17 +1452,24 @@ function run(command, data, duration) {
     case 'move':
       // Instead of a string command, this is buffered as an object
       c = {type: 'absmove', x: data.x, y: data.y};
+
+      if (skipBuffer) {
+        console.log('Skipping buffer for:', c);
+        actuallyMove(c);
+        sendPenUpdate();
+        return 1;
+      }
       break;
     case 'height':
       // Send a new setup value for the the up position, then trigger "pen up"
-      run('custom', cmdstr('movez', {z: data}));
+      run('custom', cmdstr('movez', {z: data}), null, skipBuffer);
 
       // If there's a togglez, run it after setting Z
       if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}));
+        run('custom', cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}), null, skipBuffer);
       }
 
-      run('wait', '', duration);
+      run('wait', '', duration, skipBuffer);
       return;
       break;
     case 'wait':
@@ -1461,40 +1518,43 @@ function executeNext() {
 
   if (buffer.length) {
     var cmd = buffer.pop();
-    sendBufferUpdate();
 
-    // Process a single line of the buffer =======================================
-    // ===========================================================================
+    // Process a single line of the buffer =====================================
+    // =========================================================================
 
     if (typeof cmd[0] === "function") { // Custom Callback buffer item
       // Timing for this should be correct because of commandDuration below!
       cmd[0](1);
-      executeNext();
-    } else if (typeof cmd[0] === "object") { // Detailed object with special needs
-      if (cmd[0].type = "absmove") {
-        // Get the amount of change/duration from difference between actualPen and
-        // absolute position in buffered item request.
-        var change = getPosChangeData(actualPen, cmd[0]);
-        serialCommand(cmdstr('movexy', change)); // Send the X, Y an Duration
+      // Set the actualPen state to match the state assumed at the time the
+      // buffer item was created
+      actualPen = extend({}, cmd[2]);
 
-        // Pass along the correct duration through to actualPen, via the buffer
-        // pen object being inherited.
-        cmd[2].lastDuration = change.d;
-        commandDuration = Math.max(change.d, 0);
+      // Trigger an update for buffer loss and actualPen change
+      sendPenUpdate();
+      sendBufferUpdate();
+
+      executeNext();
+    } else if (typeof cmd[0] === "object") { // Detailed buffer object
+      if (cmd[0].type = "absmove") {
+        actuallyMove(cmd[0]); // Actually send off the command to move
       }
     } else {
+
       // Set the duration of this command so when the board returns "OK",
       // will delay next command send
       commandDuration = Math.max(cmd[1], 0);
 
+      // Set the actualPen state to match the state assumed at the time the
+      // buffer item was created
+      actualPen = extend({}, cmd[2]);
+
+      // Trigger an update for buffer loss and actualPen change
+      sendPenUpdate();
+      sendBufferUpdate();
+
       // Actually send the command out to serial
       serialCommand(cmd[0]);
     }
-
-    // Set the actualPen state to match the state assumed at the time the buffer
-    // item was created
-    actualPen = extend({}, cmd[2]);
-    sendPenUpdate();
 
   } else {
     bufferRunning = false;
