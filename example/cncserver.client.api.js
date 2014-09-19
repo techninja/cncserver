@@ -144,11 +144,7 @@ cncserver.api = {
       point.y = point.y < 0 ? 0 : point.y;
 
       _put('pen', {
-        data: {
-          x: point.x,
-          y: point.y,
-          ignoreTimeout: point.ignoreTimeout
-        },
+        data: point,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
