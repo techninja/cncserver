@@ -700,14 +700,15 @@ function serialPortReadyCallback() {
       return true; // Tell endpoint wrapper we'll handle the response
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
-      setHeight('up');
-      setPen({x: BOT.park.x, y: BOT.park.y, park: true}, function(stat){
-        if (!stat) {
-          res.status(500).send(JSON.stringify({
-            status: "Error parking pen!"
-          }));
-        }
-        res.status(200).send(JSON.stringify(pen));
+      setHeight('up', function(){
+        setPen({x: BOT.park.x, y: BOT.park.y, park: true, skipBuffer: req.body.skipBuffer}, function(stat){
+          if (!stat) {
+            res.status(500).send(JSON.stringify({
+              status: "Error parking pen!"
+            }));
+          }
+          res.status(200).send(JSON.stringify(pen));
+        });
       });
 
       return true; // Tell endpoint wrapper we'll handle the response
