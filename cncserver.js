@@ -67,8 +67,8 @@ function sendBufferUpdate() {
 // STATE Variables
 
 // The pen: this holds the state of the pen at the "latest tip" of the buffer,
-// meaning that as soon as an instruction is received, this variable is updated
-// to reflect the intention of the buffered item.
+// meaning that as soon as an instruction intended to be run in the buffer is
+// received, this is updated to reflect the intention of the buffered item.
 var pen = {
   x: null, // XY to be set by bot defined park position (assumed initial location)
   y: null,
@@ -702,7 +702,12 @@ function serialPortReadyCallback() {
     } else if (req.route.method == 'delete'){
       // Reset pen to defaults (park)
       setHeight('up', function(){
-        setPen({x: BOT.park.x, y: BOT.park.y, park: true, skipBuffer: req.body.skipBuffer}, function(stat){
+        setPen({
+          x: BOT.park.x,
+          y: BOT.park.y,
+          park: true,
+          skipBuffer: req.body.skipBuffer
+        }, function(stat){
           if (!stat) {
             res.status(500).send(JSON.stringify({
               status: "Error parking pen!"
@@ -728,8 +733,6 @@ function serialPortReadyCallback() {
       return [201, 'Disable Queued'];
     } else if (req.route.method == 'put') {
       if (req.body.reset == 1) {
-        // TODO: This could totally break queueing as movements are queued with
-        // offsets that break if the relative position doesn't match!
         var park = centToSteps(BOT.park, true);
         pen.x = park.x;
         pen.y = park.y;
@@ -770,7 +773,6 @@ function serialPortReadyCallback() {
         }
       }
 
-
       // Did we actually change position since pausing?
       var changedSincePause = false;
       if (bufferPausePen) {
@@ -784,7 +786,6 @@ function serialPortReadyCallback() {
           }
         }
       }
-
 
       // Resuming? Move back to position we paused at (if changed)
       if (!bufferPaused && changedSincePause) {
@@ -879,16 +880,33 @@ function serialPortReadyCallback() {
     }
   });
 
+  // ===========================================================================
+  // UTILITY FUNCTIONS =========================================================
+  // ===========================================================================
 
-  // UTILITY FUNCTIONS =======================================================
-
-  // Send direct setup var command
+  /**
+   * Run to the buffer direct low level setup commands (for EiBotBoard only).
+   *
+   * @param {integer} id
+   *   Numeric ID of EBB setting to change the value of
+   * @param {integer} value
+   *   Value to set to
+   */
   exports.sendSetup = sendSetup;
   function sendSetup(id, value) {
     // TODO: Make this WCB specific, or refactor to be general
     run('custom', 'SC,' + id + ',' + value);
   }
 
+  /**
+   * General logic sorting function for most "pen" requests.
+   *
+   * @param {object} inPen
+   *   Raw object containing data from /v1/pen PUT requests. See API spec for
+   *   pen to get an idea of what can live in this object.
+   * @param callback
+   *   Callback triggered when intended action should be complete.
+   */
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
     pen.distanceCounter = parseInt(pen.distanceCounter);
@@ -973,7 +991,19 @@ function serialPortReadyCallback() {
     if (callback) callback(true);
   }
 
-  // Set servo position
+
+  /**
+   * Run a servo position from a given percentage or named height value into
+   * the buffer, or directly via skipBuffer.
+   *
+   * @param {number|string} height
+   *   Named height preset machine name, or number between/included 0 to 1.
+   * @param callback
+   *   Callback triggered when operation should be complete.
+   * @param skipBuffer
+   *   Set to true to skip adding the command to the buffer and run it
+   *   immediately.
+   */
   exports.setHeight = setHeight;
   function setHeight(height, callback, skipBuffer) {
     var fullRange = false; // Whether to use the full min/max range
@@ -1040,7 +1070,18 @@ function serialPortReadyCallback() {
     }
   }
 
-  // Tool change
+  /**
+   * Run the operation to set the current tool (and any aggregate operations
+   * required) into the buffer
+   *
+   * @param toolName
+   *   The machine name of the tool (as defined in the bot config file).
+   * @param callback
+   *   Triggered when the full tool change is to have been completed, or on
+   *   failure.
+   * @returns {boolean}
+   *   True if success, false if failuer
+   */
   exports.setTool = setTool;
   function setTool(toolName, callback) {
     var tool = botConf.get('tools:' + toolName);
@@ -1093,11 +1134,27 @@ function serialPortReadyCallback() {
       if (callback){
         run('callback', callback);
       }
+      return true;
     }
   }
 
-  // Move the Pen to an absolute point in the entire work area
-  // Returns distance moved, in steps
+  /**
+   * "Move" the pen (tip of the buffer) to an absolute point inside the maximum
+   * available bot area. Includes cutoffs and sanity checks.
+   *
+   * @param {{x: number, y: number}} point
+   *   Absolute coordinate measured in steps to move to. src is assumed to be
+   *   "pen" tip of buffer.
+   * @param {function} callback
+   *   Callback triggered when operation should be complete.
+   * @param {boolean} immediate
+   *   Set to true to trigger the callback immediately.
+   * @param {boolean} skipBuffer
+   *    Set to true to skip adding to the buffer, simplifying this function
+   *    down to just a sanity checker.
+   * @returns {number}
+   *   Distance moved from previous position, in steps.
+   */
   function movePenAbs(point, callback, immediate, skipBuffer) {
 
     // Something really bad happened here...
@@ -1134,12 +1191,15 @@ function serialPortReadyCallback() {
       return 0;
     }
 
-    // Duration/distance is only calculated as relative from last assumed point, which
-    // may not actually ever happen, though it is likely to happen. Buffered items
-    // may not be pushed out of order, but previos location may have changed as user
-    // might pause the buffer, and move the actualPen position.
-    // @see executeNext() for more details on how this is handled.
-    var distance = getDistance(change);
+    /*
+     Duration/distance is only calculated as relative from last assumed point,
+     which may not actually ever happen, though it is likely to happen.
+     Buffered items may not be pushed out of order, but previous location may
+     have changed as user might pause the buffer, and move the actualPen
+     position.
+     @see executeNext - for more details on how this is handled.
+    */
+    var distance = getVectorLength(change);
     var duration = getDurationFromDistance(distance);
 
     // Save the duration state
@@ -1174,7 +1234,17 @@ function serialPortReadyCallback() {
     return distance;
   }
 
-  // Wiggle Pen for WCB toolchanges
+  /**
+   * Util function to buffer the "wiggle" movement for WaterColorBot Tool
+   * changes. TODO: Replace this with a real API for tool changes.
+   *
+   * @param {string} axis
+   *   Which axis to move along. Either 'xy' or 'y'
+   * @param travel
+   *   How much to move during the wiggle.
+   * @param iterations
+   *   How many times to move.
+   */
   function wigglePen(axis, travel, iterations){
     var start = {x: Number(pen.x), y: Number(pen.y)};
     var i = 0;
@@ -1189,7 +1259,7 @@ function serialPortReadyCallback() {
       if (axis == 'xy') {
         var rot = i % 4; // Ensure rot is always 0-3
 
-        // This confuluted series ensure the wiggle moves in a proper diamond
+        // This convoluted series ensure the wiggle moves in a proper diamond
         if (rot % 3) { // Results in F, T, T, F
           if (toggle) {
             point.y+= travel/2; // Down
@@ -1220,7 +1290,17 @@ function serialPortReadyCallback() {
   }
 }
 
-// Util function, convert a percent into steps
+/**
+ * Convert percent of total area coordinates into absolute step coordinate
+ * values
+ * @param {{x: number, y: number}} point
+ *   Coordinate (measured in steps) to be converted.
+ * @param {boolean} inMaxArea
+ *   Pass "true" if percent values should be considered within the maximum area
+ *   otherwise steps will be calculated as part of the global work area.
+ * @returns {{x: number, y: number}}
+ *   Converted coordinate in steps.
+ */
 function centToSteps(point, inMaxArea) {
   if (!inMaxArea) { // Calculate based on workArea
     return {
@@ -1235,7 +1315,12 @@ function centToSteps(point, inMaxArea) {
   }
 }
 
-// Initialize global config
+/**
+ * Initialize/load the global cncserver configuration file & options.
+ *
+ * @param cb
+ *   Optional callback triggered when complete.
+ */
 function loadGlobalConfig(cb) {
   // Pull conf from file
   var configPath = path.resolve(__dirname, 'config.ini');
@@ -1270,13 +1355,21 @@ function loadGlobalConfig(cb) {
   });
 }
 
-// Load bot config file based on botType global config
+/**
+ * Load bot specific config file
+ *
+ * @param {function} cb
+ *   Callback triggered when loading is complete
+ * @param {string} botType
+ *   Optional, the machine name for the bot type to load. Defaults to
+ *   the globally configured bot type.
+ */
 function loadBotConfig(cb, botType) {
   if (!botType) botType = gConf.get('botType');
 
   var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
   if (!fs.existsSync(botTypeFile)){
-    console.error('CNC Server bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
+    console.error('Bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
     process.exit(16);
   } else {
     botConf.reset();
@@ -1345,7 +1438,15 @@ function loadBotConfig(cb, botType) {
   }
 }
 
-// Utility wrapper for creating and managing standard responses and headers for endpoints
+/**
+ * Wrapper for unifying the creation and logic of standard endpoints, their
+ * headers and their responses and formats.
+ *
+ * @param {string} path
+ *   Full path of HTTP callback in express path format (can include wildcards)
+ * @param {function} callback
+ *   Callback triggered on HTTP request
+ */
 function createServerEndpoint(path, callback){
   var what = Object.prototype.toString;
   app.all(path, function(req, res){
@@ -1388,7 +1489,17 @@ function createServerEndpoint(path, callback){
   });
 }
 
-// Given two points, find the difference and duration at current speed between them
+/**
+ * Given two points, find the difference and duration at current speed between them
+ *
+ * @param {{x: number, y: number}} src
+ *   Source position coordinate (in steps).
+ * @param {{x: number, y: number}} dest
+ *   Destination position coordinate (in steps).
+ * @returns {{d: number, x: number, y: number}}
+ *   Object containing the change amount in steps for x & y, along with the
+ *   duration in milliseconds.
+ */
 function getPosChangeData(src, dest) {
    var change = {
     x: Math.round(dest.x - src.x),
@@ -1396,7 +1507,7 @@ function getPosChangeData(src, dest) {
   }
 
   // Calculate distance
-  var duration = getDurationFromDistance(getDistance(change));
+  var duration = getDurationFromDistance(getVectorLength(change));
 
   // Adjust change direction/inversion
   if (botConf.get('controller').position == "relative") {
@@ -1419,12 +1530,29 @@ function getPosChangeData(src, dest) {
   return {d: duration, x: change.x, y: change.y};
 }
 
-// Get a distance/length of the given vector
-function getDistance(vector) {
+/**
+ * Get the distance/length of the given vector coordinate
+ *
+ * @param {{x: number, y: number}} vector
+ *   Object representing coordinate away from (0,0)
+ * @returns {number}
+ *   Length (in steps) of the given vector point
+ */
+function getVectorLength(vector) {
   return Math.sqrt( Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
 }
 
-// Calculate the given assumed duration from the number of steps
+/**
+ * Calculate the duration for a pen movement from the number of steps distance,
+ * takes into account whether pen is up or down
+ *
+ * @param {float} distance
+ *   Distance in steps that we'll be moving
+ * @param {int} min
+ *   Optional minimum value for output duration, defaults to 1.
+ * @returns {number}
+ *   Millisecond duration of how long the move should take
+ */
 function getDurationFromDistance(distance, min) {
   if (typeof min === "undefined") min = 1;
 
@@ -1438,17 +1566,25 @@ function getDurationFromDistance(distance, min) {
   return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
 }
 
-// A DRY function for actually sending out an absolute movement command from anywhere
-function actuallyMove(dest, callback) {
+/**
+ * Actually move the position of the pen, called inside and outside buffer
+ * runs, figures out timing/offset based on actualPen position.
+ *
+ * @param {{x: number, y: number}} destination
+ *   Absolute destination coordinate position (in steps).
+ * @param {function} callback
+ *   Optional, callback for when operation should have completed.
+ */
+function actuallyMove(destination, callback) {
   // Get the amount of change/duration from difference between actualPen and
   // absolute position in given destination
-  var change = getPosChangeData(actualPen, dest);
+  var change = getPosChangeData(actualPen, destination);
   commandDuration = Math.max(change.d, 0);
 
   // Pass along the correct duration and new position through to actualPen
   actualPen.lastDuration = change.d;
-  actualPen.x = dest.x;
-  actualPen.y = dest.y;
+  actualPen.x = destination.x;
+  actualPen.y = destination.y;
 
   // Trigger an update for (possible) buffer loss and actualPen change
   sendPenUpdate();
@@ -1464,14 +1600,30 @@ function actuallyMove(dest, callback) {
   }
 }
 
-// COMMAND RUN QUEUE UTILS ==========================================
+
+// COMMAND RUN QUEUE UTILS =====================================================
 
 // Holds the MS time of the "current" command sent, as this should be limited
 // by the run queue, this should only ever refer to what's being sent through.
 // the following command will be delayed by this much time.
 var commandDuration = 0;
 
-// Add command to serial command runner
+
+/**
+ * Add a command to the command runner buffer.
+ *
+ * @param {string} command
+ *   The
+ * @param {object} data
+ *
+ * @param {int} duration
+ *   The time in milliseconds this command should take to run
+ * @param {boolean} skipBuffer
+ *   This probably shouldn't be here...
+ *
+ * @returns {boolean}
+ *   Return false if failure, true if success
+ */
 function run(command, data, duration, skipBuffer) {
   var c = '';
 
@@ -1499,7 +1651,7 @@ function run(command, data, duration, skipBuffer) {
       }
 
       run('wait', '', duration, skipBuffer);
-      return;
+      return false;
       break;
     case 'wait':
       // Send wait, blocking buffer
@@ -1520,9 +1672,21 @@ function run(command, data, duration, skipBuffer) {
   // pen state at this point in time to be copied to actualPen after execution
   buffer.unshift([c, duration, extend({}, pen)]);
   sendBufferUpdate();
+  return true;
 }
 
-// Create a bot specific serial command string from values
+/**
+ * Create a bot specific serial command string from a key:value object
+ *
+ * @param {string} name
+ *   Key in BOT.commands object to find the command string
+ * @param {object} values
+ *   Object containing the keys of placeholders to find in command string, with
+ *   value to replace placeholder
+ * @returns {string}
+ *   Serial command string intended to be outputted directly, empty string
+ *   if error.
+ */
 function cmdstr(name, values) {
   if (!name || !BOT.commands[name]) return ''; // Sanity check
 
@@ -1535,7 +1699,12 @@ function cmdstr(name, values) {
   return out;
 }
 
-// Buffer self-runner
+/**
+ * Execute the next command in the buffer, triggered by self, buffer interval
+ * catcher loop below, and serialReadLine.
+ *
+ * @see serialReadLine
+ */
 function executeNext() {
   // Run the paused callback if applicable
   if (bufferNewlyPaused) {
@@ -1605,11 +1774,19 @@ setInterval(function(){
 }, 10);
 
 
-// SERIAL READ/WRITE ================================================
-function serialCommand(command, callback){
+// SERIAL READ/WRITE ===========================================================
+
+/**
+ * Actually write a command to the open serial port (or simulate it)
+ *
+ * @param {string} command
+ *  Exact, ready to write string to be sent
+ * @returns {boolean}
+ *   True if success, false if failure
+ */
+function serialCommand(command){
   if (!serialPort.write && !pen.simulation) { // Not ready to write to serial!
-    if (callback) callback(true);
-    return;
+    return false;
   }
 
   if (gConf.get('debug')) {
@@ -1617,19 +1794,35 @@ function serialCommand(command, callback){
     console.log(word + ' serial command: ' + command);
   }
 
-  // Not much error catching.. but.. really, when does that happen?!
+
+  // Actually write the data to the port (or simulate completion of write)
   if (!pen.simulation) {
-    serialPort.write(command + "\r");
+    try {
+      serialPort.write(command + "\r");
+    } catch(e) {
+      console.error('Failed to write to the serial port!:', e);
+      return false;
+      // TODO: What _else_ should happen here?
+    }
   } else {
     // Trigger next command as we're simulating and would never receive the ACK
     serialReadline(botConf.get('controller').ack);
   }
 
-  if (callback) callback(true);
+  return true;
 }
 
-// READ (Initialized on connect)
-var nextExecutionTimeout = 0;
+/**
+ * Callback event function initialized on connect to handle incoming serial
+ * data (and because of simple return data format on the EBB, this currently
+ * only initiates the next buffer command on ACKnowledgement of receive.)
+ *
+ * @param {string} data
+ *   Incoming data from serial port
+ *
+ * @see connectSerial
+ */
+var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 function serialReadline(data) {
   if (data.trim() == botConf.get('controller').ack) {
     // Trigger the next buffered command (after its intended duration)
@@ -1646,7 +1839,12 @@ function serialReadline(data) {
   }
 }
 
-// Event callback for serial close
+/**
+ * Global event callback for serial close/disconnect, initialized on connect.
+ * Starts simulation mode immediately to keep sends valid.
+ *
+ * @see connectSerial
+ */
 function serialPortCloseCallback() {
   console.log('Serialport connection to "' + gConf.get('serialPath') + '" lost!! Did it get unplugged?');
   serialPort = false;
@@ -1662,7 +1860,17 @@ function simulationModeInit() {
   pen.simulation = 1;
 }
 
-// Helper function to manage initial serial connection and reconnection
+/**
+ * Helper function to manage initial serial connection and reconnection.
+ *
+ * @param {object} options
+ *   Holds all possible callbacks for the serial connection:
+ *     connect: Callback for successful serial connect event
+ *     success: Callback for general success
+ *     error: Callback for init/connect error, arg of error string/object
+ *     disconnect: Callback for close/unexpected disconnect
+ *     complete: Callback for general completion
+ */
 function connectSerial(options){
   var autoDetect = false;
   var stat = false;
