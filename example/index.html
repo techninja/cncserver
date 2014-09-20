@@ -64,6 +64,7 @@
 
   <fieldset><legend>X,Y Movement</legend>
     <button id="park">PARK</button>
+    <label for="skipbuffer">Bypass buffer</label><input id="skipbuffer" type="checkbox">
     <table>
       <tr>
         <td><button class="move">0,0</button></td>
@@ -122,6 +123,7 @@
   var $draw = $('#drawarea');
   var pen = {};
   var lastPen = {};
+  var resumePen = null;
   var drawPoints = []; // Array of points from buffer to draw
 
   var viewScale = 1; // The scale to adjust bot steps by for viewing
@@ -163,10 +165,13 @@
     lastPen = $.extend({}, pen);
   });
 
+
+  // CNCServer Buffer Change events (for pause, update, or resume)
   socket.on('buffer update', function(b){
     $('#bufrun').text(b.bufferRunning);
     $('#bufpause').text(b.bufferPaused);
     $('#bufcount').text(b.buffer.length);
+    resumePen = b.bufferPausePen;
 
     // Populate buffer list of items
     var $b = $('#buffer');
@@ -191,15 +196,24 @@
     // Clear it out
     ctx.clearRect(0, 0, $('#bufferarea')[0].width, $('#bufferarea')[0].height);
 
-    if (drawPoints.length) {
+    // Do we have a resume point? draw that
+    if (resumePen) {
+      drawCrosshair(ctx, 20, 'green', resumePen);
+    }
 
-      // Draw forward locations
+    // Move points in the buffer? Connect the dots.
+    if (drawPoints.length) {
       ctx.beginPath();
       ctx.lineWidth = '4';
       ctx.strokeStyle = "orange";
 
-      ctx.moveTo(pen.x * viewScale, pen.y * viewScale);
-      //ctx.lineTo(pen.x * viewScale, pen.y * viewScale);
+      // Move to start of buffer (either resume pos, or current)
+      if (resumePen) {
+        ctx.moveTo(resumePen.x * viewScale, resumePen.y * viewScale);
+      } else {
+        ctx.moveTo(pen.x * viewScale, pen.y * viewScale);
+      }
+
       for (var i = drawPoints.length - 1; i >= 0; i--) {
         ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
       }
@@ -232,6 +246,18 @@
       // Clear it out
       ctx.clearRect(0, 0, $draw[0].width, $draw[0].height);
 
+      // Draw directional path to DEST
+      if (dest) {
+        ctx.beginPath();
+        ctx.lineWidth = '4';
+        ctx.strokeStyle = "green";
+        ctx.moveTo(current.x * viewScale, current.y * viewScale);
+        ctx.lineTo(dest.x * viewScale, dest.y * viewScale);
+        ctx.stroke();
+        ctx.closePath();
+      }
+
+
       // Red outline the work area
       ctx.beginPath();
       ctx.lineWidth = '1';
@@ -246,28 +272,8 @@
       ctx.closePath();
 
 
-      if (dest) drawCrosshair(10, 'orange', dest); // Draw destination
-      drawCrosshair(20, 'black', current); // Draw Current Position
-
-      // Util function for drawing crosshairs
-      function drawCrosshair(size, color, pos) {
-        ctx.beginPath();
-        ctx.lineWidth = '2';
-        ctx.strokeStyle = color;
-        var x = pos.x * viewScale;
-        var y = pos.y * viewScale;
-
-        ctx.arc(x, y, size/2, 0, 2*Math.PI); // Circle
-
-        // Cross lines
-        ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
-        ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
-
-        ctx.stroke();
-        ctx.closePath();
-      }
-
-
+      if (dest) drawCrosshair(ctx, 10, 'orange', dest); // Draw destination
+      drawCrosshair(ctx, 20, 'black', current); // Draw Current Position
 
     };
 
@@ -278,6 +284,24 @@
       $draw.update(data);
     });
   });
+
+  // Util function for drawing crosshairs
+  function drawCrosshair(ctx, size, color, pos) {
+    ctx.beginPath();
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = color;
+    var x = pos.x * viewScale;
+    var y = pos.y * viewScale;
+
+    ctx.arc(x, y, size/2, 0, 2*Math.PI); // Circle
+
+    // Cross lines
+    ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
+    ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
+
+    ctx.stroke();
+    ctx.closePath();
+  }
 
 
   var run = cncserver.cmd.run; // Shortcut!
@@ -326,7 +350,11 @@
     // One of the move button array
     if ($(this).is('.move')) {
       var pos = $(this).text().split(',');
-      cncserver.api.pen.move({x: pos[0], y: pos[1]});
+      cncserver.api.pen.move({
+        x: pos[0],
+        y: pos[1],
+        skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
+      });
     }
   });
 
