@@ -45,9 +45,11 @@ cncserver.api = {
     * @param {float|string} value
     *   0 to 1 float, and named constants
     */
-    height: function(value, callback){
+    height: function(value, callback, options){
+      if (typeof options !== 'object') options = {};
+      options.state = value;
       _put('pen', {
-        data: { state: value},
+        data: options,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
@@ -59,13 +61,13 @@ cncserver.api = {
     },
 
     // Shortcut call to the above with flop set to true
-    up: function(callback) {
-      this.height(0, callback);
+    up: function(callback, options) {
+      this.height(0, callback, options);
     },
 
     // Shortcut call to the above with flop set to true
-    down: function(callback) {
-      this.height(1, callback);
+    down: function(callback, options) {
+      this.height(1, callback, options);
     },
 
    /**
@@ -91,8 +93,9 @@ cncserver.api = {
     * @param {function} callback
     *   Function to callback when done, including data from response body
     */
-    park: function(callback){
+    park: function(callback, options){
       _delete('pen',{
+        data: options,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           $(cncserver.api).trigger('offCanvas');
