@@ -58,7 +58,8 @@ function sendBufferUpdate() {
   io.emit('buffer update', {
     buffer: buffer,
     bufferRunning: bufferRunning,
-    bufferPaused: bufferPaused
+    bufferPaused: bufferPaused,
+    bufferPausePen: bufferPausePen
   });
 }
 
@@ -764,17 +765,37 @@ function serialPortReadyCallback() {
           // Hold on the current actualPen to return to before resuming
           if (bufferPaused) {
             bufferPausePen = extend({}, actualPen);
+            sendBufferUpdate();
           }
         }
       }
 
-      // Resuming? Move back to position we paused at
-      if (!bufferPaused && bufferPausePen) {
+
+      // Did we actually change position since pausing?
+      var changedSincePause = false;
+      if (bufferPausePen) {
+        if (bufferPausePen.x != actualPen.x || bufferPausePen.y != actualPen.y){
+          changedSincePause = true;
+        } else {
+          // If we're resuming, and there's no change... clear the pause pen
+          if (!bufferPaused) {
+            bufferPausePen = null;
+            sendBufferUpdate();
+          }
+        }
+      }
+
+
+      // Resuming? Move back to position we paused at (if changed)
+      if (!bufferPaused && changedSincePause) {
         bufferPaused = true; // Pause for a bit until we move back to last pos
-        console.log('Moving back to pre-pause position...')
+        sendBufferUpdate();
+        console.log('Moving back to pre-pause position...');
         actuallyMove(bufferPausePen, function(){
+          console.log('Resuming buffer!');
           bufferPaused = false;
           bufferPausePen = null;
+          sendBufferUpdate();
           res.status(200).send(JSON.stringify({
             running: bufferRunning,
             paused: bufferPaused,
@@ -1093,6 +1114,15 @@ function serialPortReadyCallback() {
     point.y = Number(point.y) > BOT.maxArea.height ? BOT.maxArea.height : point.y;
     point.y = Number(point.y) < 0 ? 0 : point.y;
 
+    // If we're skipping the buffer, just move to the point
+    // Pen stays put as last point set in buffer
+    if (skipBuffer) {
+      console.log('Skipping buffer for:', point);
+      actuallyMove(point, callback);
+      return 1;
+    }
+
+    // Calculate change from end of buffer pen position
     var change = {
       x: Math.round(point.x - pen.x),
       y: Math.round(point.y - pen.y)
@@ -1415,7 +1445,7 @@ function actuallyMove(dest, callback) {
   var change = getPosChangeData(actualPen, dest);
   commandDuration = Math.max(change.d, 0);
 
-  // Pass along the correct duration through to actualPen
+  // Pass along the correct duration and new position through to actualPen
   actualPen.lastDuration = change.d;
   actualPen.x = dest.x;
   actualPen.y = dest.y;
@@ -1455,9 +1485,7 @@ function run(command, data, duration, skipBuffer) {
       c = {type: 'absmove', x: data.x, y: data.y};
 
       if (skipBuffer) {
-        console.log('Skipping buffer for:', c);
-        actuallyMove(c);
-        sendPenUpdate();
+
         return 1;
       }
       break;
@@ -1558,6 +1586,10 @@ function executeNext() {
     }
 
   } else {
+    // Buffer Empty? Cover our butts and ensure the "last buffer tip"
+    // pen object is up to date with actualPen.
+    pen = extend({}, actualPen);
+
     bufferRunning = false;
     sendBufferUpdate();
   }
@@ -1597,13 +1629,15 @@ function serialCommand(command, callback){
 }
 
 // READ (Initialized on connect)
+var nextExecutionTimeout = 0;
 function serialReadline(data) {
   if (data.trim() == botConf.get('controller').ack) {
     // Trigger the next buffered command (after its intended duration)
     if (commandDuration < 2) {
       executeNext();
     } else {
-      setTimeout(executeNext, commandDuration);
+      clearTimeout(nextExecutionTimeout);
+      nextExecutionTimeout = setTimeout(executeNext, commandDuration);
     }
 
   } else {
