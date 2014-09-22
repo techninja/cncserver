@@ -740,7 +740,11 @@ function serialPortReadyCallback() {
 
       return true; // Tell endpoint wrapper we'll handle the response
     } else if (req.route.method == 'get'){
-      return {code: 200, body: pen};
+      if (req.query.actual) {
+        return {code: 200, body: actualPen};
+      } else {
+        return {code: 200, body: pen};
+      }
     } else  {
       return false;
     }
