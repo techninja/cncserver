@@ -39,8 +39,7 @@ var botConf = new nconf.Provider();
 gConf.env().argv();
 
 
-// SOCKET STUFF
-// TODO: Put this in a good place with better documentation
+// SOCKET DATA STREAM ==========================================================
 io.on('connection', function(socket){
   // Send buffer and pen updates on user connect
   sendPenUpdate();
@@ -52,11 +51,20 @@ io.on('connection', function(socket){
 
 });
 
+/**
+ * Send an update to all Stream clients about the actualPen object.
+ * Called whenever actualPen object has been changed, E.G.: right before
+ * a serial command is run, or internal state changes.
+ */
 function sendPenUpdate() {
   io.emit('pen update', actualPen);
 }
 
-
+/**
+ * Send an update to all stream clients about everything buffer related.
+ * Called whenever something about the buffer state or associated vars has
+ * changed, E.G.
+ */
 function sendBufferUpdate() {
   io.emit('buffer update', {
     buffer: buffer,
@@ -66,8 +74,21 @@ function sendBufferUpdate() {
   });
 }
 
+/**
+ * Send an update to all stream clients of the given custom text string.
+ *
+ * @param {string} message
+ *   Message to send out to all clients.
+ */
+function sendMessageUpdate(message) {
+  io.emit('message update', {
+    message: message,
+    timestamp: new Date().toString()
+  });
+}
 
-// STATE Variables
+
+// STATE VARIABLES =============================================================
 
 // The pen: this holds the state of the pen at the "latest tip" of the buffer,
 // meaning that as soon as an instruction intended to be run in the buffer is
