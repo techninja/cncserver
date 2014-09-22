@@ -360,12 +360,9 @@
         cncserver.api.pen.zero();
         break;
       case 'park':
-        cncserver.api.pen.park(); // << Direct method
-        //run('park');                // << Queue method
-        break;
-      case 'up':
-      case 'draw':
-        cncserver.api.pen.height(id);
+        cncserver.api.pen.park(null, {
+          skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
+        }); // << Direct method
         break;
     }
 
