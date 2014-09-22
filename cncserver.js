@@ -1707,13 +1707,11 @@ var commandDuration = 0;
  *
  * @param {int} duration
  *   The time in milliseconds this command should take to run
- * @param {boolean} skipBuffer
- *   This probably shouldn't be here...
  *
  * @returns {boolean}
  *   Return false if failure, true if success
  */
-function run(command, data, duration, skipBuffer) {
+function run(command, data, duration) {
   var c = '';
 
   // Sanity check duration to minimum of 1, int only
@@ -1722,16 +1720,11 @@ function run(command, data, duration, skipBuffer) {
 
   switch (command) {
     case 'move':
-      // Instead of a string command, this is buffered as an object
+      // Detailed buffer object X and Y
       c = {type: 'absmove', x: data.x, y: data.y};
-
-      if (skipBuffer) {
-
-        return 1;
-      }
       break;
     case 'height':
-      // Instead of a string command, this is buffered as an object
+      // Detailed buffer object with z height and state string
       c = {type: 'absheight', z: data, state: pen.state};
       break;
     case 'message':
