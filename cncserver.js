@@ -40,8 +40,11 @@ gConf.env().argv();
 
 
 // SOCKET STUFF
+// TODO: Put this in a good place with better documentation
 io.on('connection', function(socket){
-  //console.log('a user connected');
+  // Send buffer and pen updates on user connect
+  sendPenUpdate();
+  sendBufferUpdate();
 
   socket.on('disconnect', function(){
     //console.log('user disconnected');
