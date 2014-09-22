@@ -775,7 +775,6 @@ function serialPortReadyCallback() {
   // Command buffer API ========================================================
   createServerEndpoint("/v1/buffer", function(req, res){
     if (req.route.method == 'get' || req.route.method == 'put') {
-
       // Pause/resume (normalize input)
       if (typeof req.body.paused == "string") {
         req.body.paused = req.body.paused == "true" ? true : false;
@@ -862,7 +861,14 @@ function serialPortReadyCallback() {
 
         return true; // Don't finish the response till later
       }
-
+    } else if (req.route.method == 'post') {
+      // Create a status message and shuck it into the buffer
+      if (typeof req.body.message == "string") {
+        run('message', req.body.message);
+        return [200, 'Message added to buffer'];
+      } else {
+        return [400, '/v1/buffer POST only accepts data "message"'];
+      }
     } else if (req.route.method == 'delete') {
       buffer = [];
 
@@ -1728,6 +1734,10 @@ function run(command, data, duration, skipBuffer) {
       // Instead of a string command, this is buffered as an object
       c = {type: 'absheight', z: data, state: pen.state};
       break;
+    case 'message':
+      // Detailed buffer object with z height and state string
+      c = {type: 'message', message: data};
+      break;
     case 'wait':
       // Send wait, blocking buffer
       if (!BOT.commands.wait) return false;
@@ -1816,6 +1826,9 @@ function executeNext() {
           break;
         case 'absheight':
           actuallyMoveHeight(cmd[0].z, cmd[0].state);
+          break;
+        case 'message':
+          sendMessageUpdate(cmd[0].message);
           break;
       }
     } else {
