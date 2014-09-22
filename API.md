@@ -559,8 +559,8 @@ Content-Type: application/json; charset=UTF-8
 ##### Usage Notes
  * For clients that want event driven status messages, this adds the messages to
 the same buffer as the other commands, so as the message item is reached during
-buffer processing, it's sent out the `message update` socket.io event, see
-socket/streaming section below.
+buffer processing, it's sent out via the `message update` Socket.IO event. See
+socket/streaming section below for more info.
  * No filtering is done to this string, use with care.
 
 * * *
@@ -591,10 +591,10 @@ called. This might have to change though...
 
 
 ## 6. Socket.IO & real-time event data streaming
-The API has served the project incredibly well, but it lacking in one important
-aspect: a remote client can receive no updates without asking first, no events
-or data without polling or some other kludge. That is now all completely fixed
-with full Socket.IO streaming support.
+The API has served the project incredibly well, but it was lacking in one
+important aspect: a remote client can receive no updates without asking first,
+no events or data without polling or some other kludge. That is now all
+completely fixed with full Socket.IO streaming support.
 
 Though not technically ReSTful *or* required, CNC Server now supports streaming
 of server oriented events that allow for a far better buffer management,
