@@ -1099,7 +1099,7 @@ function serialPortReadyCallback() {
     pen.state = stateValue;
 
     // Run the height into the command buffer
-    run('height', height, servoDuration, skipBuffer);
+    run('height', height, servoDuration);
 
     // Pen lift / drop
     if (callback) {
@@ -1250,7 +1250,7 @@ function serialPortReadyCallback() {
     pen.y = point.y;
 
     // Queue the final absolute move (serial command generated later)
-    run('move', {x: pen.x, y: pen.y}, duration, skipBuffer);
+    run('move', {x: pen.x, y: pen.y}, duration);
 
     if (callback) {
       if (immediate == 1) {
