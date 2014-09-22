@@ -104,9 +104,11 @@
     </table>
   </fieldset>
 
-  <fieldset><legend>Z/Servo Control</legend>
-    <button id="up">Up</button>
-    <button id="draw">Draw</button>
+  <fieldset id="heightbuttons"><legend>Z/Servo Control</legend>
+    <div>
+      <label for="skipbufferz">Bypass buffer</label>
+      <input id="skipbufferz" type="checkbox">
+    </div>
   </fieldset>
 
   <fieldset id="tools"><legend>Available Tools</legend>
@@ -225,7 +227,7 @@
   });
 
 
-  // Setup live display box
+  // Setup live display box, pull in the bot specific settings
   cncserver.api.settings.bot(function(bot) {
     $('#bot legend:first').text('Live Status: ' + bot.name);
 
@@ -276,6 +278,17 @@
       drawCrosshair(ctx, 20, 'black', current); // Draw Current Position
 
     };
+
+    // Setup the height option buttons for the bot
+    for (var name in bot.servo.presets) {
+      $('#heightbuttons').append(
+        $('<button>').text(name).click(function(){
+          cncserver.api.pen.height($(this).text(), null, {
+            skipBuffer: $('#skipbufferz').prop('checked') ? 1 : ''
+          });
+        })
+      );
+    }
 
     // Initially set the pen from the bot
     cncserver.api.pen.stat(function(data){
