@@ -39,8 +39,11 @@ directly to do with drawing or interacting with the "pen". For the
 WaterColorBot, it could be a paintbrush, or a pencil, or even an actual pen.
 
 ### GET /v1/pen
-Gets the current pen status. This is a direct dump of the internal state of the
-pen, so it will include x,y absolute step position, which you should ignore.
+Gets the "current" pen status at the tip of the execution buffer (note that this
+is ***not*** the known actual machine status if the buffer has any items in it).
+This is a direct dump of the internal state of the pen, so it will include x,y
+absolute step position, which can be used in conjunction with bot settings
+`maxArea` width and height to tell you exactly where the pen should be.
 
 #### Request
 ```javascript
@@ -72,6 +75,10 @@ runtime state.
 handy realtime counter for steps when pen is down.
  * Pen simulation mode of 1 means that either the serial connection to the bot
 never worked, or has been lost. `PUT` a value of 0 to attempt to reconnect.
+ * To restate: if there are items in the buffer, this will only represent the
+very end of the buffer (the last action sent). To get the actual pen position,
+add `?actual=1` to the query URI, or use the real-time event driven API detailed
+at the bottom of this document.
 
 * * *
 
@@ -524,6 +531,37 @@ Content-Type: application/json; charset=UTF-8
  * The data given is always the same as the GET method, but current as of the
 last change.
 
+* * *
+
+### POST /v1/buffer
+Create buffer specific items for the buffer. Currently only supports `message`.
+
+#### Request
+```javascript
+POST /v1/buffer
+Content-Type: application/json; charset=UTF-8
+
+{
+  "message": "Going and drawing something"
+}
+```
+
+#### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "status": "Message added to buffer"
+}
+```
+
+##### Usage Notes
+ * For clients that want event driven status messages, this adds the messages to
+the same buffer as the other commands, so as the message item is reached during
+buffer processing, it's sent out the `message update` socket.io event, see
+socket/streaming section below.
+ * No filtering is done to this string, use with care.
 
 * * *
 
@@ -550,3 +588,108 @@ Content-Type: application/json; charset=UTF-8
 ##### Usage Notes
  * No wait is given, buffer is immediately cleared and no waiting callbacks are
 called. This might have to change though...
+
+
+## 6. Socket.IO & real-time event data streaming
+The API has served the project incredibly well, but it lacking in one important
+aspect: a remote client can receive no updates without asking first, no events
+or data without polling or some other kludge. That is now all completely fixed
+with full Socket.IO streaming support.
+
+Though not technically ReSTful *or* required, CNC Server now supports streaming
+of server oriented events that allow for a far better buffer management,
+visualization and accuracy.
+
+To use an event, just pass the named event type into your `socket.on` function
+like this:
+```javascript
+socket.on('pen update', function(actualPen){
+  console.log('The pen just moved to x:' + actualPen.x + ' y:' + actualPen.y);
+});
+```
+
+The following named Socket.IO event types and data are available:
+
+### Socket.IO event: "pen update"
+Triggered whenever the actualPen object is changed, usually during serial
+command sends.
+
+#### Event Response Argument Object
+```javascript
+( RETURNS FULL PEN STATUS OBJECT, SEE ABOVE EXAMPLE IN: GET /v1/pen RESPONSE )
+```
+
+##### Usage Notes
+ * Pen status object here is the `actualPen` object, so it should represent the
+current status, or at least the soon to be current status of the bot itself.
+ * This is triggered as serial commands are being sent out. For movement,
+the bot will only just start moving at the moment this is triggered, so you can
+use the `lastDuration` key in the object to animate the movement linearly
+between the last location and the new location perfectly. See example
+application CNC Server Controller at the web root for an idea of how this works.
+ * _This event can trigger an update with no actual pen changes._
+
+* * *
+
+### Socket.IO event: "buffer update"
+Triggered whenever the buffer object (or its associated variables) is changed,
+usually during serial command sends, or pausing/unpausing.
+
+#### Event Response Argument Object
+```javascript
+{
+    buffer: (FULL BUFFER ARRAY),    // Array of objects for every item in the array
+    bufferRunning: bufferRunning,   // Boolean: Is the buffer is currently processing/running?
+    bufferPaused: bufferPaused,     // Boolean: Is the buffer paused?
+    bufferPausePen: bufferPausePen  // Object: Last pen object set before paused
+}
+```
+
+#### Buffer Item Objects
+```javascript
+move =
+{
+    type: "absmove",
+    x: 4200,
+    y: 1200,
+}
+
+height =
+{
+    type: "absheight",
+    z: 19750,
+    state: "up",
+}
+
+message =
+{
+    type: "message",
+    message: "This is a custom text message!"
+}
+```
+
+##### Usage Notes
+ * Buffer items are verbatim as used in the event loop. See above buffer object
+descriptions.
+ * If buffer command is not an object, it will be a string to be sent out as
+serial ASCII data with no extra metadata.
+ * _This event can trigger an update with no actual buffer changes._
+
+* * *
+
+### Socket.IO event: "message update"
+Triggered whenever a "message" item in the buffer is reached, added via the
+`/v1/buffer POST`.
+
+#### Event Response Argument Object
+```javascript
+{
+    message: "I never could get the hang of Thursdays.",
+    timestamp: "Thur Sep 1 2016 12:09:45 GMT-0700 (Pacific Standard Time)"
+}
+```
+
+##### Usage Notes
+ * These custom text messages are set simply to trigger this event, and intend
+to simply help inform users about where the bot might be or what it's intent is
+within a large set of operations.
