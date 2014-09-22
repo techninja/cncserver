@@ -243,13 +243,10 @@ function standaloneOrModuleInit() {
       });
     }
 
-    // Set pen direct command
-    // TODO: Rewrite this to play nice with the buffer!!!!
+    // Set pen direct command (overrides buffer)
     exports.setPen = function(value) {
-      pen.state = value;
-      serialCommand('SP,' + (pen.state == 1 ? 1 : 0));
+      setHeight(value, null, true);
     }
-    exports.directSetPen=function(){};
 
     // Export ReST Server endpoint creation utility
     exports.createServerEndpoint = createServerEndpoint;
