@@ -718,7 +718,7 @@ function serialPortReadyCallback() {
           }
           res.status(200).send(JSON.stringify(pen));
         });
-      });
+      }, req.body.skipBuffer);
 
       return true; // Tell endpoint wrapper we'll handle the response
     } else if (req.route.method == 'get'){
@@ -941,12 +941,10 @@ function serialPortReadyCallback() {
     }
 
 
-    // State has changed
+    // State/z position has been passed
     if (typeof inPen.state != "undefined") {
-      if (inPen.state != pen.state) {
-        setHeight(inPen.state, callback, inPen.skipBuffer);
-        return;
-      }
+      setHeight(inPen.state, callback, inPen.skipBuffer);
+      return;
     }
 
     // Absolute positions are set
@@ -972,6 +970,8 @@ function serialPortReadyCallback() {
       // Are we parking?
       if (inPen.park) {
         // Don't repark if already parked
+        // TODO: This doesn't exactly fly with skipBuffer support.. but it
+        // seems pretty rare a thing to happen :/
         var park = centToSteps(BOT.park, true);
         if (pen.x == park.x && pen.y == park.y) {
           if (callback) callback(false);
@@ -983,7 +983,7 @@ function serialPortReadyCallback() {
         absInput.y = park.y;
       }
 
-      // Actually move the pen!
+      // Adjust the distance counter based on movement amount
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
       if (pen.state === 'draw' || pen.state === 1) {
         pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
@@ -1051,6 +1051,12 @@ function serialPortReadyCallback() {
     // Calculate the servo value from percentage
     height = Math.round(((height / 100) * range) + min);
 
+    // If we're skipping the buffer, just set the height directly
+    if (skipBuffer) {
+      console.log('Skipping buffer to set height:', height);
+      actuallyMoveHeight(height, stateValue, callback);
+      return;
+    }
 
     // Pro-rate the duration depending on amount of change
     if (pen.height) {
@@ -1603,6 +1609,55 @@ function actuallyMove(destination, callback) {
   }
 }
 
+/**
+ * Actually change the height of the pen, called inside and outside buffer
+ * runs, figures out timing offset based on actualPen position.
+ *
+ * @param {integer} height
+ *   Write-ready servo "height" value calculated from "state"
+ * @param {string} stateValue
+ *   Optional, pass what the name of the state should be saved as in the
+ *   actualPen object when complete.
+ * @param {function} callback
+ *   Optional, callback for when operation should have completed.
+ */
+function actuallyMoveHeight(height, stateValue, callback) {
+  var sd = botConf.get('servo:duration');
+
+  // Get the amount of change from difference between actualPen and absolute
+  // height position, pro-rating the duration depending on amount of change
+  if (actualPen.height) {
+    range = parseInt(botConf.get('servo:max')) - parseInt(botConf.get('servo:min'));
+    commandDuration = Math.round((Math.abs(height - actualPen.height) / range) * sd) + 1;
+  }
+
+  // Pass along the correct height position through to actualPen
+  if (stateValue) actualPen.state = stateValue;
+  actualPen.height = height;
+
+  // Trigger an update for (possible) buffer loss and actualPen change
+  sendPenUpdate();
+  sendBufferUpdate();
+
+  // Set the pen up position (EBB)
+  serialCommand(cmdstr('movez', {z: height}));
+
+  // If there's a togglez, run it after setting Z
+  if (BOT.commands.togglez) {
+    serialCommand(cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}));
+  }
+
+  // Force BOT to wait
+  serialCommand(cmdstr('wait', {d: commandDuration}));
+
+  // Delayed callback (if used)
+  if (callback) {
+    setTimeout(function(){
+      callback(1);
+    }, Math.max(commandDuration - gConf.get('bufferLatencyOffset'), 0));
+  }
+}
+
 
 // COMMAND RUN QUEUE UTILS =====================================================
 
@@ -1645,16 +1700,8 @@ function run(command, data, duration, skipBuffer) {
       }
       break;
     case 'height':
-      // Send a new setup value for the the up position, then trigger "pen up"
-      run('custom', cmdstr('movez', {z: data}), null, skipBuffer);
-
-      // If there's a togglez, run it after setting Z
-      if (BOT.commands.togglez) {
-        run('custom', cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}), null, skipBuffer);
-      }
-
-      run('wait', '', duration, skipBuffer);
-      return false;
+      // Instead of a string command, this is buffered as an object
+      c = {type: 'absheight', z: data, state: pen.state};
       break;
     case 'wait':
       // Send wait, blocking buffer
@@ -1736,8 +1783,15 @@ function executeNext() {
 
       executeNext();
     } else if (typeof cmd[0] === "object") { // Detailed buffer object
-      if (cmd[0].type = "absmove") {
-        actuallyMove(cmd[0]); // Actually send off the command to move
+
+      // Actually send off the command to do something
+      switch (cmd[0].type) {
+        case 'absmove':
+          actuallyMove(cmd[0]);
+          break;
+        case 'absheight':
+          actuallyMoveHeight(cmd[0].z, cmd[0].state);
+          break;
       }
     } else {
 
