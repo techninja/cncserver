@@ -1188,7 +1188,7 @@ function serialPortReadyCallback() {
     if (skipBuffer) {
       console.log('Skipping buffer for:', point);
       actuallyMove(point, callback);
-      return 1;
+      return 0; // Don't return any distance for buffer skipped movements
     }
 
     // Calculate change from end of buffer pen position
