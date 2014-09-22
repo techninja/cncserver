@@ -385,7 +385,7 @@
         $('<button>').text(data.tools[i]).appendTo('#tools');
       }
       $('#tools button').click(function(){
-        run('tool', $(this).text());
+        cncserver.api.tools.change($(this).text());
       });
     } else {
       $('#tools h4').text('Failed to load tools :(');
