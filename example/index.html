@@ -190,11 +190,19 @@
 
       if (typeof cmd == 'object') {
         if (typeof cmd.type == "string") {
-          if (cmd.type == 'absmove') {
-            drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
-            cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
-          } else if (cmd.type == 'absheight') {
-            cmd = 'height: ' + cmd.z + ', state:' + cmd.state;
+          switch (cmd.type) {
+            case 'absmove':
+              drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
+              cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
+              break;
+            case 'absheight':
+              cmd = 'height: ' + cmd.z + ', state:' + cmd.state;
+              break;
+            case 'message':
+              cmd = 'message: ' + cmd.message;
+              break;
+            default:
+              cmd = cmd.type;
           }
         }
       }
