@@ -183,11 +183,20 @@
     for (var i in b.buffer) {
       var cmd = b.buffer[i][0];
 
+      // Skip the command if it's null
+      if (cmd === null) continue;
+
       if (typeof cmd == "function") cmd = 'callback';
 
-      if (typeof cmd == "object") {
-        drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
-        cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
+      if (typeof cmd == 'object') {
+        if (typeof cmd.type == "string") {
+          if (cmd.type == 'absmove') {
+            drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
+            cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
+          } else if (cmd.type == 'absheight') {
+            cmd = 'height: ' + cmd.z + ', state:' + cmd.state;
+          }
+        }
       }
 
       $b.prepend( $('<option>').text(cmd) );
