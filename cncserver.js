@@ -1234,6 +1234,10 @@ function serialPortReadyCallback() {
     point.y = Number(point.y) > BOT.maxArea.height ? BOT.maxArea.height : point.y;
     point.y = Number(point.y) < 0 ? 0 : point.y;
 
+    // Round everything (as we only move in whole number steps)
+    point.x = Math.round(point.x);
+    point.y = Math.round(point.y);
+
     // If we're skipping the buffer, just move to the point
     // Pen stays put as last point set in buffer
     if (skipBuffer) {
