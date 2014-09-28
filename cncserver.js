@@ -805,6 +805,7 @@ function serialPortReadyCallback() {
           if (bufferPaused) {
             bufferPausePen = extend({}, actualPen);
             sendBufferUpdate();
+            setHeight('up', null, true); // Pen up for safety!
           }
         }
       }
@@ -812,7 +813,9 @@ function serialPortReadyCallback() {
       // Did we actually change position since pausing?
       var changedSincePause = false;
       if (bufferPausePen) {
-        if (bufferPausePen.x != actualPen.x || bufferPausePen.y != actualPen.y){
+        if (bufferPausePen.x != actualPen.x ||
+            bufferPausePen.y != actualPen.y ||
+            bufferPausePen.height != actualPen.height){
           changedSincePause = true;
         } else {
           // If we're resuming, and there's no change... clear the pause pen
