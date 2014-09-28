@@ -831,21 +831,26 @@ function serialPortReadyCallback() {
         bufferPaused = true; // Pause for a bit until we move back to last pos
         sendBufferUpdate();
         console.log('Moving back to pre-pause position...');
-        actuallyMove(bufferPausePen, function(){
-          // Set the height back to what it was AFTER moving
-          actuallyMoveHeight(bufferPausePen.height, bufferPausePen.state, function(){
-            console.log('Resuming buffer!');
-            bufferPaused = false;
-            bufferPausePen = null;
-            sendBufferUpdate();
-            res.status(200).send(JSON.stringify({
-              running: bufferRunning,
-              paused: bufferPaused,
-              count: buffer.length,
-              buffer: buffer
-            }));
+
+        // Set the pen up before moving to resume position
+        setHeight('up', function(){
+          actuallyMove(bufferPausePen, function(){
+            // Set the height back to what it was AFTER moving
+            actuallyMoveHeight(bufferPausePen.height, bufferPausePen.state, function(){
+              console.log('Resuming buffer!');
+              bufferPaused = false;
+              bufferPausePen = null;
+              sendBufferUpdate();
+              res.status(200).send(JSON.stringify({
+                running: bufferRunning,
+                paused: bufferPaused,
+                count: buffer.length,
+                buffer: buffer
+              }));
+            });
           });
-        });
+        }, true); // Skipbuffer on setheight!
+
         return true; // Don't finish the response till after move back ^^^
       }
 
