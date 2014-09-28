@@ -534,15 +534,26 @@ last change.
 * * *
 
 ### POST /v1/buffer
-Create buffer specific items for the buffer. Currently only supports `message`.
+Create buffer specific items for the buffer. Currently only supports `message`
+and `callback`.
 
-#### Request
+#### Request: Add message
 ```javascript
 POST /v1/buffer
 Content-Type: application/json; charset=UTF-8
 
 {
   "message": "Going and drawing something"
+}
+```
+
+#### Request: Add callback name
+```javascript
+POST /v1/buffer
+Content-Type: application/json; charset=UTF-8
+
+{
+  "callback": "drawcomplete"
 }
 ```
 
@@ -693,3 +704,23 @@ Triggered whenever a "message" item in the buffer is reached, added via the
  * These custom text messages are set simply to trigger this event, and intend
 to simply help inform users about where the bot might be or what it's intent is
 within a large set of operations.
+
+
+* * *
+
+### Socket.IO event: "callback update"
+Triggered whenever a "callbackname" item in the buffer is reached, added via the
+`/v1/buffer POST`.
+
+#### Event Response Argument Object
+```javascript
+{
+    name: "drawcomplete",
+    timestamp: "Thur Sep 1 2016 12:09:45 GMT-0700 (Pacific Standard Time)"
+}
+```
+
+##### Usage Notes
+ * Yet another custom text message, but with the sole intent to be used as a
+switch case in the event function to trigger events as "callbacks" at certain
+points in execution.

@@ -87,6 +87,18 @@ function sendMessageUpdate(message) {
   });
 }
 
+/**
+ * Send an update to all stream clients of a machine name callback event.
+ *
+ * @param {string} name
+ *   Machine name of callback to send to clients
+ */
+function sendCallbackUpdate(name) {
+  io.emit('callback update', {
+    name: name,
+    timestamp: new Date().toString()
+  });
+}
 
 // STATE VARIABLES =============================================================
 
@@ -862,12 +874,15 @@ function serialPortReadyCallback() {
         return true; // Don't finish the response till later
       }
     } else if (req.route.method == 'post') {
-      // Create a status message and shuck it into the buffer
+      // Create a status message/callback and shuck it into the buffer
       if (typeof req.body.message == "string") {
         run('message', req.body.message);
         return [200, 'Message added to buffer'];
+      } else if (typeof req.body.callback == "string") {
+        run('callbackname', req.body.callback);
+        return [200, 'Callback name added to buffer'];
       } else {
-        return [400, '/v1/buffer POST only accepts data "message"'];
+        return [400, '/v1/buffer POST only accepts data "message" or "callback"'];
       }
     } else if (req.route.method == 'delete') {
       buffer = [];
@@ -1731,6 +1746,10 @@ function run(command, data, duration) {
       // Detailed buffer object with z height and state string
       c = {type: 'message', message: data};
       break;
+    case 'callbackname':
+      // Detailed buffer object with a callback machine name
+      c = {type: 'callbackname', name: data};
+      break;
     case 'wait':
       // Send wait, blocking buffer
       if (!BOT.commands.wait) return false;
@@ -1822,6 +1841,9 @@ function executeNext() {
           break;
         case 'message':
           sendMessageUpdate(cmd[0].message);
+        case 'callbackname':
+          sendCallbackUpdate(cmd[0].name);
+          executeNext(); // We're sure the message sent via stream, move on
           break;
       }
     } else {

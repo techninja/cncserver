@@ -286,6 +286,22 @@ cncserver.api = {
       });
     },
 
+   /**
+    * Push a callback name into the buffer
+    */
+    callbackname: function(name, callback){
+      _post('buffer', {
+        data: {callback: name},
+        success: function(d) {
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
+   /**
     * Pause all bot operations until resumed
     */
     clear: function(callback){
