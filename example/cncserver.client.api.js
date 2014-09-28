@@ -48,6 +48,12 @@ cncserver.api = {
     height: function(value, callback, options){
       if (typeof options !== 'object') options = {};
       options.state = value;
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('pen', {
         data: options,
         success: function(d){
@@ -94,6 +100,13 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     park: function(callback, options){
+      if (typeof options !== 'object') options = {};
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _delete('pen',{
         data: options,
         success: function(d){
@@ -146,6 +159,11 @@ cncserver.api = {
       point.x = point.x < 0 ? 0 : point.x;
       point.y = point.y < 0 ? 0 : point.y;
 
+      // Ignore timeout with no callback by default
+      if (typeof point.ignoreTimeout == 'undefined') {
+        point.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('pen', {
         data: point,
         success: function(d){
@@ -196,13 +214,23 @@ cncserver.api = {
     *   Machine name of tool to switch to
     * @param {function} callback
     *   Function to callback when done, including data from response body
+    * @param {function} options
+    *   The base of the full object to send for API options
     */
-    change: function(toolName, callback){
+    change: function(toolName, callback, options){
       $(cncserver.api).trigger('offCanvas');
       $(cncserver.api).trigger('toolChange');
 
+      if (typeof options !== 'object') options = {};
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('tools/' + toolName, {
         success: callback,
+        data: options,
         error: function(e) {
           if (callback) callback(false);
         }
