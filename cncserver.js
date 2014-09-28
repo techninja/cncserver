@@ -1758,7 +1758,7 @@ function run(command, data, duration) {
       c = {type: 'absheight', z: data, state: pen.state};
       break;
     case 'message':
-      // Detailed buffer object with z height and state string
+      // Detailed buffer object with a string message
       c = {type: 'message', message: data};
       break;
     case 'callbackname':
@@ -1856,6 +1856,8 @@ function executeNext() {
           break;
         case 'message':
           sendMessageUpdate(cmd[0].message);
+          executeNext(); // We're sure the message sent via stream, move on
+          break;
         case 'callbackname':
           sendCallbackUpdate(cmd[0].name);
           executeNext(); // We're sure the message sent via stream, move on
