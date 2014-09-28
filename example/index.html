@@ -201,6 +201,9 @@
             case 'message':
               cmd = 'message: ' + cmd.message;
               break;
+            case 'callbackname':
+              cmd = 'callback: ' + cmd.name;
+              break;
             default:
               cmd = cmd.type;
           }
