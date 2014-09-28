@@ -272,6 +272,20 @@ cncserver.api = {
     },
 
    /**
+    * Push a message into the buffer
+    */
+    message: function(message, callback){
+      _post('buffer', {
+        data: {message: message},
+        success: function(d) {
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
     * Pause all bot operations until resumed
     */
     clear: function(callback){
