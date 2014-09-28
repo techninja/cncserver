@@ -894,6 +894,7 @@ function serialPortReadyCallback() {
       }
     } else if (req.route.method == 'delete') {
       buffer = [];
+      bufferRunning = false;
 
       // Reset the state of the buffer tip pen to the state of the actual robot.
       // If this isn't done, it will be assumed to be a state that was deleted
@@ -901,6 +902,7 @@ function serialPortReadyCallback() {
       pen = extend({}, actualPen);
 
       sendBufferUpdate();
+
       console.log('Run buffer cleared!');
       return [200, 'Buffer Cleared'];
     } else {
