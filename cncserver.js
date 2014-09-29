@@ -929,7 +929,7 @@ function serialPortReadyCallback() {
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
-        });
+        }, req.body.ignoreTimeout);
         return true; // Tell endpoint wrapper we'll handle the response
       } else {
         return [404, "Tool: '" + toolName + "' not found"];
@@ -1148,7 +1148,7 @@ function serialPortReadyCallback() {
    *   True if success, false if failuer
    */
   exports.setTool = setTool;
-  function setTool(toolName, callback) {
+  function setTool(toolName, callback, ignoreTimeout) {
     var tool = botConf.get('tools:' + toolName);
 
     // No tool found with that name? Augh! Run AWAY!
@@ -1187,6 +1187,7 @@ function serialPortReadyCallback() {
 
       sendBufferUpdate();
     } else { // "Standard" WaterColorBot toolchange
+
       // Pen down
       setHeight(downHeight);
 
@@ -1196,8 +1197,13 @@ function serialPortReadyCallback() {
       // Put the pen back up when done!
       setHeight('up');
 
+      // If there's a callback to run...
       if (callback){
-        run('callback', callback);
+        if (!ignoreTimeout) { // Run inside the buffer
+          run('callback', callback)
+        } else { // Run as soon as items have been buffered
+          callback(1);
+        }
       }
       return true;
     }
@@ -1920,7 +1926,6 @@ function serialCommand(command){
     var word = !pen.simulation ? 'Executing' : 'Simulating';
     console.log(word + ' serial command: ' + command);
   }
-
 
   // Actually write the data to the port (or simulate completion of write)
   if (!pen.simulation) {
