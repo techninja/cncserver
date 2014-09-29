@@ -429,23 +429,35 @@ function serialPortReadyCallback() {
     // Move Endpoint(s)
     createServerEndpoint("/park", moveRequest);
     createServerEndpoint("/coord/:x/:y", moveRequest);
-    createServerEndpoint("/move/:op", moveRequest);
-    createServerEndpoint("/move/:op/:arg", moveRequest);
-    createServerEndpoint("/move/:op/:arg/:arg2", moveRequest);
+    createServerEndpoint("/move.forward./:arg", moveRequest);
+    createServerEndpoint("/move.wait./:arg", moveRequest);
+    createServerEndpoint("/move.right./:arg", moveRequest);
+    createServerEndpoint("/move.left./:arg", moveRequest);
+    createServerEndpoint("/move.absturn./:arg", moveRequest);
+    createServerEndpoint("/move.toward./:arg/:arg2", moveRequest);
+    createServerEndpoint("/move.speed./:arg", moveRequest);
+
+    createServerEndpoint("/move.nudge.x./:arg2", moveRequest);
+    createServerEndpoint("/move.nudge.y./:arg2", moveRequest);
 
     // Move request endpoint handler function
     function moveRequest(req, res){
       //pollData.busy(req.params.busyid);
 
+      var url = req.originalUrl.split('.');
+
+
+      var op = url[1];
+      var arg = req.params.arg;
+      var arg2 = req.params.arg2;
+      if (req.params.arg2 && !req.params.arg) {
+        arg = url[2];
+      }
       // Do nothing if sleeping
       if (turtle.sleeping) {
         // TODO: Do we care about running the math?
         return {code: 200, body: ''};
       }
-
-      var op = req.params.op;
-      var arg = req.params.arg;
-      var arg2 = req.params.arg2;
 
       // Park
       if (req.url == '/park') {
@@ -474,7 +486,7 @@ function serialPortReadyCallback() {
         turtle.degrees = op == 'right' ? turtle.degrees + arg : turtle.degrees - arg;
         if (turtle.degrees > 360) turtle.degrees -= 360;
         if (turtle.degrees < 0) turtle.degrees += 360;
-        console.log('Rotate pen to ' + turtle.degrees + ' degrees');
+        console.log('Rotate pen ' + op + ' ' + arg + ' deg. to ' + turtle.degrees + ' deg.');
         return {code: 200, body: ''};
       }
 
@@ -498,6 +510,7 @@ function serialPortReadyCallback() {
       // Rotate pointer directly
       if (op == 'absturn') {
         turtle.degrees = parseInt(arg) - 90; // correct for "standard" Turtle orientation in Scratch
+        console.log('Rotate pen to ' + turtle.degrees + ' degrees');
         return {code: 200, body: ''};
       }
 
@@ -578,12 +591,20 @@ function serialPortReadyCallback() {
 
     // Pen endpoints
     createServerEndpoint("/pen", penRequest);
-    createServerEndpoint("/pen/:op", penRequest);
-    createServerEndpoint("/pen/:op/:arg", penRequest);
+    createServerEndpoint("/pen.wash", penRequest);
+    createServerEndpoint("/pen.up", penRequest);
+    createServerEndpoint("/pen.down", penRequest);
+    createServerEndpoint("/pen.off", penRequest);
+    createServerEndpoint("/pen.resetDistance", penRequest);
+    createServerEndpoint("/pen.sleep.1", penRequest);
+    createServerEndpoint("/pen.sleep.0", penRequest);
+
 
     function penRequest(req, res){
-      var op = req.params.op;
-      var arg = req.params.arg;
+      // Parse out the arguments as we can't use slashes in the URI(!?!)
+      var url = req.originalUrl.split('.');
+      var op = url[1];
+      var arg = url[2];
 
       // Reset internal counter
       if (op == 'resetDistance') {
@@ -633,24 +654,21 @@ function serialPortReadyCallback() {
     }
 
     // Tool set endpoints
-    createServerEndpoint("/tool/:tool", toolRequest);
-    createServerEndpoint("/tool/:type/:id", toolRequest);
+    createServerEndpoint("/tool.color./:id", toolRequest);
+    createServerEndpoint("/tool.water./:id", toolRequest);
 
     function toolRequest(req, res) {
+      var type = req.originalUrl.split('.')[1];
+
       // Do nothing if sleeping
       if (turtle.sleeping) {
         // TODO: Do we care about running the math?
         return {code: 200, body: ''};
       }
 
-      // Direct set tool
-      if (req.params.tool) {
-        setTool(req.params.tool);
-      }
-
       // Set by ID (water/color)
-      if (req.params.type) {
-        setTool(req.params.type + parseInt(req.params.id));
+      if (type) {
+        setTool(type + parseInt(req.params.id));
       }
 
       return {code: 200, body: ''};
