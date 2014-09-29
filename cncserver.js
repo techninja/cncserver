@@ -1698,7 +1698,7 @@ function actuallyMoveHeight(height, stateValue, callback) {
   }
 
   // Pass along the correct height position through to actualPen
-  if (stateValue) actualPen.state = stateValue;
+  if (typeof stateValue !== 'undefined') actualPen.state = stateValue;
   actualPen.height = height;
   actualPen.lastDuration = commandDuration;
 
