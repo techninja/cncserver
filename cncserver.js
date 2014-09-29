@@ -255,11 +255,6 @@ function standaloneOrModuleInit() {
       });
     }
 
-    // Set pen direct command (overrides buffer)
-    exports.setPen = function(value) {
-      setHeight(value, null, true);
-    }
-
     // Export ReST Server endpoint creation utility
     exports.createServerEndpoint = createServerEndpoint;
   }
@@ -966,6 +961,7 @@ function serialPortReadyCallback() {
    * @param callback
    *   Callback triggered when intended action should be complete.
    */
+  exports.setPen = setPen;
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
     pen.distanceCounter = parseInt(pen.distanceCounter);
@@ -1047,7 +1043,7 @@ function serialPortReadyCallback() {
       return;
     }
 
-    if (callback) callback(true);
+    if (callback) callback(pen);
   }
 
 
@@ -1262,7 +1258,7 @@ function serialPortReadyCallback() {
 
     // Don't do anything if there's no change
     if (change.x == 0 && change.y == 0) {
-      if (callback) callback(true);
+      if (callback) callback(pen);
       return 0;
     }
 
@@ -1289,7 +1285,7 @@ function serialPortReadyCallback() {
 
     if (callback) {
       if (immediate == 1) {
-        callback(1);
+        callback(pen);
       } else {
         // Set the timeout to occur sooner so the next command will execute
         // before the other is actually complete. This will push into the buffer
@@ -1298,9 +1294,9 @@ function serialPortReadyCallback() {
         var cmdDuration = Math.max(duration - gConf.get('bufferLatencyOffset'), 0);
 
         if (cmdDuration < 2) {
-          callback(1);
+          callback(pen);
         } else {
-          setTimeout(function(){callback(1);}, cmdDuration);
+          setTimeout(function(){callback(pen);}, cmdDuration);
         }
 
       }
