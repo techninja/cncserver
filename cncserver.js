@@ -1958,11 +1958,13 @@ var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 function serialReadline(data) {
   if (data.trim() == botConf.get('controller').ack) {
     // Trigger the next buffered command (after its intended duration)
-    if (commandDuration < 2) {
+    if (commandDuration < gConf.get('bufferLatencyOffset')) {
       executeNext();
     } else {
       clearTimeout(nextExecutionTimeout);
-      nextExecutionTimeout = setTimeout(executeNext, commandDuration);
+      nextExecutionTimeout = setTimeout(executeNext,
+        commandDuration - gConf.get('bufferLatencyOffset')
+      );
     }
 
   } else {
