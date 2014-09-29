@@ -1,19 +1,62 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.5, maximum-scale=1.5, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
     <script src="jquery.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="cncserver.client.api.js"></script>
     <script src="cncserver.client.commander.js"></script>
     <style type="text/css">
       body {
         font-family: sans-serif;
       }
+
+      #buffer {
+        width: 200px;
+        height: 200px;
+        float: right;
+      }
+
+      #simwrap {
+        position: relative;
+      }
+
+      canvas.simcanvas {
+        border: 1px solid black;
+        width: 100%;
+        max-width: 600px;
+        max-height: 400px;
+        display: block;
+      }
+
+      #bufferarea {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
     </style>
   </head>
   <title>CNC Server Controller</title>
 <body>
   <h3>CNC Server example Controller</h3>
+
+  <fieldset id="bot"><legend>Live Status</legend>
+    <div id="simwrap">
+      <canvas class="simcanvas" id="drawarea"></canvas>
+      <canvas class="simcanvas" id="bufferarea"></canvas>
+    </div>
+    <textarea id="pendata"></textarea>
+    <fieldset><legend>Buffer</legend>
+      <select size="10" id="buffer"></select>
+      <div><label for="bufrun">Running: </label><b id="bufrun">false</b></div>
+      <div><label for="bufpause">Paused: </label><b id="bufpause">false</b></div>
+      <div><label for="bufcount">Items: </label><b id="bufcount">0</b></div>
+      <button id="buf_pause">Pause Buffer</button>
+      <button id="buf_resume">Resume Buffer</button>
+      <button id="buf_clear">Clear Buffer</button>
+    </fieldset>
+  </fieldset>
+
   <fieldset><legend>General</legend>
     <button id="unlock">Unlock</button>
     <button id="zero">Zero</button>
@@ -21,6 +64,7 @@
 
   <fieldset><legend>X,Y Movement</legend>
     <button id="park">PARK</button>
+    <label for="skipbuffer">Bypass buffer</label><input id="skipbuffer" type="checkbox">
     <table>
       <tr>
         <td><button class="move">0,0</button></td>
@@ -60,9 +104,11 @@
     </table>
   </fieldset>
 
-  <fieldset><legend>Z/Servo Control</legend>
-    <button id="up">Up</button>
-    <button id="draw">Draw</button>
+  <fieldset id="heightbuttons"><legend>Z/Servo Control</legend>
+    <div>
+      <label for="skipbufferz">Bypass buffer</label>
+      <input id="skipbufferz" type="checkbox">
+    </div>
   </fieldset>
 
   <fieldset id="tools"><legend>Available Tools</legend>
@@ -74,7 +120,16 @@
   </fieldset>
 
 <script>
+  var socket = io();
   var runningTest = false;
+  var $draw = $('#drawarea');
+  var pen = {};
+  var lastPen = {};
+  var resumePen = null;
+  var drawPoints = []; // Array of points from buffer to draw
+
+  var viewScale = 1; // The scale to adjust bot steps by for viewing
+  var viewMax = {x: 600, y: 400}; // The maximum view size to constrain to
 
   // Initialize CNC Server connection details
   // (thanks to CORS support, this should be fully portable)
@@ -84,6 +139,203 @@
     protocol: 'http',
     version: '1'
   };
+
+
+  // Socket.io stream data events =========================
+  socket.on('pen update', function(data){
+    var animPen = {};
+    pen = $.extend({}, data);
+    var d = "Status =-=-=-=" + "\n";
+    d+= 'draw pos: ' + pen.state + '/' + pen.height + "\n";
+    d+= 'tool: ' + pen.tool + "\n";
+    $('#pendata').text(d);
+
+    if (pen.lastDuration - 5 > 0) {
+      animPen = $.extend({}, lastPen);
+      $(lastPen).animate({ x:pen.x, y: pen.y  }, {
+        duration: pen.lastDuration - 5,
+        easing: 'linear',
+        step: function(val, fx) {
+          animPen[fx.prop] = val;
+          $draw.update(animPen, pen);
+        }
+      });
+    } else {
+      $draw.update(pen);
+    }
+
+    lastPen = $.extend({}, pen);
+  });
+
+
+  // CNCServer Buffer Change events (for pause, update, or resume)
+  socket.on('buffer update', function(b){
+    $('#bufrun').text(b.bufferRunning);
+    $('#bufpause').text(b.bufferPaused);
+    $('#bufcount').text(b.buffer.length);
+    resumePen = b.bufferPausePen;
+
+    // Populate buffer list of items
+    var $b = $('#buffer');
+    $b.find('option').remove();
+    drawPoints = [];
+
+    for (var i in b.buffer) {
+      var cmd = b.buffer[i][0];
+
+      // Skip the command if it's null
+      if (cmd === null) continue;
+
+      if (typeof cmd == "function") cmd = 'callback';
+
+      if (typeof cmd == 'object') {
+        if (typeof cmd.type == "string") {
+          switch (cmd.type) {
+            case 'absmove':
+              drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
+              cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
+              break;
+            case 'absheight':
+              cmd = 'height: ' + cmd.z + ', state:' + cmd.state;
+              break;
+            case 'message':
+              cmd = 'message: ' + cmd.message;
+              break;
+            case 'callbackname':
+              cmd = 'callback: ' + cmd.name;
+              break;
+            default:
+              cmd = cmd.type;
+          }
+        }
+      }
+
+      $b.prepend( $('<option>').text(cmd) );
+    }
+
+    var ctx = $('#bufferarea')[0].getContext('2d');
+
+    // Clear it out
+    ctx.clearRect(0, 0, $('#bufferarea')[0].width, $('#bufferarea')[0].height);
+
+    // Do we have a resume point? draw that
+    if (resumePen) {
+      drawCrosshair(ctx, 20, 'green', resumePen);
+    }
+
+    // Move points in the buffer? Connect the dots.
+    if (drawPoints.length) {
+      ctx.beginPath();
+      ctx.lineWidth = '4';
+      ctx.strokeStyle = "orange";
+
+      // Move to start of buffer (either resume pos, or current)
+      if (resumePen) {
+        ctx.moveTo(resumePen.x * viewScale, resumePen.y * viewScale);
+      } else {
+        ctx.moveTo(pen.x * viewScale, pen.y * viewScale);
+      }
+
+      for (var i = drawPoints.length - 1; i >= 0; i--) {
+        ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
+      }
+
+      ctx.stroke();
+      ctx.closePath;
+    }
+
+  });
+
+
+  // Setup live display box, pull in the bot specific settings
+  cncserver.api.settings.bot(function(bot) {
+    $('#bot legend:first').text('Live Status: ' + bot.name);
+
+    // Find the view scale
+    if (bot.maxArea.width > bot.maxArea.height) {
+      viewScale = viewMax.x / bot.maxArea.width;
+    }else {
+      viewScale = viewMax.y / bot.maxArea.height;
+    }
+
+    $('.simcanvas').attr({
+      width: bot.maxArea.width * viewScale,
+      height: bot.maxArea.height * viewScale
+    });
+
+    $draw.update = function(current, dest) {
+      var ctx = $draw[0].getContext('2d');
+      // Clear it out
+      ctx.clearRect(0, 0, $draw[0].width, $draw[0].height);
+
+      // Draw directional path to DEST
+      if (dest) {
+        ctx.beginPath();
+        ctx.lineWidth = '4';
+        ctx.strokeStyle = "green";
+        ctx.moveTo(current.x * viewScale, current.y * viewScale);
+        ctx.lineTo(dest.x * viewScale, dest.y * viewScale);
+        ctx.stroke();
+        ctx.closePath();
+      }
+
+
+      // Red outline the work area
+      ctx.beginPath();
+      ctx.lineWidth = '1';
+      ctx.strokeStyle = 'red';
+      ctx.rect(
+        bot.workArea.left * viewScale,
+        bot.workArea.top * viewScale,
+        bot.maxArea.width * viewScale,
+        bot.maxArea.height * viewScale
+      );
+      ctx.stroke();
+      ctx.closePath();
+
+
+      if (dest) drawCrosshair(ctx, 10, 'orange', dest); // Draw destination
+      drawCrosshair(ctx, 20, 'black', current); // Draw Current Position
+
+    };
+
+    // Setup the height option buttons for the bot
+    for (var name in bot.servo.presets) {
+      $('#heightbuttons').append(
+        $('<button>').text(name).click(function(){
+          cncserver.api.pen.height($(this).text(), null, {
+            skipBuffer: $('#skipbufferz').prop('checked') ? 1 : ''
+          });
+        })
+      );
+    }
+
+    // Initially set the pen from the bot
+    cncserver.api.pen.stat(function(data){
+      pen = data;
+      lastPen = $.extend({}, data);
+      $draw.update(data);
+    });
+  });
+
+  // Util function for drawing crosshairs
+  function drawCrosshair(ctx, size, color, pos) {
+    ctx.beginPath();
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = color;
+    var x = pos.x * viewScale;
+    var y = pos.y * viewScale;
+
+    ctx.arc(x, y, size/2, 0, 2*Math.PI); // Circle
+
+    // Cross lines
+    ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
+    ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
+
+    ctx.stroke();
+    ctx.closePath();
+  }
+
 
   var run = cncserver.cmd.run; // Shortcut!
 
@@ -103,6 +355,15 @@
         }
 
         break;
+      case 'buf_pause':
+        cncserver.api.buffer.pause();
+        break;
+      case 'buf_resume':
+        cncserver.api.buffer.resume();
+        break;
+      case 'buf_clear':
+        cncserver.api.buffer.clear();
+        break;
       case 'unlock':
         cncserver.api.motors.unlock();
         break;
@@ -110,19 +371,20 @@
         cncserver.api.pen.zero();
         break;
       case 'park':
-        //cncserver.api.pen.park(); // << Direct method
-        run('park');                // << Queue method
-        break;
-      case 'up':
-      case 'draw':
-        cncserver.api.pen.height(id);
+        cncserver.api.pen.park(null, {
+          skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
+        }); // << Direct method
         break;
     }
 
     // One of the move button array
     if ($(this).is('.move')) {
       var pos = $(this).text().split(',');
-      cncserver.api.pen.move({x: pos[0], y: pos[1]});
+      cncserver.api.pen.move({
+        x: pos[0],
+        y: pos[1],
+        skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
+      });
     }
   });
 
@@ -134,7 +396,7 @@
         $('<button>').text(data.tools[i]).appendTo('#tools');
       }
       $('#tools button').click(function(){
-        run('tool', $(this).text());
+        cncserver.api.tools.change($(this).text());
       });
     } else {
       $('#tools h4').text('Failed to load tools :(');

@@ -45,9 +45,17 @@ cncserver.api = {
     * @param {float|string} value
     *   0 to 1 float, and named constants
     */
-    height: function(value, callback){
+    height: function(value, callback, options){
+      if (typeof options !== 'object') options = {};
+      options.state = value;
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('pen', {
-        data: { state: value},
+        data: options,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
@@ -59,13 +67,13 @@ cncserver.api = {
     },
 
     // Shortcut call to the above with flop set to true
-    up: function(callback) {
-      this.height(0, callback);
+    up: function(callback, options) {
+      this.height(0, callback, options);
     },
 
     // Shortcut call to the above with flop set to true
-    down: function(callback) {
-      this.height(1, callback);
+    down: function(callback, options) {
+      this.height(1, callback, options);
     },
 
    /**
@@ -91,8 +99,16 @@ cncserver.api = {
     * @param {function} callback
     *   Function to callback when done, including data from response body
     */
-    park: function(callback){
+    park: function(callback, options){
+      if (typeof options !== 'object') options = {};
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _delete('pen',{
+        data: options,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           $(cncserver.api).trigger('offCanvas');
@@ -143,12 +159,13 @@ cncserver.api = {
       point.x = point.x < 0 ? 0 : point.x;
       point.y = point.y < 0 ? 0 : point.y;
 
+      // Ignore timeout with no callback by default
+      if (typeof point.ignoreTimeout == 'undefined') {
+        point.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('pen', {
-        data: {
-          x: point.x,
-          y: point.y,
-          ignoreTimeout: point.ignoreTimeout
-        },
+        data: point,
         success: function(d){
           $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
@@ -197,13 +214,23 @@ cncserver.api = {
     *   Machine name of tool to switch to
     * @param {function} callback
     *   Function to callback when done, including data from response body
+    * @param {function} options
+    *   The base of the full object to send for API options
     */
-    change: function(toolName, callback){
+    change: function(toolName, callback, options){
       $(cncserver.api).trigger('offCanvas');
       $(cncserver.api).trigger('toolChange');
 
+      if (typeof options !== 'object') options = {};
+
+      // Ignore timeout with no callback by default
+      if (typeof options.ignoreTimeout == 'undefined') {
+        options.ignoreTimeout = callback ? '' : '1';
+      }
+
       _put('tools/' + toolName, {
         success: callback,
+        data: options,
         error: function(e) {
           if (callback) callback(false);
         }
@@ -245,6 +272,36 @@ cncserver.api = {
     },
 
    /**
+    * Push a message into the buffer
+    */
+    message: function(message, callback){
+      _post('buffer', {
+        data: {message: message},
+        success: function(d) {
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
+   /**
+    * Push a callback name into the buffer
+    */
+    callbackname: function(name, callback){
+      _post('buffer', {
+        data: {callback: name},
+        success: function(d) {
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
+   /**
     * Pause all bot operations until resumed
     */
     clear: function(callback){
@@ -255,7 +312,37 @@ cncserver.api = {
         }
       });
     }
-  }
+  },
+
+  settings: {
+   /**
+    * Get the cncserver global settings object
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    global: function(callback){
+      _get('settings/global', {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
+    },
+
+   /**
+    * Get the cncserver bot specific settings object
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    bot: function(callback){
+      _get('settings/bot', {
+        success: callback,
+        error: function(e) {
+          callback(false);
+        }
+      });
+    },
+  },
 };
 
 function _get(path, options) {
