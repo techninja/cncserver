@@ -1,5 +1,11 @@
 # CNC Server Scratch HTTP API [v1]
 
+
+Please note that this documentation HAS NOT been updated for recent changes in the API.
+
+---
+
+
 This file defines and documents all the available non-ReSTful Scratch 2 offline
 editor "[experimental HTTP extension](http://wiki.scratch.mit.edu/wiki/Scratch_Extension#HTTP_Extensions)"
 API resources and configuration for [`cncserver.js`](cncserver.js). As noted,
@@ -204,7 +210,7 @@ Reset the `distanceCounter` variable back to 0.
 
 ### GET /sleep/:on-off
 Turn on or off sleep mode based on the given value, either 1 for on, 0 for off.
-Sleep mode ON will prevent the API from doing anythig until sleep mode is turned
+Sleep mode ON will prevent the API from doing anything until sleep mode is turned
 OFF.
 
 ### GET /move/wait/:seconds
