@@ -342,6 +342,18 @@ function serialPortReadyCallback() {
 
     pollData.render = function() {
       var out = "";
+      
+      out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
+      out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
+      out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
+
+      var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
+      if (angleTemp > 360) {
+        angleTemp -= 360;
+      }
+      out += 'angle ' + angleTemp + "\n";
+      out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
+      out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
 
       // Loop through all existing/static pollData
       for (var key in this) {
@@ -356,27 +368,13 @@ function serialPortReadyCallback() {
 
       // Throw in full pen data as well
       for (var key in pen) {
-        if (key == 'x') {
-          out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
-        }else if (key == 'y') {
-          out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
-
-          // Add some other stuff while we're at it
-          // TODO: Should probably automate all this output :P
-          out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
-
-          var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
-          if (angleTemp > 360) {
-            angleTemp -= 360;
-          }
-          out += 'angle ' + angleTemp + "\n";
-          out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
-        }else if (key == 'distanceCounter') {
-          out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
-        } else {
+        if (key == 'x') {}
+        else if (key == 'y') {}
+        else if (key == 'distanceCounter') {}
+        else {
           out += key + ' ' + pen[key] + "\n";
         }
-      }
+      } 
       return out;
     }
 
