@@ -342,7 +342,7 @@ function serialPortReadyCallback() {
 
     pollData.render = function() {
       var out = "";
-      
+
       out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
       out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
       out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
@@ -374,7 +374,7 @@ function serialPortReadyCallback() {
         else {
           out += key + ' ' + pen[key] + "\n";
         }
-      } 
+      }
       return out;
     }
 
