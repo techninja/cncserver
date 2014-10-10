@@ -907,6 +907,9 @@ function serialPortReadyCallback() {
       buffer = [];
       bufferRunning = false;
 
+      bufferPausePen = null; // Resuming with an empty buffer is silly
+      bufferPaused = false;
+
       // Reset the state of the buffer tip pen to the state of the actual robot.
       // If this isn't done, it will be assumed to be a state that was deleted
       // and never sent out in the line above.
