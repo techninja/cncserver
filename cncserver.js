@@ -57,6 +57,11 @@ io.on('connection', function(socket){
  * a serial command is run, or internal state changes.
  */
 function sendPenUpdate() {
+  // Low-level event callback trigger to avoid Socket.io overhead
+  if (exports.penUpdateTrigger) {
+    exports.penUpdateTrigger(actualPen);
+  }
+
   io.emit('pen update', actualPen);
 }
 
@@ -66,12 +71,25 @@ function sendPenUpdate() {
  * changed, E.G.
  */
 function sendBufferUpdate() {
-  io.emit('buffer update', {
+  var data = {
     buffer: buffer,
     bufferRunning: bufferRunning,
     bufferPaused: bufferPaused,
     bufferPausePen: bufferPausePen
-  });
+  };
+
+  // Low-level event callback trigger to avoid Socket.io overhead
+  if (exports.bufferUpdateTrigger) {
+    exports.bufferUpdateTrigger(data);
+  } else {
+    // TODO: This sucks, but sending really giant buffers via Socket.IO
+    // for every update is a TOTAL buzzkill. Syncing in memory is no biggie,
+    // but transfer overhead time for 100+ items takes longer than the standard
+    // time of execution, therefore totally killing us. A better way to handle
+    // this would be some method of only sending UPDATES (Add/Remove/Clear),
+    // course that's a bit out of scope right now :P
+    io.emit('buffer update', data);
+  }
 }
 
 /**
@@ -194,6 +212,15 @@ function standaloneOrModuleInit() {
   } else { // Export the module's useful API functions! ========================
     // Connect to serial and start server
     exports.start = function(options) {
+      // Add low-level short-circuit to avoid Socket.IO overhead
+      if (typeof options.bufferUpdate === 'function') {
+        exports.bufferUpdateTrigger = options.bufferUpdate;
+      }
+
+      if (typeof options.penUpdate === 'function') {
+        exports.penUpdateTrigger = options.penUpdate;
+      }
+
       loadBotConfig(function(){
         connectSerial({
           success: function() { // Successfully connected
