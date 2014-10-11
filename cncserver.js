@@ -1458,12 +1458,11 @@ function loadGlobalConfig(cb) {
         }
       }
 
-      gConf.save(function (err) {
-        if (cb) cb();
-      });
-    } else { // Config file already exists
-      if (cb) cb(); // Trigger the callback
+      // Should be sync/blocking save with no callback
+      gConf.save();
     }
+
+    if (cb) cb(); // Trigger the callback
 
     // Output if debug mode is on
     if (gConf.get('debug')) {
