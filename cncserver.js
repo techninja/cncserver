@@ -60,9 +60,13 @@ function sendPenUpdate() {
   // Low-level event callback trigger to avoid Socket.io overhead
   if (exports.penUpdateTrigger) {
     exports.penUpdateTrigger(actualPen);
+  } else {
+    // TODO: This sucks, but even sending these smaller packets is somewhat
+    // blocking and screws with buffer send timing. Need to either make these
+    // packets smaller, or limit the number of direct updates per second to the
+    // transfer rate to clients? Who knows.
+    io.emit('buffer update', data);
   }
-
-  io.emit('pen update', actualPen);
 }
 
 /**
@@ -82,7 +86,7 @@ function sendBufferUpdate() {
   if (exports.bufferUpdateTrigger) {
     exports.bufferUpdateTrigger(data);
   } else {
-    // TODO: This sucks, but sending really giant buffers via Socket.IO
+    // TODO: This ALSO sucks, but sending really giant buffers via Socket.IO
     // for every update is a TOTAL buzzkill. Syncing in memory is no biggie,
     // but transfer overhead time for 100+ items takes longer than the standard
     // time of execution, therefore totally killing us. A better way to handle

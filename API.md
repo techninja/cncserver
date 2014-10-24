@@ -638,6 +638,10 @@ the bot will only just start moving at the moment this is triggered, so you can
 use the `lastDuration` key in the object to animate the movement linearly
 between the last location and the new location perfectly. See example
 application CNC Server Controller at the web root for an idea of how this works.
+ * Unfortunately because of issues upstream, if being used as a node module with
+a local callback `penUpdateTrigger`, these event updates will no longer be
+sent. This shouldn't need to be the case, but it ensures that commands are sent
+cleanly to the bot over repeating this data over the stream.
  * _This event can trigger an update with no actual pen changes._
 
 * * *
@@ -684,6 +688,10 @@ message =
 descriptions.
  * If buffer command is not an object, it will be a string to be sent out as
 serial ASCII data with no extra metadata.
+ * Unfortunately because of issues upstream, if being used as a node module with
+a local callback `bufferUpdateTrigger`, these event updates will no longer be
+sent. This shouldn't need to be the case, but it ensures that commands are sent
+cleanly to the bot over repeating this data over the stream.
  * _This event can trigger an update with no actual buffer changes._
 
 * * *
