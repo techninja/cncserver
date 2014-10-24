@@ -65,7 +65,7 @@ function sendPenUpdate() {
     // blocking and screws with buffer send timing. Need to either make these
     // packets smaller, or limit the number of direct updates per second to the
     // transfer rate to clients? Who knows.
-    io.emit('buffer update', data);
+    io.emit('pen update', actualPen);
   }
 }
 
@@ -1962,6 +1962,7 @@ setInterval(function(){
  * @returns {boolean}
  *   True if success, false if failure
  */
+var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 function serialCommand(command){
   if (!serialPort.write && !pen.simulation) { // Not ready to write to serial!
     return false;
@@ -1975,7 +1976,22 @@ function serialCommand(command){
   // Actually write the data to the port (or simulate completion of write)
   if (!pen.simulation) {
     try {
-      serialPort.write(command + "\r");
+      // Once written, wait for command to drain completely, confirming the
+      // entire command has been sent and we can send the next command.
+      serialPort.write(command + "\r", function() {
+        serialPort.drain(function(){
+          // Command should be sent! Time out the next command send
+          if (commandDuration < gConf.get('bufferLatencyOffset')) {
+            //console.log('Immediate Run!');
+            executeNext();
+          } else {
+            clearTimeout(nextExecutionTimeout);
+            nextExecutionTimeout = setTimeout(executeNext,
+              commandDuration - gConf.get('bufferLatencyOffset')
+            );
+          }
+        });
+      });
     } catch(e) {
       console.error('Failed to write to the serial port!:', e);
       return false;
@@ -1990,29 +2006,16 @@ function serialCommand(command){
 }
 
 /**
- * Callback event function initialized on connect to handle incoming serial
- * data (and because of simple return data format on the EBB, this currently
- * only initiates the next buffer command on ACKnowledgement of receive.)
+ * Callback event function initialized on connect to handle incoming data.
  *
  * @param {string} data
  *   Incoming data from serial port
  *
  * @see connectSerial
  */
-var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
+
 function serialReadline(data) {
   if (data.trim() == botConf.get('controller').ack) {
-    // Trigger the next buffered command (after its intended duration)
-    if (commandDuration < gConf.get('bufferLatencyOffset')) {
-      executeNext();
-    } else {
-      clearTimeout(nextExecutionTimeout);
-      nextExecutionTimeout = setTimeout(executeNext,
-        commandDuration - gConf.get('bufferLatencyOffset')
-      );
-    }
-
-  } else {
     console.error('Message From Controller: ' + data);
     executeNext(); // Error, but continue anyways
   }
