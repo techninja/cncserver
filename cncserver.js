@@ -155,7 +155,7 @@ var globalConfigDefaults = {
     y: false
   },
   serialPath: "{auto}", // Empty for auto-config
-  bufferLatencyOffset: 50, // Number of ms to move each command closer together
+  bufferLatencyOffset: 30, // Number of ms to move each command closer together
   corsDomain: '*', // Start as open to CORs enabled browser clients
   debug: false,
   botType: 'watercolorbot',
