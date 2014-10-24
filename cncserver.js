@@ -2015,9 +2015,8 @@ function serialCommand(command){
  */
 
 function serialReadline(data) {
-  if (data.trim() == botConf.get('controller').ack) {
+  if (data.trim() != botConf.get('controller').ack) {
     console.error('Message From Controller: ' + data);
-    executeNext(); // Error, but continue anyways
   }
 }
 
