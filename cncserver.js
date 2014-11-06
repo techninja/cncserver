@@ -671,13 +671,16 @@ function serialPortReadyCallback() {
 
       // Turn off motors and zero to park pos
       if (op == 'off'){
-        // Run in buffer to ensure correct timing
-        run('callback', function(){
-          run('custom', 'EM,0,0');
-          var park = centToSteps(BOT.park, true);
-          pen.x = park.x;
-          pen.y = park.y;
-        });
+        // Zero the assumed position
+        var park = centToSteps(BOT.park, true);
+        pen.x = park.x;
+        pen.y = park.y;
+        actualPen.x = park.x;
+        actualPen.y = park.y;
+
+        // You must zero FIRST then disable, otherwise actualPen is overwritten
+        run('custom', 'EM,0,0');
+        sendPenUpdate();
       }
       return {code: 200, body: ''};
     }
@@ -812,10 +815,30 @@ function serialPortReadyCallback() {
       return [201, 'Disable Queued'];
     } else if (req.route.method == 'put') {
       if (req.body.reset == 1) {
+        // ZERO motor position to park position
         var park = centToSteps(BOT.park, true);
+        // It is at this point assumed that one would *never* want to do this as
+        // a buffered operation as it implies *manually* moving the bot to the
+        // parking location, so we're going to man-handle the variables a bit.
+        // completely not repecting the buffer (as really, it should be empty)
+
+        // As a precaution, here's some insurance
+        if (buffer.length && bufferRunning) {
+          return [406, 'Can not Zero while running. Pause or clear buffer.'];
+        }
+
+        // Set tip of buffer to current
         pen.x = park.x;
         pen.y = park.y;
 
+        // Set actualPen position. This is the ONLY place we set this value
+        // without a movement, because it's assumed to have been moved there
+        // physically by a user. Also we're assuming they did it instantly!
+        actualPen.x = park.x;
+        actualPen.y = park.y;
+        actualPen.lastDuration = 0;
+
+        sendPenUpdate();
         console.log('Motor offset reset to park position')
         return [200, 'Motor offset reset to park position'];
       } else {
