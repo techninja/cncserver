@@ -1071,11 +1071,9 @@ function serialPortReadyCallback() {
 
       // Are we parking?
       if (inPen.park) {
-        // Don't repark if already parked
-        // TODO: This doesn't exactly fly with skipBuffer support.. but it
-        // seems pretty rare a thing to happen :/
+        // Don't repark if already parked (but not if we're skipping the buffer)
         var park = centToSteps(BOT.park, true);
-        if (pen.x == park.x && pen.y == park.y) {
+        if (pen.x == park.x && pen.y == park.y && !inPen.skipBuffer) {
           if (callback) callback(false);
           return;
         }
