@@ -6,7 +6,7 @@
     [" ", "wash brush", "pen.wash"],
     [" ", "brush up", "pen.up"],
     [" ", "brush down", "pen.down"],
-    [" ", "wait %d.time seconds", "move.wait", 0.5],
+    [" ", "wait %d.time seconds", "move.wait.", 0.5],
     [" ", "move to x: %n y: %n", "coord", 0, 0],
     [" ", "move to %m.positionY %m.positionX", "coord", "center", "center"],
     [" ", "get color %d.colors", "tool.color.", 0],

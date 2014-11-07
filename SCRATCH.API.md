@@ -1,11 +1,5 @@
 # CNC Server Scratch HTTP API [v1]
 
-
-Please note that this documentation HAS NOT been updated for recent changes in the API.
-
----
-
-
 This file defines and documents all the available non-ReSTful Scratch 2 offline
 editor "[experimental HTTP extension](http://wiki.scratch.mit.edu/wiki/Scratch_Extension#HTTP_Extensions)"
 API resources and configuration for [`cncserver.js`](cncserver.js). As noted,
@@ -20,6 +14,10 @@ passed in the URL path structure, or in get variables.
  * Scratch currently doesn't support any kind of namespacing for URIs, so these
 endpoints live outside the `/v1` ReSTful namsespaced API, directly on the
 root.
+ * Scratch _**also**_ doesn't seem to support arbitrary slashes in URI structure
+so I've replaced them with periods. This unfortunately does not apply to
+variables, and must be also added to the end before any variables (if any).
+:imp:
 
 In each request example below, the server is assumed to be added to the
 beginning of each resource, E.G.: `GET http://localhost:4242/poll` will `GET`
@@ -128,7 +126,7 @@ as described above.
 ## 3. Absolute movement/settings
 If you need to change something to an exact know value, these are what you need.
 
-### GET /pen/up & /pen/down
+### GET /pen.up & /pen.down
 Does just what it says on the tin.
 
 ### GET /coord/:x/:y
@@ -140,11 +138,11 @@ Set the absolute X/Y position based on the given word for the position, E.G.:
 `/coord/right/bottom`, `/coord/center/top`. Accepts standard English `top`,
 `left`, `right`, `bottom` & `center`.
 
-### GET /move/absturn/:angle
+### GET /move.absturn./:angle
 Set the exact angle of the turtle's facing direction or relative movement to the
 given angle.
 
-### GET /move/speed/:value
+### GET /move.speed./:value
 Sets the move speed to the given value, accepts 0-10.
 
 * * *
@@ -154,18 +152,18 @@ Relative movement is made possible via the "turtle" pointer interface and is
 based on angle, X/Y or other known variables. All relative values are sanity
 checked to avoid crashes.
 
-### GET /move/forward/:amount
+### GET /move.forward./:amount
 Steps the turtle forward (based on angle) from current position.
 
-### GET /move/nudge/x/:amount & /move/nudge/y/:amount
+### GET /move.nudge.x./:amount & /move.nudge.y./:amount
 Nudges the turtle X or Y value by the given amount. Allows for positive or
 negative values, does not change turtle angle.
 
-### GET /move/right/:amount & /move/left/:amount
+### GET /move.right./:amount & /move.left./:amount
 Rotate direction that the turtle is facing either right or left by the amount of
 degrees given.
 
-### GET /move/toward/:x/:y
+### GET /move.toward./:x/:y
 Absolutely sets the turtle facing direction angle towards an absolute X/Y
 coordinate *relative* to the current turtle position. Useful for "follow the
 mouse" applications.
@@ -175,11 +173,11 @@ mouse" applications.
 ## 5. Grouped functions
 These do a series of actions to help make things easier
 
-### GET /tool/color/:index & /tool/water/:index
+### GET /tool.color./:index & /tool.water./:index
 Helpers for getting water or paint on the brush based off the integer index
 number given. 0-2 for `water`, 0-7 for `color`.
 
-### GET /pen/wash
+### GET /pen.wash
 Washes the brush in all three water dishes from the top to the bottom. Does not
 park, but does life the brush when complete.
 
@@ -202,17 +200,17 @@ or group action (like getting paint).
 
 * * *
 
-### GET /pen/off
+### GET /pen.off
 Turn off motors and reset pointer to top left park position.
 
-### GET /pen/resetDistance
+### GET /pen.resetDistance
 Reset the `distanceCounter` variable back to 0.
 
-### GET /sleep/:on-off
+### GET /pen.sleep.0 & /pen.sleep.1
 Turn on or off sleep mode based on the given value, either 1 for on, 0 for off.
 Sleep mode ON will prevent the API from doing anything until sleep mode is turned
 OFF.
 
-### GET /move/wait/:seconds
+### GET /move.wait./:seconds
 Sets a "wait" command in the buffer for the specified number of seconds, decimal
 values like 0.5 are OK.
