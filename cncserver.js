@@ -43,7 +43,9 @@ gConf.env().argv();
 io.on('connection', function(socket){
   // Send buffer and pen updates on user connect
   sendPenUpdate();
-  sendBufferUpdate();
+
+  // TODO: this likely needs to be sent ONLY to new connections
+  sendBufferComplete();
 
   socket.on('disconnect', function(){
     //console.log('user disconnected');
@@ -70,12 +72,68 @@ function sendPenUpdate() {
 }
 
 /**
- * Send an update to all stream clients about everything buffer related.
- * Called whenever something about the buffer state or associated vars has
- * changed, E.G.
+ * Send an update to all stream clients when something is added to the buffer.
+ * Includes only the item added to the buffer, expects the client to handle.
  */
-function sendBufferUpdate() {
+function sendBufferAdd(item) {
   var data = {
+    type: 'add',
+    item: item
+  };
+
+  // Low-level event callback trigger to avoid Socket.io overhead
+  if (exports.bufferUpdateTrigger) {
+    exports.bufferUpdateTrigger(data);
+  } else {
+    io.emit('buffer update', data);
+  }
+}
+
+
+/**
+ * Send an update to all stream clients when something is removed from the
+ * buffer. Assumes the client knows where to remove from.
+ */
+function sendBufferRemove() {
+  var data = {
+    type: 'remove'
+  };
+
+  // Low-level event callback trigger to avoid Socket.io overhead
+  if (exports.bufferUpdateTrigger) {
+    exports.bufferUpdateTrigger(data);
+  } else {
+    io.emit('buffer update', data);
+  }
+}
+
+/**
+ * Send an update to all stream clients when something is added to the buffer.
+ * Includes only the item added to the buffer, expects the client to handle.
+ */
+function sendBufferVars() {
+  var data = {
+    type: 'vars',
+    bufferRunning: bufferRunning,
+    bufferPaused: bufferPaused,
+    bufferPausePen: bufferPausePen
+  };
+
+  // Low-level event callback trigger to avoid Socket.io overhead
+  if (exports.bufferUpdateTrigger) {
+    exports.bufferUpdateTrigger(data);
+  } else {
+    io.emit('buffer update', data);
+  }
+}
+
+/**
+ * Send an update to all stream clients about everything buffer related.
+ * Called only during connection inits.
+ */
+function sendBufferComplete() {
+  var data = {
+    type: 'complete',
     buffer: buffer,
     bufferRunning: bufferRunning,
     bufferPaused: bufferPaused,
@@ -86,12 +144,6 @@ function sendBufferUpdate() {
   if (exports.bufferUpdateTrigger) {
     exports.bufferUpdateTrigger(data);
   } else {
-    // TODO: This ALSO sucks, but sending really giant buffers via Socket.IO
-    // for every update is a TOTAL buzzkill. Syncing in memory is no biggie,
-    // but transfer overhead time for 100+ items takes longer than the standard
-    // time of execution, therefore totally killing us. A better way to handle
-    // this would be some method of only sending UPDATES (Add/Remove/Clear),
-    // course that's a bit out of scope right now :P
     io.emit('buffer update', data);
   }
 }
@@ -864,12 +916,12 @@ function serialPortReadyCallback() {
           bufferRunning = false; // Force a followup check as the paused var has changed
 
           bufferNewlyPaused = bufferPaused; // Changed to paused!
-          sendBufferUpdate();
+          sendBufferVars();
 
           // Hold on the current actualPen to return to before resuming
           if (bufferPaused) {
             bufferPausePen = extend({}, actualPen);
-            sendBufferUpdate();
+            sendBufferVars();
             setHeight('up', null, true); // Pen up for safety!
           }
         }
@@ -886,7 +938,7 @@ function serialPortReadyCallback() {
           // If we're resuming, and there's no change... clear the pause pen
           if (!bufferPaused) {
             bufferPausePen = null;
-            sendBufferUpdate();
+            sendBufferVars();
           }
         }
       }
@@ -894,7 +946,7 @@ function serialPortReadyCallback() {
       // Resuming? Move back to position we paused at (if changed)
       if (!bufferPaused && changedSincePause) {
         bufferPaused = true; // Pause for a bit until we move back to last pos
-        sendBufferUpdate();
+        sendBufferVars();
         console.log('Moving back to pre-pause position...');
 
         // Set the pen up before moving to resume position
@@ -905,7 +957,7 @@ function serialPortReadyCallback() {
               console.log('Resuming buffer!');
               bufferPaused = false;
               bufferPausePen = null;
-              sendBufferUpdate();
+              sendBufferVars();
               res.status(200).send(JSON.stringify({
                 running: bufferRunning,
                 paused: bufferPaused,
@@ -922,12 +974,11 @@ function serialPortReadyCallback() {
 
       if (!bufferNewlyPaused || buffer.length === 0) {
         bufferNewlyPaused = false; // In case paused with 0 items in buffer
-        sendBufferUpdate();
+        sendBufferVars();
         return {code: 200, body: {
           running: bufferRunning,
           paused: bufferPaused,
-          count: buffer.length,
-          buffer: buffer
+          count: buffer.length
         }};
       } else { // Buffer isn't empty and we're newly paused
         // Wait until last item has finished before returning
@@ -937,10 +988,9 @@ function serialPortReadyCallback() {
           res.status(200).send(JSON.stringify({
             running: bufferRunning,
             paused: bufferPaused,
-            count: buffer.length,
-            buffer: buffer
+            count: buffer.length
           }));
-          sendBufferUpdate();
+          sendBufferVars();
           bufferNewlyPaused = false;
         };
 
@@ -969,7 +1019,7 @@ function serialPortReadyCallback() {
       // and never sent out in the line above.
       pen = extend({}, actualPen);
 
-      sendBufferUpdate();
+      sendBufferComplete(); // SHould be fine to send as buffer is empty.
 
       console.log('Run buffer cleared!');
       return [200, 'Buffer Cleared'];
@@ -1252,7 +1302,7 @@ function serialPortReadyCallback() {
         executeNext();
       }
 
-      sendBufferUpdate();
+      sendBufferVars();
     } else { // "Standard" WaterColorBot toolchange
 
       // Pen down
@@ -1727,9 +1777,8 @@ function actuallyMove(destination, callback) {
   actualPen.x = destination.x;
   actualPen.y = destination.y;
 
-  // Trigger an update for (possible) buffer loss and actualPen change
+  // Trigger an update for pen position
   sendPenUpdate();
-  sendBufferUpdate();
 
   serialCommand(cmdstr('movexy', change)); // Send the actual X, Y and Duration
 
@@ -1768,9 +1817,8 @@ function actuallyMoveHeight(height, stateValue, callback) {
   actualPen.height = height;
   actualPen.lastDuration = commandDuration;
 
-  // Trigger an update for (possible) buffer loss and actualPen change
+  // Trigger an update for pen position
   sendPenUpdate();
-  sendBufferUpdate();
 
   // Set the pen up position (EBB)
   serialCommand(cmdstr('movez', {z: height}));
@@ -1855,7 +1903,7 @@ function run(command, data, duration) {
   // Add final command and duration to end of queue, along with a copy of the
   // pen state at this point in time to be copied to actualPen after execution
   buffer.unshift([c, duration, extend({}, pen)]);
-  sendBufferUpdate();
+  sendBufferAdd(buffer[0]);
   return true;
 }
 
@@ -1913,8 +1961,6 @@ function executeNext() {
 
       // Trigger an update for buffer loss and actualPen change
       sendPenUpdate();
-      sendBufferUpdate();
-
       executeNext();
     } else if (typeof cmd[0] === "object") { // Detailed buffer object
 
@@ -1945,21 +1991,20 @@ function executeNext() {
       // buffer item was created
       actualPen = extend({}, cmd[2]);
 
-      // Trigger an update for buffer loss and actualPen change
+      // Trigger an update for actualPen change
       sendPenUpdate();
-      sendBufferUpdate();
 
       // Actually send the command out to serial
       serialCommand(cmd[0]);
     }
 
+    sendBufferRemove();
   } else {
     // Buffer Empty? Cover our butts and ensure the "last buffer tip"
     // pen object is up to date with actualPen.
     pen = extend({}, actualPen);
 
     bufferRunning = false;
-    sendBufferUpdate();
   }
 }
 
@@ -1967,7 +2012,7 @@ function executeNext() {
 setInterval(function(){
   if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
-    sendBufferUpdate();
+    sendBufferVars();
     executeNext();
   }
 }, 10);
@@ -2003,8 +2048,7 @@ function serialCommand(command){
         serialPort.drain(function(){
           // Command should be sent! Time out the next command send
           if (commandDuration < gConf.get('bufferLatencyOffset')) {
-            //console.log('Immediate Run!');
-            executeNext();
+            executeNext(); // Under threshold, "immediate" run
           } else {
             clearTimeout(nextExecutionTimeout);
             nextExecutionTimeout = setTimeout(executeNext,

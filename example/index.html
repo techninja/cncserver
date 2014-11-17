@@ -126,6 +126,7 @@
   var pen = {};
   var lastPen = {};
   var resumePen = null;
+  var buffer= [];
   var drawPoints = []; // Array of points from buffer to draw
 
   var viewScale = 1; // The scale to adjust bot steps by for viewing
@@ -171,18 +172,33 @@
 
   // CNCServer Buffer Change events (for pause, update, or resume)
   socket.on('buffer update', function(b){
-    $('#bufrun').text(b.bufferRunning);
-    $('#bufpause').text(b.bufferPaused);
-    $('#bufcount').text(b.buffer.length);
-    resumePen = b.bufferPausePen;
+    // What KIND of buffer update is this?
+    switch (b.type) {
+      case 'complete':
+        buffer = b.buffer;
+      case 'vars':
+        $('#bufrun').text(b.bufferRunning);
+        $('#bufpause').text(b.bufferPaused);
+        $('#bufcount').text(b.buffer.length);
+        resumePen = b.bufferPausePen;
+        break;
+      case 'add':
+        console.log('ADD');
+        buffer.unshift(b.item);
+        break;
+      case 'remove':
+        console.log('REMOVE');
+        buffer.pop();
+        break;
+    }
 
     // Populate buffer list of items
     var $b = $('#buffer');
     $b.find('option').remove();
     drawPoints = [];
 
-    for (var i in b.buffer) {
-      var cmd = b.buffer[i][0];
+    for (var i in buffer) {
+      var cmd = buffer[i][0];
 
       // Skip the command if it's null
       if (cmd === null) continue;
@@ -244,7 +260,6 @@
       ctx.stroke();
       ctx.closePath;
     }
-
   });
 
 
@@ -422,4 +437,3 @@
 
 </body>
 </html>
-
