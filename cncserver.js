@@ -2019,8 +2019,8 @@ function serialCommand(command){
       // TODO: What _else_ should happen here?
     }
   } else {
-    // Trigger next command as we're simulating and would never receive the ACK
-    serialReadline(botConf.get('controller').ack);
+    // Trigger executeNext as we're simulating and "drain" would never trigger
+    setTimeout(executeNext, 1);
   }
 
   return true;
