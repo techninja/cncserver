@@ -150,7 +150,7 @@
     d+= 'tool: ' + pen.tool + "\n";
     $('#pendata').text(d);
 
-    if (pen.lastDuration - 5 > 0) {
+    if (pen.lastDuration > 250) {
       animPen = $.extend({}, lastPen);
       $(lastPen).animate({ x:pen.x, y: pen.y  }, {
         duration: pen.lastDuration - 5,
@@ -160,11 +160,12 @@
           $draw.update(animPen, pen);
         }
       });
-    } else {
-      $draw.update(pen);
-    }
 
-    lastPen = $.extend({}, pen);
+    } else {
+      $(lastPen).stop();
+      $draw.update(pen);
+      lastPen = $.extend({}, pen);
+    }
   });
 
 
