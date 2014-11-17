@@ -2020,7 +2020,15 @@ function serialCommand(command){
     }
   } else {
     // Trigger executeNext as we're simulating and "drain" would never trigger
-    setTimeout(executeNext, 1);
+    // Command should be sent! Time out the next command send
+    if (commandDuration < gConf.get('bufferLatencyOffset')) {
+      setTimeout(executeNext, 1);
+    } else {
+      clearTimeout(nextExecutionTimeout);
+      nextExecutionTimeout = setTimeout(executeNext,
+        commandDuration - gConf.get('bufferLatencyOffset')
+      );
+    }
   }
 
   return true;
