@@ -419,6 +419,8 @@ function serialPortReadyCallback() {
       x: BOT.workArea.absCenter.x,
       y: BOT.workArea.absCenter.y,
       sleeping: false,
+      reinkDistance: 0,
+      media: 'water0',
       degrees: 0,
       distanceCounter: 0
     };
@@ -492,6 +494,8 @@ function serialPortReadyCallback() {
         x: BOT.workArea.absCenter.x,
         y: BOT.workArea.absCenter.y,
         sleeping: false,
+        media: 'water0',
+        reinkDistance: 0,
         degrees: 0,
         distanceCounter: 0
       };
@@ -667,8 +671,35 @@ function serialPortReadyCallback() {
       if (pen.state === 'draw' || pen.state === 1) {
         turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
       }
+
+      // If reink initialized, check distance and initiate reink!
+      if (turtle.reinkDistance > 0 && turtle.distanceCounter > turtle.reinkDistance) {
+        turtle.distanceCounter = 0;
+
+        // Reink procedure!
+        setTool('water0dip');   // Dip in the water
+        setTool(turtle.media);  // Apply the last saved media
+        movePenAbs(turtle);     // Move back to "current" position
+        setHeight('draw');      // Set the position back to draw
+      }
+
       return {code: 200, body: ''};
     }
+
+    // Reink initialization endpoint
+    createServerEndpoint("/penreink/:distance", function(req, res) {
+      // 167.7 = 1.6mm per step * 100 mm per cm (as input)
+      var cm = parseFloat(req.params.distance);
+      turtle.reinkDistance = Math.round(req.params.distance * 167.7);
+      console.log('Reink distance: ', turtle.reinkDistance);
+    });
+
+
+    // Stop Reinking endpoint
+    createServerEndpoint("/penstopreink", function(req, res) {
+      turtle.reinkDistance = 0;
+      console.log('Reink distance: ', turtle.reinkDistance);
+    });
 
     // Pen endpoints
     createServerEndpoint("/pen", penRequest);
@@ -752,7 +783,9 @@ function serialPortReadyCallback() {
 
       // Set by ID (water/color)
       if (type) {
-        setTool(type + parseInt(req.params.id));
+        var tool = type + parseInt(req.params.id);
+        setTool(tool);
+        turtle.media = tool;
       }
 
       return {code: 200, body: ''};

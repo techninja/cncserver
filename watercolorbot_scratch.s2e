@@ -6,6 +6,8 @@
     [" ", "wash brush", "pen.wash"],
     [" ", "brush up", "pen.up"],
     [" ", "brush down", "pen.down"],
+    [" ", "reload paint every %d.distance cm", "penreink", 48],
+    [" ", "end paint reloading", "penstopreink"],
     [" ", "wait %d.time seconds", "move.wait.", 0.5],
     [" ", "move to x: %n y: %n", "coord", 0, 0],
     [" ", "move to %m.positionY %m.positionX", "coord", "center", "center"],
@@ -32,6 +34,7 @@
   ],
   "menus": {
     "colors": [0, 1, 2, 3, 4, 5, 6, 7],
+    "distance": [5, 10, 15, 20, 30, 48, 60, 70],
     "speed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     "waters": [0, 1, 2],
     "positionX": ["left", "center", "right"],

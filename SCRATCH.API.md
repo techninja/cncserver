@@ -145,6 +145,16 @@ given angle.
 ### GET /move.speed./:value
 Sets the move speed to the given value, accepts 0-10.
 
+### GET /penreink/:distance
+Sets the number of centimeters the bot will draw (movement over the canvas while
+the brush is down) before "re-inking" the brush with the last used media
+(water/paint). 48 is the default value used by RoboPaint and is recommended.
+This value is reset to 0 (do nothing) whenever the Stop button/`/reset_all` is
+triggered.
+
+### GET /penstopreink
+A shortcut to set the re-ink distance to 0, or OFF.
+
 * * *
 
 ## 4. Relative movement/settings
