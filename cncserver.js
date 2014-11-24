@@ -504,6 +504,7 @@ function serialPortReadyCallback() {
       // @see /v1/buffer/ DELETE
       buffer = [];
       pen = extend({}, actualPen);
+      sendBufferComplete();
 
       pollData["_busy"] = []; // Clear busy indicators
       return {code: 200, body: ''};
