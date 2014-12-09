@@ -693,6 +693,7 @@ function serialPortReadyCallback() {
       var cm = parseFloat(req.params.distance);
       turtle.reinkDistance = Math.round(req.params.distance * 167.7);
       console.log('Reink distance: ', turtle.reinkDistance);
+      return {code: 200, body: ''};
     });
 
 
@@ -700,6 +701,7 @@ function serialPortReadyCallback() {
     createServerEndpoint("/penstopreink", function(req, res) {
       turtle.reinkDistance = 0;
       console.log('Reink distance: ', turtle.reinkDistance);
+      return {code: 200, body: ''};
     });
 
     // Pen endpoints
