@@ -186,6 +186,7 @@ var pen = {
   height: 0, // Last set pen height in output servo value
   busy: false,
   tool: 'color0',
+  offCanvas: false,
   lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0 // Fake everything and act like it's working, no serial
@@ -418,6 +419,7 @@ function serialPortReadyCallback() {
     var turtle = { // Helper turtle for relative movement
       x: BOT.workArea.absCenter.x,
       y: BOT.workArea.absCenter.y,
+      limit: 'workArea',
       sleeping: false,
       reinkDistance: 0,
       media: 'water0',
@@ -493,6 +495,7 @@ function serialPortReadyCallback() {
       turtle = { // Reset to default
         x: BOT.workArea.absCenter.x,
         y: BOT.workArea.absCenter.y,
+        limit: 'workArea', // Limits movements to bot work area
         sleeping: false,
         media: 'water0',
         reinkDistance: 0,
@@ -648,28 +651,11 @@ function serialPortReadyCallback() {
         console.log('Move pen to coord ' + turtle.x + ' ' + turtle.y);
       }
 
-      // Sanity check values
-      if (turtle.x > BOT.maxArea.width) {
-        turtle.x = BOT.maxArea.width;
-      }
-
-      if (turtle.x < BOT.workArea.left) {
-        turtle.x = BOT.workArea.left;
-      }
-
-      if (turtle.y > BOT.maxArea.height) {
-        turtle.y = BOT.maxArea.height;
-      }
-
-      if (turtle.y < BOT.workArea.top) {
-        turtle.y = BOT.workArea.top;
-      }
-
-      // Actually move pen
+      // Attempt to move pen to desired point (may be off screen)
       var distance = movePenAbs(turtle);
 
       // Add up distance counter
-      if (pen.state === 'draw' || pen.state === 1) {
+      if ((pen.state === 'draw' || pen.state === 1) && !pen.offCanvas) {
         turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
       }
 
@@ -745,7 +731,14 @@ function serialPortReadyCallback() {
         if (op == 'down') {
           op = 'draw';
         }
-        setHeight(op);
+
+        // Don't set the height explicitly when off the canvas
+        if (!pen.offCanvas) {
+          setHeight(op);
+        } else {
+          // Save the state for when we come back
+          pen.state = op;
+        }
       }
 
       // Run simple wash
@@ -1154,7 +1147,14 @@ function serialPortReadyCallback() {
 
     // State/z position has been passed
     if (typeof inPen.state != "undefined") {
-      setHeight(inPen.state, callback, inPen.skipBuffer);
+      // Disallow actual pen setting when off canvas (unless skipping buffer)
+      if (!pen.offCanvas || inPen.skipBuffer) {
+        setHeight(inPen.state, callback, inPen.skipBuffer);
+      } else {
+        // Save the state anyways so we can come back to it
+        pen.state = inPen.state;
+        if (callback) callback(1);
+      }
       return;
     }
 
@@ -1168,15 +1168,9 @@ function serialPortReadyCallback() {
         return;
       }
 
-      // Sanity check incoming values
-      inPen.x  = inPen.x > 100 ? 100 : inPen.x;
-      inPen.x  = inPen.x < 0 ? 0 : inPen.x;
-
-      inPen.y  = inPen.y > 100 ? 100 : inPen.y;
-      inPen.y  = inPen.y < 0 ? 0 : inPen.y;
-
       // Convert the percentage values into real absolute and appropriate values
       var absInput = centToSteps(inPen);
+      absInput.limit = 'workArea';
 
       // Are we parking?
       if (inPen.park) {
@@ -1190,6 +1184,7 @@ function serialPortReadyCallback() {
         // Set Absolute input value to park position in steps
         absInput.x = park.x;
         absInput.y = park.y;
+        absInput.limit = 'maxArea';
       }
 
       // Adjust the distance counter based on movement amount
@@ -1366,9 +1361,10 @@ function serialPortReadyCallback() {
    * "Move" the pen (tip of the buffer) to an absolute point inside the maximum
    * available bot area. Includes cutoffs and sanity checks.
    *
-   * @param {{x: number, y: number}} point
+   * @param {{x: number, y: number, [limit: string]}} inPoint
    *   Absolute coordinate measured in steps to move to. src is assumed to be
-   *   "pen" tip of buffer.
+   *   "pen" tip of buffer. Also can contain optional "limit" key to set where
+   *   movement should be limited to. Defaults to none, accepts "workArea".
    * @param {function} callback
    *   Callback triggered when operation should be complete.
    * @param {boolean} immediate
@@ -1379,25 +1375,62 @@ function serialPortReadyCallback() {
    * @returns {number}
    *   Distance moved from previous position, in steps.
    */
-  function movePenAbs(point, callback, immediate, skipBuffer) {
-
+  function movePenAbs(inPoint, callback, immediate, skipBuffer) {
     // Something really bad happened here...
-    if (isNaN(point.x) || isNaN(point.y)){
-      console.error('INVALID Move pen input, given:', point);
+    if (isNaN(inPoint.x) || isNaN(inPoint.y)){
+      console.error('INVALID Move pen input, given:', inPoint);
       if (callback) callback(false);
       return 0;
     }
 
-    // Sanity check absolute position input point
-    point.x = Number(point.x) > BOT.maxArea.width ? BOT.maxArea.width : point.x;
-    point.x = Number(point.x) < 0 ? 0 : point.x;
+    // Make a local copy of point as we don't want to mess with its values ByRef
+    var point = extend({}, inPoint);
 
-    point.y = Number(point.y) > BOT.maxArea.height ? BOT.maxArea.height : point.y;
-    point.y = Number(point.y) < 0 ? 0 : point.y;
+    // Sanity check absolute position input point and round everything (as we
+    // only move in whole number steps)
+    point.x = Math.round(Number(point.x));
+    point.y = Math.round(Number(point.y));
 
-    // Round everything (as we only move in whole number steps)
-    point.x = Math.round(point.x);
-    point.y = Math.round(point.y);
+    // If moving in the workArea only, limit to allowed workArea, and trigger
+    // on/off screen events when we go offscreen, retaining suggested position.
+    var startOffCanvasChange = false;
+    if (point.limit === 'workArea') {
+      // Off the Right
+      if (point.x > BOT.workArea.right) {
+        point.x = BOT.workArea.right;
+        startOffCanvasChange = true;
+      }
+
+      // Off the Left
+      if (point.x < BOT.workArea.left) {
+        point.x = BOT.workArea.left;
+        startOffCanvasChange = true;
+      }
+
+      // Off the Top
+      if (point.y < BOT.workArea.top) {
+        point.y = BOT.workArea.top;
+        startOffCanvasChange = true;
+      }
+
+      // Off the Bottom
+      if (point.y > BOT.workArea.bottom) {
+        point.y = BOT.workArea.bottom;
+        startOffCanvasChange = true;
+      }
+
+      // Are we beyond our workarea limits?
+      if (startOffCanvasChange) { // Yep.
+        // We MUST trigger the start offscreen change AFTER the movement to draw
+        // up to that point (which happens later).
+      } else { // Nope!
+        // The off canvas STOP trigger must happen BEFORE the move happens
+        // (which is fine right here)
+        offCanvasChange(false);
+      }
+    }
+
+    sanityCheckAbsoluteCoord(point); // Ensure values don't go off the rails
 
     // If we're skipping the buffer, just move to the point
     // Pen stays put as last point set in buffer
@@ -1433,12 +1466,17 @@ function serialPortReadyCallback() {
     // Save the duration state
     //pen.lastDuration = duration;
 
-    // Set pen at new position
+    // Set the tip of buffer pen at new position
     pen.x = point.x;
     pen.y = point.y;
 
     // Queue the final absolute move (serial command generated later)
     run('move', {x: pen.x, y: pen.y}, duration);
+
+    // Required start offCanvas change -after- movement has been queued
+    if (startOffCanvasChange) {
+      offCanvasChange(true);
+    }
 
     if (callback) {
       if (immediate == 1) {
@@ -1516,6 +1554,39 @@ function serialPortReadyCallback() {
       }
     }
   }
+}
+
+/**
+ * Triggered when the pen is requested to move across the bounds of the draw
+ * area (either in or out).
+ *
+ * @param {boolean} newValue
+ *   Pass true when moving "off screen", false when moving back into bounds
+ */
+function offCanvasChange(newValue) {
+  if (pen.offCanvas !== newValue) { // Only do anything if the value is different
+    pen.offCanvas = newValue;
+    if (pen.offCanvas) { // Pen is now off screen/out of bounds
+      if (pen.state === 'draw' || pen.state === 1) {
+        // Don't draw stuff while out of bounds (also, don't change the current
+        // known state so we can come back to it when we return to bounds)
+        run('callback', function() {
+          exports.setHeight('up', false, true);
+        });
+      }
+    } else { // Pen is now back in bounds
+      // Set the state regardless of actual change
+      console.log('Go Back to:', pen.state);
+      exports.setHeight(pen.state);
+    }
+  }
+}
+
+function sanityCheckAbsoluteCoord(point) {
+  point.x = point.x > BOT.maxArea.width ? BOT.maxArea.width : point.x;
+  point.y = point.y > BOT.maxArea.height ? BOT.maxArea.height : point.y;
+  point.x = point.x < 0 ? 0 : point.x;
+  point.y = point.y < 0 ? 0 : point.y;
 }
 
 /**
@@ -1619,7 +1690,9 @@ function loadBotConfig(cb, botType) {
       BOT = {
         workArea: {
           left: Number(botConf.get('workArea:left')),
-          top: Number(botConf.get('workArea:top'))
+          top: Number(botConf.get('workArea:top')),
+          right: Number(botConf.get('maxArea:width')),
+          bottom: Number(botConf.get('maxArea:height'))
         },
         maxArea: {
           width: Number(botConf.get('maxArea:width')),
@@ -2038,6 +2111,10 @@ function executeNext() {
   } else {
     // Buffer Empty? Cover our butts and ensure the "last buffer tip"
     // pen object is up to date with actualPen.
+
+    // Save the offCanvas variable value to ensure it carries along with the tip
+    // of the buffer.
+    actualPen.offCanvas = pen.offCanvas;
     pen = extend({}, actualPen);
 
     bufferRunning = false;
