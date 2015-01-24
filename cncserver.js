@@ -1857,7 +1857,7 @@ function getDurationFromDistance(distance, min) {
   if (typeof min === "undefined") min = 1;
 
   // Use given speed over distance to calculate duration
-  var speed = pen.state ? botConf.get('speed:drawing') : botConf.get('speed:moving');
+  var speed = (actualPen.state === 'draw' || actualPen.state === 1) ? botConf.get('speed:drawing') : botConf.get('speed:moving');
     speed = (speed/100) * botConf.get('speed:max'); // Convert to steps from percentage
 
     // Sanity check speed value
