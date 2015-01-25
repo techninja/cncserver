@@ -9,7 +9,7 @@
     "express": "~3.0.0",
     "ini": "1.1.0",
     "nconf": "0.6.9",
-    "serialport": "1.4.10",
+    "serialport": "voodootikigod/node-serialport#80b8c5f",
     "socket.io": "^1.1.0"
   },
   "repository": {
