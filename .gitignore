@@ -18,3 +18,5 @@ npm-debug.log
 config.ini
 
 .DS_Store
+/nbproject/*
+
