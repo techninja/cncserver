@@ -60,6 +60,7 @@ Content-Type: application/json; charset=UTF-8
     "y": 281,
     "state": 1,              // Pen state is from 0 (Up/Off) to 1 (Down/On)*
     "height": 12372,         // The last sent servo position height value
+    "power": 0,              // The amount of power given to the pen (not always supported)
     "tool": color2,          // Machine name of last tool
     "lastDuration": 1288,    // The duration of the last movement
     "distanceCounter": 231,  // Distance traveled in steps with pen down
@@ -127,6 +128,17 @@ Content-Type: application/json; charset=UTF-8
 
 {
     "resetCounter": 1 // Should be 0 or 1
+}
+
+```
+
+#### Request Example (set power)
+```javascript
+PUT /v1/pen
+Content-Type: application/json; charset=UTF-8
+
+{
+    "power": 0.75  // Pen power is a float from 0 (Full off) to 1 (Full on)
 }
 
 ```
