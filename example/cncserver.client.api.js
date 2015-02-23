@@ -76,6 +76,25 @@ cncserver.api = {
       this.height(1, callback, options);
     },
 
+    /**
+    * Set power of the pen
+    * @param {float|string} value
+    *   0 to 1 float
+    * @param {function} callback
+    *   Function to callback when done, including data from response body
+    */
+    power: function(value, callback){
+      _put('pen', {
+        data: {power: value},
+        success: function(d){
+          if (callback) callback(d);
+        },
+        error: function(e) {
+          if (callback) callback(false);
+        }
+      });
+    },
+
    /**
     * Reset server state for distanceCounter
     * @param {function} callback
