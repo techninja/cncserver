@@ -1130,7 +1130,7 @@ function serialPortReadyCallback() {
     if (typeof inPen.power !== "undefined") {
       powers = botConf.get('penpower');
       if(typeof powers === "undefined") { // We have no super powers
-        powers = {min: 0, max: 0};  //Set the powers to zero
+        powers = {min: 0, max: 0};  // Set the powers to zero
       }
 
       run('custom', cmdstr('penpower', {p: Math.round(inPen.power * powers.max) + Number(powers.min)}));
