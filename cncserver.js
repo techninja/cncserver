@@ -1136,6 +1136,7 @@ function serialPortReadyCallback() {
       run('custom', cmdstr('penpower', {p: Math.round(inPen.power * powers.max) + Number(powers.min)}));
       pen.power = inPen.power;
       if (callback) callback(true);
+      return
     }
 
     // Setting the value of simulation
