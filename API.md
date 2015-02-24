@@ -133,6 +133,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Request Example (set power)
+This will set the PWM output on B3 of the EBB
 ```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
