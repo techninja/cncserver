@@ -342,7 +342,7 @@ function standaloneOrModuleInit() {
       require("serialport").list(function (err, ports) {
         cb(ports);
       });
-    }
+    };
 
     // Export ReST Server endpoint creation utility
     exports.createServerEndpoint = cncserver.createServerEndpoint;
@@ -376,7 +376,7 @@ function startServer() {
 
   // Catch Addr in Use Error
   server.on('error', function (e) {
-    if (e.code == 'EADDRINUSE') {
+    if (e.code === 'EADDRINUSE') {
       console.log('Address in use, retrying...');
       setTimeout(function () {
         closeServer();
@@ -396,7 +396,7 @@ function closeServer() {
   try {
     server.close();
   } catch(e) {
-    console.log("Whoops, server wasn't running.. Oh well.")
+    console.log("Whoops, server wasn't running.. Oh well.");
   }
 }
 
@@ -424,7 +424,7 @@ function serialPortReadyCallback() {
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
   cncserver.createServerEndpoint("/v1/settings", function(req, res){
-    if (req.route.method == 'get') { // Get list of tools
+    if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
         bot: '/v1/settings/bot'
@@ -441,15 +441,15 @@ function serialPortReadyCallback() {
       return [404, 'Settings group not found'];
     }
 
-    var conf = setType == 'global' ? cncserver.gConf : cncserver.botConf;
+    var conf = setType === 'global' ? cncserver.gConf : cncserver.botConf;
 
     function getSettings() {
       var out = {};
       // Clean the output for global as it contains all commandline env vars!
-      if (setType == 'global') {
+      if (setType === 'global') {
         var g = conf.get();
         for (var i in g) {
-          if (i == "botOverride") {
+          if (i === "botOverride") {
             break;
           }
           out[i] = g[i];
@@ -461,9 +461,9 @@ function serialPortReadyCallback() {
     }
 
     // Get the full list for the type
-    if (req.route.method == 'get') {
+    if (req.route.method === 'get') {
       return {code: 200, body: getSettings()};
-    } else if (req.route.method == 'put') {
+    } else if (req.route.method === 'put') {
       for (var i in req.body) {
         conf.set(i, req.body[i]);
       }
@@ -475,7 +475,7 @@ function serialPortReadyCallback() {
 
   // Return/Set PEN state  API =================================================
   cncserver.createServerEndpoint("/v1/pen", function(req, res){
-    if (req.route.method == 'put') {
+    if (req.route.method === 'put') {
       // SET/UPDATE pen status
       setPen(req.body, function(stat){
         if (!stat) {
@@ -491,7 +491,7 @@ function serialPortReadyCallback() {
       });
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method == 'delete'){
+    } else if (req.route.method === 'delete'){
       // Reset pen to defaults (park)
       setHeight('up', function(){
         setPen({
@@ -510,7 +510,7 @@ function serialPortReadyCallback() {
       }, req.body.skipBuffer);
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method == 'get'){
+    } else if (req.route.method === 'get'){
       if (req.query.actual) {
         return {code: 200, body: cncserver.actualPen};
       } else {
@@ -524,11 +524,11 @@ function serialPortReadyCallback() {
   // Return/Set Motor state API ================================================
   cncserver.createServerEndpoint("/v1/motors", function(req, res){
     // Disable/unlock motors
-    if (req.route.method == 'delete') {
+    if (req.route.method === 'delete') {
       run('custom', 'EM,0,0');
       return [201, 'Disable Queued'];
-    } else if (req.route.method == 'put') {
-      if (req.body.reset == 1) {
+    } else if (req.route.method === 'put') {
+      if (req.body.reset === 1) {
         // ZERO motor position to park position
         var park = centToSteps(cncserver.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
@@ -553,7 +553,7 @@ function serialPortReadyCallback() {
         cncserver.actualPen.lastDuration = 0;
 
         sendPenUpdate();
-        console.log('Motor offset reset to park position')
+        console.log('Motor offset reset to park position');
         return [200, 'Motor offset reset to park position'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
@@ -565,13 +565,13 @@ function serialPortReadyCallback() {
 
   // Command buffer API ========================================================
   cncserver.createServerEndpoint("/v1/buffer", function(req, res){
-    if (req.route.method == 'get' || req.route.method == 'put') {
+    if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
-      if (typeof req.body.paused == "string") {
-        req.body.paused = req.body.paused == "true" ? true : false;
+      if (typeof req.body.paused === "string") {
+        req.body.paused = req.body.paused === "true" ? true : false;
       }
 
-      if (typeof req.body.paused == "boolean") {
+      if (typeof req.body.paused === "boolean") {
         if (req.body.paused != bufferPaused) {
           bufferPaused = req.body.paused;
           console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
@@ -658,18 +658,18 @@ function serialPortReadyCallback() {
 
         return true; // Don't finish the response till later
       }
-    } else if (req.route.method == 'post') {
+    } else if (req.route.method === 'post') {
       // Create a status message/callback and shuck it into the buffer
-      if (typeof req.body.message == "string") {
+      if (typeof req.body.message === "string") {
         run('message', req.body.message);
         return [200, 'Message added to buffer'];
-      } else if (typeof req.body.callback == "string") {
+      } else if (typeof req.body.callback === "string") {
         run('callbackname', req.body.callback);
         return [200, 'Callback name added to buffer'];
       } else {
         return [400, '/v1/buffer POST only accepts data "message" or "callback"'];
       }
-    } else if (req.route.method == 'delete') {
+    } else if (req.route.method === 'delete') {
       buffer = [];
       bufferRunning = false;
 
@@ -692,7 +692,7 @@ function serialPortReadyCallback() {
 
   // Get/Change Tool API =======================================================
   cncserver.createServerEndpoint("/v1/tools", function(req, res){
-    if (req.route.method == 'get') { // Get list of tools
+    if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body:{tools: Object.keys(cncserver.botConf.get('tools'))}};
     } else {
       return false;
@@ -702,7 +702,7 @@ function serialPortReadyCallback() {
   cncserver.createServerEndpoint("/v1/tools/:tool", function(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
-    if (req.route.method == 'put') { // Set Tool
+    if (req.route.method === 'put') { // Set Tool
       if (cncserver.botConf.get('tools:' + toolName)){
         setTool(toolName, function(data){
           cncserver.pen.tool = toolName;
@@ -762,12 +762,12 @@ function serialPortReadyCallback() {
     if (typeof inPen.simulation != "undefined") {
 
       // No change
-      if (inPen.simulation == cncserver.pen.simulation) {
+      if (inPen.simulation === cncserver.pen.simulation) {
         callback(true);
         return;
       }
 
-      if (inPen.simulation == 0) { // Attempt to connect to serial
+      if (inPen.simulation === 0) { // Attempt to connect to serial
         connectSerial({complete: callback});
       } else {  // Turn off serial!
         // TODO: Actually nullify connection.. no use case worth it yet
@@ -809,7 +809,7 @@ function serialPortReadyCallback() {
       if (inPen.park) {
         // Don't repark if already parked (but not if we're skipping the buffer)
         var park = centToSteps(cncserver.bot.park, true);
-        if (cncserver.pen.x == park.x && cncserver.pen.y == park.y && !inPen.skipBuffer) {
+        if (cncserver.pen.x === park.x && cncserver.pen.y === park.y && !inPen.skipBuffer) {
           if (callback) callback(false);
           return;
         }
@@ -944,7 +944,7 @@ function serialPortReadyCallback() {
 
     // Set the height based on what kind of tool it is
     // TODO: fold this into bot specific tool change logic
-    var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'draw';
+    var downHeight = toolName.indexOf('water') !== -1 ? 'wash' : 'draw';
 
     // Pen Up
     setHeight('up');
@@ -953,7 +953,7 @@ function serialPortReadyCallback() {
     movePenAbs(tool);
 
     // "wait" tools need user feedback to let cncserver know that it can continue
-    if (typeof tool.wait != "undefined") {
+    if (typeof tool.wait !== "undefined") {
 
       if (callback){
         run('callback', callback);
@@ -983,7 +983,7 @@ function serialPortReadyCallback() {
       // If there's a callback to run...
       if (callback){
         if (!ignoreTimeout) { // Run inside the buffer
-          run('callback', callback)
+          run('callback', callback);
         } else { // Run as soon as items have been buffered
           callback(1);
         }
@@ -1080,10 +1080,10 @@ function serialPortReadyCallback() {
     var change = {
       x: Math.round(point.x - cncserver.pen.x),
       y: Math.round(point.y - cncserver.pen.y)
-    }
+    };
 
     // Don't do anything if there's no change
-    if (change.x == 0 && change.y == 0) {
+    if (change.x === 0 && change.y === 0) {
       if (callback) callback(cncserver.pen);
       return 0;
     }
@@ -1115,7 +1115,7 @@ function serialPortReadyCallback() {
     }
 
     if (callback) {
-      if (immediate == 1) {
+      if (immediate === 1) {
         callback(cncserver.pen);
       } else {
         // Set the timeout to occur sooner so the next command will execute
@@ -1271,7 +1271,7 @@ function loadGlobalConfig(cb) {
     if(!fs.existsSync(configPath)) {
       var def = cncserver.gConf.stores['defaults'].store;
       for(var key in def) {
-        if (key != 'type'){
+        if (key !== 'type'){
           cncserver.gConf.set(key, def[key]);
         }
       }
@@ -1339,7 +1339,7 @@ function loadBotConfig(cb, botType) {
           y: Number(cncserver.botConf.get('park:y'))
         },
         commands : cncserver.botConf.get('controller').commands
-      }
+      };
 
       // Store assumed constants
       cncserver.bot.workArea.width = cncserver.bot.maxArea.width - cncserver.bot.workArea.left;
@@ -1366,7 +1366,7 @@ function loadBotConfig(cb, botType) {
         cncserver.gConf.set('swapMotors', cncserver.botConf.get('controller:swapMotors'));
       }
 
-      console.log('Successfully loaded config for ' + cncserver.botConf.get('name') + '! Initializing...')
+      console.log('Successfully loaded config for ' + cncserver.botConf.get('name') + '! Initializing...');
 
       // Trigger the callback once we're done
       if (cb) cb();
@@ -1414,7 +1414,7 @@ cncserver.createServerEndpoint = function(path, callback){
         status: cbStat[1]
       }));
     } else if(what.call(cbStat) === '[object Object]') { // Full message
-      if (typeof cbStat.body == "string") { // Send plaintext if body is string
+      if (typeof cbStat.body === "string") { // Send plaintext if body is string
         res.set('Content-Type', 'text/plain; charset=UTF-8');
         res.status(cbStat.code).send(cbStat.body);
       } else {
@@ -1446,7 +1446,7 @@ function getPosChangeData(src, dest) {
   var duration = getDurationFromDistance(getVectorLength(change));
 
   // Adjust change direction/inversion
-  if (cncserver.botConf.get('controller').position == "relative") {
+  if (cncserver.botConf.get('controller').position === "relative") {
     // Invert X or Y to match stepper direction
     change.x = cncserver.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
     change.y = cncserver.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
@@ -1460,7 +1460,7 @@ function getPosChangeData(src, dest) {
     change = {
       x: change.y,
       y: change.x
-    }
+    };
   }
 
   return {d: duration, x: change.x, y: change.y};
@@ -1837,7 +1837,7 @@ function serialCommand(command){
  */
 
 function serialReadline(data) {
-  if (data.trim() != cncserver.botConf.get('controller').ack) {
+  if (data.trim() !== cncserver.botConf.get('controller').ack) {
     console.error('Message From Controller: ' + data);
   }
 }
@@ -1879,7 +1879,7 @@ function connectSerial(options){
   var stat = false;
 
   // Attempt to auto detect EBB Board via PNPID
-  if (cncserver.gConf.get('serialPath') == "" || cncserver.gConf.get('serialPath') == '{auto}') {
+  if (cncserver.gConf.get('serialPath') === "" || cncserver.gConf.get('serialPath') === '{auto}') {
     autoDetect = true;
     console.log('Finding available serial ports...');
   } else {
@@ -1909,7 +1909,7 @@ function connectSerial(options){
     console.log('Available Serial ports: ' + portNames.join(', '));
 
     // Try to connect to serial, or exit with error codes
-    if (cncserver.gConf.get('serialPath') == "" || cncserver.gConf.get('serialPath') == '{auto}') {
+    if (cncserver.gConf.get('serialPath') === "" || cncserver.gConf.get('serialPath') === '{auto}') {
       console.log(cncserver.botConf.get('controller').name + " not found. Are you sure it's connected? Error #22");
       if (options.error) options.error(cncserver.botConf.get('controller').name + ' not found.');
     } else {
