@@ -4,7 +4,7 @@
 
 /**
  * @file CNC Server for communicating with hardware via serial commands!
- * Supports EiBotBoart for Eggbot, Ostrich Eggbot and Sylvia's Super-Awesome
+ * Supports EiBotBoard for Eggbot, Ostrich Eggbot and Sylvia's Super-Awesome
  * WaterColorBot
  *
  * This script can be run standalone via 'node cncserver.js' with command line
