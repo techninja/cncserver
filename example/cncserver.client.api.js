@@ -365,8 +365,17 @@ function _request(method, path, options) {
     return;
   }
 
+  var srvPath = "";
+
+  // If given an absolute server path, use it directly
+  if (path[0] === '/') {
+    srvPath = path;
+  } else { // Otherwise, construct an absolute path from versioned API path
+    srvPath = '/v' + srv.version + '/' + path
+  }
+
   $.ajax({
-    url: srv.protocol + '://' + srv.domain + ':' + srv.port + '/v' + srv.version + '/' + path,
+    url: srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath,
     type: method,
     data: options.data,
     success: options.success,
