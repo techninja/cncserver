@@ -1,6 +1,5 @@
 /*jslint node: true */
-/*global describe, it */
-'use strict';
+"use strict";
 
 /**
  * @file CNC Server for communicating with hardware via serial commands!
@@ -66,6 +65,7 @@ io.on('connection', function(socket){
  * Called whenever actualPen object has been changed, E.G.: right before
  * a serial command is run, or internal state changes.
  */
+cncserver.sendPenUpdate = sendPenUpdate;
 function sendPenUpdate() {
   // Low-level event callback trigger to avoid Socket.io overhead
   if (exports.penUpdateTrigger) {
@@ -139,6 +139,7 @@ function sendBufferVars() {
  * Send an update to all stream clients about everything buffer related.
  * Called only during connection inits.
  */
+cncserver.sendBufferComplete = sendBufferComplete;
 function sendBufferComplete() {
   var data = {
     type: 'complete',
@@ -301,7 +302,7 @@ function standaloneOrModuleInit() {
           }
         });
       }, options.botType);
-    }
+    };
 
     // Retreieve list of bot configs
     exports.getSupportedBots = function() {
@@ -317,13 +318,13 @@ function standaloneOrModuleInit() {
         };
       }
       return out;
-    }
+    };
 
     // Direct configuration access (use the getters and override setters!)
     exports.conf = {
       bot: cncserver.botConf,
       global: cncserver.gConf
-    }
+    };
 
     // Export to reset global config
     exports.loadGlobalConfig = loadGlobalConfig;
@@ -670,16 +671,11 @@ function serialPortReadyCallback() {
         return [400, '/v1/buffer POST only accepts data "message" or "callback"'];
       }
     } else if (req.route.method === 'delete') {
-      buffer = [];
+      cncserver.clearBuffer();
       bufferRunning = false;
 
       bufferPausePen = null; // Resuming with an empty buffer is silly
       bufferPaused = false;
-
-      // Reset the state of the buffer tip pen to the state of the actual robot.
-      // If this isn't done, it will be assumed to be a state that was deleted
-      // and never sent out in the line above.
-      cncserver.pen = extend({}, cncserver.actualPen);
 
       sendBufferComplete(); // SHould be fine to send as buffer is empty.
 
@@ -1219,6 +1215,21 @@ function serialPortReadyCallback() {
   }
 }
 
+
+/**
+ * Helper function for clearing the buffer. Used mainly by plugins.
+ *
+ */
+cncserver.clearBuffer = function() {
+  buffer = [];
+
+  // Reset the state of the buffer tip pen to the state of the actual robot.
+  // If this isn't done, it will be assumed to be a state that was deleted
+  // and never sent out.
+  cncserver.pen = extend({}, cncserver.actualPen);
+
+};
+
 /**
  * Triggered when the pen is requested to move across the bounds of the draw
  * area (either in or out).
@@ -1271,6 +1282,7 @@ function sanityCheckAbsoluteCoord(point) {
  * @returns {{x: number, y: number}}
  *   Converted coordinate in steps.
  */
+cncserver.centToSteps = centToSteps;
 function centToSteps(point, inMaxArea) {
   if (!inMaxArea) { // Calculate based on workArea
     return {
@@ -1304,7 +1316,7 @@ function loadGlobalConfig(cb) {
 
     // Save Global Conf file defaults if not saved
     if(!fs.existsSync(configPath)) {
-      var def = cncserver.gConf.stores['defaults'].store;
+      var def = cncserver.gConf.stores.defaults.store;
       for(var key in def) {
         if (key !== 'type'){
           cncserver.gConf.set(key, def[key]);
@@ -1388,7 +1400,7 @@ function loadBotConfig(cb, botType) {
       cncserver.bot.workArea.absCenter = {
         x: cncserver.bot.workArea.relCenter.x + cncserver.bot.workArea.left,
         y: cncserver.bot.workArea.relCenter.y + cncserver.bot.workArea.top
-      }
+      };
 
 
       // Set initial pen position at park position
@@ -1458,7 +1470,7 @@ cncserver.createServerEndpoint = function(path, callback){
 
     }
   });
-}
+};
 
 /**
  * Given two points, find the difference and duration at current speed between them
@@ -1475,7 +1487,7 @@ function getPosChangeData(src, dest) {
    var change = {
     x: Math.round(dest.x - src.x),
     y: Math.round(dest.y - src.y)
-  }
+  };
 
   // Calculate distance
   var duration = getDurationFromDistance(getVectorLength(change));
@@ -1641,6 +1653,7 @@ var commandDuration = 0;
  * @returns {boolean}
  *   Return false if failure, true if success
  */
+cncserver.run = run;
 function run(command, data, duration) {
   var c = '';
 

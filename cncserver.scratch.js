@@ -1,5 +1,4 @@
 /*jslint node: true */
-/*global describe, it */
 'use strict';
 
 /**
@@ -40,7 +39,8 @@ exports.initAPI = function(cncserverArg) {
     out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
 
     // Loop through all existing/static pollData
-    for (var key in this) {
+    var key = "";
+    for (key in this) {
       if (typeof this[key] === 'object') {
         var v = (typeof this[key] === 'string') ?  this[key] : this[key].join(' ');
 
@@ -51,7 +51,7 @@ exports.initAPI = function(cncserverArg) {
     }
 
     // Throw in full pen data as well
-    for (var key in cncserver.pen) {
+    for (key in cncserver.pen) {
       if (key === 'x') {}
       else if (key === 'y') {}
       else if (key === 'distanceCounter') {}
@@ -65,14 +65,14 @@ exports.initAPI = function(cncserverArg) {
   // Helper function to add/remove busy watchers
   // TODO: Not fully implemented as performance is better without waiting.
   pollData.busy = function(id, destroy) {
-    if (!pollData['_busy']) pollData['_busy'] = []; // Add busy placeholder)
+    if (!pollData._busy) pollData._busy = []; // Add busy placeholder)
 
-    var index = pollData['_busy'].indexOf(id);
+    var index = pollData._busy.indexOf(id);
 
     if (destroy && index > -1) { // Remove
-      pollData['_busy'].splice(index, 1);
+      pollData._busy.splice(index, 1);
     } else if (!destroy && index === -1) { // Add!
-      pollData['_busy'].push(id);
+      pollData._busy.push(id);
     }
   };
 
@@ -103,11 +103,10 @@ exports.initAPI = function(cncserverArg) {
 
     // Clear Run Buffer
     // @see /v1/buffer/ DELETE
-    buffer = [];
-    cncserver.cncserver.pen = extend({}, cncserver.actualPen);
-    sendBufferComplete();
+    cncserver.clearBuffer();
+    cncserver.sendBufferComplete();
 
-    pollData["_busy"] = []; // Clear busy indicators
+    pollData._busy = []; // Clear busy indicators
     return {code: 200, body: ''};
   });
 
@@ -187,7 +186,7 @@ function moveRequest(req, res){
   // Arbitrary Wait
   if (op === 'wait') {
     arg = parseFloat(arg) * 1000;
-    run('wait', false, arg);
+    cncserver.run('wait', false, arg);
     return {code: 200, body: ''};
   }
 
@@ -263,7 +262,7 @@ function moveRequest(req, res){
       var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
       var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
       if (wordX > -1) {
-        var steps = centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
+        var steps = cncserver.centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
         turtle.x = steps.x;
         turtle.y = steps.y;
       } else {
@@ -354,15 +353,15 @@ function penRequest(req, res){
   // Turn off motors and zero to park pos
   if (op === 'off'){
     // Zero the assumed position
-    var park = centToSteps(cncserver.bot.park, true);
+    var park = cncserver.centToSteps(cncserver.bot.park, true);
     cncserver.pen.x = park.x;
     cncserver.pen.y = park.y;
     cncserver.actualPen.x = park.x;
     cncserver.actualPen.y = park.y;
 
     // You must zero FIRST then disable, otherwise actualPen is overwritten
-    run('custom', 'EM,0,0');
-    sendPenUpdate();
+    cncserver.run('custom', 'EM,0,0');
+    cncserver.sendPenUpdate();
   }
   return {code: 200, body: ''};
 }
