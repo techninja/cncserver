@@ -343,6 +343,28 @@ cncserver.api = {
       });
     },
   },
+
+  // Scratch turtle/abstracted API, non-ReSTful.
+  scratch: {
+    move: function(direction, amount, callback) {
+      _get('/move.' + direction + './' + amount,
+        {
+          success: function() {
+            _get('/poll', {success: function(d){
+              // Callback return objectified /poll data
+              var data = d.split("\n");
+              var out = {};
+              for (var i in data) {
+                var line = data[i].split(' ');
+                out[line[0]] = line[1];
+              }
+              callback(out);
+            }});
+          }
+        }
+      );
+    }
+  }
 };
 
 function _get(path, options) {
