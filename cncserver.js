@@ -1874,6 +1874,9 @@ function serialCommand(command){
 function serialReadline(data) {
   if (data.trim() !== cncserver.botConf.get('controller').ack) {
     console.error('Message From Controller: ' + data);
+
+    // Assume error was on startup, and resend setup
+    sendBotConfig();
   }
 }
 
