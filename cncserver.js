@@ -1232,15 +1232,23 @@ function offCanvasChange(newValue) {
     if (cncserver.pen.offCanvas) { // Pen is now off screen/out of bounds
       if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
         // Don't draw stuff while out of bounds (also, don't change the current
-        // known state so we can come back to it when we return to bounds)
+        // known state so we can come back to it when we return to bounds),
+        // but DO change the buffer tip height so that is reflected on actualPen
+        // if it's every copied over on buffer execution.
+        cncserver.pen.height = cncserver.stateToHeight('up').height;
         run('callback', function() {
           exports.setHeight('up', false, true);
         });
       }
     } else { // Pen is now back in bounds
       // Set the state regardless of actual change
-      console.log('Go Back to:', pen.state);
-      exports.setHeight(cncserver.pen.state);
+      var back = cncserver.pen.state;
+      console.log('Go back to:', back);
+
+      // Assume starting from up state & height (ensures correct timing)
+      cncserver.pen.state = "up";
+      cncserver.pen.height = cncserver.stateToHeight('up').height;
+      exports.setHeight(back);
     }
   }
 }
