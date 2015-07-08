@@ -1124,15 +1124,17 @@ function serialPortReadyCallback() {
     var distance = getVectorLength(change);
     var duration = getDurationFromDistance(distance);
 
-    // Save the duration state
-    //pen.lastDuration = duration;
 
-    // Set the tip of buffer pen at new position
-    cncserver.pen.x = point.x;
-    cncserver.pen.y = point.y;
 
-    // Queue the final absolute move (serial command generated later)
-    run('move', {x: cncserver.pen.x, y: cncserver.pen.y}, duration);
+    // Only if we actually moved anywhere should we queue a movement
+    if (distance !== 0) {
+      // Set the tip of buffer pen at new position
+      cncserver.pen.x = point.x;
+      cncserver.pen.y = point.y;
+
+      // Queue the final absolute move (serial command generated later)
+      run('move', {x: cncserver.pen.x, y: cncserver.pen.y}, duration);
+    }
 
     // Required start offCanvas change -after- movement has been queued
     if (startOffCanvasChange) {
