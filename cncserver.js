@@ -836,8 +836,8 @@ function serialPortReadyCallback() {
    * Run a servo position from a given percentage or named height value into
    * the buffer, or directly via skipBuffer.
    *
-   * @param {number|string} height
-   *   Named height preset machine name, or number between/included 0 to 1.
+   * @param {number|string} state
+   *   Named height preset machine name, or float between 0 & 1.
    * @param callback
    *   Callback triggered when operation should be complete.
    * @param skipBuffer
@@ -846,48 +846,15 @@ function serialPortReadyCallback() {
    */
   exports.setHeight = setHeight;
   cncserver.setHeight = setHeight;
-  function setHeight(height, callback, skipBuffer) {
-    var fullRange = false; // Whether to use the full min/max range
-    var min = parseInt(cncserver.botConf.get('servo:min'));
-    var max = parseInt(cncserver.botConf.get('servo:max'));
-    var range = max - min;
-    var stateValue = null; // Placeholder for what to set pen state to
-    var p = cncserver.botConf.get('servo:presets');
+  function setHeight(state, callback, skipBuffer) {
+    var stateValue = null; // Placeholder for what to normalize the pen state to
+    var height = 0; // Placeholder for servo height value
     var servoDuration = cncserver.botConf.get('servo:duration');
 
-    // Validate Height, and conform to a bottom to top based percentage 0 to 100
-    if (isNaN(parseInt(height))){ // Textual position!
-      if (p[height]) {
-        stateValue = height;
-        height = parseFloat(p[height]);
-      } else { // Textual expression not found, default to UP
-        height = p.up;
-        stateValue = 'up';
-      }
-      fullRange = true;
-    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
-      height = Math.abs(parseFloat(height));
-      height = height > 1 ?  1 : height; // Limit to 1
-      stateValue = height;
-
-      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
-      height = parseInt((1 - height) * 1000) / 10;
-    }
-
-    // Lower the range when using 0 to 1 values
-    if (!fullRange) {
-      min = ((p.draw / 100) * range) + min;
-      max = ((p.up / 100) * range) + parseInt(cncserver.botConf.get('servo:min'));
-
-      range = max - min;
-    }
-
-    // Sanity check incoming height value to 0 to 100
-    height = height > 100 ? 100 : height;
-    height = height < 0 ? 0 : height;
-
-    // Calculate the servo value from percentage
-    height = Math.round(((height / 100) * range) + min);
+    // Convert the incoming state
+    var conv = stateToHeight(state);
+      height = conv.height;
+      stateValue = conv.state;
 
     // If we're skipping the buffer, just set the height directly
     if (skipBuffer) {
@@ -896,26 +863,84 @@ function serialPortReadyCallback() {
       return;
     }
 
-    // Pro-rate the duration depending on amount of change
+    // Pro-rate the duration depending on amount of change from current to tip of buffer
     if (cncserver.pen.height) {
-      range = parseInt(cncserver.botConf.get('servo:max')) - parseInt(cncserver.botConf.get('servo:min'));
+      var range = parseInt(cncserver.botConf.get('servo:max')) - parseInt(cncserver.botConf.get('servo:min'));
       servoDuration = Math.round((Math.abs(height - cncserver.pen.height) / range) * servoDuration)+1;
     }
 
+    // Actually set tip of buffer to given sanitized state & servo height.
     cncserver.pen.height = height;
     cncserver.pen.state = stateValue;
 
     // Run the height into the command buffer
     run('height', height, servoDuration);
 
-    // Pen lift / drop
+    // Height movement callback servo movement duration offset
     if (callback) {
-      // Force the EBB block buffer for the pen change state
       setTimeout(function(){
         callback(1);
       }, Math.max(servoDuration - cncserver.gConf.get('bufferLatencyOffset'), 0));
     }
   }
+
+  /**
+   * Perform conversion from named/0-1 number state value to given pen height
+   * suitable for outputting to a Z axis control statement.
+   *
+   * @param state
+   * @returns {object}
+   *   Object containing normalized state, and numeric height value. As:
+   *   {state: [integer|string], height: [float]}
+   */
+  cncserver.stateToHeight = stateToHeight;
+  function stateToHeight(state) {
+    // Whether to use the full min/max range (used for named presets only)
+    var fullRange = false;
+    var min = parseInt(cncserver.botConf.get('servo:min'));
+    var max = parseInt(cncserver.botConf.get('servo:max'));
+    var range = max - min;
+    var normalizedState = state; // Normalize/sanitize the incoming state
+
+    var presets = cncserver.botConf.get('servo:presets');
+    var height = 0; // Placeholder for height output
+
+    // Validate Height, and conform to a bottom to top based percentage 0 to 100
+    if (isNaN(parseInt(state))){ // Textual position!
+      if (presets[state]) {
+        height = parseFloat(presets[state]);
+      } else { // Textual expression not found, default to UP
+        height = presets.up;
+        normalizedState = 'up';
+      }
+
+      fullRange = true;
+    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
+      height = Math.abs(parseFloat(state));
+      height = height > 1 ?  1 : height; // Limit to 1
+      normalizedState = height;
+
+      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
+      height = parseInt((1 - height) * 1000) / 10;
+    }
+
+    // Lower the range when using 0 to 1 values to between up and draw
+    if (!fullRange) {
+      min = ((presets.draw / 100) * range) + min;
+      max = ((presets.up / 100) * range) + parseInt(cncserver.botConf.get('servo:min'));
+
+      range = max - min;
+    }
+
+    // Sanity check incoming height value to 0 to 100
+    height = height > 100 ? 100 : height;
+    height = height < 0 ? 0 : height;
+
+    // Calculate the final servo value from percentage
+    height = Math.round(((height / 100) * range) + min);
+    return {height: height, state: normalizedState};
+  }
+
 
   /**
    * Run the operation to set the current tool (and any aggregate operations
