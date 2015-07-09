@@ -34,6 +34,19 @@
         top: 0;
         left: 0;
       }
+
+      #scratch button {
+        font-size: 30px;
+        height: 50px;
+        width: 50px;
+        line-height: 24px;
+      }
+
+      #scratch turtle {
+        font-size: 50px;
+        width: 50px;
+        display: block;
+      }
     </style>
   </head>
   <title>CNC Server Controller</title>
@@ -102,6 +115,14 @@
         <td><button class="move">100,100</button></td>
       </tr>
     </table>
+  </fieldset>
+
+  <fieldset id="scratch"><legend>Scratch API / Turtle Control</legend>
+    <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
+    <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
+    <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
+    <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
+    <turtle title="Turtle angle">&#10140;</turtle>
   </fieldset>
 
   <fieldset id="heightbuttons"><legend>Z/Servo Control</legend>
@@ -357,6 +378,21 @@
 
   // Bind button action click
   $('button').click(function(){
+    var $this = $(this);
+
+    // Bind special for scratch buttons, as they're not regular API things.
+    if ($this.parent().is('#scratch')) {
+      cncserver.api.scratch.move(
+        $this.attr('direction'),
+        $this.attr('amount'),
+        function(d) {
+          $('#scratch turtle').css('transform', 'rotate(' + (parseInt(d.angle)-90) + 'deg)');
+        }
+      );
+      return;
+    }
+
+    // Bind for normal API functionality buttons.
     var id = this.id;
     switch(id) {
       case 'diagtest':

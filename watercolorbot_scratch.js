@@ -1,10 +1,12 @@
+/*global console */
 /*
- * @file The official JavaScript based Scratch 2.0 extension for CNCServer and
- * WaterColorBot. Should mirror the abilities of the .s2e Scratch 2 Offline
- * extension.
+ * @file The official client-side JavaScript based Scratch 2.0 extension for
+ * CNCServer and WaterColorBot. Should mirror the abilities of the .s2e
+ * Scratch 2 Offline extension.
  */
 
 (function(ext) {
+  "use strict";
   // Initialize the default server location
   var cncserver = {
     api: {
@@ -113,13 +115,13 @@
         var lines = data.split("\n");
         for (var i in lines) {
           var line = lines[i].split(' ');
-          if (name == line[0]) {
+          if (name === line[0]) {
             cb(line[1]);
             return;
           }
         }
       }
-    })
+    });
   }
 
   // ===========================================================================

@@ -1,6 +1,9 @@
+/*jslint node: true */
+"use strict";
+
 /**
  * @file CNC Server for communicating with hardware via serial commands!
- * Supports EiBotBoart for Eggbot, Ostrich Eggbot and Sylvia's Super-Awesome
+ * Supports EiBotBoard for Eggbot, Ostrich Eggbot and Sylvia's Super-Awesome
  * WaterColorBot
  *
  * This script can be run standalone via 'node cncserver.js' with command line
@@ -31,13 +34,17 @@ var path = require('path');                // Path management and normalization
 var extend = require('util')._extend;      // Util for cloning objects
 var io = require('socket.io')(server);     // Socket.io for streaming state data
 
+var scratch = require('./cncserver.scratch.js'); // Scratch support/API addition
+
 // CONFIGURATION ===============================================================
-var gConf = new nconf.Provider();
-var botConf = new nconf.Provider();
+var cncserver = { // Master object for holding stuff!
+  gConf: new nconf.Provider(),
+  botConf: new nconf.Provider(),
+  bot: {} // Holds clean rendered settings set after botConfig is loaded
+};
 
 // Pull conf from env, or arguments
-gConf.env().argv();
-
+cncserver.gConf.env().argv();
 
 // SOCKET DATA STREAM ==========================================================
 io.on('connection', function(socket){
@@ -58,16 +65,17 @@ io.on('connection', function(socket){
  * Called whenever actualPen object has been changed, E.G.: right before
  * a serial command is run, or internal state changes.
  */
+cncserver.sendPenUpdate = sendPenUpdate;
 function sendPenUpdate() {
   // Low-level event callback trigger to avoid Socket.io overhead
   if (exports.penUpdateTrigger) {
-    exports.penUpdateTrigger(actualPen);
+    exports.penUpdateTrigger(cncserver.actualPen);
   } else {
     // TODO: This sucks, but even sending these smaller packets is somewhat
     // blocking and screws with buffer send timing. Need to either make these
     // packets smaller, or limit the number of direct updates per second to the
     // transfer rate to clients? Who knows.
-    io.emit('pen update', actualPen);
+    io.emit('pen update', cncserver.actualPen);
   }
 }
 
@@ -131,6 +139,7 @@ function sendBufferVars() {
  * Send an update to all stream clients about everything buffer related.
  * Called only during connection inits.
  */
+cncserver.sendBufferComplete = sendBufferComplete;
 function sendBufferComplete() {
   var data = {
     type: 'complete',
@@ -179,7 +188,7 @@ function sendCallbackUpdate(name) {
 // The pen: this holds the state of the pen at the "latest tip" of the buffer,
 // meaning that as soon as an instruction intended to be run in the buffer is
 // received, this is updated to reflect the intention of the buffered item.
-var pen = {
+cncserver.pen = {
   x: null, // XY to be set by bot defined park position (assumed initial location)
   y: null,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
@@ -191,13 +200,13 @@ var pen = {
   lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0 // Fake everything and act like it's working, no serial
-}
+};
 
 // actualPen: This is set to the state of the pen variable as it passes through
 // the buffer queue and into the robot, meant to reflect the actual position and
 // state of the robot, and will be where the pen object is reset to when the
 // buffer is cleared and the future state is lost.
-var actualPen = extend({}, pen);
+cncserver.actualPen = extend({}, cncserver.pen);
 
 // Global Defaults (also used to write the initial config.ini)
 var globalConfigDefaults = {
@@ -219,9 +228,6 @@ var globalConfigDefaults = {
     info: "Override bot specific settings like > [botOverride.eggbot] servo:max = 1234"
   }
 };
-
-// Hold common bot specific contants (also helps with string conversions)
-var BOT = {}; // Set after botConfig is loaded
 
 // INTIAL SETUP ================================================================
 
@@ -297,7 +303,7 @@ function standaloneOrModuleInit() {
           }
         });
       }, options.botType);
-    }
+    };
 
     // Retreieve list of bot configs
     exports.getSupportedBots = function() {
@@ -313,13 +319,13 @@ function standaloneOrModuleInit() {
         };
       }
       return out;
-    }
+    };
 
     // Direct configuration access (use the getters and override setters!)
     exports.conf = {
-      bot: botConf,
-      global: gConf
-    }
+      bot: cncserver.botConf,
+      global: cncserver.gConf
+    };
 
     // Export to reset global config
     exports.loadGlobalConfig = loadGlobalConfig;
@@ -338,27 +344,27 @@ function standaloneOrModuleInit() {
       require("serialport").list(function (err, ports) {
         cb(ports);
       });
-    }
+    };
 
     // Export ReST Server endpoint creation utility
-    exports.createServerEndpoint = createServerEndpoint;
+    exports.createServerEndpoint = cncserver.createServerEndpoint;
   }
 }
 
 // Grouping function to send off the initial configuration for the bot
 function sendBotConfig() {
   // EBB Specific Config =================================
-  if (botConf.get('controller').name == 'EiBotBoard') {
-    console.log('Sending EBB config...')
-    run('custom', 'EM,' + botConf.get('speed:precision'));
+  if (cncserver.botConf.get('controller').name === 'EiBotBoard') {
+    console.log('Sending EBB config...');
+    run('custom', 'EM,' + cncserver.botConf.get('speed:precision'));
 
     // Send twice for good measure
-    run('custom', 'SC,10,' + botConf.get('servo:rate'));
-    run('custom', 'SC,10,' + botConf.get('servo:rate'));
+    run('custom', 'SC,10,' + cncserver.botConf.get('servo:rate'));
+    run('custom', 'SC,10,' + cncserver.botConf.get('servo:rate'));
   }
 
-  var isVirtual = pen.simulation ? ' (simulated)' : '';
-  console.info('---=== ' + botConf.get('name') + isVirtual + ' is ready to receive commands ===---');
+  var isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
+  console.info('---=== ' + cncserver.botConf.get('name') + isVirtual + ' is ready to receive commands ===---');
 }
 
 // Start express HTTP server for API on the given port
@@ -368,20 +374,20 @@ function startServer() {
   if (serverStarted) return;
   serverStarted = true;
 
-  var hostname = gConf.get('httpLocalOnly') ? 'localhost' : null;
+  var hostname = cncserver.gConf.get('httpLocalOnly') ? 'localhost' : null;
 
   // Catch Addr in Use Error
   server.on('error', function (e) {
-    if (e.code == 'EADDRINUSE') {
+    if (e.code === 'EADDRINUSE') {
       console.log('Address in use, retrying...');
       setTimeout(function () {
         closeServer();
-        server.listen(gConf.get('httpPort'), hostname);
+        server.listen(cncserver.gConf.get('httpPort'), hostname);
       }, 1000);
     }
   });
 
-  server.listen(gConf.get('httpPort'), hostname, function(){
+  server.listen(cncserver.gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
     process.on('uncaughtException', function(err){ console.log(err); closeServer(); });
     process.on('SIGTERM', function(err){ console.log(err); closeServer(); });
@@ -392,7 +398,7 @@ function closeServer() {
   try {
     server.close();
   } catch(e) {
-    console.log("Whoops, server wasn't running.. Oh well.")
+    console.log("Whoops, server wasn't running.. Oh well.");
   }
 }
 
@@ -400,12 +406,12 @@ function closeServer() {
 function serialPortReadyCallback() {
 
   console.log('CNC server API listening on ' +
-    (gConf.get('httpLocalOnly') ? 'localhost' : '*') +
-    ':' + gConf.get('httpPort')
+    (cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*') +
+    ':' + cncserver.gConf.get('httpPort')
   );
 
   // Is the serialport ready? Start reading
-  if (!pen.simulation) {
+  if (!cncserver.pen.simulation) {
     serialPort.on("data", serialReadline);
   }
 
@@ -413,386 +419,14 @@ function serialPortReadyCallback() {
   startServer();
 
   // Scratch v2 endpoint & API =================================================
-  if (gConf.get('scratchSupport')) {
-    console.info('Scratch v2 Programming support ENABLED');
-    var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
-    var sizeMultiplier = 10; // Amount to increase size of steps
-    var turtle = { // Helper turtle for relative movement
-      x: BOT.workArea.absCenter.x,
-      y: BOT.workArea.absCenter.y,
-      limit: 'workArea',
-      sleeping: false,
-      reinkDistance: 0,
-      media: 'water0',
-      degrees: 0,
-      distanceCounter: 0
-    };
-
-    pollData.render = function() {
-      var out = "";
-
-      out += 'x ' + (turtle.x - BOT.workArea.absCenter.x) / sizeMultiplier  + "\n";
-      out += 'y ' + (turtle.y - BOT.workArea.absCenter.y) / sizeMultiplier + "\n";
-      out += 'z ' + ((pen.state === 'draw' || pen.state === 1) ? '1' : '0') + "\n";
-
-      var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
-      if (angleTemp > 360) {
-        angleTemp -= 360;
-      }
-      out += 'angle ' + angleTemp + "\n";
-      out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
-      out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
-
-      // Loop through all existing/static pollData
-      for (var key in this) {
-        if (typeof this[key] == 'object') {
-          var v = (typeof this[key] == 'string') ?  this[key] : this[key].join(' ');
-
-          if (v !== '') {
-            out += key + ' ' + v + "\n";
-          }
-        }
-      }
-
-      // Throw in full pen data as well
-      for (var key in pen) {
-        if (key == 'x') {}
-        else if (key == 'y') {}
-        else if (key == 'distanceCounter') {}
-        else {
-          out += key + ' ' + pen[key] + "\n";
-        }
-      }
-      return out;
-    }
-
-    // Helper function to add/remove busy watchers
-    pollData.busy = function(id, destroy) {
-      if (!pollData['_busy']) pollData['_busy'] = []; // Add busy placeholder)
-
-      var index = pollData['_busy'].indexOf(id);
-
-      if (destroy && index > -1) { // Remove
-        pollData['_busy'].splice(index, 1);
-      } else if (!destroy && index === -1) { // Add!
-        pollData['_busy'].push(id);
-      }
-    }
-
-
-    // SCRATCH v2 Specific endpoints =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    // Central poll returner (Queried ~30hz)
-    createServerEndpoint("/poll", function(req, res){
-      return {code: 200, body: pollData.render()};
-    });
-
-    // Flash crossdomain helper
-    createServerEndpoint("/crossdomain.xml", function(req, res){
-      return {code: 200, body: '<?xml version="1.0" ?><cross-domain-policy><allow-access-from domain="*" to-ports="' + gConf.get('httpPort') + '"/></cross-domain-policy>'};
-    });
-
-    // Initialize/reset status
-    createServerEndpoint("/reset_all", function(req, res){
-      turtle = { // Reset to default
-        x: BOT.workArea.absCenter.x,
-        y: BOT.workArea.absCenter.y,
-        limit: 'workArea', // Limits movements to bot work area
-        sleeping: false,
-        media: 'water0',
-        reinkDistance: 0,
-        degrees: 0,
-        distanceCounter: 0
-      };
-
-      // Clear Run Buffer
-      // @see /v1/buffer/ DELETE
-      buffer = [];
-      pen = extend({}, actualPen);
-      sendBufferComplete();
-
-      pollData["_busy"] = []; // Clear busy indicators
-      return {code: 200, body: ''};
-    });
-
-    // SCRATCH v2 Specific endpoints =^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=-=^=
-
-    // Move Endpoint(s)
-    createServerEndpoint("/park", moveRequest);
-    createServerEndpoint("/coord/:x/:y", moveRequest);
-    createServerEndpoint("/move.forward./:arg", moveRequest);
-    createServerEndpoint("/move.wait./:arg", moveRequest);
-    createServerEndpoint("/move.right./:arg", moveRequest);
-    createServerEndpoint("/move.left./:arg", moveRequest);
-    createServerEndpoint("/move.absturn./:arg", moveRequest);
-    createServerEndpoint("/move.toward./:arg/:arg2", moveRequest);
-    createServerEndpoint("/move.speed./:arg", moveRequest);
-
-    createServerEndpoint("/move.nudge.x./:arg2", moveRequest);
-    createServerEndpoint("/move.nudge.y./:arg2", moveRequest);
-
-    // Move request endpoint handler function
-    function moveRequest(req, res){
-      //pollData.busy(req.params.busyid);
-
-      var url = req.originalUrl.split('.');
-
-
-      var op = url[1];
-      var arg = req.params.arg;
-      var arg2 = req.params.arg2;
-      if (req.params.arg2 && !req.params.arg) {
-        arg = url[2];
-      }
-      // Do nothing if sleeping
-      if (turtle.sleeping) {
-        // TODO: Do we care about running the math?
-        return {code: 200, body: ''};
-      }
-
-      // Park
-      if (req.url == '/park') {
-        setHeight('up');
-        setPen({x: BOT.park.x, y: BOT.park.y, park: true});
-        return {code: 200, body: ''};
-      }
-
-      // Arbitrary Wait
-      if (op == 'wait') {
-        arg = parseFloat(arg) * 1000;
-        run('wait', false, arg);
-        return {code: 200, body: ''};
-      }
-
-      // Speed setting
-      if (op == 'speed') {
-        arg = parseFloat(arg) * 10;
-        botConf.set('speed:drawing', arg);
-        botConf.set('speed:moving', arg);
-      }
-
-      // Rotating Pointer? (just rotate)
-      if (op == 'left' || op == 'right') {
-        arg = parseInt(arg);
-        turtle.degrees = op == 'right' ? turtle.degrees + arg : turtle.degrees - arg;
-        if (turtle.degrees > 360) turtle.degrees -= 360;
-        if (turtle.degrees < 0) turtle.degrees += 360;
-        console.log('Rotate pen ' + op + ' ' + arg + ' deg. to ' + turtle.degrees + ' deg.');
-        return {code: 200, body: ''};
-      }
-
-      // Rotate pointer towards turtle relative X/Y
-      if (op == 'toward') {
-        // Convert input X/Y from scratch coordinates
-        var point = {
-          x: (parseInt(arg) * sizeMultiplier) + BOT.workArea.absCenter.x,
-          y: (-parseInt(arg2) * sizeMultiplier) + BOT.workArea.absCenter.y
-        }
-
-        var theta = Math.atan2(point.y - turtle.y, point.x - turtle.x);
-        turtle.degrees = Math.round(theta * 180 / Math.PI);
-          if (turtle.degrees > 360) turtle.degrees -= 360;
-          if (turtle.degrees < 0) turtle.degrees += 360;
-
-        console.log('Move relative towards ', point, ' from ', turtle);
-        return {code: 200, body: ''};
-      }
-
-      // Rotate pointer directly
-      if (op == 'absturn') {
-        turtle.degrees = parseInt(arg) - 90; // correct for "standard" Turtle orientation in Scratch
-        console.log('Rotate pen to ' + turtle.degrees + ' degrees');
-        return {code: 200, body: ''};
-      }
-
-      // Simple Nudge X/Y
-      if (op == 'nudge') {
-        if (arg == 'y') {
-          turtle[arg] += -1 * parseInt(arg2) * sizeMultiplier;
-        } else {
-          turtle[arg] += parseInt(arg2) * sizeMultiplier;
-        }
-      }
-
-      // Move Pointer? Actually move!
-      if (op == 'forward') {
-        arg = parseInt(arg);
-
-        console.log('Move pen by ' + arg + ' steps');
-        var radians = turtle.degrees * (Math.PI / 180);
-        turtle.x = Math.round(turtle.x + Math.cos(radians) * arg * sizeMultiplier);
-        turtle.y = Math.round(turtle.y + Math.sin(radians) * arg * sizeMultiplier);
-      }
-
-      // Move x, y or both
-      if (op == 'x' || op == 'y' || typeof req.params.x != 'undefined') {
-        arg = parseInt(arg);
-
-        if (op == 'x' || op == 'y') {
-          turtle[op] = arg * sizeMultiplier;
-        } else {
-
-          // Word positions? convert to actual coordinates
-          var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
-          var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
-          if (wordX > -1) {
-            var steps = centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
-            turtle.x = steps.x;
-            turtle.y = steps.y;
-          } else {
-            // Convert input X/Y to steps via multiplier
-            turtle.x = parseInt(req.params.x) * sizeMultiplier;
-            turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;  // In Scratch, positive Y is up on the page. :(
-
-            // When directly setting XY position, offset by half for center 0,0
-            turtle.x+= BOT.workArea.absCenter.x;
-            turtle.y+= BOT.workArea.absCenter.y;
-          }
-        }
-
-        console.log('Move pen to coord ' + turtle.x + ' ' + turtle.y);
-      }
-
-      // Attempt to move pen to desired point (may be off screen)
-      var distance = movePenAbs(turtle);
-
-      // Add up distance counter
-      if ((pen.state === 'draw' || pen.state === 1) && !pen.offCanvas) {
-        turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
-      }
-
-      // If reink initialized, check distance and initiate reink!
-      if (turtle.reinkDistance > 0 && turtle.distanceCounter > turtle.reinkDistance) {
-        turtle.distanceCounter = 0;
-
-        // Reink procedure!
-        setTool('water0dip');   // Dip in the water
-        setTool(turtle.media);  // Apply the last saved media
-        movePenAbs(turtle);     // Move back to "current" position
-        setHeight('draw');      // Set the position back to draw
-      }
-
-      return {code: 200, body: ''};
-    }
-
-    // Reink initialization endpoint
-    createServerEndpoint("/penreink/:distance", function(req, res) {
-      // 167.7 = 1.6mm per step * 100 mm per cm (as input)
-      var cm = parseFloat(req.params.distance);
-      turtle.reinkDistance = Math.round(req.params.distance * 167.7);
-      console.log('Reink distance: ', turtle.reinkDistance);
-      return {code: 200, body: ''};
-    });
-
-
-    // Stop Reinking endpoint
-    createServerEndpoint("/penstopreink", function(req, res) {
-      turtle.reinkDistance = 0;
-      console.log('Reink distance: ', turtle.reinkDistance);
-      return {code: 200, body: ''};
-    });
-
-    // Pen endpoints
-    createServerEndpoint("/pen", penRequest);
-    createServerEndpoint("/pen.wash", penRequest);
-    createServerEndpoint("/pen.up", penRequest);
-    createServerEndpoint("/pen.down", penRequest);
-    createServerEndpoint("/pen.off", penRequest);
-    createServerEndpoint("/pen.resetDistance", penRequest);
-    createServerEndpoint("/pen.sleep.1", penRequest);
-    createServerEndpoint("/pen.sleep.0", penRequest);
-
-
-    function penRequest(req, res){
-      // Parse out the arguments as we can't use slashes in the URI(!?!)
-      var url = req.originalUrl.split('.');
-      var op = url[1];
-      var arg = url[2];
-
-      // Reset internal counter
-      if (op == 'resetDistance') {
-        turtle.distanceCounter = 0;
-        return {code: 200, body: ''};
-      }
-
-      // Toggle sleep/simulation mode
-      if (op == 'sleep') {
-        arg = parseInt(arg);
-        turtle.sleeping = !!arg; // Convert integer to true boolean
-        return {code: 200, body: ''};
-      }
-
-      // Do nothing if sleeping
-      if (turtle.sleeping) {
-        // TODO: Do we care about running the math?
-        return {code: 200, body: ''};
-      }
-
-      // Set Pen up/down
-      if (op == 'up' || op == "down") {
-        if (op == 'down') {
-          op = 'draw';
-        }
-
-        // Don't set the height explicitly when off the canvas
-        if (!pen.offCanvas) {
-          setHeight(op);
-        } else {
-          // Save the state for when we come back
-          pen.state = op;
-        }
-      }
-
-      // Run simple wash
-      if (op == 'wash'){
-        setTool('water0');
-        setTool('water1');
-        setTool('water2');
-      }
-
-      // Turn off motors and zero to park pos
-      if (op == 'off'){
-        // Zero the assumed position
-        var park = centToSteps(BOT.park, true);
-        pen.x = park.x;
-        pen.y = park.y;
-        actualPen.x = park.x;
-        actualPen.y = park.y;
-
-        // You must zero FIRST then disable, otherwise actualPen is overwritten
-        run('custom', 'EM,0,0');
-        sendPenUpdate();
-      }
-      return {code: 200, body: ''};
-    }
-
-    // Tool set endpoints
-    createServerEndpoint("/tool.color./:id", toolRequest);
-    createServerEndpoint("/tool.water./:id", toolRequest);
-
-    function toolRequest(req, res) {
-      var type = req.originalUrl.split('.')[1];
-
-      // Do nothing if sleeping
-      if (turtle.sleeping) {
-        // TODO: Do we care about running the math?
-        return {code: 200, body: ''};
-      }
-
-      // Set by ID (water/color)
-      if (type) {
-        var tool = type + parseInt(req.params.id);
-        setTool(tool);
-        turtle.media = tool;
-      }
-
-      return {code: 200, body: ''};
-    }
+  if (cncserver.gConf.get('scratchSupport')) {
+    scratch.initAPI(cncserver);
   }
 
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
-  createServerEndpoint("/v1/settings", function(req, res){
-    if (req.route.method == 'get') { // Get list of tools
+  cncserver.createServerEndpoint("/v1/settings", function(req, res){
+    if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
         bot: '/v1/settings/bot'
@@ -802,22 +436,22 @@ function serialPortReadyCallback() {
     }
   });
 
-  createServerEndpoint("/v1/settings/:type", function(req, res){
+  cncserver.createServerEndpoint("/v1/settings/:type", function(req, res){
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){
       return [404, 'Settings group not found'];
     }
 
-    var conf = setType == 'global' ? gConf : botConf;
+    var conf = setType === 'global' ? cncserver.gConf : cncserver.botConf;
 
     function getSettings() {
       var out = {};
       // Clean the output for global as it contains all commandline env vars!
-      if (setType == 'global') {
+      if (setType === 'global') {
         var g = conf.get();
         for (var i in g) {
-          if (i == "botOverride") {
+          if (i === "botOverride") {
             break;
           }
           out[i] = g[i];
@@ -829,9 +463,9 @@ function serialPortReadyCallback() {
     }
 
     // Get the full list for the type
-    if (req.route.method == 'get') {
+    if (req.route.method === 'get') {
       return {code: 200, body: getSettings()};
-    } else if (req.route.method == 'put') {
+    } else if (req.route.method === 'put') {
       for (var i in req.body) {
         conf.set(i, req.body[i]);
       }
@@ -842,8 +476,8 @@ function serialPortReadyCallback() {
   });
 
   // Return/Set PEN state  API =================================================
-  createServerEndpoint("/v1/pen", function(req, res){
-    if (req.route.method == 'put') {
+  cncserver.createServerEndpoint("/v1/pen", function(req, res){
+    if (req.route.method === 'put') {
       // SET/UPDATE pen status
       setPen(req.body, function(stat){
         if (!stat) {
@@ -852,19 +486,19 @@ function serialPortReadyCallback() {
           }));
         } else {
           if (req.body.ignoreTimeout){
-            res.status(202).send(JSON.stringify(pen));
+            res.status(202).send(JSON.stringify(cncserver.pen));
           }
-          res.status(200).send(JSON.stringify(pen));
+          res.status(200).send(JSON.stringify(cncserver.pen));
         }
       });
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method == 'delete'){
+    } else if (req.route.method === 'delete'){
       // Reset pen to defaults (park)
       setHeight('up', function(){
         setPen({
-          x: BOT.park.x,
-          y: BOT.park.y,
+          x: cncserver.bot.park.x,
+          y: cncserver.bot.park.y,
           park: true,
           skipBuffer: req.body.skipBuffer
         }, function(stat){
@@ -873,16 +507,16 @@ function serialPortReadyCallback() {
               status: "Error parking pen!"
             }));
           }
-          res.status(200).send(JSON.stringify(pen));
+          res.status(200).send(JSON.stringify(cncserver.pen));
         });
       }, req.body.skipBuffer);
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method == 'get'){
+    } else if (req.route.method === 'get'){
       if (req.query.actual) {
-        return {code: 200, body: actualPen};
+        return {code: 200, body: cncserver.actualPen};
       } else {
-        return {code: 200, body: pen};
+        return {code: 200, body: cncserver.pen};
       }
     } else  {
       return false;
@@ -890,15 +524,15 @@ function serialPortReadyCallback() {
   });
 
   // Return/Set Motor state API ================================================
-  createServerEndpoint("/v1/motors", function(req, res){
+  cncserver.createServerEndpoint("/v1/motors", function(req, res){
     // Disable/unlock motors
-    if (req.route.method == 'delete') {
+    if (req.route.method === 'delete') {
       run('custom', 'EM,0,0');
       return [201, 'Disable Queued'];
-    } else if (req.route.method == 'put') {
-      if (req.body.reset == 1) {
+    } else if (req.route.method === 'put') {
+      if (req.body.reset === 1) {
         // ZERO motor position to park position
-        var park = centToSteps(BOT.park, true);
+        var park = centToSteps(cncserver.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
         // a buffered operation as it implies *manually* moving the bot to the
         // parking location, so we're going to man-handle the variables a bit.
@@ -910,18 +544,18 @@ function serialPortReadyCallback() {
         }
 
         // Set tip of buffer to current
-        pen.x = park.x;
-        pen.y = park.y;
+        cncserver.pen.x = park.x;
+        cncserver.pen.y = park.y;
 
         // Set actualPen position. This is the ONLY place we set this value
         // without a movement, because it's assumed to have been moved there
         // physically by a user. Also we're assuming they did it instantly!
-        actualPen.x = park.x;
-        actualPen.y = park.y;
-        actualPen.lastDuration = 0;
+        cncserver.actualPen.x = park.x;
+        cncserver.actualPen.y = park.y;
+        cncserver.actualPen.lastDuration = 0;
 
         sendPenUpdate();
-        console.log('Motor offset reset to park position')
+        console.log('Motor offset reset to park position');
         return [200, 'Motor offset reset to park position'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
@@ -932,14 +566,14 @@ function serialPortReadyCallback() {
   });
 
   // Command buffer API ========================================================
-  createServerEndpoint("/v1/buffer", function(req, res){
-    if (req.route.method == 'get' || req.route.method == 'put') {
+  cncserver.createServerEndpoint("/v1/buffer", function(req, res){
+    if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
-      if (typeof req.body.paused == "string") {
-        req.body.paused = req.body.paused == "true" ? true : false;
+      if (typeof req.body.paused === "string") {
+        req.body.paused = req.body.paused === "true" ? true : false;
       }
 
-      if (typeof req.body.paused == "boolean") {
+      if (typeof req.body.paused === "boolean") {
         if (req.body.paused != bufferPaused) {
           bufferPaused = req.body.paused;
           console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
@@ -950,7 +584,7 @@ function serialPortReadyCallback() {
 
           // Hold on the current actualPen to return to before resuming
           if (bufferPaused) {
-            bufferPausePen = extend({}, actualPen);
+            bufferPausePen = extend({}, cncserver.actualPen);
             sendBufferVars();
             setHeight('up', null, true); // Pen up for safety!
           }
@@ -960,9 +594,9 @@ function serialPortReadyCallback() {
       // Did we actually change position since pausing?
       var changedSincePause = false;
       if (bufferPausePen) {
-        if (bufferPausePen.x != actualPen.x ||
-            bufferPausePen.y != actualPen.y ||
-            bufferPausePen.height != actualPen.height){
+        if (bufferPausePen.x != cncserver.actualPen.x ||
+            bufferPausePen.y != cncserver.actualPen.y ||
+            bufferPausePen.height != cncserver.actualPen.height){
           changedSincePause = true;
         } else {
           // If we're resuming, and there's no change... clear the pause pen
@@ -1026,28 +660,23 @@ function serialPortReadyCallback() {
 
         return true; // Don't finish the response till later
       }
-    } else if (req.route.method == 'post') {
+    } else if (req.route.method === 'post') {
       // Create a status message/callback and shuck it into the buffer
-      if (typeof req.body.message == "string") {
+      if (typeof req.body.message === "string") {
         run('message', req.body.message);
         return [200, 'Message added to buffer'];
-      } else if (typeof req.body.callback == "string") {
+      } else if (typeof req.body.callback === "string") {
         run('callbackname', req.body.callback);
         return [200, 'Callback name added to buffer'];
       } else {
         return [400, '/v1/buffer POST only accepts data "message" or "callback"'];
       }
-    } else if (req.route.method == 'delete') {
-      buffer = [];
+    } else if (req.route.method === 'delete') {
+      cncserver.clearBuffer();
       bufferRunning = false;
 
       bufferPausePen = null; // Resuming with an empty buffer is silly
       bufferPaused = false;
-
-      // Reset the state of the buffer tip pen to the state of the actual robot.
-      // If this isn't done, it will be assumed to be a state that was deleted
-      // and never sent out in the line above.
-      pen = extend({}, actualPen);
 
       sendBufferComplete(); // SHould be fine to send as buffer is empty.
 
@@ -1059,21 +688,21 @@ function serialPortReadyCallback() {
   });
 
   // Get/Change Tool API =======================================================
-  createServerEndpoint("/v1/tools", function(req, res){
-    if (req.route.method == 'get') { // Get list of tools
-      return {code: 200, body:{tools: Object.keys(botConf.get('tools'))}};
+  cncserver.createServerEndpoint("/v1/tools", function(req, res){
+    if (req.route.method === 'get') { // Get list of tools
+      return {code: 200, body:{tools: Object.keys(cncserver.botConf.get('tools'))}};
     } else {
       return false;
     }
   });
 
-  createServerEndpoint("/v1/tools/:tool", function(req, res){
+  cncserver.createServerEndpoint("/v1/tools/:tool", function(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
-    if (req.route.method == 'put') { // Set Tool
-      if (botConf.get('tools:' + toolName)){
+    if (req.route.method === 'put') { // Set Tool
+      if (cncserver.botConf.get('tools:' + toolName)){
         setTool(toolName, function(data){
-          pen.tool = toolName;
+          cncserver.pen.tool = toolName;
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
@@ -1117,11 +746,11 @@ function serialPortReadyCallback() {
   exports.setPen = setPen;
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
-    pen.distanceCounter = parseInt(pen.distanceCounter);
+    cncserver.pen.distanceCounter = parseInt(cncserver.pen.distanceCounter);
 
     // Counter Reset
     if (inPen.resetCounter) {
-      pen.distanceCounter = Number(0);
+      cncserver.pen.distanceCounter = Number(0);
       callback(true);
       return;
     }
@@ -1143,12 +772,12 @@ function serialPortReadyCallback() {
     if (typeof inPen.simulation != "undefined") {
 
       // No change
-      if (inPen.simulation == pen.simulation) {
+      if (inPen.simulation === cncserver.pen.simulation) {
         callback(true);
         return;
       }
 
-      if (inPen.simulation == 0) { // Attempt to connect to serial
+      if (inPen.simulation === 0) { // Attempt to connect to serial
         connectSerial({complete: callback});
       } else {  // Turn off serial!
         // TODO: Actually nullify connection.. no use case worth it yet
@@ -1161,12 +790,12 @@ function serialPortReadyCallback() {
 
     // State/z position has been passed
     if (typeof inPen.state != "undefined") {
-      // Disallow actual pen setting when off canvas (unless skipping buffer)
-      if (!pen.offCanvas || inPen.skipBuffer) {
+      // Disallow actual cncserver.pen setting when off canvas (unless skipping buffer)
+      if (!cncserver.pen.offCanvas || inPen.skipBuffer) {
         setHeight(inPen.state, callback, inPen.skipBuffer);
       } else {
         // Save the state anyways so we can come back to it
-        pen.state = inPen.state;
+        cncserver.pen.state = inPen.state;
         if (callback) callback(1);
       }
       return;
@@ -1189,8 +818,8 @@ function serialPortReadyCallback() {
       // Are we parking?
       if (inPen.park) {
         // Don't repark if already parked (but not if we're skipping the buffer)
-        var park = centToSteps(BOT.park, true);
-        if (pen.x == park.x && pen.y == park.y && !inPen.skipBuffer) {
+        var park = centToSteps(cncserver.bot.park, true);
+        if (cncserver.pen.x === park.x && cncserver.pen.y === park.y && !inPen.skipBuffer) {
           if (callback) callback(false);
           return;
         }
@@ -1203,13 +832,13 @@ function serialPortReadyCallback() {
 
       // Adjust the distance counter based on movement amount
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
-      if (pen.state === 'draw' || pen.state === 1) {
-        pen.distanceCounter = parseInt(Number(distance) + Number(pen.distanceCounter));
+      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
+        cncserver.pen.distanceCounter = parseInt(Number(distance) + Number(cncserver.pen.distanceCounter));
       }
       return;
     }
 
-    if (callback) callback(pen);
+    if (callback) callback(cncserver.pen);
   }
 
 
@@ -1217,8 +846,8 @@ function serialPortReadyCallback() {
    * Run a servo position from a given percentage or named height value into
    * the buffer, or directly via skipBuffer.
    *
-   * @param {number|string} height
-   *   Named height preset machine name, or number between/included 0 to 1.
+   * @param {number|string} state
+   *   Named height preset machine name, or float between 0 & 1.
    * @param callback
    *   Callback triggered when operation should be complete.
    * @param skipBuffer
@@ -1226,48 +855,16 @@ function serialPortReadyCallback() {
    *   immediately.
    */
   exports.setHeight = setHeight;
-  function setHeight(height, callback, skipBuffer) {
-    var fullRange = false; // Whether to use the full min/max range
-    var min = parseInt(botConf.get('servo:min'));
-    var max = parseInt(botConf.get('servo:max'));
-    var range = max - min;
-    var stateValue = null; // Placeholder for what to set pen state to
-    var p = botConf.get('servo:presets');
-    var servoDuration = botConf.get('servo:duration');
+  cncserver.setHeight = setHeight;
+  function setHeight(state, callback, skipBuffer) {
+    var stateValue = null; // Placeholder for what to normalize the pen state to
+    var height = 0; // Placeholder for servo height value
+    var servoDuration = cncserver.botConf.get('servo:duration');
 
-    // Validate Height, and conform to a bottom to top based percentage 0 to 100
-    if (isNaN(parseInt(height))){ // Textual position!
-      if (p[height]) {
-        stateValue = height;
-        height = parseFloat(p[height]);
-      } else { // Textual expression not found, default to UP
-        height = p.up;
-        stateValue = 'up';
-      }
-      fullRange = true;
-    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
-      height = Math.abs(parseFloat(height));
-      height = height > 1 ?  1 : height; // Limit to 1
-      stateValue = height;
-
-      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
-      height = parseInt((1 - height) * 1000) / 10;
-    }
-
-    // Lower the range when using 0 to 1 values
-    if (!fullRange) {
-      min = ((p.draw / 100) * range) + min;
-      max = ((p.up / 100) * range) + parseInt(botConf.get('servo:min'));
-
-      range = max - min;
-    }
-
-    // Sanity check incoming height value to 0 to 100
-    height = height > 100 ? 100 : height;
-    height = height < 0 ? 0 : height;
-
-    // Calculate the servo value from percentage
-    height = Math.round(((height / 100) * range) + min);
+    // Convert the incoming state
+    var conv = stateToHeight(state);
+      height = conv.height;
+      stateValue = conv.state;
 
     // If we're skipping the buffer, just set the height directly
     if (skipBuffer) {
@@ -1276,26 +873,84 @@ function serialPortReadyCallback() {
       return;
     }
 
-    // Pro-rate the duration depending on amount of change
-    if (pen.height) {
-      range = parseInt(botConf.get('servo:max')) - parseInt(botConf.get('servo:min'));
-      servoDuration = Math.round((Math.abs(height - pen.height) / range) * servoDuration)+1;
+    // Pro-rate the duration depending on amount of change from current to tip of buffer
+    if (cncserver.pen.height) {
+      var range = parseInt(cncserver.botConf.get('servo:max')) - parseInt(cncserver.botConf.get('servo:min'));
+      servoDuration = Math.round((Math.abs(height - cncserver.pen.height) / range) * servoDuration)+1;
     }
 
-    pen.height = height;
-    pen.state = stateValue;
+    // Actually set tip of buffer to given sanitized state & servo height.
+    cncserver.pen.height = height;
+    cncserver.pen.state = stateValue;
 
     // Run the height into the command buffer
     run('height', height, servoDuration);
 
-    // Pen lift / drop
+    // Height movement callback servo movement duration offset
     if (callback) {
-      // Force the EBB block buffer for the pen change state
       setTimeout(function(){
         callback(1);
-      }, Math.max(servoDuration - gConf.get('bufferLatencyOffset'), 0));
+      }, Math.max(servoDuration - cncserver.gConf.get('bufferLatencyOffset'), 0));
     }
   }
+
+  /**
+   * Perform conversion from named/0-1 number state value to given pen height
+   * suitable for outputting to a Z axis control statement.
+   *
+   * @param state
+   * @returns {object}
+   *   Object containing normalized state, and numeric height value. As:
+   *   {state: [integer|string], height: [float]}
+   */
+  cncserver.stateToHeight = stateToHeight;
+  function stateToHeight(state) {
+    // Whether to use the full min/max range (used for named presets only)
+    var fullRange = false;
+    var min = parseInt(cncserver.botConf.get('servo:min'));
+    var max = parseInt(cncserver.botConf.get('servo:max'));
+    var range = max - min;
+    var normalizedState = state; // Normalize/sanitize the incoming state
+
+    var presets = cncserver.botConf.get('servo:presets');
+    var height = 0; // Placeholder for height output
+
+    // Validate Height, and conform to a bottom to top based percentage 0 to 100
+    if (isNaN(parseInt(state))){ // Textual position!
+      if (presets[state]) {
+        height = parseFloat(presets[state]);
+      } else { // Textual expression not found, default to UP
+        height = presets.up;
+        normalizedState = 'up';
+      }
+
+      fullRange = true;
+    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
+      height = Math.abs(parseFloat(state));
+      height = height > 1 ?  1 : height; // Limit to 1
+      normalizedState = height;
+
+      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
+      height = parseInt((1 - height) * 1000) / 10;
+    }
+
+    // Lower the range when using 0 to 1 values to between up and draw
+    if (!fullRange) {
+      min = ((presets.draw / 100) * range) + min;
+      max = ((presets.up / 100) * range) + parseInt(cncserver.botConf.get('servo:min'));
+
+      range = max - min;
+    }
+
+    // Sanity check incoming height value to 0 to 100
+    height = height > 100 ? 100 : height;
+    height = height < 0 ? 0 : height;
+
+    // Calculate the final servo value from percentage
+    height = Math.round(((height / 100) * range) + min);
+    return {height: height, state: normalizedState};
+  }
+
 
   /**
    * Run the operation to set the current tool (and any aggregate operations
@@ -1310,8 +965,9 @@ function serialPortReadyCallback() {
    *   True if success, false if failuer
    */
   exports.setTool = setTool;
+  cncserver.setTool = setTool;
   function setTool(toolName, callback, ignoreTimeout) {
-    var tool = botConf.get('tools:' + toolName);
+    var tool = cncserver.botConf.get('tools:' + toolName);
 
     // No tool found with that name? Augh! Run AWAY!
     if (!tool) {
@@ -1323,7 +979,7 @@ function serialPortReadyCallback() {
 
     // Set the height based on what kind of tool it is
     // TODO: fold this into bot specific tool change logic
-    var downHeight = toolName.indexOf('water') != -1 ? 'wash' : 'draw';
+    var downHeight = toolName.indexOf('water') !== -1 ? 'wash' : 'draw';
 
     // Pen Up
     setHeight('up');
@@ -1332,7 +988,7 @@ function serialPortReadyCallback() {
     movePenAbs(tool);
 
     // "wait" tools need user feedback to let cncserver know that it can continue
-    if (typeof tool.wait != "undefined") {
+    if (typeof tool.wait !== "undefined") {
 
       if (callback){
         run('callback', callback);
@@ -1362,7 +1018,7 @@ function serialPortReadyCallback() {
       // If there's a callback to run...
       if (callback){
         if (!ignoreTimeout) { // Run inside the buffer
-          run('callback', callback)
+          run('callback', callback);
         } else { // Run as soon as items have been buffered
           callback(1);
         }
@@ -1389,6 +1045,7 @@ function serialPortReadyCallback() {
    * @returns {number}
    *   Distance moved from previous position, in steps.
    */
+  cncserver.movePenAbs = movePenAbs;
   function movePenAbs(inPoint, callback, immediate, skipBuffer) {
     // Something really bad happened here...
     if (isNaN(inPoint.x) || isNaN(inPoint.y)){
@@ -1410,26 +1067,26 @@ function serialPortReadyCallback() {
     var startOffCanvasChange = false;
     if (point.limit === 'workArea') {
       // Off the Right
-      if (point.x > BOT.workArea.right) {
-        point.x = BOT.workArea.right;
+      if (point.x > cncserver.bot.workArea.right) {
+        point.x = cncserver.bot.workArea.right;
         startOffCanvasChange = true;
       }
 
       // Off the Left
-      if (point.x < BOT.workArea.left) {
-        point.x = BOT.workArea.left;
+      if (point.x < cncserver.bot.workArea.left) {
+        point.x = cncserver.bot.workArea.left;
         startOffCanvasChange = true;
       }
 
       // Off the Top
-      if (point.y < BOT.workArea.top) {
-        point.y = BOT.workArea.top;
+      if (point.y < cncserver.bot.workArea.top) {
+        point.y = cncserver.bot.workArea.top;
         startOffCanvasChange = true;
       }
 
       // Off the Bottom
-      if (point.y > BOT.workArea.bottom) {
-        point.y = BOT.workArea.bottom;
+      if (point.y > cncserver.bot.workArea.bottom) {
+        point.y = cncserver.bot.workArea.bottom;
         startOffCanvasChange = true;
       }
 
@@ -1456,13 +1113,13 @@ function serialPortReadyCallback() {
 
     // Calculate change from end of buffer pen position
     var change = {
-      x: Math.round(point.x - pen.x),
-      y: Math.round(point.y - pen.y)
-    }
+      x: Math.round(point.x - cncserver.pen.x),
+      y: Math.round(point.y - cncserver.pen.y)
+    };
 
     // Don't do anything if there's no change
-    if (change.x == 0 && change.y == 0) {
-      if (callback) callback(pen);
+    if (change.x === 0 && change.y === 0) {
+      if (callback) callback(cncserver.pen);
       return 0;
     }
 
@@ -1477,15 +1134,17 @@ function serialPortReadyCallback() {
     var distance = getVectorLength(change);
     var duration = getDurationFromDistance(distance);
 
-    // Save the duration state
-    //pen.lastDuration = duration;
 
-    // Set the tip of buffer pen at new position
-    pen.x = point.x;
-    pen.y = point.y;
 
-    // Queue the final absolute move (serial command generated later)
-    run('move', {x: pen.x, y: pen.y}, duration);
+    // Only if we actually moved anywhere should we queue a movement
+    if (distance !== 0) {
+      // Set the tip of buffer pen at new position
+      cncserver.pen.x = point.x;
+      cncserver.pen.y = point.y;
+
+      // Queue the final absolute move (serial command generated later)
+      run('move', {x: cncserver.pen.x, y: cncserver.pen.y}, duration);
+    }
 
     // Required start offCanvas change -after- movement has been queued
     if (startOffCanvasChange) {
@@ -1493,19 +1152,19 @@ function serialPortReadyCallback() {
     }
 
     if (callback) {
-      if (immediate == 1) {
-        callback(pen);
+      if (immediate === 1) {
+        callback(cncserver.pen);
       } else {
         // Set the timeout to occur sooner so the next command will execute
         // before the other is actually complete. This will push into the buffer
         // and allow for far smoother move runs.
 
-        var cmdDuration = Math.max(duration - gConf.get('bufferLatencyOffset'), 0);
+        var cmdDuration = Math.max(duration - cncserver.gConf.get('bufferLatencyOffset'), 0);
 
         if (cmdDuration < 2) {
-          callback(pen);
+          callback(cncserver.pen);
         } else {
-          setTimeout(function(){callback(pen);}, cmdDuration);
+          setTimeout(function(){callback(cncserver.pen);}, cmdDuration);
         }
 
       }
@@ -1526,7 +1185,7 @@ function serialPortReadyCallback() {
    *   How many times to move.
    */
   function wigglePen(axis, travel, iterations){
-    var start = {x: Number(pen.x), y: Number(pen.y)};
+    var start = {x: Number(cncserver.pen.x), y: Number(cncserver.pen.y)};
     var i = 0;
     travel = Number(travel); // Make sure it's not a string
 
@@ -1536,7 +1195,7 @@ function serialPortReadyCallback() {
     function _wiggleSlave(toggle){
       var point = {x: start.x, y: start.y};
 
-      if (axis == 'xy') {
+      if (axis === 'xy') {
         var rot = i % 4; // Ensure rot is always 0-3
 
         // This convoluted series ensure the wiggle moves in a proper diamond
@@ -1570,6 +1229,21 @@ function serialPortReadyCallback() {
   }
 }
 
+
+/**
+ * Helper function for clearing the buffer. Used mainly by plugins.
+ *
+ */
+cncserver.clearBuffer = function() {
+  buffer = [];
+
+  // Reset the state of the buffer tip pen to the state of the actual robot.
+  // If this isn't done, it will be assumed to be a state that was deleted
+  // and never sent out.
+  cncserver.pen = extend({}, cncserver.actualPen);
+
+};
+
 /**
  * Triggered when the pen is requested to move across the bounds of the draw
  * area (either in or out).
@@ -1578,27 +1252,35 @@ function serialPortReadyCallback() {
  *   Pass true when moving "off screen", false when moving back into bounds
  */
 function offCanvasChange(newValue) {
-  if (pen.offCanvas !== newValue) { // Only do anything if the value is different
-    pen.offCanvas = newValue;
-    if (pen.offCanvas) { // Pen is now off screen/out of bounds
-      if (pen.state === 'draw' || pen.state === 1) {
+  if (cncserver.pen.offCanvas !== newValue) { // Only do anything if the value is different
+    cncserver.pen.offCanvas = newValue;
+    if (cncserver.pen.offCanvas) { // Pen is now off screen/out of bounds
+      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
         // Don't draw stuff while out of bounds (also, don't change the current
-        // known state so we can come back to it when we return to bounds)
+        // known state so we can come back to it when we return to bounds),
+        // but DO change the buffer tip height so that is reflected on actualPen
+        // if it's every copied over on buffer execution.
+        cncserver.pen.height = cncserver.stateToHeight('up').height;
         run('callback', function() {
           exports.setHeight('up', false, true);
         });
       }
     } else { // Pen is now back in bounds
       // Set the state regardless of actual change
-      console.log('Go Back to:', pen.state);
-      exports.setHeight(pen.state);
+      var back = cncserver.pen.state;
+      console.log('Go back to:', back);
+
+      // Assume starting from up state & height (ensures correct timing)
+      cncserver.pen.state = "up";
+      cncserver.pen.height = cncserver.stateToHeight('up').height;
+      exports.setHeight(back);
     }
   }
 }
 
 function sanityCheckAbsoluteCoord(point) {
-  point.x = point.x > BOT.maxArea.width ? BOT.maxArea.width : point.x;
-  point.y = point.y > BOT.maxArea.height ? BOT.maxArea.height : point.y;
+  point.x = point.x > cncserver.bot.maxArea.width ? cncserver.bot.maxArea.width : point.x;
+  point.y = point.y > cncserver.bot.maxArea.height ? cncserver.bot.maxArea.height : point.y;
   point.x = point.x < 0 ? 0 : point.x;
   point.y = point.y < 0 ? 0 : point.y;
 }
@@ -1614,16 +1296,17 @@ function sanityCheckAbsoluteCoord(point) {
  * @returns {{x: number, y: number}}
  *   Converted coordinate in steps.
  */
+cncserver.centToSteps = centToSteps;
 function centToSteps(point, inMaxArea) {
   if (!inMaxArea) { // Calculate based on workArea
     return {
-      x: BOT.workArea.left + ((point.x / 100) * BOT.workArea.width),
-      y: BOT.workArea.top + ((point.y / 100) * BOT.workArea.height)
+      x: cncserver.bot.workArea.left + ((point.x / 100) * cncserver.bot.workArea.width),
+      y: cncserver.bot.workArea.top + ((point.y / 100) * cncserver.bot.workArea.height)
     };
   } else { // Calculate based on ALL area
     return {
-      x: (point.x / 100) * BOT.maxArea.width,
-      y: (point.y / 100) * BOT.maxArea.height
+      x: (point.x / 100) * cncserver.bot.maxArea.width,
+      y: (point.y / 100) * cncserver.bot.maxArea.height
     };
   }
 }
@@ -1637,31 +1320,31 @@ function centToSteps(point, inMaxArea) {
 function loadGlobalConfig(cb) {
   // Pull conf from file
   var configPath = path.resolve(__dirname, 'config.ini');
-  gConf.reset();
-  gConf.use('file', {
+  cncserver.gConf.reset();
+  cncserver.gConf.use('file', {
     file: configPath,
     format: nconf.formats.ini
   }).load(function (){
     // Set Global Config Defaults
-    gConf.defaults(globalConfigDefaults);
+    cncserver.gConf.defaults(globalConfigDefaults);
 
     // Save Global Conf file defaults if not saved
     if(!fs.existsSync(configPath)) {
-      var def = gConf.stores['defaults'].store;
+      var def = cncserver.gConf.stores.defaults.store;
       for(var key in def) {
-        if (key != 'type'){
-          gConf.set(key, def[key]);
+        if (key !== 'type'){
+          cncserver.gConf.set(key, def[key]);
         }
       }
 
       // Should be sync/blocking save with no callback
-      gConf.save();
+      cncserver.gConf.save();
     }
 
     if (cb) cb(); // Trigger the callback
 
     // Output if debug mode is on
-    if (gConf.get('debug')) {
+    if (cncserver.gConf.get('debug')) {
       console.info('== CNCServer Debug mode is ON ==');
     }
   });
@@ -1677,74 +1360,74 @@ function loadGlobalConfig(cb) {
  *   the globally configured bot type.
  */
 function loadBotConfig(cb, botType) {
-  if (!botType) botType = gConf.get('botType');
+  if (!botType) botType = cncserver.gConf.get('botType');
 
   var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
   if (!fs.existsSync(botTypeFile)){
     console.error('Bot configuration file "' + botTypeFile + '" doesn\'t exist. Error #16');
     process.exit(16);
   } else {
-    botConf.reset();
-    botConf.use('file', {
+    cncserver.botConf.reset();
+    cncserver.botConf.use('file', {
       file: botTypeFile,
       format: nconf.formats.ini
     }).load(function(){
 
       // Mesh in bot overrides from main config
-      var overrides = gConf.get('botOverride');
+      var overrides = cncserver.gConf.get('botOverride');
       if (overrides) {
         if (overrides[botType]) {
           for(var key in overrides[botType]) {
-            botConf.set(key, overrides[botType][key]);
+            cncserver.botConf.set(key, overrides[botType][key]);
           }
         }
       }
 
       // Handy bot constant for easy number from string conversion
-      BOT = {
+      cncserver.bot = {
         workArea: {
-          left: Number(botConf.get('workArea:left')),
-          top: Number(botConf.get('workArea:top')),
-          right: Number(botConf.get('maxArea:width')),
-          bottom: Number(botConf.get('maxArea:height'))
+          left: Number(cncserver.botConf.get('workArea:left')),
+          top: Number(cncserver.botConf.get('workArea:top')),
+          right: Number(cncserver.botConf.get('maxArea:width')),
+          bottom: Number(cncserver.botConf.get('maxArea:height'))
         },
         maxArea: {
-          width: Number(botConf.get('maxArea:width')),
-          height: Number(botConf.get('maxArea:height'))
+          width: Number(cncserver.botConf.get('maxArea:width')),
+          height: Number(cncserver.botConf.get('maxArea:height'))
         },
         park: {
-          x: Number(botConf.get('park:x')),
-          y: Number(botConf.get('park:y'))
+          x: Number(cncserver.botConf.get('park:x')),
+          y: Number(cncserver.botConf.get('park:y'))
         },
-        commands : botConf.get('controller').commands
-      }
-
-      // Store assumed constants
-      BOT.workArea.width = BOT.maxArea.width - BOT.workArea.left;
-      BOT.workArea.height = BOT.maxArea.height - BOT.workArea.top;
-
-      BOT.workArea.relCenter = {
-        x: BOT.workArea.width / 2,
-        y: BOT.workArea.height / 2
+        commands : cncserver.botConf.get('controller').commands
       };
 
-      BOT.workArea.absCenter = {
-        x: BOT.workArea.relCenter.x + BOT.workArea.left,
-        y: BOT.workArea.relCenter.y + BOT.workArea.top
-      }
+      // Store assumed constants
+      cncserver.bot.workArea.width = cncserver.bot.maxArea.width - cncserver.bot.workArea.left;
+      cncserver.bot.workArea.height = cncserver.bot.maxArea.height - cncserver.bot.workArea.top;
+
+      cncserver.bot.workArea.relCenter = {
+        x: cncserver.bot.workArea.width / 2,
+        y: cncserver.bot.workArea.height / 2
+      };
+
+      cncserver.bot.workArea.absCenter = {
+        x: cncserver.bot.workArea.relCenter.x + cncserver.bot.workArea.left,
+        y: cncserver.bot.workArea.relCenter.y + cncserver.bot.workArea.top
+      };
 
 
       // Set initial pen position at park position
-      var park = centToSteps(BOT.park, true);
-      pen.x = park.x;
-      pen.y = park.y;
+      var park = centToSteps(cncserver.bot.park, true);
+      cncserver.pen.x = park.x;
+      cncserver.pen.y = park.y;
 
       // Set global override for swapMotors if set by bot config
-      if (typeof botConf.get('controller:swapMotors') !== 'undefined') {
-        gConf.set('swapMotors', botConf.get('controller:swapMotors'));
+      if (typeof cncserver.botConf.get('controller:swapMotors') !== 'undefined') {
+        cncserver.gConf.set('swapMotors', cncserver.botConf.get('controller:swapMotors'));
       }
 
-      console.log('Successfully loaded config for ' + botConf.get('name') + '! Initializing...')
+      console.log('Successfully loaded config for ' + cncserver.botConf.get('name') + '! Initializing...');
 
       // Trigger the callback once we're done
       if (cb) cb();
@@ -1761,13 +1444,13 @@ function loadBotConfig(cb, botType) {
  * @param {function} callback
  *   Callback triggered on HTTP request
  */
-function createServerEndpoint(path, callback){
+cncserver.createServerEndpoint = function(path, callback){
   var what = Object.prototype.toString;
   app.all(path, function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
-    res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
+    res.set('Access-Control-Allow-Origin', cncserver.gConf.get('corsDomain'));
 
-    if (gConf.get('debug') && path !== '/poll') {
+    if (cncserver.gConf.get('debug') && path !== '/poll') {
       console.log(req.route.method.toUpperCase(), req.route.path, JSON.stringify(req.body));
     }
 
@@ -1792,7 +1475,7 @@ function createServerEndpoint(path, callback){
         status: cbStat[1]
       }));
     } else if(what.call(cbStat) === '[object Object]') { // Full message
-      if (typeof cbStat.body == "string") { // Send plaintext if body is string
+      if (typeof cbStat.body === "string") { // Send plaintext if body is string
         res.set('Content-Type', 'text/plain; charset=UTF-8');
         res.status(cbStat.code).send(cbStat.body);
       } else {
@@ -1801,7 +1484,7 @@ function createServerEndpoint(path, callback){
 
     }
   });
-}
+};
 
 /**
  * Given two points, find the difference and duration at current speed between them
@@ -1818,27 +1501,27 @@ function getPosChangeData(src, dest) {
    var change = {
     x: Math.round(dest.x - src.x),
     y: Math.round(dest.y - src.y)
-  }
+  };
 
   // Calculate distance
   var duration = getDurationFromDistance(getVectorLength(change));
 
   // Adjust change direction/inversion
-  if (botConf.get('controller').position == "relative") {
+  if (cncserver.botConf.get('controller').position === "relative") {
     // Invert X or Y to match stepper direction
-    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
-    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+    change.x = cncserver.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+    change.y = cncserver.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
   } else { // Absolute! Just use the "new" absolute X & Y locations
-    change.x = pen.x;
-    change.y = pen.y;
+    change.x = cncserver.pen.x;
+    change.y = cncserver.pen.y;
   }
 
   // Swap motor positions
-  if (gConf.get('swapMotors')) {
+  if (cncserver.gConf.get('swapMotors')) {
     change = {
       x: change.y,
       y: change.x
-    }
+    };
   }
 
   return {d: duration, x: change.x, y: change.y};
@@ -1871,12 +1554,12 @@ function getDurationFromDistance(distance, min) {
   if (typeof min === "undefined") min = 1;
 
   // Use given speed over distance to calculate duration
-  var speed = (actualPen.state === 'draw' || actualPen.state === 1) ? botConf.get('speed:drawing') : botConf.get('speed:moving');
-    speed = (speed/100) * botConf.get('speed:max'); // Convert to steps from percentage
+  var speed = (cncserver.actualPen.state === 'draw' || cncserver.actualPen.state === 1) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
+    speed = (speed/100) * cncserver.botConf.get('speed:max'); // Convert to steps from percentage
 
     // Sanity check speed value
-    speed = speed > botConf.get('speed:max') ? botConf.get('speed:max') : speed;
-    speed = speed < botConf.get('speed:min') ? botConf.get('speed:min') : speed;
+    speed = speed > cncserver.botConf.get('speed:max') ? cncserver.botConf.get('speed:max') : speed;
+    speed = speed < cncserver.botConf.get('speed:min') ? cncserver.botConf.get('speed:min') : speed;
   return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
 }
 
@@ -1892,13 +1575,13 @@ function getDurationFromDistance(distance, min) {
 function actuallyMove(destination, callback) {
   // Get the amount of change/duration from difference between actualPen and
   // absolute position in given destination
-  var change = getPosChangeData(actualPen, destination);
+  var change = getPosChangeData(cncserver.actualPen, destination);
   commandDuration = Math.max(change.d, 0);
 
   // Pass along the correct duration and new position through to actualPen
-  actualPen.lastDuration = change.d;
-  actualPen.x = destination.x;
-  actualPen.y = destination.y;
+  cncserver.actualPen.lastDuration = change.d;
+  cncserver.actualPen.x = destination.x;
+  cncserver.actualPen.y = destination.y;
 
   // Trigger an update for pen position
   sendPenUpdate();
@@ -1909,7 +1592,7 @@ function actuallyMove(destination, callback) {
   if (callback) {
     setTimeout(function(){
       callback(1);
-    }, Math.max(commandDuration - gConf.get('bufferLatencyOffset'), 0));
+    }, Math.max(commandDuration - cncserver.gConf.get('bufferLatencyOffset'), 0));
   }
 }
 
@@ -1926,19 +1609,19 @@ function actuallyMove(destination, callback) {
  *   Optional, callback for when operation should have completed.
  */
 function actuallyMoveHeight(height, stateValue, callback) {
-  var sd = botConf.get('servo:duration');
+  var sd = cncserver.botConf.get('servo:duration');
 
   // Get the amount of change from difference between actualPen and absolute
   // height position, pro-rating the duration depending on amount of change
-  if (actualPen.height) {
-    range = parseInt(botConf.get('servo:max')) - parseInt(botConf.get('servo:min'));
-    commandDuration = Math.round((Math.abs(height - actualPen.height) / range) * sd) + 1;
+  if (cncserver.actualPen.height) {
+    var range = parseInt(cncserver.botConf.get('servo:max')) - parseInt(cncserver.botConf.get('servo:min'));
+    commandDuration = Math.round((Math.abs(height - cncserver.actualPen.height) / range) * sd) + 1;
   }
 
   // Pass along the correct height position through to actualPen
-  if (typeof stateValue !== 'undefined') actualPen.state = stateValue;
-  actualPen.height = height;
-  actualPen.lastDuration = commandDuration;
+  if (typeof stateValue !== 'undefined') cncserver.actualPen.state = stateValue;
+  cncserver.actualPen.height = height;
+  cncserver.actualPen.lastDuration = commandDuration;
 
   // Trigger an update for pen position
   sendPenUpdate();
@@ -1947,18 +1630,18 @@ function actuallyMoveHeight(height, stateValue, callback) {
   serialCommand(cmdstr('movez', {z: height}));
 
   // If there's a togglez, run it after setting Z
-  if (BOT.commands.togglez) {
-    serialCommand(cmdstr('togglez', {t: gConf.get('flipZToggleBit') ? 1 : 0}));
+  if (cncserver.bot.commands.togglez) {
+    serialCommand(cmdstr('togglez', {t: cncserver.gConf.get('flipZToggleBit') ? 1 : 0}));
   }
 
-  // Force BOT to wait
+  // Force cncserver.bot to wait
   serialCommand(cmdstr('wait', {d: commandDuration}));
 
   // Delayed callback (if used)
   if (callback) {
     setTimeout(function(){
       callback(1);
-    }, Math.max(commandDuration - gConf.get('bufferLatencyOffset'), 0));
+    }, Math.max(commandDuration - cncserver.gConf.get('bufferLatencyOffset'), 0));
   }
 }
 
@@ -1984,6 +1667,7 @@ var commandDuration = 0;
  * @returns {boolean}
  *   Return false if failure, true if success
  */
+cncserver.run = run;
 function run(command, data, duration) {
   var c = '';
 
@@ -1998,7 +1682,7 @@ function run(command, data, duration) {
       break;
     case 'height':
       // Detailed buffer object with z height and state string
-      c = {type: 'absheight', z: data, state: pen.state};
+      c = {type: 'absheight', z: data, state: cncserver.pen.state};
       break;
     case 'message':
       // Detailed buffer object with a string message
@@ -2010,7 +1694,7 @@ function run(command, data, duration) {
       break;
     case 'wait':
       // Send wait, blocking buffer
-      if (!BOT.commands.wait) return false;
+      if (!cncserver.bot.commands.wait) return false;
       c = cmdstr('wait', {d: duration});
       break;
     case 'custom':
@@ -2025,7 +1709,7 @@ function run(command, data, duration) {
 
   // Add final command and duration to end of queue, along with a copy of the
   // pen state at this point in time to be copied to actualPen after execution
-  buffer.unshift([c, duration, extend({}, pen)]);
+  buffer.unshift([c, duration, extend({}, cncserver.pen)]);
   sendBufferAdd(buffer[0]);
   return true;
 }
@@ -2034,7 +1718,7 @@ function run(command, data, duration) {
  * Create a bot specific serial command string from a key:value object
  *
  * @param {string} name
- *   Key in BOT.commands object to find the command string
+ *   Key in cncserver.bot.commands object to find the command string
  * @param {object} values
  *   Object containing the keys of placeholders to find in command string, with
  *   value to replace placeholder
@@ -2043,9 +1727,9 @@ function run(command, data, duration) {
  *   if error.
  */
 function cmdstr(name, values) {
-  if (!name || !BOT.commands[name]) return ''; // Sanity check
+  if (!name || !cncserver.bot.commands[name]) return ''; // Sanity check
 
-  var out = BOT.commands[name];
+  var out = cncserver.bot.commands[name];
 
   for(var v in values) {
     out = out.replace('%' + v, values[v]);
@@ -2080,7 +1764,7 @@ function executeNext() {
       cmd[0](1);
       // Set the actualPen state to match the state assumed at the time the
       // buffer item was created
-      actualPen = extend({}, cmd[2]);
+      cncserver.actualPen = extend({}, cmd[2]);
 
       // Trigger an update for buffer loss and actualPen change
       sendPenUpdate();
@@ -2112,7 +1796,7 @@ function executeNext() {
 
       // Set the actualPen state to match the state assumed at the time the
       // buffer item was created
-      actualPen = extend({}, cmd[2]);
+      cncserver.actualPen = extend({}, cmd[2]);
 
       // Trigger an update for actualPen change
       sendPenUpdate();
@@ -2128,8 +1812,8 @@ function executeNext() {
 
     // Save the offCanvas variable value to ensure it carries along with the tip
     // of the buffer.
-    actualPen.offCanvas = pen.offCanvas;
-    pen = extend({}, actualPen);
+    cncserver.actualPen.offCanvas = cncserver.pen.offCanvas;
+    cncserver.pen = extend({}, cncserver.actualPen);
 
     bufferRunning = false;
   }
@@ -2157,29 +1841,29 @@ setInterval(function(){
  */
 var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 function serialCommand(command){
-  if (!serialPort.write && !pen.simulation) { // Not ready to write to serial!
+  if (!serialPort.write && !cncserver.pen.simulation) { // Not ready to write to serial!
     return false;
   }
 
-  if (gConf.get('debug')) {
-    var word = !pen.simulation ? 'Executing' : 'Simulating';
+  if (cncserver.gConf.get('debug')) {
+    var word = !cncserver.pen.simulation ? 'Executing' : 'Simulating';
     console.log(word + ' serial command: ' + command);
   }
 
   // Actually write the data to the port (or simulate completion of write)
-  if (!pen.simulation) {
+  if (!cncserver.pen.simulation) {
     try {
       // Once written, wait for command to drain completely, confirming the
       // entire command has been sent and we can send the next command.
       serialPort.write(command + "\r", function() {
         serialPort.drain(function(){
           // Command should be sent! Time out the next command send
-          if (commandDuration < gConf.get('bufferLatencyOffset')) {
+          if (commandDuration < cncserver.gConf.get('bufferLatencyOffset')) {
             executeNext(); // Under threshold, "immediate" run
           } else {
             clearTimeout(nextExecutionTimeout);
             nextExecutionTimeout = setTimeout(executeNext,
-              commandDuration - gConf.get('bufferLatencyOffset')
+              commandDuration - cncserver.gConf.get('bufferLatencyOffset')
             );
           }
         });
@@ -2192,12 +1876,12 @@ function serialCommand(command){
   } else {
     // Trigger executeNext as we're simulating and "drain" would never trigger
     // Command should be sent! Time out the next command send
-    if (commandDuration < gConf.get('bufferLatencyOffset')) {
+    if (commandDuration < cncserver.gConf.get('bufferLatencyOffset')) {
       setTimeout(executeNext, 1);
     } else {
       clearTimeout(nextExecutionTimeout);
       nextExecutionTimeout = setTimeout(executeNext,
-        commandDuration - gConf.get('bufferLatencyOffset')
+        commandDuration - cncserver.gConf.get('bufferLatencyOffset')
       );
     }
   }
@@ -2215,8 +1899,11 @@ function serialCommand(command){
  */
 
 function serialReadline(data) {
-  if (data.trim() != botConf.get('controller').ack) {
+  if (data.trim() !== cncserver.botConf.get('controller').ack) {
     console.error('Message From Controller: ' + data);
+
+    // Assume error was on startup, and resend setup
+    sendBotConfig();
   }
 }
 
@@ -2227,18 +1914,18 @@ function serialReadline(data) {
  * @see connectSerial
  */
 function serialPortCloseCallback() {
-  console.log('Serialport connection to "' + gConf.get('serialPath') + '" lost!! Did it get unplugged?');
+  console.log('Serialport connection to "' + cncserver.gConf.get('serialPath') + '" lost!! Did it get unplugged?');
   serialPort = false;
 
   // Assume the last serialport isn't coming back for a while... a long vacation
-  gConf.set('serialPath', '');
+  cncserver.gConf.set('serialPath', '');
   simulationModeInit();
 }
 
 // Helper to initialize simulation mode
 function simulationModeInit() {
   console.log("=======Continuing in SIMULATION MODE!!!============");
-  pen.simulation = 1;
+  cncserver.pen.simulation = 1;
 }
 
 /**
@@ -2257,16 +1944,16 @@ function connectSerial(options){
   var stat = false;
 
   // Attempt to auto detect EBB Board via PNPID
-  if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
+  if (cncserver.gConf.get('serialPath') === "" || cncserver.gConf.get('serialPath') === '{auto}') {
     autoDetect = true;
     console.log('Finding available serial ports...');
   } else {
-    console.log('Using passed serial port "' + gConf.get('serialPath') + '"...');
+    console.log('Using passed serial port "' + cncserver.gConf.get('serialPath') + '"...');
   }
 
   require("serialport").list(function (err, ports) {
     var portNames = ['None'];
-    if (gConf.get('debug')) console.log('Full Available Port Data:', ports);
+    if (cncserver.gConf.get('debug')) console.log('Full Available Port Data:', ports);
     for (var portID in ports){
       portNames[portID] = ports[portID].comName;
 
@@ -2276,33 +1963,33 @@ function connectSerial(options){
       }
 
       // Specific board detect for linux
-      if (ports[portID].pnpId.indexOf(botConf.get('controller').name) !== -1 && autoDetect) {
-        gConf.set('serialPath', portNames[portID]);
+      if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
+        cncserver.gConf.set('serialPath', portNames[portID]);
       // All other OS detect
-      } else if (ports[portID].manufacturer.indexOf(botConf.get('controller').manufacturer) !== -1 && autoDetect) {
-        gConf.set('serialPath', portNames[portID]);
+      } else if (ports[portID].manufacturer.indexOf(cncserver.botConf.get('controller').manufacturer) !== -1 && autoDetect) {
+        cncserver.gConf.set('serialPath', portNames[portID]);
       }
     }
 
     console.log('Available Serial ports: ' + portNames.join(', '));
 
     // Try to connect to serial, or exit with error codes
-    if (gConf.get('serialPath') == "" || gConf.get('serialPath') == '{auto}') {
-      console.log(botConf.get('controller').name + " not found. Are you sure it's connected? Error #22");
-      if (options.error) options.error(botConf.get('controller').name + ' not found.');
+    if (cncserver.gConf.get('serialPath') === "" || cncserver.gConf.get('serialPath') === '{auto}') {
+      console.log(cncserver.botConf.get('controller').name + " not found. Are you sure it's connected? Error #22");
+      if (options.error) options.error(cncserver.botConf.get('controller').name + ' not found.');
     } else {
-      console.log('Attempting to open serial port: "' + gConf.get('serialPath') + '"...');
+      console.log('Attempting to open serial port: "' + cncserver.gConf.get('serialPath') + '"...');
       try {
-        serialPort = new SerialPort(gConf.get('serialPath'), {
-          baudrate : Number(botConf.get('controller').baudRate),
+        serialPort = new SerialPort(cncserver.gConf.get('serialPath'), {
+          baudrate : Number(cncserver.botConf.get('controller').baudRate),
           parser: serialport.parsers.readline("\r"),
           disconnectedCallback: options.disconnect
         });
 
         if (options.connect) serialPort.on("open", options.connect);
 
-        console.log('Serial connection open at ' + botConf.get('controller').baudRate + 'bps');
-        pen.simulation = 0;
+        console.log('Serial connection open at ' + cncserver.botConf.get('controller').baudRate + 'bps');
+        cncserver.pen.simulation = 0;
         if (options.success) options.success();
       } catch(e) {
         console.log("Serial port failed to connect. Is it busy or in use? Error #10");
