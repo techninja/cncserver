@@ -345,9 +345,6 @@ function standaloneOrModuleInit() {
         cb(ports);
       });
     };
-
-    // Export ReST Server endpoint creation utility
-    exports.createServerEndpoint = cncserver.createServerEndpoint;
   }
 }
 
@@ -1444,7 +1441,9 @@ function loadBotConfig(cb, botType) {
  * @param {function} callback
  *   Callback triggered on HTTP request
  */
-cncserver.createServerEndpoint = function(path, callback){
+exports.createServerEndpoint = createServerEndpoint;
+cncserver.createServerEndpoint = createServerEndpoint;
+function createServerEndpoint(path, callback){
   var what = Object.prototype.toString;
   app.all(path, function(req, res){
     res.set('Content-Type', 'application/json; charset=UTF-8');
