@@ -741,6 +741,7 @@ function serialPortReadyCallback() {
    *   Callback triggered when intended action should be complete.
    */
   exports.setPen = setPen;
+  cncserver.setPen = setPen;
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
     cncserver.pen.distanceCounter = parseInt(cncserver.pen.distanceCounter);
