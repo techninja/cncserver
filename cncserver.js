@@ -1553,13 +1553,17 @@ function getVectorLength(vector) {
 function getDurationFromDistance(distance, min) {
   if (typeof min === "undefined") min = 1;
 
+  var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
+  var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
+
   // Use given speed over distance to calculate duration
   var speed = (cncserver.actualPen.state === 'draw' || cncserver.actualPen.state === 1) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
-    speed = (speed/100) * (cncserver.botConf.get('speed:max') - cncserver.botConf.get('speed:min')) + cncserver.botConf.get('speed:min'); // Convert to steps from percentage
+  speed = parseFloat(speed) / 100;
+  speed = speed * (maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
 
-    // Sanity check speed value
-    speed = speed > cncserver.botConf.get('speed:max') ? cncserver.botConf.get('speed:max') : speed;
-    speed = speed < cncserver.botConf.get('speed:min') ? cncserver.botConf.get('speed:min') : speed;
+  // Sanity check speed value
+  speed = speed > maxSpeed ? maxSpeed : speed;
+  speed = speed < minSpeed ? minSpeed : speed;
   return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
 }
 
