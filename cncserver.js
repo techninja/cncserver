@@ -828,6 +828,11 @@ function serialPortReadyCallback() {
         absInput.limit = 'maxArea';
       }
 
+      // Sanity check and format ignoreTimeout as clean triple equals boolean.
+      if (typeof inPen.ignoreTimeout !== 'undefined') {
+        inPen.ignoreTimeout = parseInt(inPen.ignoreTimeout) === 1 ? true : false;
+      }
+
       // Adjust the distance counter based on movement amount
       var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
       if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
@@ -1150,7 +1155,7 @@ function serialPortReadyCallback() {
     }
 
     if (callback) {
-      if (immediate === 1) {
+      if (immediate === true) {
         callback(cncserver.pen);
       } else {
         // Set the timeout to occur sooner so the next command will execute
