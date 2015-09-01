@@ -1564,7 +1564,7 @@ function getDurationFromDistance(distance, min) {
   // Use given speed over distance to calculate duration
   var speed = (cncserver.actualPen.state === 'draw' || cncserver.actualPen.state === 1) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
   speed = parseFloat(speed) / 100;
-  speed = speed * (maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
+  speed = speed * ((maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
 
   // Sanity check speed value
   speed = speed > maxSpeed ? maxSpeed : speed;
