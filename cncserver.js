@@ -1588,7 +1588,7 @@ function actuallyMove(destination, callback) {
   commandDuration = Math.max(change.d, 0);
 
   // Pass along the correct duration and new position through to actualPen
-  cncserver.actualPen.lastDuration = change.d;
+  cncserver.actualPen.lastDuration = change.d - cncserver.gConf.get('bufferLatencyOffset');
   cncserver.actualPen.x = destination.x;
   cncserver.actualPen.y = destination.y;
 
