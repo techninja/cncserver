@@ -833,11 +833,7 @@ function serialPortReadyCallback() {
         inPen.ignoreTimeout = parseInt(inPen.ignoreTimeout) === 1 ? true : false;
       }
 
-      // Adjust the distance counter based on movement amount
-      var distance = movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
-      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
-        cncserver.pen.distanceCounter = parseInt(Number(distance) + Number(cncserver.pen.distanceCounter));
-      }
+      movePenAbs(absInput, callback, inPen.ignoreTimeout, inPen.skipBuffer);
       return;
     }
 
@@ -1137,13 +1133,16 @@ function serialPortReadyCallback() {
     var distance = getVectorLength(change);
     var duration = getDurationFromDistance(distance);
 
-
-
     // Only if we actually moved anywhere should we queue a movement
     if (distance !== 0) {
       // Set the tip of buffer pen at new position
       cncserver.pen.x = point.x;
       cncserver.pen.y = point.y;
+
+      // Adjust the distance counter based on movement amount
+      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
+        cncserver.pen.distanceCounter = parseInt(Number(distance) + Number(cncserver.pen.distanceCounter));
+      }
 
       // Queue the final absolute move (serial command generated later)
       run('move', {x: cncserver.pen.x, y: cncserver.pen.y}, duration);
