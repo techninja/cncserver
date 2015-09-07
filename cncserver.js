@@ -552,7 +552,7 @@ function serialPortReadyCallback() {
         cncserver.actualPen.lastDuration = 0;
 
         sendPenUpdate();
-        console.log('Motor offset reset to park position');
+        if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
         return [200, 'Motor offset reset to park position'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
@@ -974,7 +974,7 @@ function serialPortReadyCallback() {
       return false;
     }
 
-    console.log('Changing to tool: ' + toolName);
+    if (cncserver.gConf.get('debug')) console.log('Changing to tool: ' + toolName);
 
     // Set the height based on what kind of tool it is
     // TODO: fold this into bot specific tool change logic
