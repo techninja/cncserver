@@ -1782,6 +1782,8 @@ function executeNext() {
       // Actually send off the command to do something
       switch (cmd[0].type) {
         case 'absmove':
+          // Propagate distanceCounter to actualPen
+          cncserver.actualPen.distanceCounter = cmd[2].distanceCounter;
           actuallyMove(cmd[0]);
           break;
         case 'absheight':
