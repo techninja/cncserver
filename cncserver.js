@@ -1139,8 +1139,9 @@ function serialPortReadyCallback() {
       cncserver.pen.x = point.x;
       cncserver.pen.y = point.y;
 
-      // Adjust the distance counter based on movement amount
-      if (cncserver.pen.state === 'draw' || cncserver.pen.state > 0.5) {
+      // Adjust the distance counter based on movement amount, not if we're off
+      // the canvas though.
+      if (cncserver.penDown() && !cncserver.pen.offCanvas) {
         cncserver.pen.distanceCounter = parseFloat(Number(distance) + Number(cncserver.pen.distanceCounter));
       }
 
@@ -1234,7 +1235,6 @@ function serialPortReadyCallback() {
 
 /**
  * Helper function for clearing the buffer. Used mainly by plugins.
- *
  */
 cncserver.clearBuffer = function() {
   buffer = [];
@@ -1244,6 +1244,20 @@ cncserver.clearBuffer = function() {
   // and never sent out.
   cncserver.pen = extend({}, cncserver.actualPen);
 
+};
+
+/**
+ * Helper abstraction for checking if the tip of buffer pen is "down" or not.
+ *
+ * @returns {Boolean}
+ *   False if pen is considered up, true if pen is considered down.
+ */
+cncserver.penDown = function() {
+  if (cncserver.pen.state === 'up' || cncserver.pen.state < 0.5) {
+    return false;
+  } else {
+    return true;
+  }
 };
 
 /**
@@ -1257,7 +1271,7 @@ function offCanvasChange(newValue) {
   if (cncserver.pen.offCanvas !== newValue) { // Only do anything if the value is different
     cncserver.pen.offCanvas = newValue;
     if (cncserver.pen.offCanvas) { // Pen is now off screen/out of bounds
-      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
+      if (cncserver.penDown()) {
         // Don't draw stuff while out of bounds (also, don't change the current
         // known state so we can come back to it when we return to bounds),
         // but DO change the buffer tip height so that is reflected on actualPen
@@ -1561,7 +1575,7 @@ function getDurationFromDistance(distance, min) {
   var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
 
   // Use given speed over distance to calculate duration
-  var speed = (cncserver.actualPen.state === 'draw' || cncserver.actualPen.state === 1) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
+  var speed = (cncserver.penDown()) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
   speed = parseFloat(speed) / 100;
   speed = speed * ((maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
 

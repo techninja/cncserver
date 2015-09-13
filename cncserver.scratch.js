@@ -284,7 +284,7 @@ function moveRequest(req, res){
   if (distance === 0) console.log('Not moved any distance');
 
   // Add up distance counter
-  if ((cncserver.pen.state === 'draw' || cncserver.pen.state === 1) && !cncserver.pen.offCanvas) {
+  if ((cncserver.penDown()) && !cncserver.pen.offCanvas) {
     turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
   }
 
