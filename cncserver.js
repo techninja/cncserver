@@ -744,7 +744,7 @@ function serialPortReadyCallback() {
   cncserver.setPen = setPen;
   function setPen(inPen, callback) {
     // Force the distanceCounter to be a number (was coming up as null)
-    cncserver.pen.distanceCounter = parseInt(cncserver.pen.distanceCounter);
+    cncserver.pen.distanceCounter = parseFloat(cncserver.pen.distanceCounter);
 
     // Counter Reset
     if (inPen.resetCounter) {
@@ -1140,8 +1140,8 @@ function serialPortReadyCallback() {
       cncserver.pen.y = point.y;
 
       // Adjust the distance counter based on movement amount
-      if (cncserver.pen.state === 'draw' || cncserver.pen.state === 1) {
-        cncserver.pen.distanceCounter = parseInt(Number(distance) + Number(cncserver.pen.distanceCounter));
+      if (cncserver.pen.state === 'draw' || cncserver.pen.state > 0.5) {
+        cncserver.pen.distanceCounter = parseFloat(Number(distance) + Number(cncserver.pen.distanceCounter));
       }
 
       // Queue the final absolute move (serial command generated later)
