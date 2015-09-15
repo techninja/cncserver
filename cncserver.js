@@ -386,7 +386,6 @@ function startServer() {
 
   server.listen(cncserver.gConf.get('httpPort'), hostname, function(){
     // Properly close down server on fail/close
-    process.on('uncaughtException', function(err){ console.log(err); closeServer(); });
     process.on('SIGTERM', function(err){ console.log(err); closeServer(); });
   });
 }
