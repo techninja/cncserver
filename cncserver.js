@@ -496,6 +496,7 @@ function serialPortReadyCallback() {
           x: cncserver.bot.park.x,
           y: cncserver.bot.park.y,
           park: true,
+          ignoreTimeout: req.body.ignoreTimeout,
           skipBuffer: req.body.skipBuffer
         }, function(stat){
           if (!stat) {
