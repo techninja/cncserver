@@ -217,6 +217,7 @@ var globalConfigDefaults = {
     x: false,
     y: false
   },
+  maximumBlockingCallStack: 100, // Limit for the # blocking sequential calls
   serialPath: "{auto}", // Empty for auto-config
   bufferLatencyOffset: 30, // Number of ms to move each command closer together
   corsDomain: '*', // Start as open to CORs enabled browser clients
@@ -1864,6 +1865,7 @@ setInterval(function(){
  *   True if success, false if failure
  */
 var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
+var consecutiveCallStackCount = 0; // Count the blocking call stack size.
 function serialCommand(command){
   if (!serialPort.write && !cncserver.pen.simulation) { // Not ready to write to serial!
     return false;
@@ -1882,9 +1884,12 @@ function serialCommand(command){
       serialPort.write(command + "\r", function() {
         serialPort.drain(function(){
           // Command should be sent! Time out the next command send
-          if (commandDuration < cncserver.gConf.get('bufferLatencyOffset')) {
+          if (commandDuration < cncserver.gConf.get('bufferLatencyOffset') &&
+              consecutiveCallStackCount < cncserver.gConf.get('maximumBlockingCallStack')) {
+            consecutiveCallStackCount++;
             executeNext(); // Under threshold, "immediate" run
           } else {
+            consecutiveCallStackCount = 0;
             clearTimeout(nextExecutionTimeout);
             nextExecutionTimeout = setTimeout(executeNext,
               commandDuration - cncserver.gConf.get('bufferLatencyOffset')
@@ -1900,9 +1905,12 @@ function serialCommand(command){
   } else {
     // Trigger executeNext as we're simulating and "drain" would never trigger
     // Command should be sent! Time out the next command send
-    if (commandDuration < cncserver.gConf.get('bufferLatencyOffset')) {
-      setTimeout(executeNext, 1);
+    if (commandDuration < cncserver.gConf.get('bufferLatencyOffset') &&
+        consecutiveCallStackCount < cncserver.gConf.get('maximumBlockingCallStack')) {
+      consecutiveCallStackCount++;
+      executeNext();
     } else {
+      consecutiveCallStackCount = 0;
       clearTimeout(nextExecutionTimeout);
       nextExecutionTimeout = setTimeout(executeNext,
         commandDuration - cncserver.gConf.get('bufferLatencyOffset')
