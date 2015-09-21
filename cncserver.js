@@ -1769,7 +1769,7 @@ function cmdstr(name, values) {
  */
 function executeNext() {
   // Run the paused callback if applicable
-  if (bufferNewlyPaused) {
+  if (bufferNewlyPaused && bufferPauseCallback) {
     bufferPauseCallback();
   }
 
