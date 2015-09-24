@@ -1142,7 +1142,7 @@ function serialPortReadyCallback() {
 
       // Adjust the distance counter based on movement amount, not if we're off
       // the canvas though.
-      if (cncserver.penDown() && !cncserver.pen.offCanvas) {
+      if (cncserver.penDown() && !cncserver.pen.offCanvas && cncserver.bot.inWorkArea(point)) {
         cncserver.pen.distanceCounter = parseFloat(Number(distance) + Number(cncserver.pen.distanceCounter));
       }
 
@@ -1417,6 +1417,18 @@ function loadBotConfig(cb, botType) {
           y: Number(cncserver.botConf.get('park:y'))
         },
         commands : cncserver.botConf.get('controller').commands
+      };
+
+      // Check if a point is within the work area.
+      cncserver.bot.inWorkArea = function(point) {
+        var area = cncserver.bot.workArea;
+        if (point.x > area.right || point.x < area.left) {
+          return false;
+        }
+        if (point.y > area.bottom || point.y < area.top) {
+          return false;
+        }
+        return true;
       };
 
       // Store assumed constants
