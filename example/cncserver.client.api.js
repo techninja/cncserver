@@ -1,6 +1,7 @@
 /**
  * @file Holds all CNC Server API controller functions and RESTful interactions
- * abstracted for use in the client side application
+ * abstracted for use in the client side application. Includable as DOM JS, or
+ * as a Node module.
  *
  * In use, must set the "server" object like the following:
  *
@@ -14,6 +15,12 @@
 
 // Initialize wrapper object is this library is being used elsewhere
 if (typeof cncserver === 'undefined') var cncserver = {};
+
+// Detect NodeJS vs Browser:
+var isNode = false;
+try {
+  isNode = Object.prototype.toString.call(global.process) === '[object process]';
+} catch(e) {}
 
 /**
  * Restful API wrappers
@@ -29,7 +36,7 @@ cncserver.api = {
     stat: function(callback){
       _get('pen', {
         success: function(d){
-          $(cncserver.api).trigger('updatePen', [d]);
+          if (!isNode) $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
         },
         error: function(e) {
@@ -57,7 +64,7 @@ cncserver.api = {
       _put('pen', {
         data: options,
         success: function(d){
-          $(cncserver.api).trigger('updatePen', [d]);
+          if (!isNode) $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
         },
         error: function(e) {
@@ -104,7 +111,7 @@ cncserver.api = {
       _put('pen', {
         data: { resetCounter: 1},
         success: function(d){
-          $(cncserver.api).trigger('updatePen', [d]);
+          if (!isNode) $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
         },
         error: function(e) {
@@ -129,8 +136,8 @@ cncserver.api = {
       _delete('pen',{
         data: options,
         success: function(d){
-          $(cncserver.api).trigger('updatePen', [d]);
-          $(cncserver.api).trigger('offCanvas');
+          if (!isNode) $(cncserver.api).trigger('updatePen', [d]);
+          if (!isNode) $(cncserver.api).trigger('offCanvas');
           if (callback) callback(d);
         },
         error: function(e) {
@@ -148,7 +155,7 @@ cncserver.api = {
       _put('motors',{
         data: {reset: 1},
         success: function(d){
-          $(cncserver.api).trigger('offCanvas');
+          if (!isNode) $(cncserver.api).trigger('offCanvas');
           if (callback) callback(d);
         },
         error: function(e) {
@@ -170,7 +177,7 @@ cncserver.api = {
         return;
       }
 
-      $(cncserver.api).trigger('movePoint', [point]);
+      if (!isNode) $(cncserver.api).trigger('movePoint', [point]);
 
       // Sanity check inputs
       point.x = point.x > 100 ? 100 : point.x;
@@ -186,7 +193,7 @@ cncserver.api = {
       _put('pen', {
         data: point,
         success: function(d){
-          $(cncserver.api).trigger('updatePen', [d]);
+          if (!isNode) $(cncserver.api).trigger('updatePen', [d]);
           if (callback) callback(d);
         },
         error: function(e) {
@@ -237,8 +244,8 @@ cncserver.api = {
     *   The base of the full object to send for API options
     */
     change: function(toolName, callback, options){
-      $(cncserver.api).trigger('offCanvas');
-      $(cncserver.api).trigger('toolChange');
+      if (!isNode) $(cncserver.api).trigger('offCanvas');
+      if (!isNode) $(cncserver.api).trigger('toolChange');
 
       if (typeof options !== 'object') options = {};
 
@@ -265,7 +272,7 @@ cncserver.api = {
       _put('buffer', {
         data: {paused: true},
         success: function(d) {
-          $(cncserver.api).trigger('paused');
+          if (!isNode) $(cncserver.api).trigger('paused');
           if (callback) callback(d);
         },
         error: function(e) {
@@ -281,7 +288,7 @@ cncserver.api = {
       _put('buffer', {
         data: {paused: false},
         success: function(d) {
-          $(cncserver.api).trigger('resumed');
+          if (!isNode) $(cncserver.api).trigger('resumed');
           if (callback) callback(d);
         },
         error: function(e) {
@@ -399,6 +406,16 @@ function _delete(path, options) {
   _request('DELETE', path, options);
 }
 
+if (isNode) {
+  var request = require('request');
+
+  // As a node module, just pass your cncserver object, and the api.server obj.
+  module.exports = function(cncmain, server) {
+    cncmain.api = cncserver.api;
+    cncmain.api.server = server;
+  }
+}
+
 function _request(method, path, options) {
   var srv = cncserver.api.server;
   if (!srv) {
@@ -415,12 +432,28 @@ function _request(method, path, options) {
     srvPath = '/v' + srv.version + '/' + path
   }
 
-  $.ajax({
-    url: srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath,
-    type: method,
-    data: options.data,
-    success: options.success,
-    error: options.error,
-    timeout: options.error
-  });
+  var uri = srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath;
+  if (!isNode) {
+    $.ajax({
+      url: uri,
+      type: method,
+      data: options.data,
+      success: options.success,
+      error: options.error,
+      timeout: options.error
+    });
+  } else {
+    request({
+      uri: uri,
+      json: true,
+      method: method,
+      body: options.data
+    }, function(error, response, body){
+      if (error) {
+        if (options.error) options.error(error, response, body);
+      } else {
+        if (options.success) options.success(body, response);
+      }
+    });
+  }
 }
