@@ -354,11 +354,11 @@ function sendBotConfig() {
   // EBB Specific Config =================================
   if (cncserver.botConf.get('controller').name === 'EiBotBoard') {
     console.log('Sending EBB config...');
-    run('custom', 'EM,' + cncserver.botConf.get('speed:precision'));
+    run('custom', cmdstr('enablemotors', {p: cncserver.botConf.get('speed:precision')}));
 
     // Send twice for good measure
-    run('custom', 'SC,10,' + cncserver.botConf.get('servo:rate'));
-    run('custom', 'SC,10,' + cncserver.botConf.get('servo:rate'));
+    run('custom', cmdstr('configureservo', {r: cncserver.botConf.get('servo:rate')}));
+    run('custom', cmdstr('configureservo', {r: cncserver.botConf.get('servo:rate')}));
   }
 
   var isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
@@ -525,7 +525,7 @@ function serialPortReadyCallback() {
   cncserver.createServerEndpoint("/v1/motors", function(req, res){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
-      run('custom', 'EM,0,0');
+      run('custom', cmdstr('disablemotors'));
       return [201, 'Disable Queued'];
     } else if (req.route.method === 'put') {
       if (req.body.reset === '1') {
