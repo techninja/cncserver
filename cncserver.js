@@ -33,6 +33,7 @@ var fs = require('fs');                    // File System management
 var path = require('path');                // Path management and normalization
 var extend = require('util')._extend;      // Util for cloning objects
 var io = require('socket.io')(server);     // Socket.io for streaming state data
+var queue = require('queue')().start();    // Queue module buffer runner
 
 var scratch = require('./cncserver.scratch.js'); // Scratch support/API addition
 
@@ -42,6 +43,11 @@ var cncserver = { // Master object for holding stuff!
   botConf: new nconf.Provider(),
   bot: {} // Holds clean rendered settings set after botConfig is loaded
 };
+
+queue.concurrency = 1; // Only one item at a time can be run through.
+// MS to wait before timing out. This really should never happen.
+queue.timeout = 20 * 1000;
+
 
 // Pull conf from env, or arguments
 cncserver.gConf.env().argv();
@@ -1742,9 +1748,7 @@ function run(command, data, duration) {
       return false;
   }
 
-  // Add final command and duration to end of queue, along with a copy of the
-  // pen state at this point in time to be copied to actualPen after execution
-  buffer.unshift([c, duration, extend({}, cncserver.pen)]);
+  queue.push(commandFunction([c, duration, extend({}, cncserver.pen)]));
   sendBufferAdd(buffer[0]);
   return true;
 }
@@ -1774,36 +1778,20 @@ function cmdstr(name, values) {
 }
 
 /**
- * Execute the next command in the buffer, triggered by self, buffer interval
- * catcher loop below, and serialReadLine.
- *
- * @see serialReadLine
+ * Prepare a function for executing a command in the queue.
  */
-function executeNext() {
-  // Run the paused callback if applicable
-  if (bufferNewlyPaused && bufferPauseCallback) {
-    bufferPauseCallback();
-  }
-
-  // Don't continue execution if paused
-  if (bufferPaused) return;
-
-  if (buffer.length) {
-    var cmd = buffer.pop();
-
-    // Process a single line of the buffer =====================================
-    // =========================================================================
-
+function commandFunction(cmd) {
+  return function(cb) {
     if (typeof cmd[0] === "function") { // Custom Callback buffer item
-      // Timing for this should be correct because of commandDuration below!
-      cmd[0](1);
-      // Set the actualPen state to match the state assumed at the time the
-      // buffer item was created
-      cncserver.actualPen = extend({}, cmd[2]);
+        // Timing for this should be correct because of commandDuration below!
+        cmd[0](1);
+        // Set the actualPen state to match the state assumed at the time the
+        // buffer item was created
+        cncserver.actualPen = extend({}, cmd[2]);
 
-      // Trigger an update for buffer loss and actualPen change
-      sendPenUpdate();
-      executeNext();
+        // Trigger an update for buffer loss and actualPen change
+        sendPenUpdate();
+        cb();
     } else if (typeof cmd[0] === "object") { // Detailed buffer object
 
       // Actually send off the command to do something
@@ -1811,18 +1799,18 @@ function executeNext() {
         case 'absmove':
           // Propagate distanceCounter to actualPen
           cncserver.actualPen.distanceCounter = cmd[2].distanceCounter;
-          actuallyMove(cmd[0]);
+          actuallyMove(cmd[0], cb);
           break;
         case 'absheight':
-          actuallyMoveHeight(cmd[0].z, cmd[0].state);
+          actuallyMoveHeight(cmd[0].z, cmd[0].state, cb);
           break;
         case 'message':
           sendMessageUpdate(cmd[0].message);
-          executeNext(); // We're sure the message sent via stream, move on
+          cb(); // We're sure the message sent via stream, move on
           break;
         case 'callbackname':
           sendCallbackUpdate(cmd[0].name);
-          executeNext(); // We're sure the message sent via stream, move on
+          cb(); // We're sure the message sent via stream, move on
           break;
       }
     } else {
@@ -1840,20 +1828,27 @@ function executeNext() {
 
       // Actually send the command out to serial
       serialCommand(cmd[0]);
+      cbWait(cb, commandDuration, true);
     }
+  };
+}
 
-    sendBufferRemove();
-  } else {
-    // Buffer Empty? Cover our butts and ensure the "last buffer tip"
-    // pen object is up to date with actualPen.
-
-    // Save the offCanvas variable value to ensure it carries along with the tip
-    // of the buffer.
-    cncserver.actualPen.offCanvas = cncserver.pen.offCanvas;
-    cncserver.pen = extend({}, cncserver.actualPen);
-
-    bufferRunning = false;
+// Call a callback after a specific duration
+function cbWait(callack, duration, less) {
+  // Default less value if literal true sent.
+  if (less === true) {
+    less = cncserver.gConf.get('bufferLatencyOffset');
   }
+
+  setTimeout(function(){
+    if (callback) callback(1);
+  }, Math.max(getInt(duration) - getInt(less), 0));
+}
+
+// No matter what input we get, we always get an integer
+function getInt(num) {
+  var out = parseInt(num);
+  return isNaN(out) : 0 : out;
 }
 
 // Buffer interval catcher, starts running the buffer as soon as items exist in it
