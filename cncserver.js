@@ -1249,12 +1249,15 @@ cncserver.clearBuffer = function() {
 
 /**
  * Helper abstraction for checking if the tip of buffer pen is "down" or not.
- *
+ * @param {object} inPen
+ *   The pen object to check for donw status, defaults to buffer tip.
  * @returns {Boolean}
  *   False if pen is considered up, true if pen is considered down.
  */
-cncserver.penDown = function() {
-  if (cncserver.pen.state === 'up' || cncserver.pen.state < 0.5) {
+cncserver.penDown = function(inPen) {
+  if (!inPen) inPen = cncserver.pen;
+
+  if (inPen.state === 'up' || inPen.state < 0.5) {
     return false;
   } else {
     return true;
@@ -1535,7 +1538,7 @@ function getPosChangeData(src, dest) {
   };
 
   // Calculate distance
-  var duration = getDurationFromDistance(getVectorLength(change));
+  var duration = getDurationFromDistance(getVectorLength(change), 1, src);
 
   // Adjust change direction/inversion
   if (cncserver.botConf.get('controller').position === "relative") {
@@ -1578,17 +1581,19 @@ function getVectorLength(vector) {
  *   Distance in steps that we'll be moving
  * @param {int} min
  *   Optional minimum value for output duration, defaults to 1.
+ * @param {object} inPen
+ *   Incoming pen object to check (buffer tip or bot current).
  * @returns {number}
  *   Millisecond duration of how long the move should take
  */
-function getDurationFromDistance(distance, min) {
+function getDurationFromDistance(distance, min, inPen) {
   if (typeof min === "undefined") min = 1;
 
   var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
   var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
 
   // Use given speed over distance to calculate duration
-  var speed = (cncserver.penDown()) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
+  var speed = (cncserver.penDown(inPen)) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
   speed = parseFloat(speed) / 100;
   speed = speed * ((maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
 
