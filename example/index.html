@@ -174,15 +174,16 @@
 
     if (pen.lastDuration > 250) {
       animPen = $.extend({}, lastPen);
-      $(lastPen).animate({ x:pen.x, y: pen.y  }, {
-        duration: pen.lastDuration - 5,
-        easing: 'linear',
-        step: function(val, fx) {
-          animPen[fx.prop] = val;
-          $draw.update(animPen, pen);
-        }
-      });
-
+      if (typeof lastPen.x !== 'undefined') {
+        $(lastPen).animate({ x:pen.x, y: pen.y  }, {
+          duration: pen.lastDuration - 5,
+          easing: 'linear',
+          step: function(val, fx) {
+            animPen[fx.prop] = val;
+            $draw.update(animPen, pen);
+          }
+        });
+      }
     } else {
       $(lastPen).stop();
       $draw.update(pen);
@@ -200,15 +201,14 @@
       case 'vars':
         $('#bufrun').text(b.bufferRunning);
         $('#bufpause').text(b.bufferPaused);
-        $('#bufcount').text(b.buffer.length);
+        $('#bufcount').text(buffer.length);
+
         resumePen = b.bufferPausePen;
         break;
       case 'add':
-        console.log('ADD');
         buffer.unshift(b.item);
         break;
       case 'remove':
-        console.log('REMOVE');
         buffer.pop();
         break;
     }
