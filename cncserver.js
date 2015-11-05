@@ -536,25 +536,27 @@ function serialPortReadyCallback() {
         // parking location, so we're going to man-handle the variables a bit.
         // completely not repecting the buffer (as really, it should be empty)
 
-        // As a precaution, here's some insurance
-        if (buffer.length && bufferRunning) {
-          return [406, 'Can not Zero while running. Pause or clear buffer.'];
-        }
+        // EDIT: There are plenty of queued operations that don't involve moving
+        // the pen that make sense to have in the buffer after a zero operation,
+        // not to mention if there are items in the queue during a pause, we
+        // should still want the ability to do this.
 
         // Set tip of buffer to current
         cncserver.pen.x = park.x;
         cncserver.pen.y = park.y;
 
-        // Set actualPen position. This is the ONLY place we set this value
-        // without a movement, because it's assumed to have been moved there
-        // physically by a user. Also we're assuming they did it instantly!
-        cncserver.actualPen.x = park.x;
-        cncserver.actualPen.y = park.y;
-        cncserver.actualPen.lastDuration = 0;
+        run('callback', function(){
+          // Set actualPen position. This is the ONLY place we set this value
+          // without a movement, because it's assumed to have been moved there
+          // physically by a user. Also we're assuming they did it instantly!
+          cncserver.actualPen.x = park.x;
+          cncserver.actualPen.y = park.y;
+          cncserver.actualPen.lastDuration = 0;
 
-        sendPenUpdate();
-        if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
-        return [200, 'Motor offset reset to park position'];
+          sendPenUpdate();
+          if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
+        });
+        return [201, 'Motor offset reset to park position queued'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
       }
