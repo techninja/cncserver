@@ -528,7 +528,7 @@ function serialPortReadyCallback() {
       run('custom', 'EM,0,0');
       return [201, 'Disable Queued'];
     } else if (req.route.method === 'put') {
-      if (req.body.reset === '1') {
+      if (req.body.reset == 1) {
         // ZERO motor position to park position
         var park = centToSteps(cncserver.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
