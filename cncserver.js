@@ -534,7 +534,7 @@ function serialPortReadyCallback() {
       run('custom', 'EM,0,0');
       return [201, 'Disable Queued'];
     } else if (req.route.method === 'put') {
-      if (req.body.reset === '1') {
+      if (req.body.reset == 1) {
         // ZERO motor position to park position
         var park = centToSteps(cncserver.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
@@ -542,25 +542,27 @@ function serialPortReadyCallback() {
         // parking location, so we're going to man-handle the variables a bit.
         // completely not repecting the buffer (as really, it should be empty)
 
-        // As a precaution, here's some insurance
-        if (buffer.length && bufferRunning) {
-          return [406, 'Can not Zero while running. Pause or clear buffer.'];
-        }
+        // EDIT: There are plenty of queued operations that don't involve moving
+        // the pen that make sense to have in the buffer after a zero operation,
+        // not to mention if there are items in the queue during a pause, we
+        // should still want the ability to do this.
 
         // Set tip of buffer to current
         cncserver.pen.x = park.x;
         cncserver.pen.y = park.y;
 
-        // Set actualPen position. This is the ONLY place we set this value
-        // without a movement, because it's assumed to have been moved there
-        // physically by a user. Also we're assuming they did it instantly!
-        cncserver.actualPen.x = park.x;
-        cncserver.actualPen.y = park.y;
-        cncserver.actualPen.lastDuration = 0;
+        run('callback', function(){
+          // Set actualPen position. This is the ONLY place we set this value
+          // without a movement, because it's assumed to have been moved there
+          // physically by a user. Also we're assuming they did it instantly!
+          cncserver.actualPen.x = park.x;
+          cncserver.actualPen.y = park.y;
+          cncserver.actualPen.lastDuration = 0;
 
-        sendPenUpdate();
-        if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
-        return [200, 'Motor offset reset to park position'];
+          sendPenUpdate();
+          if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
+        });
+        return [201, 'Motor offset reset to park position queued'];
       } else {
         return [406, 'Input not acceptable, see API spec for details.'];
       }
@@ -1255,12 +1257,15 @@ cncserver.clearBuffer = function() {
 
 /**
  * Helper abstraction for checking if the tip of buffer pen is "down" or not.
- *
+ * @param {object} inPen
+ *   The pen object to check for donw status, defaults to buffer tip.
  * @returns {Boolean}
  *   False if pen is considered up, true if pen is considered down.
  */
-cncserver.penDown = function() {
-  if (cncserver.pen.state === 'up' || cncserver.pen.state < 0.5) {
+cncserver.penDown = function(inPen) {
+  if (!inPen) inPen = cncserver.pen;
+
+  if (inPen.state === 'up' || inPen.state < 0.5) {
     return false;
   } else {
     return true;
@@ -1541,7 +1546,7 @@ function getPosChangeData(src, dest) {
   };
 
   // Calculate distance
-  var duration = getDurationFromDistance(getVectorLength(change));
+  var duration = getDurationFromDistance(getVectorLength(change), 1, src);
 
   // Adjust change direction/inversion
   if (cncserver.botConf.get('controller').position === "relative") {
@@ -1584,17 +1589,19 @@ function getVectorLength(vector) {
  *   Distance in steps that we'll be moving
  * @param {int} min
  *   Optional minimum value for output duration, defaults to 1.
+ * @param {object} inPen
+ *   Incoming pen object to check (buffer tip or bot current).
  * @returns {number}
  *   Millisecond duration of how long the move should take
  */
-function getDurationFromDistance(distance, min) {
+function getDurationFromDistance(distance, min, inPen) {
   if (typeof min === "undefined") min = 1;
 
   var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
   var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
 
   // Use given speed over distance to calculate duration
-  var speed = (cncserver.penDown()) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
+  var speed = (cncserver.penDown(inPen)) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
   speed = parseFloat(speed) / 100;
   speed = speed * ((maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
 
@@ -2002,8 +2009,11 @@ function connectSerial(options){
       }
 
       // Specific board detect for linux
-      if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
-        cncserver.gConf.set('serialPath', portNames[portID]);
+      if (typeof ports[portID].pnpId === 'string') {
+        if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
+          cncserver.gConf.set('serialPath', portNames[portID]);
+        }
+
       // All other OS detect
       } else if (ports[portID].manufacturer.indexOf(cncserver.botConf.get('controller').manufacturer) !== -1 && autoDetect) {
         cncserver.gConf.set('serialPath', portNames[portID]);
