@@ -2014,8 +2014,11 @@ function connectSerial(options){
       }
 
       // Specific board detect for linux
-      if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
-        cncserver.gConf.set('serialPath', portNames[portID]);
+      if (typeof ports[portID].pnpId === 'string') {
+        if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
+          cncserver.gConf.set('serialPath', portNames[portID]);
+        }
+
       // All other OS detect
       } else if (ports[portID].manufacturer.indexOf(cncserver.botConf.get('controller').manufacturer) !== -1 && autoDetect) {
         cncserver.gConf.set('serialPath', portNames[portID]);
