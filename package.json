@@ -14,10 +14,6 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "grunt": "*",
-    "grunt-cli": "*",
-    "grunt-mocha-test": "*",
-    "grunt-contrib-jshint": "*",
     "chai": "*",
     "request": "*"
   },
@@ -29,6 +25,6 @@
     "url": "https://github.com/techninja/cncserver.git"
   },
   "scripts": {
-    "test": "grunt --verbose"
+    "test": "mocha"
   }
 }
