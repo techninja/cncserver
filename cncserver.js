@@ -1979,6 +1979,42 @@ function simulationModeInit() {
   cncserver.pen.simulation = 1;
 }
 
+
+/**
+ * Helper function to implement matching port information to configured bot parameters.
+ *
+ * Attempts to match serialport.list output to parameters and set global
+ * 'serialPath' to matching port.
+ *
+ * @param {object} portDesc
+ *   Single port description returned by serialport.list
+ * @param {object} botControllerConf
+ *   The configured bot controller to try to match
+ */
+function autoDetectPort(portDesc, botControllerConf) {
+  var botMaker = botControllerConf.manufacturer.toLowerCase();
+  var botProductId = botControllerConf.productId.toLowerCase();
+  var portMaker = (portDesc.manufacturer || "").toLowerCase();
+  var portProductId = (portDesc.productId || "").toLowerCase();
+
+  // OS specific board detection based on current output from serialport 2.0.5
+  switch (process.platform) {
+  case 'win32':
+    // Match by manufacturer partial only.
+    if (portMaker.indexOf(botMaker) !== -1) {
+      cncserver.gConf.set('serialPath', portDesc.comName);
+    }
+
+    break;
+  default: // includes 'darwin', 'linux'
+    // Match by exact productID and Manufacturer (Mac/*nix).
+    if (portMaker == botMaker && portProductId == botProductId) {
+      cncserver.gConf.set('serialPath', portDesc.comName);
+    }
+  }
+}
+
+
 /**
  * Helper function to manage initial serial connection and reconnection.
  *
@@ -2006,30 +2042,12 @@ function connectSerial(options){
     var portNames = ['None'];
     if (cncserver.gConf.get('debug')) console.log('Full Available Port Data:', ports);
 
-    var botMaker = cncserver.botConf.get('controller').manufacturer.toLowerCase();
-    var botProductId = cncserver.botConf.get('controller').productId.toLowerCase();
     for (var portID in ports){
-      var portMaker = (ports[portID].manufacturer || "").toLowerCase();
-      var portProductId = (ports[portID].productId || "").toLowerCase();
       portNames[portID] = ports[portID].comName;
-
-      // OS specific board detection based on current output from serialport 2.0.5
-      switch (process.platform) {
-        case 'win32':
-          // Match by manufacturer partial only.
-          if (portMaker.indexOf(botMaker) !== -1 && autoDetect) {
-            cncserver.gConf.set('serialPath', portNames[portID]);
-          }
-
-          break;
-        default: // includes 'darwin', 'linux'
-          // Match by exact productID and Manufacturer (Mac/*nix).
-          if (portMaker == botMaker && portProductId == botProductId && autoDetect) {
-            cncserver.gConf.set('serialPath', portNames[portID]);
-          }
+      if(autoDetect) {
+        autoDetectPort(ports[portID], cncserver.botConf.get('controller'));
       }
     }
-
     console.log('Available Serial ports: ' + portNames.join(', '));
 
     // Try to connect to serial, or exit with error codes
