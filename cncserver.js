@@ -1520,7 +1520,7 @@ function createServerEndpoint(path, callback){
 
     }
   });
-};
+}
 
 /**
  * Given two points, find the difference and duration at current speed between them
