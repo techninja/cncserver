@@ -758,13 +758,13 @@ function serialPortReadyCallback() {
 
     // Setting the value of the power to the pen
     if (typeof inPen.power !== "undefined") {
-      var powers = botConf.get('penpower');
+      var powers = cncserver.botConf.get('penpower');
       if(typeof powers === "undefined") { // We have no super powers
         powers = {min: 0, max: 0};  // Set the powers to zero
       }
 
       run('custom', cmdstr('penpower', {p: Math.round(inPen.power * powers.max) + Number(powers.min)}));
-      pen.power = inPen.power;
+      cncserver.pen.power = inPen.power;
       if (callback) callback(true);
       return;
     }
