@@ -2005,23 +2005,30 @@ function connectSerial(options){
   require("serialport").list(function (err, ports) {
     var portNames = ['None'];
     if (cncserver.gConf.get('debug')) console.log('Full Available Port Data:', ports);
+
+    var botMaker = cncserver.botConf.get('controller').manufacturer.toLowerCase();
+    var botProductId = cncserver.botConf.get('controller').productId.toLowerCase();
     for (var portID in ports){
+      var portMaker = (ports[portID].manufacturer || "").toLowerCase();
+      var portProductId = (ports[portID].productId || "").toLowerCase();
       portNames[portID] = ports[portID].comName;
 
-      // Sanity check manufacturer (returns undefined for some devices in Serialport 1.2.5)
-      if (typeof ports[portID].manufacturer != 'string') {
-        ports[portID].manufacturer = '';
-      }
+      // OS specific board detection based on current output from serialport 2.0.5
+      switch (process.platform) {
+        case 'win32':
+          // Match by manufacturer partial only.
+          if (portMaker.indexOf(botMaker) !== -1 && autoDetect) {
+            cncserver.gConf.set('serialPath', portNames[portID]);
+          }
 
-      // Specific board detect for linux
-      if (typeof ports[portID].pnpId === 'string') {
-        if (ports[portID].pnpId.indexOf(cncserver.botConf.get('controller').name) !== -1 && autoDetect) {
-          cncserver.gConf.set('serialPath', portNames[portID]);
-        }
-
-      // All other OS detect
-      } else if (ports[portID].manufacturer.indexOf(cncserver.botConf.get('controller').manufacturer) !== -1 && autoDetect) {
-        cncserver.gConf.set('serialPath', portNames[portID]);
+          break;
+        case 'darwin':
+        case 'linux':
+        default:
+          // Match by exact productID and Manufacturer (Mac/*nix).
+          if (portMaker == botMaker && portProductId == botProductId && autoDetect) {
+            cncserver.gConf.set('serialPath', portNames[portID]);
+          }
       }
     }
 
