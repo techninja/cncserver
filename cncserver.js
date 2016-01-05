@@ -2022,9 +2022,7 @@ function connectSerial(options){
           }
 
           break;
-        case 'darwin':
-        case 'linux':
-        default:
+        default: // includes 'darwin', 'linux'
           // Match by exact productID and Manufacturer (Mac/*nix).
           if (portMaker == botMaker && portProductId == botProductId && autoDetect) {
             cncserver.gConf.set('serialPath', portNames[portID]);
