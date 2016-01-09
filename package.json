@@ -19,7 +19,8 @@
     "grunt-mocha-test": "*",
     "grunt-contrib-jshint": "*",
     "chai": "*",
-    "request": "*"
+    "request": "*",
+    "rewire": "*"
   },
   "engines": {
     "node": ">= 0.10.0"
