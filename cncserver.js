@@ -919,7 +919,7 @@ function serialPortReadyCallback() {
 
     // Validate Height, and conform to a bottom to top based percentage 0 to 100
     if (isNaN(parseInt(state))){ // Textual position!
-      if (presets[state]) {
+      if (typeof presets[state] !== 'undefined') {
         height = parseFloat(presets[state]);
       } else { // Textual expression not found, default to UP
         height = presets.up;
