@@ -1,6 +1,6 @@
 {
   "name": "cncserver",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
