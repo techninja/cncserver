@@ -34,7 +34,7 @@ var path = require('path');                // Path management and normalization
 var extend = require('util')._extend;      // Util for cloning objects
 var io = require('socket.io')(server);     // Socket.io for streaming state data
 
-var scratch = require('./cncserver.scratch.js'); // Scratch support/API addition
+var scratch = require('./src/cncserver.scratch.js'); // Scratch support/API addition
 
 // CONFIGURATION ===============================================================
 var cncserver = { // Master object for holding stuff!
