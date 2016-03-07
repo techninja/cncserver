@@ -8,7 +8,7 @@ var cncserver = {}; // Set only when the API is initialized.
 var turtle = {};
 var sizeMultiplier = 10; // Amount to increase size of steps
 
-exports.initAPI = function(cncserverArg) {
+exports.initAPI = function (cncserverArg) {
   cncserver = cncserverArg;
   console.info('Scratch v2 Programming support ENABLED');
   var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
@@ -20,20 +20,23 @@ exports.initAPI = function(cncserverArg) {
     reinkDistance: 0,
     media: 'water0',
     degrees: 0,
-    distanceCounter: 0
+    distanceCounter: 0,
   };
 
-  pollData.render = function() {
+  pollData.render = function () {
     var out = "";
 
-    out += 'x ' + (turtle.x - cncserver.bot.workArea.absCenter.x) / sizeMultiplier  + "\n";
-    out += 'y ' + (turtle.y - cncserver.bot.workArea.absCenter.y) / sizeMultiplier + "\n";
-    out += 'z ' + ((cncserver.pen.state === 'draw' || cncserver.pen.state === 1) ? '1' : '0') + "\n";
+    var workArea = cncserver.bot.workArea;
+    out += 'x ' + (turtle.x - workArea.absCenter.x) / sizeMultiplier  + "\n";
+    out += 'y ' + (turtle.y - workArea.absCenter.y) / sizeMultiplier + "\n";
+    out += 'z ' + (cncserver.utils.penDown() ? '1' : '0') + "\n";
 
-    var angleTemp = turtle.degrees + 90; // correct for "standard" Turtle orientation in Scratch
+    // Correct for "standard" Turtle orientation in Scratch
+    var angleTemp = turtle.degrees + 90;
     if (angleTemp > 360) {
       angleTemp -= 360;
     }
+
     out += 'angle ' + angleTemp + "\n";
     out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
     out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
@@ -42,7 +45,7 @@ exports.initAPI = function(cncserverArg) {
     var key = "";
     for (key in this) {
       if (typeof this[key] === 'object') {
-        var v = (typeof this[key] === 'string') ?  this[key] : this[key].join(' ');
+        var v = this[key].join(' ');
 
         if (v !== '') {
           out += key + ' ' + v + "\n";
@@ -52,10 +55,7 @@ exports.initAPI = function(cncserverArg) {
 
     // Throw in full pen data as well
     for (key in cncserver.pen) {
-      if (key === 'x') {}
-      else if (key === 'y') {}
-      else if (key === 'distanceCounter') {}
-      else {
+      if (key !== 'x' && key !== 'y' && key !== 'distanceCounter') {
         out += key + ' ' + cncserver.pen[key] + "\n";
       }
     }
@@ -79,17 +79,23 @@ exports.initAPI = function(cncserverArg) {
 
   // SCRATCH v2 Specific endpoints =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
   // Central poll returner (Queried ~30hz)
-  cncserver.createServerEndpoint("/poll", function(req, res){
+  cncserver.createServerEndpoint("/poll", function(){
     return {code: 200, body: pollData.render()};
   });
 
   // Flash crossdomain helper
-  cncserver.createServerEndpoint("/crossdomain.xml", function(req, res){
-    return {code: 200, body: '<?xml version="1.0" ?><cross-domain-policy><allow-access-from domain="*" to-ports="' + cncserver.gConf.get('httpPort') + '"/></cross-domain-policy>'};
+  cncserver.createServerEndpoint("/crossdomain.xml", function(){
+    return {
+      code: 200,
+      body:
+        '<?xml version="1.0" ?><cross-domain-policy>' +
+        '<allow-access-from domain="*" to-ports="' +
+        cncserver.gConf.get('httpPort') + '"/></cross-domain-policy>'
+    };
   });
 
   // Initialize/reset status
-  cncserver.createServerEndpoint("/reset_all", function(req, res){
+  cncserver.createServerEndpoint("/reset_all", function(){
     turtle = { // Reset to default
       x: cncserver.bot.workArea.absCenter.x,
       y: cncserver.bot.workArea.absCenter.y,
@@ -103,8 +109,8 @@ exports.initAPI = function(cncserverArg) {
 
     // Clear Run Buffer
     // @see /v1/buffer/ DELETE
-    cncserver.clearBuffer();
-    cncserver.sendBufferComplete();
+    cncserver.buffer.clear();
+    cncserver.io.sendBufferComplete();
 
     pollData._busy = []; // Clear busy indicators
     return {code: 200, body: ''};
@@ -127,17 +133,17 @@ exports.initAPI = function(cncserverArg) {
   cncserver.createServerEndpoint("/move.nudge.y./:arg2", moveRequest);
 
   // Reink initialization endpoint
-  cncserver.createServerEndpoint("/penreink/:distance", function(req, res) {
+  cncserver.createServerEndpoint("/penreink/:distance", function(req) {
     // 167.7 = 1.6mm per step * 100 mm per cm (as input)
     var cm = parseFloat(req.params.distance);
-    turtle.reinkDistance = Math.round(req.params.distance * 167.7);
+    turtle.reinkDistance = Math.round(cm * 167.7);
     console.log('Reink distance: ', turtle.reinkDistance);
     return {code: 200, body: ''};
   });
 
 
   // Stop Reinking endpoint
-  cncserver.createServerEndpoint("/penstopreink", function(req, res) {
+  cncserver.createServerEndpoint("/penstopreink", function() {
     turtle.reinkDistance = 0;
     console.log('Reink distance: ', turtle.reinkDistance);
     return {code: 200, body: ''};
@@ -159,7 +165,7 @@ exports.initAPI = function(cncserverArg) {
 };
 
 // Move request endpoint handler function
-function moveRequest(req, res){
+function moveRequest(req){
   //pollData.busy(req.params.busyid);
   var url = req.originalUrl.split('.');
 
@@ -178,8 +184,12 @@ function moveRequest(req, res){
 
   // Park
   if (req.url === '/park') {
-    cncserver.setHeight('up');
-    cncserver.setPen({x: cncserver.bot.park.x, y: cncserver.bot.park.y, park: true});
+    cncserver.control.setHeight('up');
+    cncserver.control.setPen({
+      x: cncserver.bot.park.x,
+      y: cncserver.bot.park.y,
+      park: true
+    });
     return {code: 200, body: ''};
   }
 
@@ -200,10 +210,15 @@ function moveRequest(req, res){
   // Rotating Pointer? (just rotate)
   if (op === 'left' || op === 'right') {
     arg = parseInt(arg);
-    turtle.degrees = (op === 'right' ? turtle.degrees + arg : turtle.degrees - arg);
+    turtle.degrees = op === 'right' ?
+      turtle.degrees + arg :
+      turtle.degrees - arg;
+
     if (turtle.degrees > 360) turtle.degrees -= 360;
     if (turtle.degrees < 0) turtle.degrees += 360;
-    console.log('Rotate ' + op + ' ' + arg + ' deg. to ' + turtle.degrees + ' deg.');
+    console.log(
+      'Rotate ' + op + ' ' + arg + ' deg. to ' + turtle.degrees + ' deg.'
+    );
     return {code: 200, body: ''};
   }
 
@@ -220,14 +235,23 @@ function moveRequest(req, res){
       if (turtle.degrees > 360) turtle.degrees -= 360;
       if (turtle.degrees < 0) turtle.degrees += 360;
 
-    console.log('Rotate relative towards ' + point.x + ',' + point.y + ' from', turtle.x  + ', ' + turtle.y, 'to', turtle.degrees, 'deg');
+    console.log(
+      'Rotate relative towards ' + point.x +
+      ',' + point.y + ' from',
+      turtle.x  + ', ' + turtle.y, 'to',
+      turtle.degrees, 'deg'
+    );
     return {code: 200, body: ''};
   }
 
   // Rotate pointer directly
   if (op === 'absturn') {
-    turtle.degrees = parseInt(arg) - 90; // correct for "standard" Turtle orientation in Scratch
-    console.log('Rotate to', arg, 'scratch degrees', '(actual angle ' + turtle.degrees + 'deg)');
+    // Correct for "standard" Turtle orientation in Scratch.
+    turtle.degrees = parseInt(arg) - 90;
+    console.log(
+      'Rotate to', arg, 'scratch degrees',
+      '(actual angle ' + turtle.degrees + 'deg)'
+    );
     return {code: 200, body: ''};
   }
 
@@ -259,16 +283,23 @@ function moveRequest(req, res){
     } else {
 
       // Word positions? convert to actual coordinates
-      var wordX = ['left', 'center', 'right'].indexOf(req.params.y); // X/Y swapped for "top left" arg positions
+      // X/Y swapped for "top left" arg positions.
+      var wordX = ['left', 'center', 'right'].indexOf(req.params.y);
       var wordY = ['top', 'center', 'bottom'].indexOf(req.params.x);
       if (wordX > -1) {
-        var steps = cncserver.centToSteps({x: (wordX / 2) * 100, y: (wordY / 2) * 100});
+        var steps = cncserver.utils.centToSteps({
+          x: (wordX / 2) * 100,
+          y: (wordY / 2) * 100
+        });
+
         turtle.x = steps.x;
         turtle.y = steps.y;
       } else {
         // Convert input X/Y to steps via multiplier
         turtle.x = parseInt(req.params.x) * sizeMultiplier;
-        turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;  // In Scratch, positive Y is up on the page. :(
+
+        // In Scratch, positive Y is up on the page. :(
+        turtle.y = -1 * parseInt(req.params.y) * sizeMultiplier;
 
         // When directly setting XY position, offset by half for center 0,0
         turtle.x+= cncserver.bot.workArea.absCenter.x;
@@ -280,30 +311,34 @@ function moveRequest(req, res){
   }
 
   // Attempt to move pen to desired point (may be off screen)
-  var distance = cncserver.movePenAbs(turtle);
+  var distance = cncserver.control.movePenAbs(turtle);
   if (distance === 0) console.log('Not moved any distance');
 
   // Add up distance counter
-  if ((cncserver.penDown()) && !cncserver.pen.offCanvas) {
-    turtle.distanceCounter = parseInt(Number(distance) + Number(turtle.distanceCounter));
+  if ((cncserver.utils.penDown()) && !cncserver.pen.offCanvas) {
+    turtle.distanceCounter = parseInt(
+      Number(distance) + Number(turtle.distanceCounter)
+    );
   }
 
   // If reink initialized, check distance and initiate reink!
-  if (turtle.reinkDistance > 0 && turtle.distanceCounter > turtle.reinkDistance) {
+  if (turtle.reinkDistance > 0 &&
+      turtle.distanceCounter > turtle.reinkDistance ) {
+
     turtle.distanceCounter = 0;
 
     // Reink procedure!
-    cncserver.setTool('water0dip');   // Dip in the water
-    cncserver.setTool(turtle.media);  // Apply the last saved media
-    cncserver.movePenAbs(turtle);     // Move back to "current" position
-    cncserver.setHeight('draw');      // Set the position back to draw
+    cncserver.control.setTool('water0dip');  // Dip in the water
+    cncserver.control.setTool(turtle.media); // Apply the last saved media
+    cncserver.control.movePenAbs(turtle);    // Move back to "current" position
+    cncserver.control.setHeight('draw');     // Set the position back to draw
   }
 
   return {code: 200, body: ''};
 }
 
 // General pen style request handler
-function penRequest(req, res){
+function penRequest(req){
   // Parse out the arguments as we can't use slashes in the URI(!?!)
   var url = req.originalUrl.split('.');
   var op = url[1];
@@ -336,7 +371,7 @@ function penRequest(req, res){
 
     // Don't set the height explicitly when off the canvas
     if (!cncserver.pen.offCanvas) {
-      cncserver.setHeight(op);
+      cncserver.control.setHeight(op);
     } else {
       // Save the state for when we come back
       cncserver.pen.state = op;
@@ -345,15 +380,15 @@ function penRequest(req, res){
 
   // Run simple wash
   if (op === 'wash'){
-    cncserver.setTool('water0');
-    cncserver.setTool('water1');
-    cncserver.setTool('water2');
+    cncserver.control.setTool('water0');
+    cncserver.control.setTool('water1');
+    cncserver.control.setTool('water2');
   }
 
   // Turn off motors and zero to park pos
   if (op === 'off'){
     // Zero the assumed position
-    var park = cncserver.centToSteps(cncserver.bot.park, true);
+    var park = cncserver.utils.centToSteps(cncserver.bot.park, true);
     cncserver.pen.x = park.x;
     cncserver.pen.y = park.y;
     cncserver.actualPen.x = park.x;
@@ -361,13 +396,13 @@ function penRequest(req, res){
 
     // You must zero FIRST then disable, otherwise actualPen is overwritten
     cncserver.run('custom', 'EM,0,0');
-    cncserver.sendPenUpdate();
+    cncserver.io.sendPenUpdate();
   }
   return {code: 200, body: ''};
 }
 
 // Tool Request Handler
-function toolRequest(req, res) {
+function toolRequest(req) {
   var type = req.originalUrl.split('.')[1];
 
   // Do nothing if sleeping
@@ -379,7 +414,7 @@ function toolRequest(req, res) {
   // Set by ID (water/color)
   if (type) {
     var tool = type + parseInt(req.params.id);
-    cncserver.setTool(tool);
+    cncserver.control.setTool(tool);
     turtle.media = tool;
   }
 
