@@ -22,6 +22,9 @@ module.exports = function(cncserver) {
   // Start express HTTP server for API on the given port
   var serverStarted = false;
 
+  /**
+   * Attempt to start the server.
+   */
   cncserver.srv.start = function() {
     // Only run start server once...
     if (serverStarted) return;
@@ -53,6 +56,9 @@ module.exports = function(cncserver) {
     );
   };
 
+  /**
+   * Attempt to close down the server.
+   */
   cncserver.srv.close = function() {
     try {
       cncserver.server.close();

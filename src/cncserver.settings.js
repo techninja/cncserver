@@ -56,7 +56,7 @@ module.exports = function(cncserver) {
         console.info('== CNCServer Debug mode is ON ==');
       }
     });
-  }
+  };
 
   /**
    * Load bot specific config file
@@ -70,11 +70,11 @@ module.exports = function(cncserver) {
   cncserver.settings.loadBotConfig = function (cb, botType) {
     if (!botType) botType = cncserver.gConf.get('botType');
 
-    var botTypeFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
-    if (!fs.existsSync(botTypeFile)){
+    var botFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
+    if (!fs.existsSync(botFile)){
       console.error(
         'Bot configuration file "' +
-        botTypeFile +
+        botFile +
         '" doesn\'t exist. Error #16'
       );
 
@@ -82,7 +82,7 @@ module.exports = function(cncserver) {
     } else {
       cncserver.botConf.reset();
       cncserver.botConf.use('file', {
-        file: botTypeFile,
+        file: botFile,
         format: nconf.formats.ini
       }).load(function(){
 
@@ -148,11 +148,9 @@ module.exports = function(cncserver) {
         cncserver.pen.y = park.y;
 
         // Set global override for swapMotors if set by bot config
-        if (typeof cncserver.botConf.get('controller:swapMotors') !== 'undefined') {
-          cncserver.gConf.set(
-            'swapMotors',
-            cncserver.botConf.get('controller:swapMotors')
-          );
+        var swapMotors = cncserver.botConf.get('controller:swapMotors');
+        if (typeof swapMotors !== 'undefined') {
+          cncserver.gConf.set('swapMotors', swapMotors);
         }
 
         console.log(
@@ -193,4 +191,4 @@ module.exports = function(cncserver) {
   cncserver.exports.getSupportedBots = cncserver.settings.getSupportedBots;
   cncserver.exports.loadGlobalConfig = cncserver.settings.loadGlobalConfig;
   cncserver.exports.loadBotConfig = cncserver.settings.loadBotConfig;
-}
+};

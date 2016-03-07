@@ -27,8 +27,32 @@ module.exports = function(cncserver) {
     // If this isn't done, it will be assumed to be a state that was deleted
     // and never sent out.
     cncserver.pen = extend({}, cncserver.actualPen);
+    cncserver.io.sendBufferVars();
   };
 
+
+  // Pause the buffer running.
+  cncserver.buffer.pause = function() {
+    cncserver.buffer.paused = true;
+    cncserver.io.sendBufferVars();
+  };
+
+  // Resume the buffer running.
+  cncserver.buffer.resume = function() {
+    // TODO: This!
+    cncserver.buffer.paused = false;
+    //cncserver.buffer.executeNext();
+    cncserver.io.sendBufferVars();
+  };
+
+  // Toggle the state
+  cncserver.buffer.toggle = function(setPause) {
+    if (setPause && !cncserver.buffer.paused) {
+      cncserver.buffer.pause();
+    } else if (!setPause && cncserver.buffer.paused) {
+      cncserver.buffer.resume();
+    }
+  };
 
   /**
    * Add a command to the command runner buffer.

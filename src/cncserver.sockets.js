@@ -35,8 +35,8 @@ module.exports = function(cncserver) {
     } else {
       // TODO: This sucks, but even sending these smaller packets is somewhat
       // blocking and screws with buffer send timing. Need to either make these
-      // packets smaller, or limit the number of direct updates per second to the
-      // transfer rate to clients? Who knows.
+      // packets smaller, or limit the number of direct updates per second to
+      // the transfer rate to clients? Who knows.
       io.emit('pen update', cncserver.actualPen);
     }
   };
@@ -84,9 +84,9 @@ module.exports = function(cncserver) {
   cncserver.io.sendBufferVars = function() {
     var data = {
       type: 'vars',
-      bufferRunning: bufferRunning,
-      bufferPaused: bufferPaused,
-      bufferPausePen: bufferPausePen
+      bufferRunning: cncserver.buffer.running,
+      bufferPaused: cncserver.buffer.paused,
+      bufferPausePen: cncserver.buffer.pausePen
     };
 
     // Low-level event callback trigger to avoid Socket.io overhead
@@ -95,7 +95,7 @@ module.exports = function(cncserver) {
     } else {
       io.emit('buffer update', data);
     }
-  }
+  };
 
   /**
    * Send an update to all stream clients about everything buffer related.
@@ -104,10 +104,10 @@ module.exports = function(cncserver) {
   cncserver.io.sendBufferComplete = function () {
     var data = {
       type: 'complete',
-      buffer: buffer,
-      bufferRunning: bufferRunning,
-      bufferPaused: bufferPaused,
-      bufferPausePen: bufferPausePen
+      buffer: cncserver.buffer.data,
+      bufferRunning: cncserver.buffer.running,
+      bufferPaused: cncserver.buffer.paused,
+      bufferPausePen: cncserver.buffer.pausePen
     };
 
     // Low-level event callback trigger to avoid Socket.io overhead

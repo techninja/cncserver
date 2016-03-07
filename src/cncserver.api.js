@@ -63,7 +63,7 @@ module.exports = function(cncserver) {
   cncserver.createServerEndpoint("/v1/pen", function(req, res){
     if (req.route.method === 'put') {
       // SET/UPDATE pen status
-      setPen(req.body, function(stat){
+      cncserver.control.setPen(req.body, function(stat){
         if (!stat) {
           res.status(500).send(JSON.stringify({
             status: "Error setting pen!"
@@ -79,8 +79,8 @@ module.exports = function(cncserver) {
       return true; // Tell endpoint wrapper we'll handle the response
     } else if (req.route.method === 'delete'){
       // Reset pen to defaults (park)
-      setHeight('up', function(){
-        setPen({
+      cncserver.control.setHeight('up', function(){
+        cncserver.control.setPen({
           x: cncserver.bot.park.x,
           y: cncserver.bot.park.y,
           park: true,
@@ -109,7 +109,7 @@ module.exports = function(cncserver) {
   });
 
   // Return/Set Motor state API ================================================
-  cncserver.createServerEndpoint("/v1/motors", function(req, res){
+  cncserver.createServerEndpoint("/v1/motors", function(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
       run('custom', cmdstr('disablemotors'));
@@ -132,7 +132,7 @@ module.exports = function(cncserver) {
         cncserver.pen.x = park.x;
         cncserver.pen.y = park.y;
 
-        run('callback', function(){
+        cncserver.run('callback', function(){
           // Set actualPen position. This is the ONLY place we set this value
           // without a movement, because it's assumed to have been moved there
           // physically by a user. Also we're assuming they did it instantly!
@@ -140,8 +140,11 @@ module.exports = function(cncserver) {
           cncserver.actualPen.y = park.y;
           cncserver.actualPen.lastDuration = 0;
 
-          sendPenUpdate();
-          if (cncserver.gConf.get('debug')) console.log('Motor offset reset to park position');
+          cncserver.io.sendPenUpdate();
+          if (cncserver.gConf.get('debug')) {
+            console.log('Motor offset reset to park position');
+          }
+
         });
         return [201, 'Motor offset reset to park position queued'];
       } else {
@@ -161,35 +164,37 @@ module.exports = function(cncserver) {
       }
 
       if (typeof req.body.paused === "boolean") {
-        if (req.body.paused != bufferPaused) {
-          bufferPaused = req.body.paused;
+        if (req.body.paused !== cncserver.buffer.paused) {
+          cncserver.buffer.toggle(req.body.paused);
           console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
-          bufferRunning = false; // Force a followup check as the paused var has changed
 
           bufferNewlyPaused = bufferPaused; // Changed to paused!
           sendBufferVars();
 
           // Hold on the current actualPen to return to before resuming
-          if (bufferPaused) {
-            bufferPausePen = extend({}, cncserver.actualPen);
-            sendBufferVars();
-            setHeight('up', null, true); // Pen up for safety!
+          if (cncserver.buffer.paused) {
+            cncserver.buffer.pausePen = cncserver.utils.extend(
+              {}, cncserver.actualPen
+            );
+
+            cncserver.io.sendBufferVars();
+            cncserver.control.setHeight('up', null, true); // Pen up for safety!
           }
         }
       }
 
       // Did we actually change position since pausing?
       var changedSincePause = false;
-      if (bufferPausePen) {
-        if (bufferPausePen.x != cncserver.actualPen.x ||
-            bufferPausePen.y != cncserver.actualPen.y ||
-            bufferPausePen.height != cncserver.actualPen.height){
+      if (cncserver.buffer.pausePen) {
+        if (cncserver.buffer.pausePen.x !== cncserver.actualPen.x ||
+            cncserver.buffer.pausePen.y !== cncserver.actualPen.y ||
+            cncserver.buffer.pausePen.height !== cncserver.actualPen.height){
           changedSincePause = true;
         } else {
           // If we're resuming, and there's no change... clear the pause pen
-          if (!bufferPaused) {
-            bufferPausePen = null;
-            sendBufferVars();
+          if (!cncserver.buffer.paused) {
+            cncserver.buffer.pausePen = null;
+            cncserver.io.sendBufferVars();
           }
         }
       }

@@ -162,6 +162,90 @@ module.exports = function(cncserver){
     });
   };
 
+  // Local triggers.
+  cncserver.serial.localTrigger = function(event) {
+    switch(event) {
+      case 'simulationStart':
+        console.log("=======Continuing in SIMULATION MODE!!!============");
+        cncserver.pen.simulation = 1;
+        break;
+
+      case 'serialReady':
+        console.log('CNC server API listening on ' +
+          (cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*') +
+          ':' + cncserver.gConf.get('httpPort')
+        );
+
+        cncserver.serial.localTrigger('botInit');
+        cncserver.srv.start();
+
+        // Initialize scratch v2 endpoint & API.
+        if (cncserver.gConf.get('scratchSupport')) {
+          cncserver.scratch.initAPI(cncserver);
+        }
+        break;
+
+      case 'serialClose':
+        console.log(
+          'Serialport connection to "' +
+          cncserver.gConf.get('serialPath') +
+          '" lost!! Did it get unplugged?'
+        );
+
+        // Assume the serialport isn't coming back... It's on a long vacation!
+        cncserver.gConf.set('serialPath', '');
+        cncserver.serial.localTrigger('simulationStart');
+        break;
+
+      case 'botInit':
+        // EBB Specific Config =================================
+        if (cncserver.botConf.get('controller').name === 'EiBotBoard') {
+          console.log('Sending EBB config...');
+          cncserver.run(
+            'custom',
+            cncserver.buffer.cmdstr(
+              'enablemotors',
+              {p: cncserver.botConf.get('speed:precision')}
+            )
+          );
+
+          // Send twice for good measure
+          var rate = cncserver.botConf.get('servo:rate');
+          cncserver.run(
+            'custom',
+            cncserver.buffer.cmdstr('configureservo', {r: rate})
+          );
+          cncserver.run(
+            'custom',
+            cncserver.buffer.cmdstr('configureservo', {r: rate})
+          );
+        }
+
+        var isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
+        console.info(
+          '---=== ' +
+          cncserver.botConf.get('name') +
+          isVirtual +
+          ' is ready to receive commands ===---'
+        );
+        break;
+
+    }
+  };
+
+  /**
+   * Run to the buffer direct low level setup commands (for EiBotBoard only).
+   *
+   * @param {integer} id
+   *   Numeric ID of EBB setting to change the value of
+   * @param {integer} value
+   *   Value to set to
+   */
+  cncserver.serial.sendEBBSetup = function(id, value) {
+    cncserver.run('custom', 'SC,' + id + ',' + value);
+  };
+
   // Exports...
   cncserver.exports.getPorts = cncserver.serial.getPorts;
+  cncserver.exports.sendEBBSetup = cncserver.serial.sendEBBSetup;
 };

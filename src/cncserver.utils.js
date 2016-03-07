@@ -5,7 +5,9 @@
  */
 
 module.exports = function(cncserver) {
-  cncserver.utils = {};
+  cncserver.utils = {
+    extend: require('util')._extend      // Util for cloning objects
+  };
 
   /**
    * Sanity check a given coordinate within the absolute area.
@@ -15,15 +17,16 @@ module.exports = function(cncserver) {
    * @return {null}
    */
   cncserver.utils.sanityCheckAbsoluteCoord = function(point) {
-    point.x = point.x > cncserver.bot.maxArea.width ? cncserver.bot.maxArea.width : point.x;
-    point.y = point.y > cncserver.bot.maxArea.height ? cncserver.bot.maxArea.height : point.y;
+    var maxArea = cncserver.bot.maxArea;
+    point.x = point.x > maxArea.width ? maxArea.width : point.x;
+    point.y = point.y > maxArea.height ? maxArea.height : point.y;
     point.x = point.x < 0 ? 0 : point.x;
     point.y = point.y < 0 ? 0 : point.y;
-  }
+  };
 
   /**
-   * Calculate the duration for a pen movement from the number of steps distance,
-   * takes into account whether pen is up or down
+   * Calculate the duration for a pen movement from the distance.
+   * Takes into account whether pen is up or down
    *
    * @param {float} distance
    *   Distance in steps that we'll be moving
@@ -39,17 +42,23 @@ module.exports = function(cncserver) {
 
     var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
     var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
+    var drawingSpeed = cncserver.botConf.get('speed:drawing');
+    var movingSpeed = cncserver.botConf.get('speed:moving');
 
     // Use given speed over distance to calculate duration
-    var speed = (cncserver.penDown(inPen)) ? cncserver.botConf.get('speed:drawing') : cncserver.botConf.get('speed:moving');
+    var speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
     speed = parseFloat(speed) / 100;
-    speed = speed * ((maxSpeed - minSpeed) + minSpeed); // Convert to steps from percentage
+
+    // Convert to steps from percentage
+    speed = speed * ((maxSpeed - minSpeed) + minSpeed);
 
     // Sanity check speed value
     speed = speed > maxSpeed ? maxSpeed : speed;
     speed = speed < minSpeed ? minSpeed : speed;
-    return Math.max(Math.abs(Math.round(distance / speed * 1000)), min); // How many steps a second?
-  }
+
+    // How many steps a second?
+    return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
+  };
 
   /**
    * Given two points, find the difference and duration at current speed
@@ -124,6 +133,7 @@ module.exports = function(cncserver) {
    * @param {boolean} inMaxArea
    *   Pass "true" if percent vals should be considered within the maximum area
    *   otherwise steps will be calculated as part of the global work area.
+   *
    * @returns {{x: number, y: number}}
    *   Converted coordinate in steps.
    */
@@ -140,7 +150,7 @@ module.exports = function(cncserver) {
         y: (point.y / 100) * bot.maxArea.height
       };
     }
-  }
+  };
 
 
   /**
@@ -153,5 +163,64 @@ module.exports = function(cncserver) {
    */
   cncserver.utils.getVectorLength = function(vector) {
     return Math.sqrt( Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-  }
-}
+  };
+
+  /**
+   * Perform conversion from named/0-1 number state value to given pen height
+   * suitable for outputting to a Z axis control statement.
+   *
+   * @param {string/integer} state
+   *
+   * @returns {object}
+   *   Object containing normalized state, and numeric height value. As:
+   *   {state: [integer|string], height: [float]}
+   */
+  cncserver.utils.stateToHeight = function(state) {
+    // Whether to use the full min/max range (used for named presets only)
+    var fullRange = false;
+    var min = parseInt(cncserver.botConf.get('servo:min'));
+    var max = parseInt(cncserver.botConf.get('servo:max'));
+    var range = max - min;
+    var normalizedState = state; // Normalize/sanitize the incoming state
+
+    var presets = cncserver.botConf.get('servo:presets');
+    var height = 0; // Placeholder for height output
+
+    // Validate Height, and conform to a bottom to top based percentage 0 to 100
+    if (isNaN(parseInt(state))){ // Textual position!
+      if (typeof presets[state] !== 'undefined') {
+        height = parseFloat(presets[state]);
+      } else { // Textual expression not found, default to UP
+        height = presets.up;
+        normalizedState = 'up';
+      }
+
+      fullRange = true;
+    } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
+      height = Math.abs(parseFloat(state));
+      height = height > 1 ?  1 : height; // Limit to 1
+      normalizedState = height;
+
+      // Reverse value and lock to 0 to 100 percentage with 1 decimal place
+      height = parseInt((1 - height) * 1000) / 10;
+    }
+
+    // Lower the range when using 0 to 1 values to between up and draw
+    if (!fullRange) {
+      min = ((presets.draw / 100) * range) + min;
+      max = ((presets.up / 100) * range);
+      max+= parseInt(cncserver.botConf.get('servo:min'));
+
+      range = max - min;
+    }
+
+    // Sanity check incoming height value to 0 to 100
+    height = height > 100 ? 100 : height;
+    height = height < 0 ? 0 : height;
+
+    // Calculate the final servo value from percentage
+    height = Math.round(((height / 100) * range) + min);
+    return {height: height, state: normalizedState};
+  };
+
+};

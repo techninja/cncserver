@@ -25,16 +25,11 @@
  *
  */
 
-// REQUIRES ====================================================================
-var extend = require('util')._extend;      // Util for cloning objects
-
-// Scratch support/API addition
-var scratch = require('./src/cncserver.scratch.js');
-
 // CONFIGURATION ===============================================================
 var cncserver = { // Master object for holding/passing stuff!
   bot: {}, // Holds clean rendered settings set after botConfig is loaded
-  exports: {} // This entire object will be added to the module.exports
+  exports: {}, // This entire object will be added to the module.exports
+  scratch: require('./src/cncserver.scratch.js') // Scratch support/API addition
 };
 
 // Global Defaults (also used to write the initial config.ini)
@@ -58,6 +53,8 @@ cncserver.globalConfigDefaults = {
     info: "Override bot settings E.G. > [botOverride.eggbot] servo:max = 1234"
   }
 };
+
+// COMPONENT REQUIRES ==========================================================
 
 // Settings shortcuts/utils & initialization.
 require('./src/cncserver.settings.js')(cncserver);
@@ -166,50 +163,18 @@ cncserver.settings.loadGlobalConfig(function standaloneOrModuleInit() {
       };
 
       // Continue with simulation mode
-      exports.continueSimulation = simulationModeInit;
+      exports.continueSimulation = function(){
+        cncserver.serial.localTrigger('simulationStart');
+      };
 
       // Export Serial Ready Init (starts webserver)
-      exports.serialReadyInit = serialPortReadyCallback;
+      exports.serialReadyInit = function(){
+        cncserver.serial.localTrigger('serialReady');
+      };
 
     }
   }
 );
-
-// Grouping function to send off the initial configuration for the bot
-function sendBotConfig() {
-  // EBB Specific Config =================================
-  if (cncserver.botConf.get('controller').name === 'EiBotBoard') {
-    console.log('Sending EBB config...');
-    run('custom', cmdstr('enablemotors', {p: cncserver.botConf.get('speed:precision')}));
-
-    // Send twice for good measure
-    run('custom', cmdstr('configureservo', {r: cncserver.botConf.get('servo:rate')}));
-    run('custom', cmdstr('configureservo', {r: cncserver.botConf.get('servo:rate')}));
-  }
-
-  var isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
-  console.info('---=== ' + cncserver.botConf.get('name') + isVirtual + ' is ready to receive commands ===---');
-}
-
-
-
-// No events are bound till we have attempted a serial connection
-function serialPortReadyCallback() {
-
-  console.log('CNC server API listening on ' +
-    (cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*') +
-    ':' + cncserver.gConf.get('httpPort')
-  );
-
-  sendBotConfig();
-  cncserver.srv.start();
-
-  // Scratch v2 endpoint & API =================================================
-  if (cncserver.gConf.get('scratchSupport')) {
-    scratch.initAPI(cncserver);
-  }
-
-}
 
 
 // COMMAND RUN QUEUE UTILS =====================================================
@@ -299,28 +264,6 @@ function executeNext() {
     cncserver.actualPen.offCanvas = cncserver.pen.offCanvas;
     cncserver.pen = extend({}, cncserver.actualPen);
 
-    bufferRunning = false;
+    cncserver.buffer.running = false;
   }
-}
-
-// SERIAL READ/WRITE ===========================================================
-
-/**
- * Global event callback for serial close/disconnect, initialized on connect.
- * Starts simulation mode immediately to keep sends valid.
- *
- * @see connectSerial
- */
-function serialPortCloseCallback() {
-  console.log('Serialport connection to "' + cncserver.gConf.get('serialPath') + '" lost!! Did it get unplugged?');
-
-  // Assume the last serialport isn't coming back for a while... a long vacation
-  cncserver.gConf.set('serialPath', '');
-  simulationModeInit();
-}
-
-// Helper to initialize simulation mode
-function simulationModeInit() {
-  console.log("=======Continuing in SIMULATION MODE!!!============");
-  cncserver.pen.simulation = 1;
 }
