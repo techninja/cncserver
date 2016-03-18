@@ -55,7 +55,7 @@ module.exports = function(cncserver){
           cncserver.gConf.set('serialPath', ports.auto[0]);
           console.log('Using first detected port: "' + ports.auto[0] + '"...');
         } else {
-          console.warning('No matching serial ports detected.');
+          console.error('No matching serial ports detected.');
         }
       } else {
         console.log('Using passed serial port "' + passedPort + '"...');

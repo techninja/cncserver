@@ -7,7 +7,8 @@
  */
 
 module.exports = function(cncserver) {
-  var ipc = require('node-ipc');             // Inter Process Comms for runner.
+  var ipc = require('node-ipc');       // Inter Process Comms for runner.
+  var runnerInitCallback = null;       // Placeholder for init set callback.
   cncserver.ipc = {
     runnerSocket: {} // The IPC socket for communicating to the runner
   };
@@ -41,28 +42,47 @@ module.exports = function(cncserver) {
     ipc.server.emit(socket, 'app.message', packet);
   };
 
+
+  /**
+   * Initialize and start the IPC server
+   *
+   * @param  {Function} callback
+   *   Function called when the runner is connected and ready.
+   *
+   * @return {null}
+   */
+  cncserver.ipc.initServer = function(callback) {
+    runnerInitCallback = callback;
+
+    // Initialize and start the IPC Server...
+    ipc.serve(function(){
+      ipc.server.on('app.message', ipcGotMessage);
+    });
+
+    ipc.server.start();
+    console.log('Starting IPC server, waiting for runner client to start...');
+  };
+
+  /**
+   * IPC Message callback event parser/handler.
+   *
+   * @param  {object} packet
+   *   The entire message object directly from the event.
+   * @param  {object} socket
+   *   The originating IPC client socket object.
+   *
+   * @return {null}
+   */
   function ipcGotMessage(packet, socket) {
     var serialCallbacks = cncserver.serial.callbacks;
     var data = packet.data;
 
     switch(packet.command) {
       case "runner.ready":
-        cncserver.runnerSocket = socket;
-        // Runner is ready! Attempt Initial Serial Connection.
-        cncserver.serial.connect({
-          error: function() {
-            console.error('CONNECTSERIAL ERROR!');
-            cncserver.serial.localTrigger('simulationStart');
-            cncserver.serial.localTrigger('serialReady');
-          },
-          connect: function(){
-            console.log('CONNECTSERIAL CONNECT!');
-            cncserver.serial.localTrigger('serialReady');
-          },
-          disconnect: function() {
-            cncserver.serial.localTrigger('serialClose');
-          }
-        });
+        cncserver.ipc.runnerSocket = socket;
+        // TODO: Send config data packet.
+
+        if (runnerInitCallback) runnerInitCallback();
         break;
       case "serial.connected":
         console.log(
@@ -85,7 +105,8 @@ module.exports = function(cncserver) {
           console.log('SerialPort says:', packet.message);
           if (serialCallbacks.complete) serialCallbacks.complete(data);
         } else {
-          //TODO: Add better error message here, or figure out when this happens
+          // TODO: Add better error message here, or figure out when this
+          // happens.
           console.log("Serial failed to send data. Error #44");
         }
 
@@ -101,18 +122,12 @@ module.exports = function(cncserver) {
         break;
       case "buffer.itemdone":
         // Increment an item off the buffer.
+        cncserver.buffer.removeItem();
         break;
       case "buffer.complete":
         // TODO: Not sure if this is even needed.
         break;
     }
-  }
+  };
 
-  // Initialize and start the IPC Server...
-  ipc.serve(function(){
-    ipc.server.on('app.message', ipcGotMessage);
-  });
-
-  ipc.server.start();
-  console.log('Starting IPC server, waiting for runner client to start...');
 };

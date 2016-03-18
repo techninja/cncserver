@@ -11,11 +11,11 @@ module.exports = function(cncserver) {
 
   // Setup the cental server object.
   cncserver.server = require('http').createServer(cncserver.app);
-  cncserver.server = {}; // Hold custom functions/wrappers.
+  cncserver.srv = {}; // Hold custom functions/wrappers.
 
   // Global express initialization (must run before any endpoint creation)
   cncserver.app.configure(function() {
-    cncserver.app.use("/", express.static(__dirname + '/example'));
+    cncserver.app.use("/", express.static(__dirname + '/../example'));
     cncserver.app.use(express.bodyParser());
   });
 

@@ -56,6 +56,9 @@ cncserver.globalConfigDefaults = {
 
 // COMPONENT REQUIRES ==========================================================
 
+// Utlities and wrappers.
+require('./src/cncserver.utils.js')(cncserver);
+
 // Settings shortcuts/utils & initialization.
 require('./src/cncserver.settings.js')(cncserver);
 
@@ -107,7 +110,7 @@ cncserver.pen = {
 // the buffer queue and into the robot, meant to reflect the actual position and
 // state of the robot, and will be where the pen object is reset to when the
 // buffer is cleared and the future state is lost.
-cncserver.actualPen = extend({}, cncserver.pen);
+cncserver.actualPen = cncserver.utils.extend({}, cncserver.pen);
 
 // INTIAL SETUP ================================================================
 
@@ -117,7 +120,23 @@ cncserver.settings.loadGlobalConfig(function standaloneOrModuleInit() {
     if (!module.parent) {
       // Load the bot specific configuration, defaulting to gConf bot type
       cncserver.settings.loadBotConfig(function(){
-        // TODO: Start the client runner! (run manually for now);
+        cncserver.ipc.initServer(function(){
+          // Runner is ready! Attempt Initial Serial Connection.
+          cncserver.serial.connect({
+            error: function() {
+              console.error('CONNECTSERIAL ERROR!');
+              cncserver.serial.localTrigger('simulationStart');
+              cncserver.serial.localTrigger('serialReady');
+            },
+            connect: function(){
+              console.log('CONNECTSERIAL CONNECT!');
+              cncserver.serial.localTrigger('serialReady');
+            },
+            disconnect: function() {
+              cncserver.serial.localTrigger('serialClose');
+            }
+          });
+        });
       });
 
     } else { // Export the module's useful API functions! ======================
@@ -125,145 +144,61 @@ cncserver.settings.loadGlobalConfig(function standaloneOrModuleInit() {
       module.exports = cncserver.exports;
 
       // Connect to serial and start server
-      exports.start = function(options) {
+      module.exports.start = function(options) {
         // Add low-level short-circuit to avoid Socket.IO overhead
         if (typeof options.bufferUpdate === 'function') {
-          exports.bufferUpdateTrigger = options.bufferUpdate;
+          module.exports.bufferUpdateTrigger = options.bufferUpdate;
         }
 
         if (typeof options.penUpdate === 'function') {
-          exports.penUpdateTrigger = options.penUpdate;
+          module.exports.penUpdateTrigger = options.penUpdate;
         }
 
         cncserver.settings.loadBotConfig(function(){
-          cncserver.serial.connect({
-            success: function() { // Successfully connected
-              if (options.success) options.success();
-            },
-            error: function(info) { // Error during connection attempt
-              if (options.error) options.error(info);
-            },
-            connect: function() {
-              // Callback for first serial connect, or re-connect
-              serialPortReadyCallback();
-              if (options.connect) options.connect();
-            },
-            disconnect: function() { // Callback for serial disconnect
-              serialPortCloseCallback();
-              if (options.disconnect) options.disconnect();
-            }
+          // Before we can attempt to connect to the serialport, we must ensure
+          // The IPC runner is connected...
+
+          cncserver.ipc.initServer(function(){
+            // Runner is ready! Attempt Initial Serial Connection.
+            cncserver.serial.connect({
+              success: function() { // Successfully connected
+                if (options.success) options.success();
+              },
+              connect: function() {
+                // Callback for first serial connect, or re-connect
+                cncserver.serial.localTrigger('serialReady');
+                if (options.connect) options.connect();
+              },
+              disconnect: function() { // Callback for serial disconnect
+                cncserver.serial.localTrigger('serialClose');
+                if (options.disconnect) options.disconnect();
+              },
+              error: function(info) {
+                if (options.error) options.error(info);
+                cncserver.serial.localTrigger('simulationStart');
+                cncserver.serial.localTrigger('serialReady');
+              }
+            });
           });
         }, options.botType);
       };
 
       // Direct configuration access (use the getters and override setters!)
-      exports.conf = {
+      module.exports.conf = {
         bot: cncserver.botConf,
         global: cncserver.gConf
       };
 
       // Continue with simulation mode
-      exports.continueSimulation = function(){
+      module.exports.continueSimulation = function(){
         cncserver.serial.localTrigger('simulationStart');
       };
 
       // Export Serial Ready Init (starts webserver)
-      exports.serialReadyInit = function(){
+      module.exports.serialReadyInit = function(){
         cncserver.serial.localTrigger('serialReady');
       };
 
     }
   }
 );
-
-
-// COMMAND RUN QUEUE UTILS =====================================================
-
-// Holds the MS time of the "current" command sent, as this should be limited
-// by the run queue, this should only ever refer to what's being sent through.
-// the following command will be delayed by this much time.
-var commandDuration = 0;
-
-
-/**
- * Execute the next command in the buffer, triggered by self, buffer interval
- * catcher loop below, and serialReadLine.
- *
- * @see serialReadLine
- */
-function executeNext() {
-  // Run the paused callback if applicable
-  if (bufferNewlyPaused && bufferPauseCallback) {
-    bufferPauseCallback();
-  }
-
-  // Don't continue execution if paused
-  if (bufferPaused) return;
-
-  if (buffer.length) {
-    var cmd = buffer.pop();
-
-    // Process a single line of the buffer =====================================
-    // =========================================================================
-
-    if (typeof cmd[0] === "function") { // Custom Callback buffer item
-      // Timing for this should be correct because of commandDuration below!
-      cmd[0](1);
-      // Set the actualPen state to match the state assumed at the time the
-      // buffer item was created
-      cncserver.actualPen = extend({}, cmd[2]);
-
-      // Trigger an update for buffer loss and actualPen change
-      sendPenUpdate();
-      executeNext();
-    } else if (typeof cmd[0] === "object") { // Detailed buffer object
-
-      // Actually send off the command to do something
-      switch (cmd[0].type) {
-        case 'absmove':
-          // Propagate distanceCounter to actualPen
-          cncserver.actualPen.distanceCounter = cmd[2].distanceCounter;
-          cncserver.control.actuallyMove(cmd[0]);
-          break;
-        case 'absheight':
-          cncserver.control.actuallyMoveHeight(cmd[0].z, cmd[0].state);
-          break;
-        case 'message':
-          sendMessageUpdate(cmd[0].message);
-          executeNext(); // We're sure the message sent via stream, move on
-          break;
-        case 'callbackname':
-          sendCallbackUpdate(cmd[0].name);
-          executeNext(); // We're sure the message sent via stream, move on
-          break;
-      }
-    } else {
-
-      // Set the duration of this command so when the board returns "OK",
-      // will delay next command send
-      commandDuration = Math.max(cmd[1], 0);
-
-      // Set the actualPen state to match the state assumed at the time the
-      // buffer item was created
-      cncserver.actualPen = extend({}, cmd[2]);
-
-      // Trigger an update for actualPen change
-      sendPenUpdate();
-
-      // Actually send the command out to serial
-      serialCommand(cmd[0]);
-    }
-
-    sendBufferRemove();
-  } else {
-    // Buffer Empty? Cover our butts and ensure the "last buffer tip"
-    // pen object is up to date with actualPen.
-
-    // Save the offCanvas variable value to ensure it carries along with the tip
-    // of the buffer.
-    cncserver.actualPen.offCanvas = cncserver.pen.offCanvas;
-    cncserver.pen = extend({}, cncserver.actualPen);
-
-    cncserver.buffer.running = false;
-  }
-}

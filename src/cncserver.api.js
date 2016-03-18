@@ -9,7 +9,7 @@
 module.exports = function(cncserver) {
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
-  cncserver.createServerEndpoint("/v1/settings", function(req, res){
+  cncserver.createServerEndpoint("/v1/settings", function(req){
     if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
@@ -20,7 +20,7 @@ module.exports = function(cncserver) {
     }
   });
 
-  cncserver.createServerEndpoint("/v1/settings/:type", function(req, res){
+  cncserver.createServerEndpoint("/v1/settings/:type", function(req){
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){
@@ -112,12 +112,12 @@ module.exports = function(cncserver) {
   cncserver.createServerEndpoint("/v1/motors", function(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
-      run('custom', cmdstr('disablemotors'));
+      cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
       return [201, 'Disable Queued'];
     } else if (req.route.method === 'put') {
-      if (req.body.reset == 1) {
+      if (parseInt(req.body.reset, 10) === 1) {
         // ZERO motor position to park position
-        var park = centToSteps(cncserver.bot.park, true);
+        var park = cncserver.utils.centToSteps(cncserver.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
         // a buffered operation as it implies *manually* moving the bot to the
         // parking location, so we're going to man-handle the variables a bit.
@@ -157,6 +157,7 @@ module.exports = function(cncserver) {
 
   // Command buffer API ========================================================
   cncserver.createServerEndpoint("/v1/buffer", function(req, res){
+    var buffer = cncserver.buffer;
     if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
       if (typeof req.body.paused === "string") {
@@ -164,16 +165,19 @@ module.exports = function(cncserver) {
       }
 
       if (typeof req.body.paused === "boolean") {
-        if (req.body.paused !== cncserver.buffer.paused) {
-          cncserver.buffer.toggle(req.body.paused);
-          console.log('Run buffer ' + (bufferPaused ? 'paused!': 'resumed!'));
+        if (req.body.paused !== buffer.paused) {
+          buffer.toggle(req.body.paused);
+          console.log(
+            'Run buffer ' + (buffer.paused ? 'paused!': 'resumed!')
+          );
 
-          bufferNewlyPaused = bufferPaused; // Changed to paused!
-          sendBufferVars();
+          // Changed to paused!
+          buffer.newlyPaused = buffer.paused;
+          cncserver.io.sendBufferVars();
 
           // Hold on the current actualPen to return to before resuming
-          if (cncserver.buffer.paused) {
-            cncserver.buffer.pausePen = cncserver.utils.extend(
+          if (buffer.paused) {
+            buffer.pausePen = cncserver.utils.extend(
               {}, cncserver.actualPen
             );
 
@@ -185,42 +189,48 @@ module.exports = function(cncserver) {
 
       // Did we actually change position since pausing?
       var changedSincePause = false;
-      if (cncserver.buffer.pausePen) {
-        if (cncserver.buffer.pausePen.x !== cncserver.actualPen.x ||
-            cncserver.buffer.pausePen.y !== cncserver.actualPen.y ||
-            cncserver.buffer.pausePen.height !== cncserver.actualPen.height){
+      if (buffer.pausePen) {
+        if (buffer.pausePen.x !== cncserver.actualPen.x ||
+            buffer.pausePen.y !== cncserver.actualPen.y ||
+            buffer.pausePen.height !== cncserver.actualPen.height){
           changedSincePause = true;
         } else {
           // If we're resuming, and there's no change... clear the pause pen
-          if (!cncserver.buffer.paused) {
-            cncserver.buffer.pausePen = null;
+          if (!buffer.paused) {
+            buffer.pausePen = null;
             cncserver.io.sendBufferVars();
           }
         }
       }
 
       // Resuming? Move back to position we paused at (if changed)
-      if (!bufferPaused && changedSincePause) {
-        bufferPaused = true; // Pause for a bit until we move back to last pos
-        sendBufferVars();
+      if (!buffer.paused && changedSincePause) {
+        // Pause for a bit until we move back to last pos
+        buffer.paused = true;
+        cncserver.io.sendBufferVars();
         console.log('Moving back to pre-pause position...');
 
         // Set the pen up before moving to resume position
-        setHeight('up', function(){
-          actuallyMove(bufferPausePen, function(){
+        cncserver.control.setHeight('up', function(){
+          cncserver.control.actuallyMove(buffer.pausePen, function(){
             // Set the height back to what it was AFTER moving
-            actuallyMoveHeight(bufferPausePen.height, bufferPausePen.state, function(){
-              console.log('Resuming buffer!');
-              bufferPaused = false;
-              bufferPausePen = null;
-              sendBufferVars();
-              res.status(200).send(JSON.stringify({
-                running: bufferRunning,
-                paused: bufferPaused,
-                count: buffer.length,
-                buffer: buffer
-              }));
-            });
+            cncserver.control.actuallyMoveHeight(
+              buffer.pausePen.height,
+              buffer.pausePen.state,
+              function(){
+                console.log('Resuming buffer!');
+                buffer.paused = false;
+                buffer.pausePen = null;
+                cncserver.io.sendBufferVars();
+
+                res.status(200).send(JSON.stringify({
+                  running: buffer.running,
+                  paused: buffer.paused,
+                  count: buffer.data.length,
+                  buffer: "This isn't a great idea..." // TODO: FIX <<
+                }));
+              }
+            );
           });
         }, true); // Skipbuffer on setheight!
 
@@ -228,26 +238,27 @@ module.exports = function(cncserver) {
       }
 
 
-      if (!bufferNewlyPaused || buffer.length === 0) {
-        bufferNewlyPaused = false; // In case paused with 0 items in buffer
-        sendBufferVars();
+      // In case paused with 0 items in buffer...
+      if (!buffer.newlyPaused || buffer.data.length === 0) {
+        buffer.newlyPaused = false;
+        cncserver.io.sendBufferVars();
         return {code: 200, body: {
-          running: bufferRunning,
-          paused: bufferPaused,
-          count: buffer.length
+          running: buffer.running,
+          paused: buffer.paused,
+          count: buffer.data.length
         }};
       } else { // Buffer isn't empty and we're newly paused
         // Wait until last item has finished before returning
         console.log('Waiting for last item to finish...');
 
-        bufferPauseCallback = function(){
+        buffer.pauseCallback = function(){
           res.status(200).send(JSON.stringify({
-            running: bufferRunning,
-            paused: bufferPaused,
+            running: buffer.running,
+            paused: buffer.paused,
             count: buffer.length
           }));
-          sendBufferVars();
-          bufferNewlyPaused = false;
+          cncserver.io.sendBufferVars();
+          buffer.newlyPaused = false;
         };
 
         return true; // Don't finish the response till later
@@ -255,22 +266,23 @@ module.exports = function(cncserver) {
     } else if (req.route.method === 'post') {
       // Create a status message/callback and shuck it into the buffer
       if (typeof req.body.message === "string") {
-        run('message', req.body.message);
+        cncserver.run('message', req.body.message);
         return [200, 'Message added to buffer'];
       } else if (typeof req.body.callback === "string") {
-        run('callbackname', req.body.callback);
+        cncserver.run('callbackname', req.body.callback);
         return [200, 'Callback name added to buffer'];
       } else {
-        return [400, '/v1/buffer POST only accepts data "message" or "callback"'];
+        return [400, '/v1/buffer POST only accepts "message" or "callback"'];
       }
     } else if (req.route.method === 'delete') {
-      cncserver.clearBuffer();
-      bufferRunning = false;
+      cncserver.buffer.clear();
+      buffer.running = false;
 
-      bufferPausePen = null; // Resuming with an empty buffer is silly
-      bufferPaused = false;
+      buffer.pausePen = null; // Resuming with an empty buffer is silly
+      buffer.paused = false;
 
-      sendBufferComplete(); // SHould be fine to send as buffer is empty.
+      // Should be fine to send as buffer is empty.
+      cncserver.io.sendBufferComplete();
 
       console.log('Run buffer cleared!');
       return [200, 'Buffer Cleared'];
@@ -280,9 +292,11 @@ module.exports = function(cncserver) {
   });
 
   // Get/Change Tool API =======================================================
-  cncserver.createServerEndpoint("/v1/tools", function(req, res){
+  cncserver.createServerEndpoint("/v1/tools", function(req){
     if (req.route.method === 'get') { // Get list of tools
-      return {code: 200, body:{tools: Object.keys(cncserver.botConf.get('tools'))}};
+      return {code: 200, body:{
+        tools: Object.keys(cncserver.botConf.get('tools'))
+      }};
     } else {
       return false;
     }
@@ -293,7 +307,7 @@ module.exports = function(cncserver) {
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
       if (cncserver.botConf.get('tools:' + toolName)){
-        setTool(toolName, function(data){
+        cncserver.control.setTool(toolName, function(){
           cncserver.pen.tool = toolName;
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
@@ -307,4 +321,4 @@ module.exports = function(cncserver) {
       return false;
     }
   });
-}
+};

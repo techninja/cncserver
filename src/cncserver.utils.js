@@ -5,6 +5,8 @@
  */
 
 module.exports = function(cncserver) {
+  var crypto = require('crypto');       // Crypto library for hashing.
+
   cncserver.utils = {
     extend: require('util')._extend      // Util for cloning objects
   };
@@ -22,6 +24,24 @@ module.exports = function(cncserver) {
     point.y = point.y > maxArea.height ? maxArea.height : point.y;
     point.x = point.x < 0 ? 0 : point.x;
     point.y = point.y < 0 ? 0 : point.y;
+  };
+
+
+  /**
+   * Create has using passed data (and current time).
+   *
+   * @param  {mixed} data
+   *   Data to be hashed, either an object or array.
+   *
+   * @return {string}
+   *   16 char hash of data and current time in ms.
+   */
+  var hashSequence = 0;
+  cncserver.utils.getHash = function(data) {
+    var md5sum = crypto.createHash('md5');
+    md5sum.update(JSON.stringify(data) + hashSequence);
+    hashSequence++;
+    return md5sum.digest('hex').substr(0, 16);
   };
 
   /**
@@ -67,6 +87,7 @@ module.exports = function(cncserver) {
    *   Source position coordinate (in steps).
    * @param {{x: number, y: number}} dest
    *   Destination position coordinate (in steps).
+   *
    * @returns {{d: number, x: number, y: number}}
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
@@ -105,6 +126,30 @@ module.exports = function(cncserver) {
     return {d: duration, x: change.x, y: change.y};
   };
 
+  /**
+   * Given two height positions, find the difference and pro-rate duration.
+   *
+   * @param {integer} src
+   *   Source position.
+   * @param {integer} dest
+   *   Destination position.
+   *
+   * @returns {{d: number, a: number}}
+   *   Object containing the change amount in steps for x & y, along with the
+   *   duration in milliseconds.
+   */
+  cncserver.utils.getHeightChangeData = function(src, dest) {
+    var sd = cncserver.botConf.get('servo:duration');
+
+    // Get the amount of change from difference between actualPen and absolute
+    // height position, pro-rating the duration depending on amount of change
+    var range = parseInt(cncserver.botConf.get('servo:max'), 10) -
+      parseInt(cncserver.botConf.get('servo:min'));
+
+    var duration = Math.round((Math.abs(dest - src) / range) * sd) + 1;
+
+    return {d: duration, a: dest - src};
+  };
 
   /**
    * Helper abstraction for checking if the tip of buffer pen is "down" or not.

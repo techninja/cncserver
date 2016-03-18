@@ -22,12 +22,12 @@ module.exports = function(cncserver) {
   /**
    * Initialize/load the global cncserver configuration file & options.
    *
-   * @param cb
+   * @param {function} cb
    *   Optional callback triggered when complete.
    */
   cncserver.settings.loadGlobalConfig = function(cb) {
     // Pull conf from file
-    var configPath = path.resolve(__dirname, 'config.ini');
+    var configPath = path.resolve(__dirname, '..', 'config.ini');
     cncserver.gConf.reset();
     cncserver.gConf.use('file', {
       file: configPath,
@@ -70,7 +70,13 @@ module.exports = function(cncserver) {
   cncserver.settings.loadBotConfig = function (cb, botType) {
     if (!botType) botType = cncserver.gConf.get('botType');
 
-    var botFile = path.resolve(__dirname, 'machine_types', botType + '.ini');
+    var botFile = path.resolve(
+      __dirname,
+      '..',
+      'machine_types',
+      botType + '.ini'
+    );
+
     if (!fs.existsSync(botFile)){
       console.error(
         'Bot configuration file "' +
@@ -173,11 +179,11 @@ module.exports = function(cncserver) {
    */
   cncserver.settings.getSupportedBots = function() {
     var ini = require('ini');
-    var list = fs.readdirSync(path.resolve(__dirname, 'machine_types'));
+    var list = fs.readdirSync(path.resolve(__dirname, '..', 'machine_types'));
     var out = {};
     for(var i in list) {
-      var file = path.resolve(__dirname, 'machine_types', list[i]);
-      var data = ini.parse(fs.readFileSync(file), 'utf-8');
+      var file = path.resolve(__dirname, '..', 'machine_types', list[i]);
+      var data = ini.parse(fs.readFileSync(file, 'utf-8'), 'utf-8');
       var type = list[i].split('.')[0];
       out[type] = {
         name: data.name,

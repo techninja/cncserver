@@ -110,7 +110,6 @@ exports.initAPI = function (cncserverArg) {
     // Clear Run Buffer
     // @see /v1/buffer/ DELETE
     cncserver.buffer.clear();
-    cncserver.io.sendBufferComplete();
 
     pollData._busy = []; // Clear busy indicators
     return {code: 200, body: ''};

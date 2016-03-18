@@ -74,7 +74,7 @@ module.exports = function(cncserver) {
     if (typeof inPen.state !== "undefined") {
       // Disallow actual pen setting when off canvas (unless skipping buffer)
       if (!cncserver.pen.offCanvas || inPen.skipBuffer) {
-        cncserver.setHeight(inPen.state, callback, inPen.skipBuffer);
+        cncserver.control.setHeight(inPen.state, callback, inPen.skipBuffer);
       } else {
         // Save the state anyways so we can come back to it
         cncserver.pen.state = inPen.state;
@@ -163,7 +163,10 @@ module.exports = function(cncserver) {
       return;
     }
 
+    var sourceHeight = cncserver.pen.height;
+
     // Pro-rate the duration depending on amount of change to tip of buffer.
+    // TODO: Replace with cncserver.utils.getHeightChangeData()
     if (cncserver.pen.height) {
       var servo = cncserver.botConf.get('servo');
       var range = parseInt(servo.max) - parseInt(servo.min);
@@ -177,7 +180,7 @@ module.exports = function(cncserver) {
     cncserver.pen.state = stateValue;
 
     // Run the height into the command buffer
-    cncserver.run('height', height, servoDuration);
+    cncserver.run('height', {z: height, source: sourceHeight}, servoDuration);
 
     // Height movement callback servo movement duration offset
     var delay = servoDuration - cncserver.gConf.get('bufferLatencyOffset');
@@ -355,6 +358,7 @@ module.exports = function(cncserver) {
     }
 
     // Calculate change from end of buffer pen position
+    var source = {x: cncserver.pen.x, y: cncserver.pen.y};
     var change = {
       x: Math.round(point.x - cncserver.pen.x),
       y: Math.round(point.y - cncserver.pen.y)
@@ -394,7 +398,15 @@ module.exports = function(cncserver) {
       }
 
       // Queue the final absolute move (serial command generated later)
-      cncserver.run('move', {x: cncserver.pen.x, y: cncserver.pen.y}, duration);
+      cncserver.run(
+        'move',
+        {
+          x: cncserver.pen.x,
+          y: cncserver.pen.y,
+          source: source
+        },
+        duration
+      );
     }
 
     // Required start offCanvas change -after- movement has been queued
@@ -446,7 +458,7 @@ module.exports = function(cncserver) {
           // actualPen if it's every copied over on buffer execution.
           cncserver.pen.height = cncserver.stateToHeight('up').height;
           cncserver.run('callback', function() {
-            exports.setHeight('up', false, true);
+            cncserver.control.setHeight('up', false, true);
           });
         }
       } else { // Pen is now back in bounds
@@ -457,7 +469,7 @@ module.exports = function(cncserver) {
         // Assume starting from up state & height (ensures correct timing)
         cncserver.pen.state = "up";
         cncserver.pen.height = cncserver.stateToHeight('up').height;
-        exports.setHeight(back);
+        cncserver.control.setHeight(back);
       }
     }
   };
@@ -491,7 +503,7 @@ module.exports = function(cncserver) {
     cncserver.io.sendPenUpdate();
 
     // Send the actual X, Y and Duration
-    cncserver.serial.command(cncserver.serial.cmdstr('movexy', change));
+    cncserver.serial.command(cncserver.buffer.cmdstr('movexy', change));
 
     // Delayed callback (if used)
     if (callback) {
@@ -514,18 +526,11 @@ module.exports = function(cncserver) {
    *   Optional, callback for when operation should have completed.
    */
   cncserver.control.actuallyMoveHeight = function(height, stateValue, cb) {
-    var sd = cncserver.botConf.get('servo:duration');
 
-    // Get the amount of change from difference between actualPen and absolute
-    // height position, pro-rating the duration depending on amount of change
-    if (cncserver.actualPen.height) {
-      var range = parseInt(cncserver.botConf.get('servo:max'), 10) -
-        parseInt(cncserver.botConf.get('servo:min'));
-
-      cncserver.control.commandDuration = Math.round(
-        (Math.abs(height - cncserver.actualPen.height) / range) * sd
-      ) + 1;
-    }
+    var change = cncserver.utils.getHeightChangeData(
+      cncserver.actualPen.height,
+      height
+    );
 
     // Pass along the correct height position through to actualPen
     if (typeof stateValue !== 'undefined') {
@@ -533,18 +538,18 @@ module.exports = function(cncserver) {
     }
 
     cncserver.actualPen.height = height;
-    cncserver.actualPen.lastDuration = cncserver.control.commandDuration;
+    cncserver.actualPen.lastDuration = change.d;
 
     // Trigger an update for pen position
     cncserver.io.sendPenUpdate();
 
     // Set the pen up position (EBB)
-    cncserver.serial.command(cncserver.serial.cmdstr('movez', {z: height}));
+    cncserver.serial.command(cncserver.buffer.cmdstr('movez', {z: height}));
 
     // If there's a togglez, run it after setting Z
     if (cncserver.bot.commands.togglez) {
       cncserver.serial.command(
-        cncserver.serial.cmdstr(
+        cncserver.buffer.cmdstr(
           'togglez',
           {t: cncserver.gConf.get('flipZToggleBit') ? 1 : 0}
         )
@@ -553,7 +558,7 @@ module.exports = function(cncserver) {
 
     // Force cncserver.bot to wait
     cncserver.serial.command(
-      cncserver.serial.cmdstr('wait', {d: cncserver.control.commandDuration})
+      cncserver.buffer.cmdstr('wait', {d: cncserver.control.commandDuration})
     );
 
     // Delayed callback (if used)

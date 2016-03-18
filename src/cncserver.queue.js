@@ -9,7 +9,8 @@ module.exports = function(cncserver) {
 
   // Buffer State variables
   cncserver.buffer = {
-    data: [],
+    dataSet: {},         // Holds the actual buffer data keyed by hash.
+    data: [],            // Holds the order of the in a flat array of hashes.
     running: false,      // Are we running? True if items in buffer/not paused.
     paused: false,       // Are we paused?
     newlyPaused: false,  // Trigger for pause callback on executeNext()
@@ -34,14 +35,14 @@ module.exports = function(cncserver) {
   // Pause the buffer running.
   cncserver.buffer.pause = function() {
     cncserver.buffer.paused = true;
+    cncserver.ipc.sendMessage('buffer.pause');
     cncserver.io.sendBufferVars();
   };
 
   // Resume the buffer running.
   cncserver.buffer.resume = function() {
-    // TODO: This!
     cncserver.buffer.paused = false;
-    //cncserver.buffer.executeNext();
+    cncserver.ipc.sendMessage('buffer.resume');
     cncserver.io.sendBufferVars();
   };
 
@@ -52,6 +53,65 @@ module.exports = function(cncserver) {
     } else if (!setPause && cncserver.buffer.paused) {
       cncserver.buffer.resume();
     }
+  };
+
+  // Add an object to the buffer.
+  cncserver.buffer.addItem = function(item) {
+    var hash = cncserver.utils.getHash(item);
+    cncserver.buffer.data.unshift(hash);
+    cncserver.buffer.dataSet[hash] = item;
+
+    // Add the item to the runner's buffer.
+    cncserver.ipc.sendMessage('buffer.add', {
+      hash: hash,
+      commands: cncserver.buffer.render(item),
+      duration: item.duration
+    });
+
+    cncserver.io.sendBufferAdd(item, hash); // Alert clients.
+  };
+
+  // Remove an object from the end of buffer (the only place they're removed).
+  //
+  // This should only be called by the process running the buffer, and denotes
+  // when an item is run into the machine.
+  cncserver.buffer.removeItem = function() {
+    var hash = cncserver.buffer.data.pop();
+    console.log('Removing Item hash:', hash);
+
+    if (hash) {
+      var item = cncserver.buffer.dataSet[hash];
+
+      // Update the state of the actualPen to match the one in the buffer.
+      cncserver.actualPen = extend({}, item.pen);
+
+      // Trigger an update for actualPen change.
+      cncserver.io.sendPenUpdate();
+
+      // For buffer items with non-serial commands, it's time to do something!
+      cncserver.buffer.trigger(item);
+
+      delete cncserver.buffer.dataSet[hash];
+      cncserver.io.sendBufferRemove();
+    } else {
+      console.error('End IPC/Buffer Item & Hash Mismatch');
+    }
+  };
+
+  /**
+   * Helper function for clearing the buffer.
+   */
+  cncserver.buffer.clear = function() {
+    cncserver.buffer.data = [];
+    cncserver.buffer.dataSet = {};
+
+    // Reset the state of the buffer tip pen to the state of the actual robot.
+    // If this isn't done, it will be assumed to be a state that was deleted
+    // and never sent out.
+    cncserver.pen = extend({}, cncserver.actualPen);
+
+    // Send full update as it's been cleared.
+    cncserver.io.sendBufferComplete();
   };
 
   /**
@@ -83,12 +143,17 @@ module.exports = function(cncserver) {
 
     switch (command) {
       case 'move':
-        // Detailed buffer object X and Y
-        c = {type: 'absmove', x: data.x, y: data.y};
+        // Detailed buffer object X and Y.
+        c = {type: 'absmove', x: data.x, y: data.y, source: data.source};
         break;
       case 'height':
         // Detailed buffer object with z height and state string
-        c = {type: 'absheight', z: data, state: cncserver.pen.state};
+        c = {
+          type: 'absheight',
+          z: data.z,
+          source: data.source,
+          state: cncserver.pen.state
+        };
         break;
       case 'message':
         // Detailed buffer object with a string message
@@ -115,27 +180,96 @@ module.exports = function(cncserver) {
 
     // Add final command and duration to end of queue, along with a copy of the
     // pen state at this point in time to be copied to actualPen after execution
+    cncserver.buffer.addItem({
+      command: c,
+      duration: duration,
+      pen: extend({}, cncserver.pen)
+    });
 
-    // TODO: Trade this out with a grouped function that adds to the
-    // remote and local buffer, and notifies the socket clients all together.
-    cncserver.buffer.data.unshift([c, duration, extend({}, cncserver.pen)]);
-    cncserver.io.sendBufferAdd(cncserver.buffer.data[0]);
     return true;
   };
 
 
-  /**
-   * Helper function for clearing the buffer. Used mainly by plugins.
-   */
-  cncserver.buffer.clear = function() {
-    cncserver.buffer.data = [];
 
-    // Reset the state of the buffer tip pen to the state of the actual robot.
-    // If this isn't done, it will be assumed to be a state that was deleted
-    // and never sent out.
-    cncserver.pen = extend({}, cncserver.actualPen);
+  /**
+   * Render an item into a psudo serial command "string".
+   *
+   * The command will either be a direct string if direct and without dynamic
+   * vars, or it will be an object. TODO: Make Dynamic vars work
+   * @param  {object} item
+   *   The raw buffer item.
+   *
+   * @return {array}
+   *   Array of all serial command strings rendered from buffer item.
+   */
+  cncserver.buffer.render = function(item) {
+    var commandOut = "";
+
+    if (typeof item.command === "object") { // Detailed buffer object
+      switch (item.command.type) {
+        case 'absmove':
+          var change = cncserver.utils.getPosChangeData(
+            item.command.source,
+            item.command
+          );
+          commandOut = [cncserver.buffer.cmdstr('movexy', change)];
+          break;
+        case 'absheight':
+          //cncserver.control.actuallyMoveHeight(, item.command.state);
+          var hChange = cncserver.utils.getHeightChangeData(
+            item.command.source,
+            item.command.z
+          );
+          commandOut = [cncserver.buffer.cmdstr('movez', {z: item.command.z})];
+
+          // If there's a togglez, run it after setting Z
+          if (cncserver.bot.commands.togglez) {
+            commandOut.push(
+              cncserver.buffer.cmdstr(
+                'togglez',
+                {t: cncserver.gConf.get('flipZToggleBit') ? 1 : 0}
+              )
+            );
+          }
+
+          commandOut.push(cncserver.buffer.cmdstr('wait', {d: hChange.d}));
+          break;
+      }
+    } else {
+      // Serial command is direct string in item.command, no render needed.
+      commandOut = [item.command];
+    }
+
+    return commandOut;
   };
 
+  /**
+   * Trigger non-serial commands in buffer items (if any).
+   *
+   * @param  {object} item
+   *   Buffer item to check/trigger.
+   *
+   * @return {boolean}
+   *   True if triggered, false if not applicable.
+   */
+  cncserver.buffer.trigger = function(item) {
+    if (typeof item.command === "function") { // Custom Callback buffer item
+      // Just call the callback function.
+      item.command(1);
+      return true;
+    } else if (typeof item.command === "object") { // Detailed buffer object
+      switch (item.command.type) {
+        case 'message':
+          cncserver.io.sendMessageUpdate(item.command.message);
+          return true;
+        case 'callbackname':
+          cncserver.io.sendCallbackUpdate(item.command.name);
+          return true;
+      }
+    }
+
+    return false;
+  };
 
   /**
    * Create a bot specific serial command string from a key:value object
@@ -145,6 +279,7 @@ module.exports = function(cncserver) {
    * @param {object} values
    *   Object containing the keys of placeholders to find in command string,
    *   with value to replace placeholder.
+   *
    * @returns {string}
    *   Serial command string intended to be outputted directly, empty string
    *   if error.

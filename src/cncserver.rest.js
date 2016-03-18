@@ -66,4 +66,7 @@ module.exports = function(cncserver) {
       }
     });
   };
+
+  // Exports.
+  cncserver.exports.createServerEndpoint = cncserver.createServerEndpoint;
 };

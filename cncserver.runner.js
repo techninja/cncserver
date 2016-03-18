@@ -4,7 +4,10 @@
 /**
  * @file CNC Server IPC runner. Handles outputting serial commands with the
  * correct timing, so the main thread can be as bogged down as it wants, this
- * process will remain untouched.
+ * process will remain untouched as long as there's a CPU to handle it.
+ *
+ * This is an entirely separated application that runs connected only via IPC
+ * socket messages, always use the API to communicate, not this.
  */
 
 // What does this thing need?
@@ -21,16 +24,16 @@ var ipc = require('node-ipc');
 // CONFIGURATION ===============================================================
 ipc.config.id = 'cncrunner';
 ipc.config.retry = 1000;
+ipc.config.maxRetries = 10;
+
 var serialPort = false;
 var SerialPort = serialport.SerialPort;
 
 // RUNNER STATE ================================================================
 var simulation = true; // Assume simulation mode by default.
-var commandDuration = 0;
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
-
 
 // Runner config defaults, overridden on ready.
 var config = {
@@ -38,7 +41,7 @@ var config = {
   bufferLatencyOffset: 20,
   ack: "OK",
   debug: false
-}
+};
 
 // Cautch any uncaught error.
 process.on('uncaughtException', function(err) {
@@ -47,22 +50,25 @@ process.on('uncaughtException', function(err) {
   ipc.log('Uncaught error, disconnected from server, shutting down'.error);
   ipc.log(err);
   process.exit(0);
-})
+});
 
 ipc.connectTo(
   'cncserver',
   function(){
-    ipc.of.cncserver.on(
-      'connect',
-      function(){
-        ipc.log('Connected to CNCServer controller!'.rainbow, ipc.config.delay);
+    ipc.of.cncserver.on('connect', function(){
+        ipc.log('Connected to CNCServer!'.rainbow, ipc.config.delay);
         sendMessage('runner.ready');
       }
     );
-    ipc.of.cncserver.on(
-      'disconnect',
-      function(){
-        ipc.log('Disconnected from server, shutting down'.notice);
+
+    ipc.of.cncserver.on('disconnect', function(){
+        //ipc.log('Disconnected from server, shutting down'.notice);
+        //process.exit(0);
+      }
+    );
+
+    ipc.of.cncserver.on('destroy', function(){
+        ipc.log('All Retries failed or disconnected, shutting down'.notice);
         process.exit(0);
       }
     );
@@ -70,6 +76,16 @@ ipc.connectTo(
   }
 );
 
+/**
+ * Send an IPC message to the server.
+ *
+ * @param  {[type]} command
+ *   Command name, in dot notation.
+ * @param  {[type]} data
+ *   Command data (optional).
+ *
+ * @return {null}
+ */
 function sendMessage(command, data) {
   if (!data) {
     data = {};
@@ -78,12 +94,19 @@ function sendMessage(command, data) {
   var packet = {
     command: command,
     data: data
-  }
+  };
 
   ipc.of.cncserver.emit('app.message', packet);
 }
 
-// Parse and hand off message packets from the server.
+/**
+ * IPC Message callback event parser/handler.
+ *
+ * @param  {object} packet
+ *   The entire message object directly from the event.
+ *
+ * @return {null}
+ */
 function gotMessage(packet) {
   var data = packet.data;
 
@@ -91,20 +114,25 @@ function gotMessage(packet) {
     case "runner.config":
       config = data;
       break;
+
+
     case "serial.connect":
       connectSerial(data);
       break;
     case "serial.direct.command":
-      serialCommand(data.command, data.duration);
+      executeCommands(data.command, data.duration);
       break;
     case "serial.direct.write":
       serialWrite(data);
       break;
-    case "buffer.add.end": // Add to the end of the buffer, last to be executed.
-      buffer.unshift([data.command, data.duration]);
-      break;
-    case "buffer.add.tip": // Add to the running tip of the buffer.
-      buffer.shift([data.command, data.duration]);
+
+
+    case "buffer.add": // Add to the end of the buffer, last to be executed.
+      // Buffer item data comes in in the following object format:
+      //   hash {string}      : The tracking hash for this buffer item.
+      //   commands {array}   : Array of rendered serial command strings.
+      //   duration {integer} : The duration in milliseconds.
+      buffer.unshift(data);
       break;
     case "buffer.pause": // Pause the running of the buffer.
       // xxx
@@ -150,47 +178,82 @@ function disconnectSerial(e) {
 
 
 /**
- * Callback event function initialized on connect to handle incoming data.
+ * Execute a set of commands representing a single buffer item to serialWrite
+ * to callback by when done or by the end of duration.
  *
- * @param {string} data
- *   Incoming data from serial port
- */
-function serialReadline(data) {
-  sendMessage('serial.data', data);
-}
-
-/**
- * Write a psudo command to the open serial port/simulation.
+ * @param {array} commands
+ *  Array of regular/dynamic string commands to all be executed under duration.
+ * @param {integer} duration
+ *  Amount of time these commands should take before the next set should run.
  *
- * @param {string} command
- *  XXXXX
  * @returns {boolean}
  *   True if success, false if failure
  */
 var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 var consecutiveCallStackCount = 0; // Count the blocking call stack size.
-function serialCommand(command){
-  if (!serialPort.write && !simulation) { // Not ready to write to serial!
-    return false;
+function executeCommands(commands, duration, callback, index) {
+
+  // When the command coming in is a string, we execute it. Otherwise we
+  // make our own mini self-executing queue.
+  if (typeof index === 'undefined') {
+    index = 0;
   }
 
-  serialWrite(command, function() {
-    // Command should be sent! Time out the next command send
-    if (commandDuration < config.bufferLatencyOffset &&
-        consecutiveCallStackCount < config.maximumBlockingCallStack) {
-      consecutiveCallStackCount++;
-      executeNext(); // Under threshold, "immediate" run
+  /// Run the command at the index.
+  serialWrite(commands[index], function(){
+    // When the serial command has run/drained, run another, or end?
+    if (index + 1 < commands.length) {
+      // Run the next one.
+      executeCommands(commands, duration, callback, index + 1);
     } else {
-      consecutiveCallStackCount = 0;
-      clearTimeout(nextExecutionTimeout);
-      nextExecutionTimeout = setTimeout(executeNext,
-        commandDuration - config.bufferLatencyOffset
-      );
+      // End, no more commands left. Time out the next command send
+      if (duration < config.bufferLatencyOffset &&
+          consecutiveCallStackCount < config.maximumBlockingCallStack) {
+        consecutiveCallStackCount++;
+        callback(); // Under threshold, "immediate" run
+      } else {
+        consecutiveCallStackCount = 0;
+        clearTimeout(nextExecutionTimeout);
+        nextExecutionTimeout = setTimeout(callback,
+          duration - config.bufferLatencyOffset
+        );
+      }
     }
+
   });
 
   return true;
 }
+
+/**
+ * Execute the next command in the buffer, triggered by self, buffer interval
+ * catcher loop below.
+ */
+function executeNext() {
+  // Don't continue execution if paused
+  if (bufferPaused) return;
+
+  // Process a single line of the buffer =====================================
+  if (buffer.length) {
+    var item = buffer.pop();
+    executeCommands(item.commands, item.duration, function(){
+      sendMessage('buffer.itemdone');
+      executeNext();
+    });
+  } else {
+    // Buffer Empty.
+    bufferRunning = false;
+  }
+}
+
+// Buffer interval catcher, starts running as soon as items exist in the buffer.
+setInterval(function(){
+  if (buffer.length && !bufferRunning && !bufferPaused) {
+    bufferRunning = true;
+    executeNext();
+  }
+}, 10);
+
 
 /**
  * Write a data string to the connected serial port.
@@ -200,7 +263,7 @@ function serialCommand(command){
  * @param  {function} callback
  *   Callback when it should be sent/drained.
  */
-function serialWrite(command, callback) {
+function serialWrite (command, callback) {
   if (simulation) {
     console.info('Simulating serial write :', command);
     setTimeout(function(){
@@ -215,17 +278,18 @@ function serialWrite(command, callback) {
       });
     } catch(e) {
       console.error('Failed to write to the serial port!:', e);
-      sendMessage('serial.error', {type:'data', message: err});
+      sendMessage('serial.error', {type:'data', message: e});
       callback(false);
     }
   }
 }
 
-// Buffer interval catcher, starts running the buffer as soon as items exist in it
-setInterval(function(){
-  if (buffer.length && !bufferRunning && !bufferPaused) {
-    bufferRunning = true;
-    sendBufferVars();
-    executeNext();
-  }
-}, 10);
+/**
+ * Callback event function initialized on connect to handle incoming data.
+ *
+ * @param {string} data
+ *   Incoming data from serial port
+ */
+function serialReadline(data) {
+  sendMessage('serial.data', data);
+}

@@ -8,6 +8,7 @@
 module.exports = function(cncserver) {
   // Central Socket.io object for streaming state data
   var io = require('socket.io')(cncserver.server);
+  cncserver.io = {};
 
   // SOCKET DATA STREAM ========================================================
   io.on('connection', function(socket){
@@ -45,15 +46,16 @@ module.exports = function(cncserver) {
    * Send an update to all stream clients when something is added to the buffer.
    * Includes only the item added to the buffer, expects the client to handle.
    */
-  cncserver.io.sendBufferAdd = function(item) {
+  cncserver.io.sendBufferAdd = function(item, hash) {
     var data = {
       type: 'add',
-      item: item
+      item: item,
+      hash: hash
     };
 
     // Low-level event callback trigger to avoid Socket.io overhead
-    if (exports.bufferUpdateTrigger) {
-      exports.bufferUpdateTrigger(data);
+    if (cncserver.exports.bufferUpdateTrigger) {
+      cncserver.exports.bufferUpdateTrigger(data);
     } else {
       io.emit('buffer update', data);
     }
@@ -70,8 +72,8 @@ module.exports = function(cncserver) {
     };
 
     // Low-level event callback trigger to avoid Socket.io overhead
-    if (exports.bufferUpdateTrigger) {
-      exports.bufferUpdateTrigger(data);
+    if (cncserver.exports.bufferUpdateTrigger) {
+      cncserver.exports.bufferUpdateTrigger(data);
     } else {
       io.emit('buffer update', data);
     }
@@ -104,7 +106,8 @@ module.exports = function(cncserver) {
   cncserver.io.sendBufferComplete = function () {
     var data = {
       type: 'complete',
-      buffer: cncserver.buffer.data,
+      bufferList: cncserver.buffer.data,
+      bufferData: cncserver.buffer.dataSet,
       bufferRunning: cncserver.buffer.running,
       bufferPaused: cncserver.buffer.paused,
       bufferPausePen: cncserver.buffer.pausePen
