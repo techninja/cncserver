@@ -43,7 +43,7 @@ var config = {
   debug: false
 };
 
-// Cautch any uncaught error.
+// Catch any uncaught error.
 process.on('uncaughtException', function(err) {
   // Assume Disconnection and kill the process.
   disconnectSerial(err);
@@ -114,8 +114,6 @@ function gotMessage(packet) {
     case "runner.config":
       config = data;
       break;
-
-
     case "serial.connect":
       connectSerial(data);
       break;
@@ -125,8 +123,6 @@ function gotMessage(packet) {
     case "serial.direct.write":
       serialWrite(data);
       break;
-
-
     case "buffer.add": // Add to the end of the buffer, last to be executed.
       // Buffer item data comes in in the following object format:
       //   hash {string}      : The tracking hash for this buffer item.
