@@ -9,6 +9,7 @@
     "express": "~3.0.0",
     "ini": "1.1.0",
     "nconf": "0.6.9",
+    "node-ipc": "^6.0.2",
     "serialport": "2.0.5",
     "socket.io": "^1.1.0"
   },
