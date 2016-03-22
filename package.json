@@ -30,6 +30,7 @@
     "url": "https://github.com/techninja/cncserver.git"
   },
   "scripts": {
-    "test": "grunt --verbose"
+    "test": "grunt --verbose",
+    "start": "node ."
   }
 }
