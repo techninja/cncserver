@@ -193,19 +193,19 @@ function disconnectSerial(e) {
 var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 var consecutiveCallStackCount = 0; // Count the blocking call stack size.
 function executeCommands(commands, duration, callback, index) {
-
-  // When the command coming in is a string, we execute it. Otherwise we
-  // make our own mini self-executing queue.
+  // Run each command by index, defaulting with 0.
   if (typeof index === 'undefined') {
     index = 0;
   }
 
-  /// Run the command at the index.
+  // Run the command at the index.
   serialWrite(commands[index], function(){
-    // When the serial command has run/drained, run another, or end?
-    if (index + 1 < commands.length) {
+    index++; // Increment the index.
+
+    // Now that the serial command has drained to the bot, run the next, or end?
+    if (index < commands.length) {
       // Run the next one.
-      executeCommands(commands, duration, callback, index + 1);
+      executeCommands(commands, duration, callback, index);
     } else {
       // End, no more commands left. Time out the next command send
       if (duration < config.bufferLatencyOffset &&
@@ -257,7 +257,7 @@ setInterval(function(){
 
 
 /**
- * Write a data string to the connected serial port.
+ * Write and drain a string to the connected serial port.
  *
  * @param  {string} command
  *   Command to write to the connected serial port, sans delimiter.
