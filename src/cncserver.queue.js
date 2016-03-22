@@ -94,7 +94,7 @@ module.exports = function(cncserver) {
       delete cncserver.buffer.dataSet[hash];
       cncserver.io.sendBufferRemove();
     } else {
-      console.error('End IPC/Buffer Item & Hash Mismatch');
+      console.error('End IPC/Buffer Item & Hash Mismatch. This should never happen!');
     }
   };
 
