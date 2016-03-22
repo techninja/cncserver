@@ -111,6 +111,7 @@ module.exports = function(cncserver) {
     // If this isn't done, it will be assumed to be a state that was deleted
     // and never sent out.
     cncserver.pen = extend({}, cncserver.actualPen);
+    cncserver.ipc.sendMessage('buffer.clear');
 
     // Send full update as it's been cleared.
     cncserver.io.sendBufferComplete();

@@ -131,13 +131,18 @@ function gotMessage(packet) {
       buffer.unshift(data);
       break;
     case "buffer.pause": // Pause the running of the buffer.
-      // xxx
+      bufferPaused = true;
+      console.log('BUFFER PAUSED');
       break;
     case "buffer.resume": // Resume running of the buffer.
-      // xxx
+      bufferPaused = false;
+      executeNext();
+      console.log('BUFFER RESUMED');
       break;
     case "buffer.clear": // Clear the entire buffer.
-      // xxx
+      buffer = [];
+      executeNext();
+      console.log('BUFFER CLEARED');
       break;
   }
 }
