@@ -70,7 +70,7 @@ module.exports = function(cncserver) {
     speed = parseFloat(speed) / 100;
 
     // Convert to steps from percentage
-    speed = speed * ((maxSpeed - minSpeed) + minSpeed);
+    speed = (speed * (maxSpeed - minSpeed)) + minSpeed;
 
     // Sanity check speed value
     speed = speed > maxSpeed ? maxSpeed : speed;
