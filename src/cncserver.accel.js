@@ -144,7 +144,7 @@ module.exports = function(cncserver) {
         // Case 2 linear or constant velocity changes
         // TODO: this accel type currently may not make sense
 
-        var initalVel = Vmax / 2;
+        var initialVel = Vmax / 2;
         velocity = initialVel;
         // 0 is the final velocity
         var localAccel = (0 - initialVel * initialVel) / (2.0 * distance);
@@ -185,7 +185,7 @@ module.exports = function(cncserver) {
 
       if (0 > initialVel) {
         velocity = 0;
-      } else if (initalVel > 0) {
+      } else if (initialVel > 0) {
         velocity = finalVel;
       } else if (initialVel > 0) {
         // Allow case of two are equal, but nonzero
