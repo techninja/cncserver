@@ -71,11 +71,11 @@ requires `make`, which comes with Xcode, a free download.
 ## Running
 CNC Server *currently* only supports the late model
 [EBB](http://www.schmalzhaus.com/EBB/) and its command set. Of the devices that
-use it, ***only*** the WaterColorBot and the EggBot have reliable support. More
+use it, the WaterColorBot, the EggBot, and AxiDraw have reliable support. More
 devices to come soon!
 
-Plug in your device, and from the terminal in the cncserver folder, start the
-server with the command `node cncserver.js`, and you've got it!
+Plug in your device, and from the terminal in the `cncserver` repository root
+folder, start the server with the command `npm start`, and you've got it!
 
 Once the server is up and running, the API should now be available at
 `http://localhost:4242`. The `4242` is the port on the local computer, which you

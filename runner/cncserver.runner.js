@@ -43,7 +43,7 @@ var config = {
   debug: false
 };
 
-// Cautch any uncaught error.
+// Catch any uncaught error.
 process.on('uncaughtException', function(err) {
   // Assume Disconnection and kill the process.
   disconnectSerial(err);
@@ -114,19 +114,15 @@ function gotMessage(packet) {
     case "runner.config":
       config = data;
       break;
-
-
     case "serial.connect":
       connectSerial(data);
       break;
-    case "serial.direct.command":
+    /*case "serial.direct.command":
       executeCommands(data.command, data.duration);
-      break;
+      break;*/
     case "serial.direct.write":
       serialWrite(data);
       break;
-
-
     case "buffer.add": // Add to the end of the buffer, last to be executed.
       // Buffer item data comes in in the following object format:
       //   hash {string}      : The tracking hash for this buffer item.
@@ -135,13 +131,18 @@ function gotMessage(packet) {
       buffer.unshift(data);
       break;
     case "buffer.pause": // Pause the running of the buffer.
-      // xxx
+      bufferPaused = true;
+      console.log('BUFFER PAUSED');
       break;
     case "buffer.resume": // Resume running of the buffer.
-      // xxx
+      bufferPaused = false;
+      executeNext();
+      console.log('BUFFER RESUMED');
       break;
     case "buffer.clear": // Clear the entire buffer.
-      // xxx
+      buffer = [];
+      executeNext();
+      console.log('BUFFER CLEARED');
       break;
   }
 }
@@ -192,19 +193,19 @@ function disconnectSerial(e) {
 var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
 var consecutiveCallStackCount = 0; // Count the blocking call stack size.
 function executeCommands(commands, duration, callback, index) {
-
-  // When the command coming in is a string, we execute it. Otherwise we
-  // make our own mini self-executing queue.
+  // Run each command by index, defaulting with 0.
   if (typeof index === 'undefined') {
     index = 0;
   }
 
-  /// Run the command at the index.
+  // Run the command at the index.
   serialWrite(commands[index], function(){
-    // When the serial command has run/drained, run another, or end?
-    if (index + 1 < commands.length) {
+    index++; // Increment the index.
+
+    // Now that the serial command has drained to the bot, run the next, or end?
+    if (index < commands.length) {
       // Run the next one.
-      executeCommands(commands, duration, callback, index + 1);
+      executeCommands(commands, duration, callback, index);
     } else {
       // End, no more commands left. Time out the next command send
       if (duration < config.bufferLatencyOffset &&
@@ -236,13 +237,17 @@ function executeNext() {
   // Process a single line of the buffer =====================================
   if (buffer.length) {
     var item = buffer.pop();
+    console.log('RUNNING ITEM: ', item.hash);
     executeCommands(item.commands, item.duration, function(){
-      sendMessage('buffer.itemdone');
+      console.log('ITEM DONE: ', item.hash);
+      sendMessage('buffer.itemdone', item.hash);
       executeNext();
     });
   } else {
+    sendMessage('buffer.empty');
     // Buffer Empty.
     bufferRunning = false;
+    sendMessage('buffer.running', bufferRunning);
   }
 }
 
@@ -250,13 +255,14 @@ function executeNext() {
 setInterval(function(){
   if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
+    sendMessage('buffer.running', bufferRunning);
     executeNext();
   }
 }, 10);
 
 
 /**
- * Write a data string to the connected serial port.
+ * Write and drain a string to the connected serial port.
  *
  * @param  {string} command
  *   Command to write to the connected serial port, sans delimiter.

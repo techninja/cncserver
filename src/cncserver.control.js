@@ -558,7 +558,7 @@ module.exports = function(cncserver) {
 
     // Force cncserver.bot to wait
     cncserver.serial.command(
-      cncserver.buffer.cmdstr('wait', {d: cncserver.control.commandDuration})
+      cncserver.buffer.cmdstr('wait', {d: change.d})
     );
 
     // Delayed callback (if used)

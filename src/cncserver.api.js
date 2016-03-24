@@ -166,24 +166,19 @@ module.exports = function(cncserver) {
 
       if (typeof req.body.paused === "boolean") {
         if (req.body.paused !== buffer.paused) {
-          buffer.toggle(req.body.paused);
-          console.log(
-            'Run buffer ' + (buffer.paused ? 'paused!': 'resumed!')
-          );
+
+          // If pausing, trigger immediately.
+          // Resuming can't do this if returning from another position.
+          if (req.body.paused) {
+            buffer.pause();
+            cncserver.control.setHeight('up', null, true); // Pen up for safety!
+            console.log('Run buffer paused!');
+          } else {
+            console.log('Resume to begin shortly...');
+          }
 
           // Changed to paused!
-          buffer.newlyPaused = buffer.paused;
-          cncserver.io.sendBufferVars();
-
-          // Hold on the current actualPen to return to before resuming
-          if (buffer.paused) {
-            buffer.pausePen = cncserver.utils.extend(
-              {}, cncserver.actualPen
-            );
-
-            cncserver.io.sendBufferVars();
-            cncserver.control.setHeight('up', null, true); // Pen up for safety!
-          }
+          buffer.newlyPaused = req.body.paused;
         }
       }
 
@@ -194,49 +189,50 @@ module.exports = function(cncserver) {
             buffer.pausePen.y !== cncserver.actualPen.y ||
             buffer.pausePen.height !== cncserver.actualPen.height){
           changedSincePause = true;
+          console.log('CHANGED SINCE PAUSE');
         } else {
           // If we're resuming, and there's no change... clear the pause pen
-          if (!buffer.paused) {
-            buffer.pausePen = null;
-            cncserver.io.sendBufferVars();
+          if (!req.body.paused) {
+            console.log('RESUMING NO CHANGE!');
           }
         }
       }
 
-      // Resuming? Move back to position we paused at (if changed)
-      if (!buffer.paused && changedSincePause) {
-        // Pause for a bit until we move back to last pos
-        buffer.paused = true;
-        cncserver.io.sendBufferVars();
-        console.log('Moving back to pre-pause position...');
+      // Resuming?
+      if (!req.body.paused) {
+        // Move back to position we paused at (if changed).
+        if (changedSincePause) {
+          // Remain paused until we've finished...
+          console.log('Moving back to pre-pause position...');
 
-        // Set the pen up before moving to resume position
-        cncserver.control.setHeight('up', function(){
-          cncserver.control.actuallyMove(buffer.pausePen, function(){
-            // Set the height back to what it was AFTER moving
-            cncserver.control.actuallyMoveHeight(
-              buffer.pausePen.height,
-              buffer.pausePen.state,
-              function(){
-                console.log('Resuming buffer!');
-                buffer.paused = false;
-                buffer.pausePen = null;
-                cncserver.io.sendBufferVars();
+          // Set the pen up before moving to resume position
+          cncserver.control.setHeight('up', function(){
+            cncserver.control.actuallyMove(buffer.pausePen, function(){
+              // Set the height back to what it was AFTER moving
+              cncserver.control.actuallyMoveHeight(
+                buffer.pausePen.height,
+                buffer.pausePen.state,
+                function(){
+                  console.log('Resuming buffer!');
+                  buffer.resume();
 
-                res.status(200).send(JSON.stringify({
-                  running: buffer.running,
-                  paused: buffer.paused,
-                  count: buffer.data.length,
-                  buffer: "This isn't a great idea..." // TODO: FIX <<
-                }));
-              }
-            );
-          });
-        }, true); // Skipbuffer on setheight!
+                  res.status(200).send(JSON.stringify({
+                    running: buffer.running,
+                    paused: buffer.paused,
+                    count: buffer.data.length,
+                    buffer: "This isn't a great idea..." // TODO: FIX <<
+                  }));
+                }
+              );
+            });
+          }, true); // Skipbuffer on setheight!
 
-        return true; // Don't finish the response till after move back ^^^
+          return true; // Don't finish the response till after move back ^^^
+        } else {
+          // Plain resume.
+          buffer.resume();
+        }
       }
-
 
       // In case paused with 0 items in buffer...
       if (!buffer.newlyPaused || buffer.data.length === 0) {
@@ -275,16 +271,7 @@ module.exports = function(cncserver) {
         return [400, '/v1/buffer POST only accepts "message" or "callback"'];
       }
     } else if (req.route.method === 'delete') {
-      cncserver.buffer.clear();
-      buffer.running = false;
-
-      buffer.pausePen = null; // Resuming with an empty buffer is silly
-      buffer.paused = false;
-
-      // Should be fine to send as buffer is empty.
-      cncserver.io.sendBufferComplete();
-
-      console.log('Run buffer cleared!');
+      buffer.clear();
       return [200, 'Buffer Cleared'];
     } else {
       return false;
