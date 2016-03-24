@@ -35,6 +35,11 @@ module.exports = function(cncserver) {
   // Pause the buffer running.
   cncserver.buffer.pause = function() {
     cncserver.buffer.paused = true;
+
+    // Hold on to the current actualPen to return to before resuming.
+    cncserver.buffer.pausePen = cncserver.utils.extend(
+      {}, cncserver.actualPen
+    );
     cncserver.ipc.sendMessage('buffer.pause');
     cncserver.io.sendBufferVars();
   };
@@ -42,6 +47,7 @@ module.exports = function(cncserver) {
   // Resume the buffer running.
   cncserver.buffer.resume = function() {
     cncserver.buffer.paused = false;
+    cncserver.buffer.pausePen = null;
     cncserver.ipc.sendMessage('buffer.resume');
     cncserver.io.sendBufferVars();
   };
@@ -71,15 +77,17 @@ module.exports = function(cncserver) {
     cncserver.io.sendBufferAdd(item, hash); // Alert clients.
   };
 
-  // Remove an object from the end of buffer (the only place they're removed).
+  // Remove an object with the specific hash from the buffer.
   //
   // This should only be called by the process running the buffer, and denotes
   // when an item is run into the machine.
-  cncserver.buffer.removeItem = function() {
-    var hash = cncserver.buffer.data.pop();
-    console.log('Removing Item hash:', hash);
+  cncserver.buffer.removeItem = function(hash) {
+    var index = cncserver.buffer.data.indexOf(hash);
+    if (cncserver.buffer.dataSet[hash] && index > -1) {
+      cncserver.buffer.data.splice(index, 1);
 
-    if (hash) {
+      console.log('Removing Item hash:', hash);
+
       var item = cncserver.buffer.dataSet[hash];
 
       // Update the state of the actualPen to match the one in the buffer.
@@ -103,15 +111,23 @@ module.exports = function(cncserver) {
   /**
    * Helper function for clearing the buffer.
    */
-  cncserver.buffer.clear = function() {
+  cncserver.buffer.clear = function(isEmpty) {
     cncserver.buffer.data = [];
     cncserver.buffer.dataSet = {};
+
+    cncserver.buffer.pausePen = null; // Resuming with an empty buffer is silly
+    cncserver.buffer.paused = false;
 
     // Reset the state of the buffer tip pen to the state of the actual robot.
     // If this isn't done, it will be assumed to be a state that was deleted
     // and never sent out.
     cncserver.pen = extend({}, cncserver.actualPen);
-    cncserver.ipc.sendMessage('buffer.clear');
+
+    // Detect if this came from IPC runner being empty or not.
+    if (!isEmpty) {
+      cncserver.ipc.sendMessage('buffer.clear');
+      console.log('Run buffer cleared!');
+    }
 
     // Send full update as it's been cleared.
     cncserver.io.sendBufferComplete();

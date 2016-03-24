@@ -122,12 +122,15 @@ module.exports = function(cncserver) {
         break;
       case "buffer.itemdone":
         // Increment an item off the buffer.
-        cncserver.buffer.removeItem();
+        cncserver.buffer.removeItem(data);
         break;
-      case "buffer.complete":
-        // TODO: Not sure if this is even needed.
+      case "buffer.empty":
+        cncserver.buffer.clear(true);
+        break;
+      case "buffer.running":
+        cncserver.buffer.running = data;
         break;
     }
-  };
+  }
 
 };

@@ -117,9 +117,9 @@ function gotMessage(packet) {
     case "serial.connect":
       connectSerial(data);
       break;
-    case "serial.direct.command":
+    /*case "serial.direct.command":
       executeCommands(data.command, data.duration);
-      break;
+      break;*/
     case "serial.direct.write":
       serialWrite(data);
       break;
@@ -237,13 +237,17 @@ function executeNext() {
   // Process a single line of the buffer =====================================
   if (buffer.length) {
     var item = buffer.pop();
+    console.log('RUNNING ITEM: ', item.hash);
     executeCommands(item.commands, item.duration, function(){
-      sendMessage('buffer.itemdone');
+      console.log('ITEM DONE: ', item.hash);
+      sendMessage('buffer.itemdone', item.hash);
       executeNext();
     });
   } else {
+    sendMessage('buffer.empty');
     // Buffer Empty.
     bufferRunning = false;
+    sendMessage('buffer.running', bufferRunning);
   }
 }
 
@@ -251,6 +255,7 @@ function executeNext() {
 setInterval(function(){
   if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
+    sendMessage('buffer.running', bufferRunning);
     executeNext();
   }
 }, 10);
