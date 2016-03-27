@@ -23,6 +23,7 @@ var ipc = require('node-ipc');
 
 // CONFIGURATION ===============================================================
 ipc.config.id = 'cncrunner';
+ipc.config.silent = true;
 ipc.config.retry = 1000;
 ipc.config.maxRetries = 10;
 

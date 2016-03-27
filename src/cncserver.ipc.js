@@ -15,6 +15,7 @@ module.exports = function(cncserver) {
   };
 
   // IPC server config.
+  ipc.config.silent = true;
   ipc.config.id = 'cncserver';
   ipc.config.retry = 1500;
 
