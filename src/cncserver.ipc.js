@@ -125,7 +125,7 @@ module.exports = function(cncserver) {
         cncserver.buffer.removeItem(data);
         break;
       case "buffer.empty":
-        cncserver.buffer.clear(true);
+        // TODO: Is this needed?
         break;
       case "buffer.running":
         cncserver.buffer.running = data;
