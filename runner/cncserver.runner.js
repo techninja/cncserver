@@ -38,8 +38,6 @@ var bufferPaused = false;
 
 // Runner config defaults, overridden on ready.
 var config = {
-  maximumBlockingCallStack: 100,
-  bufferLatencyOffset: 20,
   ack: "OK",
   debug: false
 };
@@ -191,8 +189,6 @@ function disconnectSerial(e) {
  * @returns {boolean}
  *   True if success, false if failure
  */
-var nextExecutionTimeout = 0; // Hold on to the timeout index to be cleared
-var consecutiveCallStackCount = 0; // Count the blocking call stack size.
 function executeCommands(commands, duration, callback, index) {
   // Run each command by index, defaulting with 0.
   if (typeof index === 'undefined') {
@@ -208,18 +204,9 @@ function executeCommands(commands, duration, callback, index) {
       // Run the next one.
       executeCommands(commands, duration, callback, index);
     } else {
-      // End, no more commands left. Time out the next command send
-      if (duration < config.bufferLatencyOffset &&
-          consecutiveCallStackCount < config.maximumBlockingCallStack) {
-        consecutiveCallStackCount++;
-        callback(); // Under threshold, "immediate" run
-      } else {
-        consecutiveCallStackCount = 0;
-        clearTimeout(nextExecutionTimeout);
-        nextExecutionTimeout = setTimeout(callback,
-          duration - config.bufferLatencyOffset
-        );
-      }
+      // End, no more commands left.
+      // Timeout the next command send to avoid callstack addition.
+      setTimeout(callback, 0);
     }
 
   });
