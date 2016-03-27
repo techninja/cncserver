@@ -112,6 +112,7 @@ function gotMessage(packet) {
   switch(packet.command) {
     case "runner.config":
       config = data;
+      if (config.debug) console.log('Got Config data:', config);
       break;
     case "serial.connect":
       connectSerial(data);

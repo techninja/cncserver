@@ -128,7 +128,10 @@ module.exports = function(cncserver) {
     switch(packet.command) {
       case "runner.ready":
         cncserver.ipc.runnerSocket = socket;
-        // TODO: Send config data packet.
+        cncserver.ipc.sendMessage('runner.config', {
+          debug: cncserver.gConf.get('debug'),
+          ack: cncserver.botConf.get('controller').ack
+        });
 
         if (runnerInitCallback) runnerInitCallback();
         break;
