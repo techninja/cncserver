@@ -46,8 +46,8 @@ var config = {
 process.on('uncaughtException', function(err) {
   // Assume Disconnection and kill the process.
   disconnectSerial(err);
-  ipc.log('Uncaught error, disconnected from server, shutting down'.error);
-  ipc.log(err);
+  console.error('Uncaught error, disconnected from server, shutting down');
+  console.error(err);
   process.exit(0);
 });
 
@@ -55,7 +55,7 @@ ipc.connectTo(
   'cncserver',
   function(){
     ipc.of.cncserver.on('connect', function(){
-        ipc.log('Connected to CNCServer!'.rainbow, ipc.config.delay);
+        console.log('Connected to CNCServer!');
         sendMessage('runner.ready');
       }
     );
@@ -67,7 +67,7 @@ ipc.connectTo(
     );
 
     ipc.of.cncserver.on('destroy', function(){
-        ipc.log('All Retries failed or disconnected, shutting down'.notice);
+        console.log('All Retries failed or disconnected, shutting down');
         process.exit(0);
       }
     );
@@ -157,11 +157,11 @@ function connectSerial(options) {
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
-        ipc.log('CONNECTED TO '.rainbow, options.port);
+        console.log('CONNECTED TO ', options.port);
         serialPort.on("data", serialReadline);
       } else {
         simulation = true;
-        console.log('SerialPort says:', err);
+        if (config.debug) console.log('SerialPort says:', err);
         sendMessage('serial.error', {type:'connect', message: err});
       }
     });
@@ -226,9 +226,9 @@ function executeNext() {
   // Process a single line of the buffer =====================================
   if (buffer.length) {
     var item = buffer.pop();
-    console.log('RUNNING ITEM: ', item.hash);
+    if (config.debug) console.log('RUNNING ITEM: ' + item.hash);
     executeCommands(item.commands, item.duration, function(){
-      console.log('ITEM DONE: ', item.hash);
+      if (config.debug) console.log('ITEM DONE: ' + item.hash);
       sendMessage('buffer.itemdone', item.hash);
       executeNext();
     });
@@ -260,16 +260,20 @@ setInterval(function(){
  */
 function serialWrite (command, callback) {
   if (simulation) {
-    console.info('Simulating serial write :', command);
+    if (config.debug) console.info('Simulating serial write: ' + command);
     setTimeout(function(){
       serialReadline(config.ack);
       callback();
     }, 1);
   } else {
-    console.info('Executing serial write :', command);
+    if (config.debug) console.info('Executing serial write: ' + command);
+    if (config.debug) console.time('SerialSendtoDrain');
     try {
       serialPort.write(command + "\r", function() {
-        serialPort.drain(callback);
+        serialPort.drain(function() {
+          if (config.debug) console.timeEnd('SerialSendtoDrain');
+          callback();
+        });
       });
     } catch(e) {
       console.error('Failed to write to the serial port!:', e);
