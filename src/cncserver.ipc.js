@@ -7,6 +7,7 @@
  */
 
 module.exports = function(cncserver) {
+  var spawn = require('child_process').spawn; // Process spawner.
   var ipc = require('node-ipc');       // Inter Process Comms for runner.
   var runnerInitCallback = null;       // Placeholder for init set callback.
   cncserver.ipc = {
@@ -42,16 +43,18 @@ module.exports = function(cncserver) {
     ipc.server.emit(socket, 'app.message', packet);
   };
 
-
   /**
    * Initialize and start the IPC server
    *
+   * @param  {object} options
+   *   localRunner {boolean}: true if we should try to init the runner locally,
+   *     false to defer starting the runner to the parent application.
    * @param  {Function} callback
    *   Function called when the runner is connected and ready.
    *
    * @return {null}
    */
-  cncserver.ipc.initServer = function(callback) {
+  cncserver.ipc.initServer = function(options, callback) {
     runnerInitCallback = callback;
 
     // Initialize and start the IPC Server...
@@ -61,6 +64,50 @@ module.exports = function(cncserver) {
 
     ipc.server.start();
     console.log('Starting IPC server, waiting for runner client to start...');
+
+    if (options.localRunner) {
+      // Register an event callback to shutdown the runner if we're exiting.
+      process.on('SIGTERM', cncserver.ipc.runner.shutdown);
+      process.on('SIGINT', cncserver.ipc.runner.shutdown);
+      cncserver.ipc.runner.init();
+    }
+  };
+
+  // Define the runner tracker object.
+  cncserver.ipc.runner = {
+    process: {},
+
+    /**
+     * Start up & init the Runner process via node
+     */
+    init: function (){
+      cncserver.ipc.runner.process = spawn(
+        'node',
+        [__dirname + '/../runner/cncserver.runner']
+      );
+
+      cncserver.ipc.runner.process.stdout.on('data', function (data) {
+        data = data.toString().split("\n");
+        for (var i in data) {
+          if (data[i].length) console.log("RUNNER:" + data[i]);
+        }
+      });
+
+      cncserver.ipc.runner.process.stderr.on('data', function (data) {
+        console.log('RUNNER ERROR: ' + data);
+      });
+
+      cncserver.ipc.runner.process.on('exit', function (exitCode) {
+        // TODO: Restart it it? Who knows.
+        console.log('RUNNER EXITED: ' + exitCode);
+      });
+    },
+
+    shutdown: function() {
+      console.log('Killing runner process before exiting...');
+      cncserver.ipc.runner.process.kill();
+      process.exit();
+    }
   };
 
   /**

@@ -120,7 +120,7 @@ cncserver.settings.loadGlobalConfig(function standaloneOrModuleInit() {
     if (!module.parent) {
       // Load the bot specific configuration, defaulting to gConf bot type
       cncserver.settings.loadBotConfig(function(){
-        cncserver.ipc.initServer(function(){
+        cncserver.ipc.initServer({localRunner: true}, function(){
           // Runner is ready! Attempt Initial Serial Connection.
           cncserver.serial.connect({
             error: function() {
@@ -158,7 +158,8 @@ cncserver.settings.loadGlobalConfig(function standaloneOrModuleInit() {
           // Before we can attempt to connect to the serialport, we must ensure
           // The IPC runner is connected...
 
-          cncserver.ipc.initServer(function(){
+          cncserver.ipc.initServer(
+            {localRunner: options.localRunner}, function(){
             // Runner is ready! Attempt Initial Serial Connection.
             cncserver.serial.connect({
               success: function() { // Successfully connected
