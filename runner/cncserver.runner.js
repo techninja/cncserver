@@ -114,6 +114,10 @@ function gotMessage(packet) {
       config = data;
       if (config.debug) console.log('Got Config data:', config);
       break;
+    case "runner.shutdown":
+      console.log('Recieved kill signal from host, shutting down runner.');
+      process.exit(0);
+      break;
     case "serial.connect":
       connectSerial(data);
       break;
