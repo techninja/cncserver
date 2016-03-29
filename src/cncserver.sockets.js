@@ -30,16 +30,10 @@ module.exports = function(cncserver) {
    * a serial command is run, or internal state changes.
    */
   cncserver.io.sendPenUpdate = function () {
-    // Low-level event callback trigger to avoid Socket.io overhead
-    if (exports.penUpdateTrigger) {
-      exports.penUpdateTrigger(cncserver.actualPen);
-    } else {
-      // TODO: This sucks, but even sending these smaller packets is somewhat
-      // blocking and screws with buffer send timing. Need to either make these
-      // packets smaller, or limit the number of direct updates per second to
-      // the transfer rate to clients? Who knows.
-      io.emit('pen update', cncserver.actualPen);
+    if (cncserver.exports.penUpdateTrigger) {
+      cncserver.exports.penUpdateTrigger(cncserver.actualPen);
     }
+    io.emit('pen update', cncserver.actualPen);
   };
 
   /**
@@ -53,12 +47,10 @@ module.exports = function(cncserver) {
       hash: hash
     };
 
-    // Low-level event callback trigger to avoid Socket.io overhead
     if (cncserver.exports.bufferUpdateTrigger) {
       cncserver.exports.bufferUpdateTrigger(data);
-    } else {
-      io.emit('buffer update', data);
     }
+    io.emit('buffer update', data);
   };
 
 
@@ -71,12 +63,10 @@ module.exports = function(cncserver) {
       type: 'remove'
     };
 
-    // Low-level event callback trigger to avoid Socket.io overhead
     if (cncserver.exports.bufferUpdateTrigger) {
       cncserver.exports.bufferUpdateTrigger(data);
-    } else {
-      io.emit('buffer update', data);
     }
+    io.emit('buffer update', data);
   };
 
   /**
@@ -91,12 +81,10 @@ module.exports = function(cncserver) {
       bufferPausePen: cncserver.buffer.pausePen
     };
 
-    // Low-level event callback trigger to avoid Socket.io overhead
     if (cncserver.exports.bufferUpdateTrigger) {
       cncserver.exports.bufferUpdateTrigger(data);
-    } else {
-      io.emit('buffer update', data);
     }
+    io.emit('buffer update', data);
   };
 
   /**
@@ -116,9 +104,8 @@ module.exports = function(cncserver) {
     // Low-level event callback trigger to avoid Socket.io overhead
     if (cncserver.exports.bufferUpdateTrigger) {
       cncserver.exports.bufferUpdateTrigger(data);
-    } else {
-      io.emit('buffer update', data);
     }
+    io.emit('buffer update', data);
   };
 
   /**
