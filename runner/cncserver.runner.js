@@ -35,6 +35,7 @@ var simulation = true; // Assume simulation mode by default.
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
+var bufferExecuting = false;
 var bufferDirectBusy = false;
 
 // Runner config defaults, overridden on ready.
@@ -232,33 +233,36 @@ function executeCommands(commands, duration, callback, index) {
  * catcher loop below.
  */
 function executeNext() {
-  // Don't continue execution if paused
-  if (bufferPaused) return;
+  // Don't continue execution if paused or already executing.
+  if (bufferPaused || bufferExecuting) return;
 
   // Process a single line of the buffer =====================================
   if (buffer.length) {
     var item = buffer.pop();
     if (config.debug) console.log('RUNNING ITEM: ' + item.hash);
     sendMessage('buffer.item.start', item.hash);
+    bufferExecuting = true;
 
     // Some items don't have any rendered commands, only run those that do!
     if (item.commands.length) {
       executeCommands(item.commands, item.duration, function(){
         if (config.debug) console.log('ITEM DONE: ' + item.hash);
         sendMessage('buffer.item.done', item.hash);
+        bufferExecuting = false;
         executeNext();
       });
     } else {
       // This buffer item doesn't have any serial commands, we're done here :)
       sendMessage('buffer.itemdone', item.hash);
+      bufferExecuting = false;
       if (config.debug) console.log('NO COMMANDS ITEM: ' + item.hash);
       executeNext();
     }
-
   } else {
     sendMessage('buffer.empty');
     // Buffer Empty.
     bufferRunning = false;
+    bufferExecuting = false;
     sendMessage('buffer.running', bufferRunning);
   }
 }
