@@ -217,6 +217,7 @@ module.exports = function(cncserver) {
 
     // Add final command and duration to end of queue, along with a copy of the
     // pen state at this point in time to be copied to actualPen after execution
+    cncserver.pen.lastDuration = duration;
     cncserver.buffer.addItem({
       command: c,
       duration: duration,
