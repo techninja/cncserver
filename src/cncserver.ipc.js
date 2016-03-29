@@ -171,8 +171,12 @@ module.exports = function(cncserver) {
           cncserver.serial.localTrigger('botInit');
         }
         break;
-      case "buffer.itemdone":
-        // Increment an item off the buffer.
+      case "buffer.item.start":
+        // Buffer action item begun to run.
+        cncserver.buffer.startItem(data);
+        break;
+      case "buffer.item.done":
+        // Buffer item has completed.
         cncserver.buffer.removeItem(data);
         break;
       case "buffer.empty":
