@@ -267,7 +267,7 @@ function serialWrite (command, callback) {
     if (config.debug) console.info('Simulating serial write: ' + command);
     setTimeout(function(){
       serialReadline(config.ack);
-      callback();
+      if (callback) callback();
     }, 1);
   } else {
     if (config.debug) console.info('Executing serial write: ' + command);
@@ -276,13 +276,13 @@ function serialWrite (command, callback) {
       serialPort.write(command + "\r", function() {
         serialPort.drain(function() {
           if (config.debug) console.timeEnd('SerialSendtoDrain');
-          callback();
+          if (callback) callback();
         });
       });
     } catch(e) {
       console.error('Failed to write to the serial port!:', e);
       sendMessage('serial.error', {type:'data', message: e});
-      callback(false);
+      if (callback) callback(false);
     }
   }
 }
