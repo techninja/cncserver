@@ -204,8 +204,6 @@
       case 'vars':
         $('#bufrun').text(b.bufferRunning);
         $('#bufpause').text(b.bufferPaused);
-        $('#bufcount').text(buffer.list.length);
-
         resumePen = b.bufferPausePen;
         break;
       case 'add':
@@ -217,6 +215,8 @@
         delete buffer.data[hash];
         break;
     }
+
+    $('#bufcount').text(buffer.list.length);
 
     // Populate buffer list of items
     var $b = $('#buffer');
