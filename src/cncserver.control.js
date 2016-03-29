@@ -493,23 +493,38 @@ module.exports = function(cncserver) {
 
     cncserver.control.commandDuration = Math.max(change.d, 0);
 
-    // Pass along the correct duration and new position through to actualPen
-    var latency = cncserver.gConf.get('bufferLatencyOffset');
-    cncserver.actualPen.lastDuration = change.d - latency;
+    // Execute the command immediately via serial.direct.command.
+    cncserver.ipc.sendMessage('serial.direct.command', {
+      commands: cncserver.buffer.render({
+        command: {
+          type: 'absmove',
+          x: destination.x,
+          y: destination.y,
+          source: cncserver.actualPen
+        },
+        duration: cncserver.control.commandDuration
+      }),
+      duration: cncserver.control.commandDuration
+    });
+
+    // Set the correct duration and new position through to actualPen
+    cncserver.actualPen.lastDuration = change.d;
     cncserver.actualPen.x = destination.x;
     cncserver.actualPen.y = destination.y;
 
+    // If there's nothing in the buffer, reset pen to actualPen
+    if (cncserver.buffer.data.length === 0) {
+      cncserver.pen = cncserver.utils.extend({}, cncserver.actualPen);
+    }
+
     // Trigger an update for pen position
     cncserver.io.sendPenUpdate();
-
-    // Send the actual X, Y and Duration
-    cncserver.serial.command(cncserver.buffer.cmdstr('movexy', change));
 
     // Delayed callback (if used)
     if (callback) {
       setTimeout(function(){
         callback(1);
-      }, Math.max(cncserver.control.commandDuration - latency, 0));
+      }, Math.max(cncserver.control.commandDuration, 0));
     }
   };
 
