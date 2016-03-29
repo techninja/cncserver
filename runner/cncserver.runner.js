@@ -35,6 +35,7 @@ var simulation = true; // Assume simulation mode by default.
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
+var bufferDirectBusy = false;
 
 // Runner config defaults, overridden on ready.
 var config = {
@@ -121,9 +122,16 @@ function gotMessage(packet) {
     case "serial.connect":
       connectSerial(data);
       break;
-    /*case "serial.direct.command":
-      executeCommands(data.command, data.duration);
-      break;*/
+    case "serial.direct.command":
+      // Running a set of commands at exactly the same time as another with no
+      // queue/buffer to manage it would be... a frightening mess.
+      if (!bufferDirectBusy) {
+        bufferDirectBusy = true;
+        executeCommands(data.commands, data.duration, function(){
+          bufferDirectBusy = false;
+        });
+      }
+      break;
     case "serial.direct.write":
       serialWrite(data);
       break;
