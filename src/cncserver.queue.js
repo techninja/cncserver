@@ -77,6 +77,28 @@ module.exports = function(cncserver) {
     cncserver.io.sendBufferAdd(item, hash); // Alert clients.
   };
 
+  // Event for when a buffer has been started.
+  cncserver.buffer.startItem = function(hash) {
+    var index = cncserver.buffer.data.indexOf(hash);
+    if (cncserver.buffer.dataSet[hash] && index > -1) {
+      console.log('Starting Item hash:', hash);
+
+      var item = cncserver.buffer.dataSet[hash];
+
+      // Update the state of the actualPen to match the one in the buffer.
+      cncserver.actualPen = extend({}, item.pen);
+
+      // Trigger an update for actualPen change.
+      cncserver.io.sendPenUpdate();
+    } else {
+      console.error(
+        'IPC/Buffer Item or Hash Mismatch. This should never happen!',
+        hash,
+        'Index:' + index
+      );
+    }
+  };
+
   // Remove an object with the specific hash from the buffer.
   //
   // This should only be called by the process running the buffer, and denotes
@@ -90,12 +112,6 @@ module.exports = function(cncserver) {
 
       var item = cncserver.buffer.dataSet[hash];
 
-      // Update the state of the actualPen to match the one in the buffer.
-      cncserver.actualPen = extend({}, item.pen);
-
-      // Trigger an update for actualPen change.
-      cncserver.io.sendPenUpdate();
-
       // For buffer items with non-serial commands, it's time to do something!
       cncserver.buffer.trigger(item);
 
@@ -103,7 +119,9 @@ module.exports = function(cncserver) {
       cncserver.io.sendBufferRemove();
     } else {
       console.error(
-        'End IPC/Buffer Item & Hash Mismatch. This should never happen!'
+        'End IPC/Buffer Item & Hash Mismatch. This should never happen!',
+        hash,
+        'Index:' + index
       );
     }
   };
@@ -211,18 +229,16 @@ module.exports = function(cncserver) {
 
 
   /**
-   * Render an item into a psudo serial command "string".
+   * Render an item into an array of serial command strings.
    *
-   * The command will either be a direct string if direct and without dynamic
-   * vars, or it will be an object. TODO: Make Dynamic vars work
    * @param  {object} item
-   *   The raw buffer item.
+   *   The raw buffer "action" item.
    *
    * @return {array}
    *   Array of all serial command strings rendered from buffer item.
    */
   cncserver.buffer.render = function(item) {
-    var commandOut = "";
+    var commandOut = [];
 
     if (typeof item.command === "object") { // Detailed buffer object
       switch (item.command.type) {
@@ -263,7 +279,9 @@ module.exports = function(cncserver) {
   };
 
   /**
-   * Trigger non-serial commands in buffer items (if any).
+   * Trigger non-serial commands in local buffer items on execution by the
+   * runner. The runner can't do anything with these except say that their
+   * place in line has come.
    *
    * @param  {object} item
    *   Buffer item to check/trigger.

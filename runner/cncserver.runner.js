@@ -239,11 +239,22 @@ function executeNext() {
   if (buffer.length) {
     var item = buffer.pop();
     if (config.debug) console.log('RUNNING ITEM: ' + item.hash);
-    executeCommands(item.commands, item.duration, function(){
-      if (config.debug) console.log('ITEM DONE: ' + item.hash);
+    sendMessage('buffer.item.start', item.hash);
+
+    // Some items don't have any rendered commands, only run those that do!
+    if (item.commands.length) {
+      executeCommands(item.commands, item.duration, function(){
+        if (config.debug) console.log('ITEM DONE: ' + item.hash);
+        sendMessage('buffer.item.done', item.hash);
+        executeNext();
+      });
+    } else {
+      // This buffer item doesn't have any serial commands, we're done here :)
       sendMessage('buffer.itemdone', item.hash);
+      if (config.debug) console.log('NO COMMANDS ITEM: ' + item.hash);
       executeNext();
-    });
+    }
+
   } else {
     sendMessage('buffer.empty');
     // Buffer Empty.
