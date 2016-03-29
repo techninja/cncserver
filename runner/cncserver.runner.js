@@ -253,7 +253,7 @@ function executeNext() {
       });
     } else {
       // This buffer item doesn't have any serial commands, we're done here :)
-      sendMessage('buffer.itemdone', item.hash);
+      sendMessage('buffer.item.done', item.hash);
       bufferExecuting = false;
       if (config.debug) console.log('NO COMMANDS ITEM: ' + item.hash);
       executeNext();
