@@ -2,7 +2,8 @@
 "use strict";
 
 /**
- * @file Abstraction module for all IPC related code for CNC Server!
+ * @file Abstraction module for all Inter Process Communication related code
+ * for talking to the "runner" process, for CNC Server!
  *
  */
 
