@@ -16,10 +16,10 @@ status of the pen from a server plugged into the local computer, at the default
 port of `4242`.
 
 If you want to test any of these, try out
-[Postman for Google Chrome](https://chrome.google.com/webstore/detail/postman-rest-client/fdmmgilgnpjigdojojpjoooidkmcomcm).
+[Postman for Google Chrome](https://www.getpostman.com/).
 It allows for easy testing of any RESTful HTTP method to even remote servers.
 
-![f1a930d0641920f074aeb32ebc512408](https://f.cloud.github.com/assets/320747/920613/894669a2-fee1-11e2-8349-dc6ad8cd805d.png)
+![Postman](https://cloud.githubusercontent.com/assets/320747/14413647/3b79921a-ff35-11e5-9f52-a10e949ac083.png)
 
 An easy to use Postman JSON config file is now available in the repo
 [here](https://raw.github.com/techninja/cncserver/master/cncserver_api.postman.json).
@@ -34,11 +34,13 @@ below are just to help make it easier to understand what's being sent. Comments
 are* ***not allowed*** *in JSON data and will not exist in returned data.*
 
 ## 1. Pen
+
 The `pen` resource is meant to act as the input/output for anything having
 directly to do with drawing or interacting with the "pen". For the
 WaterColorBot, it could be a paintbrush, or a pencil, or even an actual pen.
 
 ### GET /v1/pen
+
 Gets the "current" pen status at the tip of the execution buffer (note that this
 is ***not*** the known actual machine status if the buffer has any items in it).
 This is a direct dump of the internal state of the pen, so it will include x,y
@@ -46,11 +48,13 @@ absolute step position, which can be used in conjunction with bot settings
 `maxArea` width and height to tell you exactly where the pen should be.
 
 #### Request
+
 ```javascript
 GET /v1/pen
 ```
 
 #### Response
+
 ```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
@@ -69,6 +73,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 ##### Usage Notes
+
  * All values are reset with server and will not be kept or otherwise stored as
 runtime state.
  * tool will default to first tool in toolset at server start, eg `color0`.
@@ -374,9 +379,11 @@ Content-Type: application/json; charset=UTF-8
 * * *
 
 ### PUT /v1/settings/{settings type}
+
 Set root or sub level values for *any* settings on the given type.
 
 #### Request
+
 ```javascript
 PUT /v1/settings/global
 Content-Type: application/json; charset=UTF-8
@@ -387,6 +394,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
+
 ```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
@@ -450,6 +458,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 #### Response
+
 ```javascript
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
@@ -458,6 +467,7 @@ Content-Type: application/json; charset=UTF-8
 ```
 
 ##### Usage Notes
+
  * This interface allows for changing every single setting, but in its current
 implementation *no callbacks are triggered* for certain changes like
 `serialPath` or `botType`, therefore there will only be a real effect if CNC
@@ -666,8 +676,9 @@ usually during serial command sends, or pausing/unpausing.
 #### Event Response Argument Object
 ```javascript
 {
-    buffer: (FULL BUFFER ARRAY),    // Array of objects for every item in the array
-    bufferRunning: bufferRunning,   // Boolean: Is the buffer is currently processing/running?
+    bufferList: ["hash1", "..."],   // Countable array of hashes, in order.
+    bufferData: { hash1: {...}},    // Object keyed by hash, of each buffer action.
+    bufferRunning: bufferRunning,   // Boolean: Buffer is currently processing/running?
     bufferPaused: bufferPaused,     // Boolean: Is the buffer paused?
     bufferPausePen: bufferPausePen  // Object: Last pen object set before paused
 }
@@ -701,10 +712,6 @@ message =
 descriptions.
  * If buffer command is not an object, it will be a string to be sent out as
 serial ASCII data with no extra metadata.
- * Unfortunately because of issues upstream, if being used as a node module with
-a local callback `bufferUpdateTrigger`, these event updates will no longer be
-sent. This shouldn't need to be the case, but it ensures that commands are sent
-cleanly to the bot over repeating this data over the stream.
  * _This event can trigger an update with no actual buffer changes._
 
 * * *
