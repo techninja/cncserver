@@ -4,7 +4,6 @@
 
 var chai = require('chai');
 var expect = chai.expect;
-var assert = chai.assert;
 var cncserver = require('./spawn/spawn-server.js');
 var path = cncserver.path;
 var req = require('request');
