@@ -264,7 +264,7 @@ module.exports = function(cncserver) {
           commandOut.push(cncserver.buffer.cmdstr('wait', {d: hChange.d}));
           break;
       }
-    } else {
+    } else if (typeof item.command === 'string') {
       // Serial command is direct string in item.command, no render needed.
       commandOut = [item.command];
     }
