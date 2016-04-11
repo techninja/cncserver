@@ -34,7 +34,8 @@ var bufferDirectBusy = false;
 // Runner config defaults, overridden on ready.
 var config = {
   ack: "OK",
-  debug: false
+  debug: false,
+  showSerial: false
 };
 
 // Catch any uncaught error.
@@ -277,13 +278,13 @@ setInterval(function(){
  */
 function serialWrite (command, callback) {
   if (simulation) {
-    if (config.debug) console.info('Simulating serial write: ' + command);
+    if (config.showSerial) console.info('Simulating serial write: ' + command);
     setTimeout(function(){
       serialReadline(config.ack);
       if (callback) callback();
     }, 1);
   } else {
-    if (config.debug) console.info('Executing serial write: ' + command);
+    if (config.showSerial) console.info('Executing serial write: ' + command);
     if (config.debug) console.time('SerialSendtoDrain');
     try {
       serialPort.write(command + "\r", function() {

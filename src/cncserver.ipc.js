@@ -131,7 +131,8 @@ module.exports = function(cncserver) {
         cncserver.ipc.runnerSocket = socket;
         cncserver.ipc.sendMessage('runner.config', {
           debug: cncserver.gConf.get('debug'),
-          ack: cncserver.botConf.get('controller').ack
+          ack: cncserver.botConf.get('controller').ack,
+          showSerial: cncserver.gConf.get('showSerial')
         });
 
         if (runnerInitCallback) runnerInitCallback();

@@ -42,6 +42,7 @@ cncserver.globalConfigDefaults = {
     y: false
   },
   maximumBlockingCallStack: 100, // Limit for the # blocking sequential calls
+  showSerial: false, // Specific debug to show serial data.
   serialPath: "{auto}", // Empty for auto-config
   bufferLatencyOffset: 30, // Number of ms to move each command closer together
   corsDomain: '*', // Start as open to CORs enabled browser clients
