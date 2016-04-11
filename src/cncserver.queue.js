@@ -118,6 +118,11 @@ module.exports = function(cncserver) {
         'Index:' + index
       );
     }
+
+    // Trigger the pause callback if it exists when this item is done.
+    if (typeof cncserver.buffer.pauseCallback === 'function') {
+      cncserver.buffer.pauseCallback();
+    }
   };
 
   /**
