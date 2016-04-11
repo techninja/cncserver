@@ -7,7 +7,7 @@
 
 // Our very own copy of CNC Server running for tests!
 var spawn = require('child_process').spawn;
-var cncserver = spawn('node', ['cncserver', '--debug=true']);
+var cncserver = spawn('node', ['cncserver', '--showSerial=true']);
 exports.path = "http://localhost:4242/";
 
 // Array string storage for every line output from
@@ -39,12 +39,12 @@ exports.ready = function(callback) {
   var initWait = setInterval(function(){
     if (strInArray('ready to receive commands')) {
       clearInterval(initWait);
-      console.log('CNCServer ready! Lets start testing.\n========================================\n');
+      console.log('CNCServer ready! Lets start testing.\n==================\n');
       exports.isReady = true;
       if (callback) callback();
     }
   }, 50);
-}
+};
 
 exports.kill = function(callback){
   console.log('Killing child process ' + cncserver.pid  + '...');
@@ -59,7 +59,7 @@ exports.waitFor = function(v, callback) {
   } else {
     setTimeout( function(){ exports.waitFor(v, callback); }, 250);
   }
-}
+};
 
 /**
  * Util function, does a string exist in the array of strings?
@@ -86,4 +86,4 @@ function strInArray(str, ar) {
   return false;
 }
 
-exports.clear = function (){ exports.out = []; exports.err = []; }
+exports.clear = function (){ exports.out = []; exports.err = []; };
