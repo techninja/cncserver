@@ -146,7 +146,7 @@ module.exports = function(cncserver) {
     var range = parseInt(cncserver.botConf.get('servo:max'), 10) -
       parseInt(cncserver.botConf.get('servo:min'));
 
-    var duration = Math.round((Math.abs(dest - src) / range) * sd) + 1;
+    var duration = Math.round((Math.abs(dest - src) / range) * sd);
 
     return {d: duration, a: dest - src};
   };
