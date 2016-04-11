@@ -503,8 +503,7 @@ module.exports = function(cncserver) {
           source: cncserver.actualPen
         },
         duration: cncserver.control.commandDuration
-      }),
-      duration: cncserver.control.commandDuration
+      })
     });
 
     // Set the correct duration and new position through to actualPen
@@ -541,47 +540,41 @@ module.exports = function(cncserver) {
    *   Optional, callback for when operation should have completed.
    */
   cncserver.control.actuallyMoveHeight = function(height, stateValue, cb) {
-
     var change = cncserver.utils.getHeightChangeData(
       cncserver.actualPen.height,
       height
     );
 
-    // Pass along the correct height position through to actualPen
+    cncserver.control.commandDuration = Math.max(change.d, 0);
+
+    // Pass along the correct height position through to actualPen.
     if (typeof stateValue !== 'undefined') {
       cncserver.actualPen.state = stateValue;
     }
 
+    // Execute the command immediately via serial.direct.command.
+    cncserver.ipc.sendMessage('serial.direct.command', {
+      commands: cncserver.buffer.render({
+        command: {
+          type: 'absheight',
+          z: height,
+          source: cncserver.actualPen
+        },
+        duration: cncserver.control.commandDuration
+      })
+    });
+
     cncserver.actualPen.height = height;
     cncserver.actualPen.lastDuration = change.d;
 
-    // Trigger an update for pen position
+    // Trigger an update for pen position.
     cncserver.io.sendPenUpdate();
-
-    // Set the pen up position (EBB)
-    cncserver.serial.command(cncserver.buffer.cmdstr('movez', {z: height}));
-
-    // If there's a togglez, run it after setting Z
-    if (cncserver.bot.commands.togglez) {
-      cncserver.serial.command(
-        cncserver.buffer.cmdstr(
-          'togglez',
-          {t: cncserver.gConf.get('flipZToggleBit') ? 1 : 0}
-        )
-      );
-    }
-
-    // Force cncserver.bot to wait
-    cncserver.serial.command(
-      cncserver.buffer.cmdstr('wait', {d: change.d})
-    );
 
     // Delayed callback (if used)
     if (cb) {
-      var latency = cncserver.gConf.get('bufferLatencyOffset');
       setTimeout(function(){
         cb(1);
-      }, Math.max(cncserver.control.commandDuration - latency, 0));
+      }, Math.max(cncserver.control.commandDuration, 0));
     }
   };
 
