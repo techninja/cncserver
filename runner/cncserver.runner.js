@@ -10,13 +10,6 @@
  * socket messages, always use the API to communicate, not this.
  */
 
-// What does this thing need?
-// * A buffer of serial commands
-// * The ability to add to the front or back of the buffer.
-// * Pause/resume execution
-// * Send a command directly/immediately.
-// * Run a named callback/special command (only non-serial command)
-
 // REQUIRES ====================================================================
 var serialport = require("serialport");
 var ipc = require('node-ipc');
@@ -128,7 +121,7 @@ function gotMessage(packet) {
       // queue/buffer to manage it would be... a frightening mess.
       if (!bufferDirectBusy) {
         bufferDirectBusy = true;
-        executeCommands(data.commands, data.duration, function(){
+        executeCommands(data.commands, function(){
           bufferDirectBusy = false;
         });
       }
@@ -140,7 +133,6 @@ function gotMessage(packet) {
       // Buffer item data comes in in the following object format:
       //   hash {string}      : The tracking hash for this buffer item.
       //   commands {array}   : Array of rendered serial command strings.
-      //   duration {integer} : The duration in milliseconds.
       buffer.unshift(data);
       break;
     case "buffer.pause": // Pause the running of the buffer.
@@ -192,18 +184,16 @@ function disconnectSerial(e) {
 
 
 /**
- * Execute a set of commands representing a single buffer item to serialWrite
- * to callback by when done or by the end of duration.
+ * Execute a set of commands representing a single buffer action item to write,
+ * callback will be executed when fulley sent out to machine.
  *
  * @param {array} commands
- *  Array of regular/dynamic string commands to all be executed under duration.
- * @param {integer} duration
- *  Amount of time these commands should take before the next set should run.
+ *  Array of regular/dynamic string commands to all be sent in order.
  *
  * @returns {boolean}
  *   True if success, false if failure
  */
-function executeCommands(commands, duration, callback, index) {
+function executeCommands(commands, callback, index) {
   // Run each command by index, defaulting with 0.
   if (typeof index === 'undefined') {
     index = 0;
@@ -216,7 +206,7 @@ function executeCommands(commands, duration, callback, index) {
     // Now that the serial command has drained to the bot, run the next, or end?
     if (index < commands.length) {
       // Run the next one.
-      executeCommands(commands, duration, callback, index);
+      executeCommands(commands, callback, index);
     } else {
       // End, no more commands left.
       // Timeout the next command send to avoid callstack addition.
@@ -245,7 +235,7 @@ function executeNext() {
 
     // Some items don't have any rendered commands, only run those that do!
     if (item.commands.length) {
-      executeCommands(item.commands, item.duration, function(){
+      executeCommands(item.commands, function(){
         if (config.debug) console.log('ITEM DONE: ' + item.hash);
         sendMessage('buffer.item.done', item.hash);
         bufferExecuting = false;

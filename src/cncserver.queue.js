@@ -70,8 +70,7 @@ module.exports = function(cncserver) {
     // Add the item to the runner's buffer.
     cncserver.ipc.sendMessage('buffer.add', {
       hash: hash,
-      commands: cncserver.buffer.render(item),
-      duration: item.duration
+      commands: cncserver.buffer.render(item)
     });
 
     cncserver.io.sendBufferAdd(item, hash); // Alert clients.
@@ -81,8 +80,6 @@ module.exports = function(cncserver) {
   cncserver.buffer.startItem = function(hash) {
     var index = cncserver.buffer.data.indexOf(hash);
     if (cncserver.buffer.dataSet[hash] && index > -1) {
-      console.log('Starting Item hash:', hash);
-
       var item = cncserver.buffer.dataSet[hash];
 
       // Update the state of the actualPen to match the one in the buffer.
@@ -107,9 +104,6 @@ module.exports = function(cncserver) {
     var index = cncserver.buffer.data.indexOf(hash);
     if (cncserver.buffer.dataSet[hash] && index > -1) {
       cncserver.buffer.data.splice(index, 1);
-
-      console.log('Removing Item hash:', hash);
-
       var item = cncserver.buffer.dataSet[hash];
 
       // For buffer items with non-serial commands, it's time to do something!
@@ -230,7 +224,7 @@ module.exports = function(cncserver) {
 
 
   /**
-   * Render an item into an array of serial command strings.
+   * Render an action item into an array of serial command strings.
    *
    * @param  {object} item
    *   The raw buffer "action" item.
@@ -251,7 +245,6 @@ module.exports = function(cncserver) {
           commandOut = [cncserver.buffer.cmdstr('movexy', change)];
           break;
         case 'absheight':
-          //cncserver.control.actuallyMoveHeight(, item.command.state);
           var hChange = cncserver.utils.getHeightChangeData(
             item.command.source,
             item.command.z
