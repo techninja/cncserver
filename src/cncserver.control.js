@@ -558,7 +558,7 @@ module.exports = function(cncserver) {
         command: {
           type: 'absheight',
           z: height,
-          source: cncserver.actualPen
+          source: cncserver.actualPen.height
         },
         duration: cncserver.control.commandDuration
       })
