@@ -29,7 +29,7 @@
 var cncserver = { // Master object for holding/passing stuff!
   bot: {}, // Holds clean rendered settings set after botConfig is loaded
   exports: {}, // This entire object will be added to the module.exports
-  scratch: require('./src/cncserver.scratch.js') // Scratch support/API addition
+  scratch: require('./scratch/cncserver.scratch.js') // Scratch support module.
 };
 
 // Global Defaults (also used to write the initial config.ini)
