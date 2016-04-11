@@ -2,11 +2,11 @@
 'use strict';
 
 /**
- * @file CNC Server scratch support module
+ * @file CNC Server scratch support module.
  */
-var cncserver = {}; // Set only when the API is initialized.
-var turtle = {};
+var turtle = {}; // Global turtle state object.
 var sizeMultiplier = 10; // Amount to increase size of steps
+var cncserver = {}; // Globally available cncserver obj (for this module).
 
 exports.initAPI = function (cncserverArg) {
   cncserver = cncserverArg;
