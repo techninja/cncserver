@@ -49,11 +49,21 @@ module.exports = function(cncserver) {
         res.status(405).send(JSON.stringify({
           status: 'Not supported'
         }));
+
+        // Debug Response
+        if (cncserver.gConf.get('debug') && path !== '/poll') {
+          console.log(req.route.path, "RES:", 405, 'Not Supported');
+        }
       } else if(what.call(cbStat) === '[object Array]') { // Just return message
         // Array format: [/http code/, /status message/]
         res.status(cbStat[0]).send(JSON.stringify({
           status: cbStat[1]
         }));
+
+        // Debug Response
+        if (cncserver.gConf.get('debug') && path !== '/poll') {
+          console.log(req.route.path, "RES:", cbStat[0], cbStat[1]);
+        }
       } else if(what.call(cbStat) === '[object Object]') { // Full message
         // Send plaintext if body is string, otherwise convert to JSON.
         if (typeof cbStat.body === "string") {
@@ -63,6 +73,10 @@ module.exports = function(cncserver) {
           res.status(cbStat.code).send(JSON.stringify(cbStat.body));
         }
 
+        // Debug Response
+        if (cncserver.gConf.get('debug') && path !== '/poll') {
+          console.log(req.route.path, "RES:", cbStat.code, cbStat.body);
+        }
       }
     });
   };
