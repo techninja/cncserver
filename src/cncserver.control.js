@@ -456,9 +456,9 @@ module.exports = function(cncserver) {
           // current known state so we can come back to it when we return to
           // bounds),but DO change the buffer tip height so that is reflected on
           // actualPen if it's every copied over on buffer execution.
-          cncserver.pen.height = cncserver.utils.stateToHeight('up').height;
           cncserver.run('callback', function() {
             cncserver.control.setHeight('up', false, true);
+            cncserver.pen.height = cncserver.utils.stateToHeight('up').height;
           });
         }
       } else { // Pen is now back in bounds
