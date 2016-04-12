@@ -46,36 +46,41 @@ module.exports = function(cncserver) {
       var cbStat = callback(req, res);
 
       if (cbStat === false) { // Super simple "not supported"
+        // Debug Response
+        if (cncserver.gConf.get('debug') && path !== '/poll') {
+          console.log(">RESP", req.route.path, 405, 'Not Supported');
+        }
+
         res.status(405).send(JSON.stringify({
           status: 'Not supported'
         }));
-
+      } else if(what.call(cbStat) === '[object Array]') { // Just return message
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(req.route.path, "RES:", 405, 'Not Supported');
+          console.log(">RESP", req.route.path, cbStat[0], cbStat[1]);
         }
-      } else if(what.call(cbStat) === '[object Array]') { // Just return message
+
         // Array format: [/http code/, /status message/]
         res.status(cbStat[0]).send(JSON.stringify({
           status: cbStat[1]
         }));
-
+      } else if(what.call(cbStat) === '[object Object]') { // Full message
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(req.route.path, "RES:", cbStat[0], cbStat[1]);
+          console.log(
+            ">RESP",
+            req.route.path,
+            cbStat.code,
+            JSON.stringify(req.body)
+          );
         }
-      } else if(what.call(cbStat) === '[object Object]') { // Full message
+
         // Send plaintext if body is string, otherwise convert to JSON.
         if (typeof cbStat.body === "string") {
           res.set('Content-Type', 'text/plain; charset=UTF-8');
           res.status(cbStat.code).send(cbStat.body);
         } else {
           res.status(cbStat.code).send(JSON.stringify(cbStat.body));
-        }
-
-        // Debug Response
-        if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(req.route.path, "RES:", cbStat.code, cbStat.body);
         }
       }
     });

@@ -64,15 +64,23 @@ module.exports = function(cncserver) {
     if (req.route.method === 'put') {
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
+        var code = 200;
+        var body = {};
+
         if (!stat) {
-          res.status(500).send(JSON.stringify({
-            status: "Error setting pen!"
-          }));
+          code = 500;
+          body.status = "Error setting pen!";
         } else {
           if (req.body.ignoreTimeout){
-            res.status(202).send(JSON.stringify(cncserver.pen));
+            code = 202;
           }
-          res.status(200).send(JSON.stringify(cncserver.pen));
+          body = cncserver.pen;
+        }
+
+        body = JSON.stringify(body);
+        res.status(code).send(body);
+        if (cncserver.gConf.get('debug')) {
+          console.log(">RESP", req.route.path, code, body);
         }
       });
 
@@ -87,12 +95,21 @@ module.exports = function(cncserver) {
           ignoreTimeout: req.body.ignoreTimeout,
           skipBuffer: req.body.skipBuffer
         }, function(stat){
+          var code = 200;
+          var body = {};
+
           if (!stat) {
-            res.status(500).send(JSON.stringify({
-              status: "Error parking pen!"
-            }));
+            code = 500;
+            body.status = "Error parking pen!";
+          } else {
+            body = cncserver.pen;
           }
-          res.status(200).send(JSON.stringify(cncserver.pen));
+
+          body = JSON.stringify(body);
+          res.status(code).send(body);
+          if (cncserver.gConf.get('debug')) {
+            console.log(">RESP", req.route.path, code, body);
+          }
         });
       }, req.body.skipBuffer);
 
@@ -222,6 +239,10 @@ module.exports = function(cncserver) {
                     count: buffer.data.length,
                     buffer: "This isn't a great idea..." // TODO: FIX <<
                   }));
+
+                  if (cncserver.gConf.get('debug')) {
+                    console.log(">RESP", req.route.path, '200');
+                  }
                 }
               );
             });
@@ -255,6 +276,10 @@ module.exports = function(cncserver) {
           }));
           cncserver.io.sendBufferVars();
           buffer.newlyPaused = false;
+
+          if (cncserver.gConf.get('debug')) {
+            console.log(">RESP", req.route.path, 200);
+          }
         };
 
         return true; // Don't finish the response till later
@@ -299,6 +324,10 @@ module.exports = function(cncserver) {
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
+
+          if (cncserver.gConf.get('debug')) {
+            console.log(">RESP", req.route.path, 200, 'Tool:' + toolName);
+          }
         }, req.body.ignoreTimeout);
         return true; // Tell endpoint wrapper we'll handle the response
       } else {
