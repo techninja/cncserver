@@ -11,7 +11,8 @@
     "nconf": "0.6.9",
     "node-ipc": "^6.0.2",
     "serialport": "2.0.5",
-    "socket.io": "^1.4.5"
+    "socket.io": "^1.4.5",
+    "request": "*"
   },
   "devDependencies": {
     "mocha": "*",
@@ -19,8 +20,7 @@
     "grunt-cli": "*",
     "grunt-mocha-test": "*",
     "grunt-contrib-jshint": "*",
-    "chai": "*",
-    "request": "*"
+    "chai": "*"
   },
   "engines": {
     "node": ">= 4.0.0"
