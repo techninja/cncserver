@@ -142,8 +142,8 @@ module.exports = function(cncserver) {
   // Shortcut functions for move/height streaming.
   cncserver.io.shortcut = {
     move: function(data) {
-      data.point.ignoreTimeout = 1;
-      cncserver.control.setPen(data.point, function(){
+      data.ignoreTimeout = 1;
+      cncserver.control.setPen(data, function(){
         if (data.returnData) io.emit('move', cncserver.pen);
       });
     },

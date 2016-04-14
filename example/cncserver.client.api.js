@@ -208,15 +208,22 @@ cncserver.api = {
 
       // If we're on node and we have a socket, shortcut via WebSockets.
       if (isNode && cncserver.global.socket) {
-        var data = {point: point, returnData: !!callback};
-        cncserver.global.socket.emit('move', data);
-        if (callback) {
-          var catchMove = function(d){
-            callback(d);
-            cncserver.global.socket.removeListener('move', catchMove);
-          };
+        if (typeof point.returnData === 'undefined') {
+          point.returnData = !!callback;
+        }
 
-          cncserver.global.socket.on('move', catchMove);
+        cncserver.global.socket.emit('move', point);
+        if (callback) {
+          if (!point.returnData){
+            callback({});
+          } else {
+            var catchMove = function(d){
+              callback(d);
+              cncserver.global.socket.removeListener('move', catchMove);
+            };
+
+            cncserver.global.socket.on('move', catchMove);
+          }
         }
 
         // Leave this entire function to avoid doing the regular request.
