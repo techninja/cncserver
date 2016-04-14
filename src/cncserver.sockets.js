@@ -21,6 +21,10 @@ module.exports = function(cncserver) {
     socket.on('disconnect', function(){
       //console.log('user disconnected');
     });
+
+    // Shortcuts for moving and height for streaming lots of commands.
+    socket.on('move', cncserver.io.shortcut.move);
+    socket.on('height', cncserver.io.shortcut.height);
   });
 
 
@@ -132,5 +136,24 @@ module.exports = function(cncserver) {
       name: name,
       timestamp: new Date().toString()
     });
+  };
+
+
+  // Shortcut functions for move/height streaming.
+  cncserver.io.shortcut = {
+    move: function(data) {
+      data.point.ignoreTimeout = 1;
+      cncserver.control.setPen(data.point, function(){
+        if (data.returnData) io.emit('move', cncserver.pen);
+      });
+    },
+
+    height: function(data) {
+      cncserver.control.setPen({ignoreTimeout: 1, state: data.state},
+        function(){
+          if (data.returnData) io.emit('height', cncserver.pen);
+        }
+      );
+    }
   };
 };
