@@ -13,13 +13,16 @@
  * }
  */
 
+/*globals $ */
+
 // Initialize wrapper object is this library is being used elsewhere
 if (typeof cncserver === 'undefined') var cncserver = {};
 
 // Detect NodeJS vs Browser:
 var isNode = false;
 try {
-  isNode = Object.prototype.toString.call(global.process) === '[object process]';
+  var op = Object.prototype;
+  isNode = op.toString.call(global.process) === '[object process]';
 } catch(e) {}
 
 /**
@@ -40,7 +43,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -56,8 +59,26 @@ cncserver.api = {
       if (typeof options !== 'object') options = {};
       options.state = value;
 
+      // If we're on node and we have a socket, shortcut via WebSockets.
+      if (isNode && cncserver.global.socket) {
+        var data = {state: value, returnData: !!callback};
+        cncserver.global.socket.emit('height', data);
+        if (callback) {
+          var catchMove = function(d){
+            callback(d);
+            cncserver.global.socket.removeListener('height', catchMove);
+          };
+
+          cncserver.global.socket.on('height', catchMove);
+        }
+
+        // Leave this entire function to avoid doing the regular request.
+        return;
+      }
+
+
       // Ignore timeout with no callback by default
-      if (typeof options.ignoreTimeout == 'undefined') {
+      if (typeof options.ignoreTimeout === 'undefined') {
         options.ignoreTimeout = callback ? '' : '1';
       }
 
@@ -68,7 +89,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -97,7 +118,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -115,7 +136,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -129,7 +150,7 @@ cncserver.api = {
       if (typeof options !== 'object') options = {};
 
       // Ignore timeout with no callback by default
-      if (typeof options.ignoreTimeout == 'undefined') {
+      if (typeof options.ignoreTimeout === 'undefined') {
         options.ignoreTimeout = callback ? '' : '1';
       }
 
@@ -141,7 +162,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -159,7 +180,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -172,7 +193,7 @@ cncserver.api = {
     *   Function to callback when done, including data from response body
     */
     move: function(point, callback){
-      if (point == undefined) {
+      if (typeof point === 'undefined') {
         if (callback) callback(false);
         return;
       }
@@ -185,8 +206,32 @@ cncserver.api = {
       point.x = point.x < 0 ? 0 : point.x;
       point.y = point.y < 0 ? 0 : point.y;
 
+      // If we're on node and we have a socket, shortcut via WebSockets.
+      if (isNode && cncserver.global.socket) {
+        if (typeof point.returnData === 'undefined') {
+          point.returnData = !!callback;
+        }
+
+        cncserver.global.socket.emit('move', point);
+        if (callback) {
+          if (!point.returnData){
+            callback({});
+          } else {
+            var catchMove = function(d){
+              callback(d);
+              cncserver.global.socket.removeListener('move', catchMove);
+            };
+
+            cncserver.global.socket.on('move', catchMove);
+          }
+        }
+
+        // Leave this entire function to avoid doing the regular request.
+        return;
+      }
+
       // Ignore timeout with no callback by default
-      if (typeof point.ignoreTimeout == 'undefined') {
+      if (typeof point.ignoreTimeout === 'undefined') {
         point.ignoreTimeout = callback ? '' : '1';
       }
 
@@ -197,7 +242,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     }
@@ -213,7 +258,7 @@ cncserver.api = {
       _delete('motors', {
         success: callback,
         error: function(e) {
-          callback(false);
+          callback(false, e);
         }
       });
     }
@@ -229,7 +274,7 @@ cncserver.api = {
       _get('tools', {
         success: callback,
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -250,7 +295,7 @@ cncserver.api = {
       if (typeof options !== 'object') options = {};
 
       // Ignore timeout with no callback by default
-      if (typeof options.ignoreTimeout == 'undefined') {
+      if (typeof options.ignoreTimeout === 'undefined') {
         options.ignoreTimeout = callback ? '' : '1';
       }
 
@@ -258,7 +303,7 @@ cncserver.api = {
         success: callback,
         data: options,
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     }
@@ -276,7 +321,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -292,7 +337,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -307,7 +352,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -322,7 +367,7 @@ cncserver.api = {
           if (callback) callback(d);
         },
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     },
@@ -334,7 +379,7 @@ cncserver.api = {
       _delete('buffer', {
         success: callback,
         error: function(e) {
-          if (callback) callback(false);
+          if (callback) callback(false, e);
         }
       });
     }
@@ -350,7 +395,7 @@ cncserver.api = {
       _get('settings/global', {
         success: callback,
         error: function(e) {
-          callback(false);
+          callback(false, e);
         }
       });
     },
@@ -364,7 +409,7 @@ cncserver.api = {
       _get('settings/bot', {
         success: callback,
         error: function(e) {
-          callback(false);
+          callback(false, e);
         }
       });
     },
@@ -413,7 +458,8 @@ if (isNode) {
   module.exports = function(cncmain, server) {
     cncmain.api = cncserver.api;
     cncmain.api.server = server;
-  }
+    cncserver.global = cncmain;
+  };
 }
 
 function _request(method, path, options) {
@@ -429,7 +475,7 @@ function _request(method, path, options) {
   if (path[0] === '/') {
     srvPath = path;
   } else { // Otherwise, construct an absolute path from versioned API path
-    srvPath = '/v' + srv.version + '/' + path
+    srvPath = '/v' + srv.version + '/' + path;
   }
 
   var uri = srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath;
@@ -447,9 +493,11 @@ function _request(method, path, options) {
       uri: uri,
       json: true,
       method: method,
-      body: options.data
+      body: options.data,
+      timeout: 1000
     }, function(error, response, body){
       if (error) {
+        console.error(error);
         if (options.error) options.error(error, response, body);
       } else {
         if (options.success) options.success(body, response);

@@ -147,7 +147,7 @@
   var pen = {};
   var lastPen = {};
   var resumePen = null;
-  var buffer= [];
+  var buffer = {};
   var drawPoints = []; // Array of points from buffer to draw
 
   var viewScale = 1; // The scale to adjust bot steps by for viewing
@@ -197,29 +197,34 @@
     // What KIND of buffer update is this?
     switch (b.type) {
       case 'complete':
-        buffer = b.buffer;
+        buffer = {
+          data: b.bufferData,
+          list: b.bufferList
+        };
       case 'vars':
         $('#bufrun').text(b.bufferRunning);
         $('#bufpause').text(b.bufferPaused);
-        $('#bufcount').text(buffer.length);
-
         resumePen = b.bufferPausePen;
         break;
       case 'add':
-        buffer.unshift(b.item);
+        buffer.list.unshift(b.hash);
+        buffer.data[b.hash] = b.item;
         break;
       case 'remove':
-        buffer.pop();
+        var hash = buffer.list.pop();
+        delete buffer.data[hash];
         break;
     }
+
+    $('#bufcount').text(buffer.list.length);
 
     // Populate buffer list of items
     var $b = $('#buffer');
     $b.find('option').remove();
     drawPoints = [];
 
-    for (var i in buffer) {
-      var cmd = buffer[i][0];
+    for (var i in buffer.list) {
+      var cmd = buffer.data[buffer.list[i]].command;
 
       // Skip the command if it's null
       if (cmd === null) continue;
