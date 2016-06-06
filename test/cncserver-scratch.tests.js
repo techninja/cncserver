@@ -40,7 +40,7 @@ describe('ScratchTests', function(){
       req.get(path + 'coord/0/0').on('response', function(){
         isCentered = true;
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,2823,3833,1800');
+          expect(cncserver.out[0]).to.contain('SM,2732,3833,1800');
           expect(cncserver.out[1]).to.equal('Move pen to coord 3832.5 1800');
           done();
         }, 1500); // Take up some of the 2.8s the initial move takes
@@ -57,7 +57,7 @@ describe('ScratchTests', function(){
     it('[forward] move 10 steps (100 steppers steps right)', function(done){
       req.get(path + 'move.forward./10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,100,0');
+          expect(cncserver.out[0]).to.contain('SM,65,100,0');
           expect(cncserver.out[1]).to.equal('Move pen by 10 steps');
           done();
         }, 1500); // Eat up the rest of the 2.8s from the initial move.
@@ -75,7 +75,7 @@ describe('ScratchTests', function(){
     it('[forward] move 10 steps down (100 steppers steps)', function(done){
       req.get(path + 'move.forward./10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,0,100');
+          expect(cncserver.out[0]).to.contain('SM,65,0,100');
           expect(cncserver.out[1]).to.equal('Move pen by 10 steps');
           done();
         }, 100);
@@ -92,7 +92,7 @@ describe('ScratchTests', function(){
     it('[forward] move 10 steps left (100 steppers steps)', function(done){
       req.get(path + 'move.forward./10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,-100,0');
+          expect(cncserver.out[0]).to.contain('SM,65,-100,0');
           expect(cncserver.out[1]).to.equal('Move pen by 10 steps');
           done();
         }, 100);
@@ -109,7 +109,7 @@ describe('ScratchTests', function(){
     it('[forward] should move 10 steps up (100 steppers steps)', function(done){
       req.get(path + 'move.forward./10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,0,-100');
+          expect(cncserver.out[0]).to.contain('SM,65,0,-100');
           expect(cncserver.out[1]).to.equal('Move pen by 10 steps');
           done();
         }, 100);
@@ -126,7 +126,7 @@ describe('ScratchTests', function(){
     it('[forward] move 10 steps left (100 steppers steps)', function(done){
       req.get(path + 'move.forward./10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,-100,0');
+          expect(cncserver.out[0]).to.contain('SM,65,-100,0');
           expect(cncserver.out[1]).to.equal('Move pen by 10 steps');
           done();
         }, 100);
@@ -154,7 +154,7 @@ describe('ScratchTests', function(){
     it('[forward] move -10 steps right (-100 steppers steps)', function(done){
       req.get(path + 'move.forward./-10').on('response', function(){
         setTimeout(function(){
-          expect(cncserver.out[0]).to.contain('SM,67,100,0');
+          expect(cncserver.out[0]).to.contain('SM,65,100,0');
           expect(cncserver.out[1]).to.equal('Move pen by -10 steps');
           done();
         }, 100);
@@ -199,7 +199,7 @@ describe('ScratchTests', function(){
       req.get(path + 'move.forward./500').on('response', function(){
         setTimeout(function(){
           expect(cncserver.out[5]).to.equal('Move pen by 500 steps');
-          expect(cncserver.out[4]).to.contain('SM,1200,0,-1800');
+          expect(cncserver.out[4]).to.contain('SM,1161,0,-1800');
           expect(cncserver.out[3]).to.equal(
             'Skipping buffer to set height: 19750' // Buffer skipped lift
           );
@@ -232,7 +232,7 @@ describe('ScratchTests', function(){
       req.get(path + 'move.forward./20').on('response', function(){
         setTimeout(function(){
           expect(cncserver.out[1]).to.equal('Move pen by 20 steps');
-          expect(cncserver.out[0]).to.contain('SM,133,-200,0');
+          expect(cncserver.out[0]).to.contain('SM,129,-200,0');
           done();
         }, 200); // Eat up the whole time taken to move there
       });
@@ -265,7 +265,7 @@ describe('ScratchTests', function(){
           expect(cncserver.out[3]).to.contain('SC,5,12750'); // Set Position
           expect(cncserver.out[2]).to.contain('SP,0'); // Go to position
           expect(cncserver.out[1]).to.contain('SM,136,0,0'); // Block till done
-          expect(cncserver.out[0]).to.contain('SM,1200,0,1800'); // Move
+          expect(cncserver.out[0]).to.contain('SM,1161,0,1800'); // Move
           done();
         }, 1800); // Eat up the whole time taken to move there
       });
