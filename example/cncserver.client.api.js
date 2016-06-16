@@ -60,7 +60,8 @@ cncserver.api = {
       options.state = value;
 
       // If we're on node and we have a socket, shortcut via WebSockets.
-      if (isNode && cncserver.global.socket) {
+      // TODO: FIX this as causes socket.io call stack overflows
+      if (isNode && cncserver.global.socket && false) {
         var data = {state: value, returnData: !!callback};
         cncserver.global.socket.emit('height', data);
         if (callback) {
@@ -207,7 +208,8 @@ cncserver.api = {
       point.y = point.y < 0 ? 0 : point.y;
 
       // If we're on node and we have a socket, shortcut via WebSockets.
-      if (isNode && cncserver.global.socket) {
+      // TODO: FIX this as causes socket.io call stack overflows
+      if (isNode && cncserver.global.socket && false) {
         if (typeof point.returnData === 'undefined') {
           point.returnData = !!callback;
         }
