@@ -321,6 +321,8 @@ module.exports = function(cncserver) {
       if (cncserver.botConf.get('tools:' + toolName)){
         cncserver.control.setTool(toolName, function(){
           cncserver.pen.tool = toolName;
+          cncserver.io.sendPenUpdate();
+
           res.status(200).send(JSON.stringify({
             status: 'Tool changed to ' + toolName
           }));
