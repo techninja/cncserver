@@ -11,7 +11,7 @@
  */
 
 // REQUIRES ====================================================================
-var serialport = require("serialport");
+var SerialPort = require("serialport");
 var ipc = require('node-ipc');
 
 // CONFIGURATION ===============================================================
@@ -20,11 +20,9 @@ ipc.config.silent = true;
 ipc.config.retry = 1000;
 ipc.config.maxRetries = 10;
 
-var serialPort = false;
-var SerialPort = serialport.SerialPort;
-
 // RUNNER STATE ================================================================
 var simulation = true; // Assume simulation mode by default.
+var port = false; // The running port, once initiated.
 var buffer = [];
 var bufferRunning = false;
 var bufferPaused = false;
@@ -156,15 +154,15 @@ function gotMessage(packet) {
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
   options.disconnectedCallback = disconnectSerial;
-  options.parser = serialport.parsers.readline("\r");
+  options.parser = SerialPort.parsers.readline("\r");
 
   try {
-    serialPort = new SerialPort(options.port, options, true, function(err){
+    port = new SerialPort(options.port, options, function(err){
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
         console.log('CONNECTED TO ', options.port);
-        serialPort.on("data", serialReadline);
+        port.on("data", serialReadline);
       } else {
         simulation = true;
         if (config.debug) console.log('SerialPort says:', err);
@@ -287,8 +285,8 @@ function serialWrite (command, callback) {
     if (config.showSerial) console.info('Executing serial write: ' + command);
     if (config.debug) console.time('SerialSendtoDrain');
     try {
-      serialPort.write(command + "\r", function() {
-        serialPort.drain(function() {
+      port.write(command + "\r", function() {
+        port.drain(function() {
           if (config.debug) console.timeEnd('SerialSendtoDrain');
           if (callback) callback();
         });

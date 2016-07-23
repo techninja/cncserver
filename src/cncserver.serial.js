@@ -6,10 +6,7 @@
  * Taking in only the global CNCServer object, add's the "serial" object.
  *
  */
-
-
-var serialport = require("serialport");
-//var SerialPort = serialport.SerialPort; Where is this used?
+var SerialPort = require("serialport");
 
 module.exports = function(cncserver){
   cncserver.serial = {
@@ -89,7 +86,7 @@ module.exports = function(cncserver){
    * Helper function to implement matching port information to configured bot
    * parameters.
    *
-   * Attempts to match serialport.list output to parameters and set global
+   * Attempts to match SerialPort.list output to parameters and set global
    * 'serialPath' to matching port.
    *
    * @param {object} botControllerConf
@@ -111,18 +108,17 @@ module.exports = function(cncserver){
     var portNames = [];
     var cleanList = [];
 
-    serialport.list(function (err, ports) {
+    SerialPort.list(function (err, ports) {
 
       // TODO: Catch errors thrown here.
       err = err;
 
-      for (var portID in ports){
-        var port = ports[portID];
+      ports.forEach(function(port){
         var portMaker = (port.manufacturer || "").toLowerCase();
         var portProductId = (port.productId || "").toLowerCase();
 
         // Add this port to the clean list if its vendor ID isn't undefined.
-        if (port.vendorId.indexOf('undefined') === -1) {
+        if (typeof port.vendorId !== 'undefined') {
           cleanList.push(port);
           portNames.push(port.comName);
         }
@@ -144,7 +140,7 @@ module.exports = function(cncserver){
             }
           }
         }
-      }
+      });
 
       callback({auto: detectList, names: portNames, full: cleanList});
     });
@@ -157,7 +153,7 @@ module.exports = function(cncserver){
 
   // Util function to just get the full port output from exports.
   cncserver.serial.getPorts = function(cb) {
-    require("serialport").list(function (err, ports) {
+    SerialPort.list(function (err, ports) {
       cb(ports, err);
     });
   };
