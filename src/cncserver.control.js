@@ -216,10 +216,6 @@ module.exports = function(cncserver) {
       return false;
     }
 
-    if (cncserver.gConf.get('debug')) {
-      console.log('Changing to tool: ' + toolName);
-    }
-
     // Set the height based on what kind of tool it is
     // TODO: fold this into bot specific tool change logic
     var downHeight = toolName.indexOf('water') !== -1 ? 'wash' : 'draw';
@@ -232,17 +228,12 @@ module.exports = function(cncserver) {
 
     // A "wait" tool requires user feedback before it can continue.
     if (typeof tool.wait !== "undefined") {
-
-      if (callback){
-        cncserver.run('callback', callback);
-      }
-
       // Pause or resume continued execution based on tool.wait value
       // In theory: a wait tool has a complementary resume tool to bring it back
       if (tool.wait) {
-        cncserver.buffer.pause();
+        cncserver.run('callback', cncserver.buffer.pause);
       } else {
-        cncserver.buffer.resume();
+        cncserver.run('callback', cncserver.buffer.resume);
       }
     } else { // "Standard" WaterColorBot toolchange
 
@@ -258,17 +249,18 @@ module.exports = function(cncserver) {
 
       // Put the pen back up when done!
       cncserver.control.setHeight('up');
-
-      // If there's a callback to run...
-      if (callback){
-        if (!ignoreTimeout) { // Run inside the buffer
-          cncserver.run('callback', callback);
-        } else { // Run as soon as items have been buffered
-          callback(1);
-        }
-      }
-      return true;
     }
+
+    // If there's a callback to run...
+    if (callback){
+      if (!ignoreTimeout) { // Run inside the buffer
+        cncserver.run('callback', callback);
+      } else { // Run as soon as items have been buffered
+        callback(1);
+      }
+    }
+
+    return true;
   };
 
   /**
