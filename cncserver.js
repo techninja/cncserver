@@ -57,9 +57,6 @@ cncserver.globalConfigDefaults = {
 
 // COMPONENT REQUIRES ==========================================================
 
-// Rebuild requires if they mismatch.
-require('require-rebuild')();
-
 // Utlities and wrappers.
 require('./src/cncserver.utils.js')(cncserver);
 
