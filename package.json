@@ -1,6 +1,6 @@
 {
   "name": "cncserver",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
@@ -11,7 +11,6 @@
     "nconf": "0.8.4",
     "node-ipc": "^8.0.0",
     "request": "*",
-    "require-rebuild": "^1.2.8",
     "serialport": "4.0.1",
     "socket.io": "^1.4.8"
   },
