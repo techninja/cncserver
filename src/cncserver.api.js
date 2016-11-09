@@ -325,7 +325,8 @@ module.exports = function(cncserver) {
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
-      if (cncserver.botConf.get('tools:' + toolName)){
+      // Filter non-exitant tools (ignoring virtual indexes).
+      if (cncserver.botConf.get('tools:' + toolName.split('|')[0])){
         cncserver.control.setTool(toolName, function(){
           cncserver.pen.tool = toolName;
           res.status(200).send(JSON.stringify({

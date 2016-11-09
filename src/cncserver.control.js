@@ -206,6 +206,14 @@ module.exports = function(cncserver) {
    *   True if success, false on failure.
    */
   cncserver.control.setTool = function(toolName, callback, ignoreTimeout) {
+    // Parse out any virtual indexes (pipe delimited) from the tool name.
+    // These are passed by clients to assist users for manual tool swaps, but
+    // doesn't actually do anything differently.
+    var toolNameData = toolName.split('|');
+    var vIndex = toolNameData[1];
+    toolName = toolNameData[0];
+
+    // Get the matching tool object from the bot configuration.
     var tool = cncserver.botConf.get('tools:' + toolName);
 
     // No tool found with that name? Augh! Run AWAY!
@@ -228,12 +236,22 @@ module.exports = function(cncserver) {
 
     // A "wait" tool requires user feedback before it can continue.
     if (typeof tool.wait !== "undefined") {
-      // Pause or resume continued execution based on tool.wait value
-      // In theory: a wait tool has a complementary resume tool to bring it back
+      // Queue a callback to pause continued execution on tool.wait value
       if (tool.wait) {
-        cncserver.run('callback', cncserver.buffer.pause);
-      } else {
-        cncserver.run('callback', cncserver.buffer.resume);
+        var moveDuration = cncserver.pen.lastDuration;
+        cncserver.run('callback', function() {
+          cncserver.buffer.pause();
+          cncserver.buffer.newlyPaused = true;
+
+          // Trigger the manualswap with virtual index for the client/user.
+          cncserver.buffer.pauseCallback = function() {
+            cncserver.buffer.pauseCallback = null;
+            cncserver.buffer.newlyPaused = false;
+            setTimeout(function() {
+              cncserver.io.manualSwapTrigger(vIndex);
+            }, moveDuration);
+          };
+        });
       }
     } else { // "Standard" WaterColorBot toolchange
 
