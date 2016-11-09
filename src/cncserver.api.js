@@ -129,8 +129,15 @@ module.exports = function(cncserver) {
   cncserver.createServerEndpoint("/v1/motors", function(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
-      cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
-      return [201, 'Disable Queued'];
+      if (req.body.skipBuffer) {
+        cncserver.ipc.sendMessage('serial.direct.command', {
+          commands: cncserver.buffer.cmdstr('disablemotors')
+        });
+        return [200, 'Motors Disabled'];
+      } else {
+        cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
+        return [201, 'Motor Disable Queued'];
+      }
     } else if (req.route.method === 'put') {
       if (parseInt(req.body.reset, 10) === 1) {
         // ZERO motor position to park position
