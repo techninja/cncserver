@@ -1,7 +1,7 @@
 dist: trusty
 language: node_js
 node_js:
-  - "5.3"
+  - "4.6.2"
 compiler: clang-3.6
 env:
   global:
@@ -13,3 +13,11 @@ before_install:
   - mkdir $HOME/clang+llvm
   - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang+llvm --strip-components 1
   - export PATH=$HOME/clang+llvm/bin:$PATH
+  # Install the latest npm node-pre-gyp and node-pre-gyp-github
+  - npm install -g npm
+  - npm install -g node-gyp node-pre-gyp node-pre-gyp-github
+  # print versions
+  - npm --version
+  - node-gyp --version
+  - node-pre-gyp --version
+  - node-pre-gyp-github --help
