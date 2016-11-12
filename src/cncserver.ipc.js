@@ -100,7 +100,7 @@ module.exports = function(cncserver) {
       });
 
       cncserver.ipc.runner.process.on('exit', function (exitCode) {
-        // TODO: Restart it it? Who knows.
+        // TODO: Restart it? Who knows.
         console.log('RUNNER EXITED: ' + exitCode);
       });
     },

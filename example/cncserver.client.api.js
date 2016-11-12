@@ -255,9 +255,12 @@ cncserver.api = {
     * Disable motors, allow them to be turned by hand
     * @param {function} callback
     *   Function to callback when done, including data from response body
+    * @param {object} options
+    *   Object of key:value sets to pass to the API request.
     */
-    unlock: function(callback){
+    unlock: function(callback, options){
       _delete('motors', {
+        data: options,
         success: callback,
         error: function(e) {
           callback(false, e);

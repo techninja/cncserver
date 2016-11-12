@@ -198,6 +198,11 @@ function executeCommands(commands, callback, index) {
     index = 0;
   }
 
+  // Ensure commands is an array if only one sent.
+  if (typeof commands === 'string') {
+    commands = [commands];
+  }
+
   // Run the command at the index.
   serialWrite(commands[index], function(){
     index++; // Increment the index.

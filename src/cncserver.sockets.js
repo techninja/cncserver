@@ -138,6 +138,17 @@ module.exports = function(cncserver) {
     });
   };
 
+  /**
+   * Trigger manual swap complete to all stream clients. Buffer will be paused.
+   *
+   * @param {int} vIndex
+   *   Virtual index of manual swap
+   */
+  cncserver.io.manualSwapTrigger = function (vIndex) {
+    io.emit('manualswap trigger', {
+      index: vIndex
+    });
+  };
 
   // Shortcut functions for move/height streaming.
   cncserver.io.shortcut = {
