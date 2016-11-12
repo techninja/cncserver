@@ -160,7 +160,7 @@ module.exports = function(cncserver) {
    *   False if pen is considered up, true if pen is considered down.
    */
   cncserver.utils.penDown = function(inPen) {
-    if (!inPen) inPen = cncserver.pen;
+    if (!inPen || !inPen.state) inPen = cncserver.pen;
 
     if (inPen.state === 'up' || inPen.state < 0.5) {
       return false;
