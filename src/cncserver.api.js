@@ -6,10 +6,24 @@
  *
  */
 
+var fs = require('fs');
+var request = require('request');
+var _ = require('underscore');
+var querystring = require('querystring');
+var pathToRegexp = require('path-to-regexp');
+
 module.exports = function(cncserver) {
   // CNC Server API ============================================================
+  // Enpoints are created and assigned via a server path to respond to, and
+  // and callback function that manages handles the request and response.
+  // We hold all of these in cncserver.apiHandlers to be able to call them
+  // directly from the batch API endpoint. These are actually only turned into
+  // endpoints at the end via createServerEndpoint().
+  cncserver.apiHandlers = {};
+
   // Return/Set CNCServer Configuration ========================================
-  cncserver.createServerEndpoint("/v1/settings", function(req){
+  //cncserver.createServerEndpoint("/v1/settings", );
+  cncserver.apiHandlers['/v1/settings'] = function settingsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
@@ -18,9 +32,9 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
-  });
+  };
 
-  cncserver.createServerEndpoint("/v1/settings/:type", function(req){
+  cncserver.apiHandlers['/v1/settings/:type'] = function settingsMain(req){
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){
@@ -57,10 +71,10 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
-  });
+  };
 
   // Return/Set PEN state  API =================================================
-  cncserver.createServerEndpoint("/v1/pen", function(req, res){
+  cncserver.apiHandlers['/v1/pen'] = function penMain(req, res){
     if (req.route.method === 'put') {
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
@@ -123,10 +137,10 @@ module.exports = function(cncserver) {
     } else  {
       return false;
     }
-  });
+  };
 
   // Return/Set Motor state API ================================================
-  cncserver.createServerEndpoint("/v1/motors", function(req){
+  cncserver.apiHandlers['/v1/motors'] = function motorsMain(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
       if (req.body.skipBuffer) {
@@ -177,10 +191,10 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
-  });
+  };
 
   // Command buffer API ========================================================
-  cncserver.createServerEndpoint("/v1/buffer", function(req, res){
+  cncserver.apiHandlers['/v1/buffer'] = function bufferMain(req, res){
     var buffer = cncserver.buffer;
     if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
@@ -308,10 +322,10 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
-  });
+  };
 
   // Get/Change Tool API =======================================================
-  cncserver.createServerEndpoint("/v1/tools", function(req){
+  cncserver.apiHandlers['/v1/tools'] = function toolsGet(req){
     if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body:{
         tools: Object.keys(cncserver.botConf.get('tools'))
@@ -319,9 +333,9 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
-  });
+  };
 
-  cncserver.createServerEndpoint("/v1/tools/:tool", function(req, res){
+  cncserver.apiHandlers['/v1/tools/:tool'] = function toolsMain(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
@@ -344,5 +358,224 @@ module.exports = function(cncserver) {
     } else {
       return false;
     }
+  };
+
+  // Bind all the apiHandlers into endpoints ===================================
+  _.each(cncserver.apiHandlers, function(callback, path) {
+    cncserver.createServerEndpoint(path, callback);
   });
+
+  // Batch Command API =========================================================
+  cncserver.createServerEndpoint("/v1/batch", function(req, res){
+    if (req.route.method === 'post') { // Create a new batch set.
+      if (req.body.file) {
+        var file = req.body.file;
+        if (file.substr(0, 4) === 'http') {
+          // Internet file.
+          request.get(file, function (error, response, body) {
+            // Attempt to parse/process data.
+            if (body) {
+              try {
+                var commands = JSON.parse(body);
+                processBatchData(commands, function(count) {
+                  res.status(200).send(JSON.stringify({
+                    status: 'Batch parsed and queued ' + count + '/' +
+                      commands.length + ' commands'
+                  }));
+                });
+              } catch(err) {
+                error = err;
+              }
+            }
+
+            // Catch response for errors (on parsing or reading).
+            if (error) {
+              res.status(400).send(JSON.stringify({
+                status: 'Error reading file "' + file + '"',
+                remoteHTTPCode: response.statusCode,
+                data: error
+              }));
+            }
+          });
+        } else {
+          // Local file.
+          fs.readFile(file, function(error, data) {
+            // Attempt to read the data.
+            if (data) {
+              try {
+                var commands = JSON.parse(data.toString());
+                processBatchData(commands, function(count) {
+                  res.status(200).send(JSON.stringify({
+                    status: 'Batch parsed and queued ' + count + '/' +
+                      commands.length + ' commands'
+                  }));
+                });
+              } catch (err) {
+                error = err;
+              }
+            }
+
+            // Catch response for errors (on parsing or reading).
+            if (error) {
+              res.status(400).send(JSON.stringify({
+                status: 'Error reading file "' + file + '"',
+                data: error
+              }));
+            }
+          });
+        }
+      } else {
+        // Raw command data (not from a file);
+        try {
+          processBatchData(req.body, function(count) {
+            res.status(200).send(JSON.stringify({
+              status: 'Batch parsed and queued ' + count + '/' +
+                req.body.length + ' commands'
+            }));
+          });
+        } catch (err) {
+          res.status(400).send(JSON.stringify({
+            status: 'Error reading/processing batch data',
+            data: err
+          }));
+        }
+      }
+
+      return true; // Tell endpoint wrapper we'll handle the response
+    } else {
+      return false;
+    }
+  });
+
+  /**
+   * Process a flat array of semi-abstracted commands into the queue.
+   *
+   * @param {array} commands
+   *   Flat array of command objects in the following format:
+   *   {"[POST|PUT|DELETE] /v1/[ENDPOINT]": {data: 'for the endpoint'}}
+   * @param {function} callback
+   *   Callback function when command processing is complete.
+   * @param {int} index
+   *   Array index of commands to process. Ignore/Pass as undefined to init.
+   *   Function calls itself via callbacks to ensure delayed api handlers remain
+   *   queued in order while async.
+   * @param {int} goodCount
+   *   Running tally of successful commands, to be returned to callback once
+   *   complete.
+   */
+  function processBatchData(commands, callback, index, goodCount) {
+    // Initiate for the first loop run.
+    if (typeof index === 'undefined') {
+      index = 0;
+      goodCount = 0;
+    }
+
+    var command = commands[index];
+    if (typeof command !== 'undefined') {
+      var key = Object.keys(command)[0];
+      var data = command[key];
+      var method = key.split(' ')[0];
+      var path = key.split(' ')[1].split('?')[0];
+      if (path[0] !== '/') path = '/' + path;
+
+      var query = path.split('?')[1]; // Query params.
+      var params = {}; // URL Params.
+
+      // Batch runs are send and forget, force ignoreTimeout.
+      data.ignoreTimeout = '1';
+
+      var req = getDummyObject('request');
+      var res = getDummyObject('response');
+      var handlerKey = '';
+
+      // Attempt to match the path to a requstHandler by express path match.
+      _.each(Object.keys(cncserver.apiHandlers), function(pattern) {
+        var keys = [];
+        var match = pathToRegexp(pattern, keys).exec(path);
+        if (match) {
+          handlerKey = pattern;
+
+          // If there's keyed url params, inject them.
+          if (keys.length) {
+            _.each(keys, function(p, index) {
+              params[p.name] = match[index + 1];
+            });
+          }
+        }
+      });
+
+      // Fill out request details:
+      req.route.method = method.toLowerCase();
+      req.route.path = path;
+      req.query = query ? querystring.parse(query) : {};
+      req.params = params;
+      req.body = data;
+
+      // Call the api handler (send and forget via batch!)
+      if (cncserver.apiHandlers[handlerKey]) {
+        res.status = function(code) {
+          return {send: function(data) {
+            console.log('#' + index, 'Delayed:', handlerKey, code, data);
+            if (code.toString()[0] === '2') goodCount++;
+            processBatchData(commands, callback, index + 1, goodCount);
+          }};
+        };
+
+        // Naively check to see if the request was successful.
+        // Technically if there's a wait for return (=== true), we could only
+        // see it in the .status() return callback.
+        var response = cncserver.apiHandlers[handlerKey](req, res);
+        if (response !== true) {
+          console.log('#' + index, 'Immediate:', handlerKey, response);
+          if (response !== false) goodCount++;
+          processBatchData(commands, callback, index + 1, goodCount);
+        }
+      } else {
+        // Unhandled path, not a valid API handler available. Move on.
+        processBatchData(commands, callback, index + 1, goodCount);
+      }
+    } else {
+      // We're done!
+      callback(goodCount);
+    }
+  }
+
+  /**
+   * Return a dummy 'request' or 'response' object for faking express requests.
+   *
+   * @param  {string} type
+   *   Either 'request' or 'response'.
+   *
+   * @return {object}
+   *   The dummy object with minimum required parts for the handlers to use the
+   *   same code as the express handler arguments.
+   */
+  function getDummyObject(type) {
+    var out = {};
+
+    switch (type) {
+      case 'request':
+        out = {
+          route: {
+            method: '',
+            path: ''
+          },
+          query: {},
+          params: {},
+          body: {},
+        };
+        break;
+
+      case 'response':
+        out = {
+          status: function() {
+            return {send: function() {}};
+          }
+        };
+        break;
+
+    }
+
+    return out;
+  }
 };

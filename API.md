@@ -624,7 +624,80 @@ Content-Type: application/json; charset=UTF-8
 called. This might have to change though...
 
 
-## 6. Socket.IO & real-time event data streaming
+## 6. Batch
+Overhead on individual ReSTful requests isn't so bad, but add that up over 100k+
+instructions/commands, and that's minutes wasted waiting for all the data just
+to get where it needs to go. If you don't need to know what's happening after
+every request, then _this endpoint is for you!_
+
+This final resource is meant as a catch all, allowing for ordered lists of
+ReSTful endpoint commands to be batch uploaded as either literal JSON data, or
+JSON file & path that the server has access to (either local/or remote HTTP).
+
+### POST /v1/batch
+Post the batch data into the queue. Returns when processing is complete, or
+there's an error.
+
+#### Request: Direct batch data.
+```javascript
+POST /v1/batch
+Content-Type: application/json; charset=UTF-8
+
+[
+  {"DELETE v1/pen": {}},              // Park.
+  {"PUT v1/pen": {"x": 50, "y": 50}}, // Move to 50, 50.
+  {"PUT v1/pen": {"x": 10, "y": 50}}, // Move to 10, 50.
+  {"DELETE v1/pen": {}}               // Park.
+]
+```
+
+#### Request: Batch file (local)
+```javascript
+POST /v1/batch
+Content-Type: application/json; charset=UTF-8
+
+{
+  // JSON file to read from (make sure the server has permission to read the file!)
+  "file": "/tmp/data/cncsererver-batch-example.json"
+}
+```
+
+#### Request: Batch file (remote)
+```javascript
+POST /v1/batch
+Content-Type: application/json; charset=UTF-8
+
+{
+  // Again, make sure the server has HTTP & file access to the file.
+  "file": "http://example.com/batch-data.json"
+}
+```
+
+### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    // If successful, the number of valid commands will be listed.
+    // If you park while already parked, or any commands fail, these will count
+    // against the final reported success rate.
+    "status" : "Batch parsed and queued 3/4 commands"
+}
+```
+
+##### Usage Notes
+ * Command items are parsed and run semi-asynchronously, with each being run as
+ if an individual ReSTful request had been called.
+ * Every command is run with `ignoreTimeout` set, so no need to include it in
+ batch command data.
+ * Detailed error catching is mostly non-existent, make sure your data is well
+ formed and tested without batching before moving to batch submission.
+ * Return data reporting is exceedingly minimal, so make sure you've
+ decoupled your client from return data (just tie into stream updates).
+
+
+## 7. Socket.IO & real-time event data streaming
 The API has served the project incredibly well, but it was lacking in one
 important aspect: a remote client can receive no updates without asking first,
 no events or data without polling or some other kludge. That is now all
