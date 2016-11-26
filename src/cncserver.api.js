@@ -515,7 +515,10 @@ module.exports = function(cncserver) {
       if (cncserver.apiHandlers[handlerKey]) {
         res.status = function(code) {
           return {send: function(data) {
-            console.log('#' + index, 'Delayed:', handlerKey, code, data);
+            if (cncserver.gConf.get('debug')) {
+              console.log('#' + index, 'Batch Delay:', handlerKey, code, data);
+            }
+
             if (code.toString()[0] === '2') goodCount++;
             processBatchData(commands, callback, index + 1, goodCount);
           }};
@@ -526,7 +529,10 @@ module.exports = function(cncserver) {
         // see it in the .status() return callback.
         var response = cncserver.apiHandlers[handlerKey](req, res);
         if (response !== true) {
-          console.log('#' + index, 'Immediate:', handlerKey, response);
+          if (cncserver.gConf.get('debug')) {
+            console.log('#' + index, 'Batch Immediate:', handlerKey, response);
+          }
+
           if (response !== false) goodCount++;
           processBatchData(commands, callback, index + 1, goodCount);
         }
