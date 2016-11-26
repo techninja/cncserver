@@ -440,7 +440,146 @@ cncserver.api = {
         }
       );
     }
-  }
+  },
+
+  // Batch API for lowering command send overhead.
+  batch: {
+    skipSend: false,
+    saveFile: '',
+    firstCommand: true,
+    data: [],
+
+    /**
+     * Once enabled, all commands sent through this wrapper will be saved for
+     * batch sending instead of actually being sent, until end is run.
+     *
+     * @return {[type]} [description]
+     */
+    start: function(options) {
+      options = options || {};
+      cncserver.api.batch.endClear();
+      cncserver.api.batch.skipSend = true;
+
+      // If node and a file path send, try to save it
+      // TODO: Add in some file access checks to keep this from dying.
+      if (isNode && options.saveToFile) {
+        cncserver.api.batch.fs = require('fs');
+        cncserver.api.batch.saveFile = options.saveToFile;
+        cncserver.api.batch.fs.writeFileSync(options.saveToFile, '[');
+      }
+    },
+
+    /**
+     * Write final file ending to the JSON file storage.
+     */
+    finishFile: function() {
+      if (cncserver.api.batch.saveFile) {
+        cncserver.api.batch.fs.appendFileSync(
+          cncserver.api.batch.saveFile,
+          ']'
+        );
+      }
+    },
+
+    /**
+     * Add an entry into the batch data storage.
+     *
+     * @param {string} key
+     *   The key holding the method and path
+     * @param {object} data
+     *   The data arguments being sent to modify the command.
+     */
+    addEntry: function(key, data) {
+      // Unset ignore timeout as it's just dead weight with batch.
+      if (data.ignoreTimeout) delete data.ignoreTimeout;
+
+      var entry = {};
+      entry[key] = data;
+
+      // Store the data.
+      if (cncserver.api.batch.saveFile) {
+        var line = JSON.stringify(entry);
+
+        // Add a comma if the command isn't first.
+        if (!cncserver.api.batch.firstCommand) {
+          line = ',' + line;
+        }
+        cncserver.api.batch.fs.appendFileSync(
+          cncserver.api.batch.saveFile,
+          line
+        );
+      } else {
+        cncserver.api.batch.data.push(entry);
+      }
+      cncserver.api.batch.firstCommand = false;
+    },
+
+    /**
+     * End the batch and return the data saved.
+     *
+     * @return {object|string}
+     *   Full data array if local, otherwise the file path if saved directly.
+     */
+    endReturn: function() {
+      var dump = [];
+
+      if (cncserver.api.batch.saveFile) {
+        cncserver.api.batch.finishFile();
+        dump = cncserver.api.batch.saveFile;
+      } else {
+        dump = cncserver.api.batch.data;
+      }
+
+      cncserver.api.batch.endClear();
+      return dump;
+    },
+
+    /**
+     * End the batch and send the data immediately.
+     *
+     * @param  {Function} callback
+     *   Function called when sending is complete.
+     * @param  {object}   options
+     *   Keyed options object, currently supports:
+     *     * fileOverride: path/URL that the server should have read access to
+     *     as opposed to the one that the node client has write access to.
+     */
+    endSend: function(callback, options) {
+      var dump;
+      options = options || {};
+
+      // File or raw data?
+      if (cncserver.api.batch.saveFile) {
+        cncserver.api.batch.finishFile();
+
+        // Allow client to specify the end send file path differently.
+        if (options.fileOverride) {
+          dump = {file: options.fileOverride};
+        } else {
+          dump = {file: cncserver.api.batch.saveFile};
+        }
+      } else {
+        // Send the actual data directly.
+        dump = cncserver.api.batch.data;
+      }
+
+      cncserver.api.batch.endClear();
+      _post('batch', {
+        data: dump,
+        success: callback,
+      });
+    },
+
+    /**
+     * Reset all batch state to default.
+     */
+    endClear: function() {
+      cncserver.api.batch.firstCommand = true;
+      cncserver.api.batch.data = [];
+      cncserver.api.batch.saveFile = '';
+      cncserver.api.batch.skipSend = false;
+    }
+  },
 };
 
 function _get(path, options) {
@@ -484,6 +623,15 @@ function _request(method, path, options) {
   }
 
   var uri = srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath;
+
+  // If we're batching commands.. we don't actually send them, we store them!
+  if (cncserver.api.batch.skipSend) {
+    cncserver.api.batch.addEntry(method + ' ' + srvPath, options.data);
+    options.success();
+    return;
+  }
+
+  // Send the request.
   if (!isNode) {
     $.ajax({
       url: uri,
