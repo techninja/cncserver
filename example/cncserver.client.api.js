@@ -483,7 +483,7 @@ cncserver.api = {
 
         // Add a comma if the command isn't first.
         if (!cncserver.api.batch.firstCommand) {
-          line = ',' + line;
+          line = ",\n" + line;
         }
         cncserver.api.batch.fs.appendFileSync(
           cncserver.api.batch.saveFile,
