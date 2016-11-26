@@ -59,25 +59,6 @@ cncserver.api = {
       if (typeof options !== 'object') options = {};
       options.state = value;
 
-      // If we're on node and we have a socket, shortcut via WebSockets.
-      // TODO: FIX this as causes socket.io call stack overflows
-      if (isNode && cncserver.global.socket && false) {
-        var data = {state: value, returnData: !!callback};
-        cncserver.global.socket.emit('height', data);
-        if (callback) {
-          var catchMove = function(d){
-            callback(d);
-            cncserver.global.socket.removeListener('height', catchMove);
-          };
-
-          cncserver.global.socket.on('height', catchMove);
-        }
-
-        // Leave this entire function to avoid doing the regular request.
-        return;
-      }
-
-
       // Ignore timeout with no callback by default
       if (typeof options.ignoreTimeout === 'undefined') {
         options.ignoreTimeout = callback ? '' : '1';
