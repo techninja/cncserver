@@ -520,7 +520,9 @@ module.exports = function(cncserver) {
             }
 
             if (code.toString()[0] === '2') goodCount++;
-            processBatchData(commands, callback, index + 1, goodCount);
+            process.nextTick(function() {
+              processBatchData(commands, callback, index + 1, goodCount);
+            });
           }};
         };
 
@@ -534,7 +536,9 @@ module.exports = function(cncserver) {
           }
 
           if (response !== false) goodCount++;
-          processBatchData(commands, callback, index + 1, goodCount);
+          process.nextTick(function() {
+            processBatchData(commands, callback, index + 1, goodCount);
+          });
         }
       } else {
         // Unhandled path, not a valid API handler available. Move on.
