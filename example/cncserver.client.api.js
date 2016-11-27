@@ -606,9 +606,19 @@ function _request(method, path, options) {
   var uri = srv.protocol + '://' + srv.domain + ':' + srv.port + srvPath;
 
   // If we're batching commands.. we don't actually send them, we store them!
-  if (cncserver.api.batch.skipSend) {
-    cncserver.api.batch.addEntry(method + ' ' + srvPath, options.data);
-    options.success();
+  // ...unless this command is meant to skipBuffer.
+  if (cncserver.api.batch.skipSend && !options.data.skipBuffer) {
+    if (isNode) {
+      process.nextTick(function() {
+        cncserver.api.batch.addEntry(method + ' ' + srvPath, options.data);
+        options.success();
+      });
+    } else {
+      setTimeout(function() {
+        cncserver.api.batch.addEntry(method + ' ' + srvPath, options.data);
+        options.success();
+      }, 0);
+    }
     return;
   }
 
