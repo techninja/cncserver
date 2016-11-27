@@ -368,6 +368,10 @@ module.exports = function(cncserver) {
   // Batch Command API =========================================================
   cncserver.createServerEndpoint("/v1/batch", function(req, res){
     if (req.route.method === 'post') { // Create a new batch set.
+
+      // For exceedingly large batches over 50k commands, batching in takes
+      // longer than the socket will stay open, so we simply respond with a "201
+      // queued" immediately after counting.
       if (req.body.file) {
         var file = req.body.file;
         if (file.substr(0, 4) === 'http') {
@@ -377,12 +381,10 @@ module.exports = function(cncserver) {
             if (body) {
               try {
                 var commands = JSON.parse(body);
-                processBatchData(commands, function(count) {
-                  res.status(200).send(JSON.stringify({
-                    status: 'Batch parsed and queued ' + count + '/' +
-                      commands.length + ' commands'
-                  }));
-                });
+                res.status(201).send(JSON.stringify({
+                  status: 'Batch parsed ' + commands.length + ' command queuing'
+                }));
+                processBatchData(commands);
               } catch(err) {
                 error = err;
               }
@@ -404,12 +406,10 @@ module.exports = function(cncserver) {
             if (data) {
               try {
                 var commands = JSON.parse(data.toString());
-                processBatchData(commands, function(count) {
-                  res.status(200).send(JSON.stringify({
-                    status: 'Batch parsed and queued ' + count + '/' +
-                      commands.length + ' commands'
-                  }));
-                });
+                res.status(201).send(JSON.stringify({
+                  status: 'Batch parsed ' + commands.length + ' command queuing'
+                }));
+                processBatchData(commands);
               } catch (err) {
                 error = err;
               }
@@ -427,12 +427,10 @@ module.exports = function(cncserver) {
       } else {
         // Raw command data (not from a file);
         try {
-          processBatchData(req.body, function(count) {
-            res.status(200).send(JSON.stringify({
-              status: 'Batch parsed and queued ' + count + '/' +
-                req.body.length + ' commands'
-            }));
-          });
+          res.status(201).send(JSON.stringify({
+            status: 'Batch parsed ' + req.body.length + ' commands queuing'
+          }));
+          processBatchData(req.body);
         } catch (err) {
           res.status(400).send(JSON.stringify({
             status: 'Error reading/processing batch data',
@@ -546,7 +544,7 @@ module.exports = function(cncserver) {
       }
     } else {
       // We're done!
-      callback(goodCount);
+      if (callback) callback(goodCount);
     }
   }
 
