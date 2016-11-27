@@ -638,10 +638,10 @@ function _request(method, path, options) {
       json: true,
       method: method,
       body: options.data,
-      timeout: 1000
+      timeout: options.timeout || 1000
     }, function(error, response, body){
       if (error) {
-        console.error(error);
+        console.error('API: Node request error', uri, method, error);
         if (options.error) options.error(error, response, body);
       } else {
         if (options.success) options.success(body, response);
