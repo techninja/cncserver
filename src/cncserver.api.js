@@ -16,14 +16,15 @@ module.exports = function(cncserver) {
   // CNC Server API ============================================================
   // Enpoints are created and assigned via a server path to respond to, and
   // and callback function that manages handles the request and response.
-  // We hold all of these in cncserver.apiHandlers to be able to call them
+  // We hold all of these in cncserver.api.handlers to be able to call them
   // directly from the batch API endpoint. These are actually only turned into
   // endpoints at the end via createServerEndpoint().
-  cncserver.apiHandlers = {};
+  cncserver.api = {};
+  cncserver.api.handlers = {};
 
   // Return/Set CNCServer Configuration ========================================
   //cncserver.createServerEndpoint("/v1/settings", );
-  cncserver.apiHandlers['/v1/settings'] = function settingsGet(req) {
+  cncserver.api.handlers['/v1/settings'] = function settingsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
@@ -34,7 +35,7 @@ module.exports = function(cncserver) {
     }
   };
 
-  cncserver.apiHandlers['/v1/settings/:type'] = function settingsMain(req){
+  cncserver.api.handlers['/v1/settings/:type'] = function settingsMain(req){
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){
@@ -74,7 +75,7 @@ module.exports = function(cncserver) {
   };
 
   // Return/Set PEN state  API =================================================
-  cncserver.apiHandlers['/v1/pen'] = function penMain(req, res){
+  cncserver.api.handlers['/v1/pen'] = function penMain(req, res){
     if (req.route.method === 'put') {
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
@@ -140,7 +141,7 @@ module.exports = function(cncserver) {
   };
 
   // Return/Set Motor state API ================================================
-  cncserver.apiHandlers['/v1/motors'] = function motorsMain(req){
+  cncserver.api.handlers['/v1/motors'] = function motorsMain(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
       if (req.body.skipBuffer) {
@@ -194,7 +195,7 @@ module.exports = function(cncserver) {
   };
 
   // Command buffer API ========================================================
-  cncserver.apiHandlers['/v1/buffer'] = function bufferMain(req, res){
+  cncserver.api.handlers['/v1/buffer'] = function bufferMain(req, res){
     var buffer = cncserver.buffer;
     if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
@@ -325,7 +326,7 @@ module.exports = function(cncserver) {
   };
 
   // Get/Change Tool API =======================================================
-  cncserver.apiHandlers['/v1/tools'] = function toolsGet(req){
+  cncserver.api.handlers['/v1/tools'] = function toolsGet(req){
     if (req.route.method === 'get') { // Get list of tools
       return {code: 200, body:{
         tools: Object.keys(cncserver.botConf.get('tools'))
@@ -335,7 +336,7 @@ module.exports = function(cncserver) {
     }
   };
 
-  cncserver.apiHandlers['/v1/tools/:tool'] = function toolsMain(req, res){
+  cncserver.api.handlers['/v1/tools/:tool'] = function toolsMain(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
@@ -360,8 +361,8 @@ module.exports = function(cncserver) {
     }
   };
 
-  // Bind all the apiHandlers into endpoints ===================================
-  _.each(cncserver.apiHandlers, function(callback, path) {
+  // Bind all the api.handlers into endpoints ==================================
+  _.each(cncserver.api.handlers, function(callback, path) {
     cncserver.createServerEndpoint(path, callback);
   });
 
@@ -466,10 +467,11 @@ module.exports = function(cncserver) {
     if (typeof index === 'undefined') {
       index = 0;
       goodCount = 0;
+      cncserver.api.batchRunning = true;
     }
 
     var command = commands[index];
-    if (typeof command !== 'undefined') {
+    if (typeof command !== 'undefined' && cncserver.api.batchRunning) {
       var key = Object.keys(command)[0];
       var data = command[key];
       var method = key.split(' ')[0];
@@ -487,7 +489,7 @@ module.exports = function(cncserver) {
       var handlerKey = '';
 
       // Attempt to match the path to a requstHandler by express path match.
-      _.each(Object.keys(cncserver.apiHandlers), function(pattern) {
+      _.each(Object.keys(cncserver.api.handlers), function(pattern) {
         var keys = [];
         var match = pathToRegexp(pattern, keys).exec(path);
         if (match) {
@@ -510,7 +512,7 @@ module.exports = function(cncserver) {
       req.body = data;
 
       // Call the api handler (send and forget via batch!)
-      if (cncserver.apiHandlers[handlerKey]) {
+      if (cncserver.api.handlers[handlerKey]) {
         res.status = function(code) {
           return {send: function(data) {
             if (cncserver.gConf.get('debug')) {
@@ -527,7 +529,7 @@ module.exports = function(cncserver) {
         // Naively check to see if the request was successful.
         // Technically if there's a wait for return (=== true), we could only
         // see it in the .status() return callback.
-        var response = cncserver.apiHandlers[handlerKey](req, res);
+        var response = cncserver.api.handlers[handlerKey](req, res);
         if (response !== true) {
           if (cncserver.gConf.get('debug')) {
             console.log('#' + index, 'Batch Immediate:', handlerKey, response);
@@ -543,7 +545,8 @@ module.exports = function(cncserver) {
         processBatchData(commands, callback, index + 1, goodCount);
       }
     } else {
-      // We're done!
+      // We're out of commands, or batch was cancelled.
+      cncserver.api.batchRunning = false;
       if (callback) callback(goodCount);
     }
   }

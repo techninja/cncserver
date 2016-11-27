@@ -135,6 +135,9 @@ module.exports = function(cncserver) {
     cncserver.buffer.pausePen = null; // Resuming with an empty buffer is silly
     cncserver.buffer.paused = false;
 
+    // If we're clearing, we need to kill any batch processes running.
+    cncserver.api.batchRunning = false;
+
     // Reset the state of the buffer tip pen to the state of the actual robot.
     // If this isn't done, it will be assumed to be a state that was deleted
     // and never sent out.
