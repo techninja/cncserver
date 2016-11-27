@@ -545,9 +545,15 @@ cncserver.api = {
       }
 
       cncserver.api.batch.endClear();
+      console.time('process-batch');
       _post('batch', {
         data: dump,
-        success: callback,
+        timeout: 1000 * 60 * 10, // Timeout of 10 mins!
+        success: function(d){
+          console.timeEnd('process-batch');
+          console.info(d);
+          callback();
+        },
       });
     },
 
