@@ -675,26 +675,29 @@ Content-Type: application/json; charset=UTF-8
 
 ### Response
 ```javascript
-HTTP/1.1 200 OK
+HTTP/1.1 201 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    // If successful, the number of valid commands will be listed.
-    // If you park while already parked, or any commands fail, these will count
-    // against the final reported success rate.
-    "status" : "Batch parsed and queued 3/4 commands"
+    // Because some batch processing takes longer than the connection would be
+    // held open for, we simply return a 201 that the command shave been read
+    // and that these will be pushed into the buffer as quickly as possible.
+    "status" : "Parsed 4 commands, queuing"
 }
 ```
 
 ##### Usage Notes
  * Command items are parsed and run semi-asynchronously, with each being run as
- if an individual ReSTful request had been called.
+ if an individual ReSTful request had been called, without the overhead.
  * Every command is run with `ignoreTimeout` set, so no need to include it in
- batch command data.
+ batch command data. If using the JS wrapper, this is done for you.
  * Detailed error catching is mostly non-existent, make sure your data is well
  formed and tested without batching before moving to batch submission.
  * Return data reporting is exceedingly minimal, so make sure you've
  decoupled your client from return data (just tie into stream updates).
+ * For batches of > 15k commands, data will stream into the buffer internally
+ for some time, so you have to be careful not to queue any commands in
+ afterwards or commands will be executed in the wrong order.
 
 
 ## 7. Socket.IO & real-time event data streaming

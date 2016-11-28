@@ -383,7 +383,7 @@ module.exports = function(cncserver) {
               try {
                 var commands = JSON.parse(body);
                 res.status(201).send(JSON.stringify({
-                  status: 'Batch parsed ' + commands.length + ' command queuing'
+                  status: 'Parsed ' + commands.length + ' commands, queuing'
                 }));
                 processBatchData(commands);
               } catch(err) {
@@ -408,7 +408,7 @@ module.exports = function(cncserver) {
               try {
                 var commands = JSON.parse(data.toString());
                 res.status(201).send(JSON.stringify({
-                  status: 'Batch parsed ' + commands.length + ' command queuing'
+                  status: 'Parsed ' + commands.length + ' commands, queuing'
                 }));
                 processBatchData(commands);
               } catch (err) {
@@ -429,7 +429,7 @@ module.exports = function(cncserver) {
         // Raw command data (not from a file);
         try {
           res.status(201).send(JSON.stringify({
-            status: 'Batch parsed ' + req.body.length + ' commands queuing'
+            status: 'Parsed ' + req.body.length + ' commands, queuing'
           }));
           processBatchData(req.body);
         } catch (err) {
