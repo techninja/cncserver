@@ -114,7 +114,7 @@ Content-Type: application/json; charset=UTF-8
 
 ```
 
-#### Request Example (set position)
+#### Request Example (set position via default relative percentage)
 ```javascript
 PUT /v1/pen
 Content-Type: application/json; charset=UTF-8
@@ -122,6 +122,19 @@ Content-Type: application/json; charset=UTF-8
 {
     "x": 13.2919,     // Percentage of total width/height (0 to 100)
     "y": 72.28124910
+}
+
+```
+
+#### Request Example (set position via absolute measurement)
+```javascript
+PUT /v1/pen
+Content-Type: application/json; charset=UTF-8
+
+{
+    "abs": "mm", // Can be 'mm', or 'in'
+    "x": 20.5,
+    "y": 230.25
 }
 
 ```
@@ -181,6 +194,11 @@ position. In those cases, the response will return a `202 Accepted` instead of a
 `200 OK`.
  * `lastDuration` in return data can be used in conjunction with ignoreTimeout
 to allow the client to manage timings instead of waiting on the server.
+ * Absolute measurement is only supported by bot configurations that define
+`maxAreaMM` width and height. For non-planar bots like the EggBot, absolute
+measurements of the X axis could never reliably match to real world constants as
+a differing egg size would change this measurement, so sending an `abs` option
+will result in a `406` error.
 
 * * *
 

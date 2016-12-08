@@ -169,10 +169,57 @@ module.exports = function(cncserver) {
     }
   };
 
+  /**
+   * Convert an incoming pen object absolute step coordinate values.
+   *
+   * @param {{x: number, y: number, abs: [in|mm]}} pen
+   *   Pen/Coordinate measured in percentage of total draw area, or absolute
+   *   distance to be converted to steps.
+   *
+   * @returns {{x: number, y: number}}
+   *   Converted coordinate in absolute steps.
+   */
+  cncserver.utils.inPenToSteps = function(inPen) {
+    if (inPen.abs === 'in' || inPen.abs === 'mm') {
+      return cncserver.utils.absToSteps({x: inPen.x, y: inPen.y}, inPen.abs);
+    } else {
+      return cncserver.utils.centToSteps({x: inPen.x, y: inPen.y});
+    }
+  };
 
   /**
-   * Convert percent of total area coordinates into absolute step coordinate
-   * values
+   * Convert an absolute point object to absolute step coordinate values.
+   *
+   * @param {{x: number, y: number, abs: [in|mm]}} point
+   *   Coordinate measured in percentage of total draw area, or absolute
+   *   distance to be converted to steps.
+   * @param {string} scale
+   *   Either 'in' for inches, or 'mm' for millimeters.
+   * @param {boolean} inMaxArea
+   *   Pass "true" if percent vals should be considered within the maximum area
+   *   otherwise steps will be calculated as part of the global work area.
+   *
+   * @returns {{x: number, y: number}}
+   *   Converted coordinate in absolute steps.
+   */
+  cncserver.utils.absToSteps = function(point, scale, inMaxArea) {
+    var bot = cncserver.bot;
+
+    // Convert Inches to MM.
+    if (scale === 'in') {
+      point = {x: point.x * 25.4, y: point.y * 25.4};
+    }
+
+    // Return absolute calculation.
+    return {
+      x: (!inMaxArea ? bot.workArea.left : 0) + (point.x * bot.stepsPerMM.x),
+      y: (!inMaxArea ? bot.workArea.top : 0) + (point.y * bot.stepsPerMM.y)
+    };
+  };
+
+  /**
+   * Convert percent of total area coordinates into absolute step coordinates.
+   *
    * @param {{x: number, y: number}} point
    *   Coordinate (measured in steps) to be converted.
    * @param {boolean} inMaxArea

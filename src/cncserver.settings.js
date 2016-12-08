@@ -114,6 +114,10 @@ module.exports = function(cncserver) {
             width: Number(cncserver.botConf.get('maxArea:width')),
             height: Number(cncserver.botConf.get('maxArea:height'))
           },
+          maxAreaMM: {
+            width: Number(cncserver.botConf.get('maxAreaMM:width')),
+            height: Number(cncserver.botConf.get('maxAreaMM:height'))
+          },
           park: {
             x: Number(cncserver.botConf.get('park:x')),
             y: Number(cncserver.botConf.get('park:y'))
@@ -147,6 +151,17 @@ module.exports = function(cncserver) {
           x: bot.workArea.relCenter.x + bot.workArea.left,
           y: bot.workArea.relCenter.y + bot.workArea.top
         };
+
+        // If supplied, add conversions for abs distance.
+        if (bot.maxAreaMM.width) {
+          bot.stepsPerMM = {
+            x: bot.maxArea.width / bot.maxAreaMM.width,
+            y: bot.maxArea.height / bot.maxAreaMM.height
+          };
+          //bot.stepsPerMM
+        } else {
+          cncserver.bot.maxAreaMM = false;
+        }
 
         // Set initial pen position at park position
         var park = cncserver.utils.centToSteps(bot.park, true);

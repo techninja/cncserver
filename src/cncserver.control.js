@@ -95,8 +95,8 @@ module.exports = function(cncserver) {
         return;
       }
 
-      // Convert the percentage values into real absolute and appropriate values
-      var absInput = cncserver.utils.centToSteps(inPen);
+      // Convert the percentage or absolute in/mm XY values into absolute steps.
+      var absInput = cncserver.utils.inPenToSteps(inPen);
       absInput.limit = 'workArea';
 
       // Are we parking?

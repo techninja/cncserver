@@ -77,6 +77,23 @@ module.exports = function(cncserver) {
   // Return/Set PEN state  API =================================================
   cncserver.api.handlers['/v1/pen'] = function penMain(req, res){
     if (req.route.method === 'put') {
+      // Verify absolute measurement input.
+      if (req.body.abs) {
+        if (req.body.abs !== 'in' && req.body.abs !== 'mm') {
+          return [
+            406,
+            'Input not acceptable, absolute measurement must be: in, mm'
+          ];
+        } else {
+          if (!cncserver.bot.maxAreaMM) {
+            return [
+              406,
+              'Input not acceptable, bot does not support absolute position.'
+            ];
+          }
+        }
+      }
+
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
         var code = 200;
