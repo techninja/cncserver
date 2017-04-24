@@ -473,6 +473,79 @@
     run('custom', runTest);
   }
 
+  function drawRuler(){
+    var pos = {x: 0, y: 70};
+    var border = 3; // 3mm border from edge.
+    var width = 20 * 10; // N cm ruler.
+    var height = 30; // 30mm high.
+    var tickSizes = [2.5, 5, 8.25]; // Ticks at 2.5, 5 and 8.25 mm height.
+
+    // Draw ruler border.
+    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
+    run('down'); // Draw.
+    run('move', {x:pos.x + width + border * 2, y: pos.y, abs: 'mm'}); // Top right
+    run('move', {x:pos.x + width + border * 2, y: pos.y + height, abs: 'mm'}); // Bottom right
+    run('move', {x:pos.x, y:pos.y + height, abs: 'mm'}); // Bottom left
+    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
+    run('up');
+
+    // Loop over X positions from left to right.
+    for (var x = 0; x <= width; x++) {
+      var drawX = pos.x + border + x;
+
+      var hIndex = 0; // Default to small tick.
+      if (x % 5 === 0) {
+        hIndex = x % 10 === 0 ? 2 : 1;
+      }
+
+      // Skip small ticks!
+      if (hIndex != 0) {
+        run('move', {x: drawX, y:pos.y, abs: 'mm'}); // Top of X pos
+        run('down');
+        run('move', {x: drawX, y: pos.y + tickSizes[hIndex], abs: 'mm'}); // Top of X pos
+        run('up');
+      }
+    }
+    run('park');
+  }
+
+
+  function drawRulerVert(){
+    var pos = {x: 180, y: 0};
+    var border = 3; // 3mm border from edge.
+    var width = 19 * 10; // N cm ruler.
+    var height = 30; // 30mm high.
+    var tickSizes = [2.5, 5, 8.25]; // Ticks at 2.5, 5 and 8.25 mm height.
+
+    // Draw ruler border.
+    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
+    run('down'); // Draw.
+    run('move', {x:pos.x + height, y: pos.y, abs: 'mm'}); // Top right
+    run('move', {x:pos.x + height, y: pos.y + width + border * 2, abs: 'mm'}); // Bottom right
+    run('move', {x:pos.x, y:pos.y + width + border * 2, abs: 'mm'}); // Bottom left
+    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
+    run('up');
+
+    // Loop over Y positions from top to bottom.
+    for (var y = 0; y <= width; y++) {
+      var drawY = pos.y + border + y;
+
+      var hIndex = 0; // Default to small tick.
+      if (y % 5 === 0) {
+        hIndex = y % 10 === 0 ? 2 : 1;
+      }
+
+      // Skip small ticks!
+      if (hIndex != 0) {
+        run('move', {x: pos.x, y: drawY, abs: 'mm'});
+        run('down');
+        run('move', {x: pos.x + tickSizes[hIndex], y: drawY, abs: 'mm'});
+        run('up');
+      }
+    }
+    run('park');
+  }
+
 </script>
 
 
