@@ -48,28 +48,28 @@ cncserver.cmd = {
       next = [next];
     }
 
+    // These are all run as send and forgets, so ignore the timeout.
     switch (next[0]) {
       case "move":
+        next[1].ignoreTimeout = true;
         cncserver.api.pen.move(next[1], cncserver.cmd.cb);
         break;
       case "tool":
+        next[1].ignoreTimeout = true;
         cncserver.api.tools.change(next[1], cncserver.cmd.cb);
         break;
       case "up":
-        cncserver.api.pen.up(cncserver.cmd.cb);
+        cncserver.api.pen.up(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
       case "down":
-        cncserver.api.pen.down(cncserver.cmd.cb);
+        cncserver.api.pen.down(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
       case "status":
         cncserver.utils.status(next[1], next[2]);
         cncserver.cmd.cb(true);
         break;
-      case "wash":
-        cncserver.wcb.fullWash(cncserver.cmd.cb);
-        break;
       case "park":
-        cncserver.api.pen.park(cncserver.cmd.cb);
+        cncserver.api.pen.park(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
       case "custom":
         cncserver.cmd.cb();

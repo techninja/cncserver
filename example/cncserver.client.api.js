@@ -183,34 +183,12 @@ cncserver.api = {
       if (!isNode) $(cncserver.api).trigger('movePoint', [point]);
 
       // Sanity check inputs
-      point.x = point.x > 100 ? 100 : point.x;
-      point.y = point.y > 100 ? 100 : point.y;
       point.x = point.x < 0 ? 0 : point.x;
       point.y = point.y < 0 ? 0 : point.y;
 
-      // If we're on node and we have a socket, shortcut via WebSockets.
-      // TODO: FIX this as causes socket.io call stack overflows
-      if (isNode && cncserver.global.socket && false) {
-        if (typeof point.returnData === 'undefined') {
-          point.returnData = !!callback;
-        }
-
-        cncserver.global.socket.emit('move', point);
-        if (callback) {
-          if (!point.returnData){
-            callback({});
-          } else {
-            var catchMove = function(d){
-              callback(d);
-              cncserver.global.socket.removeListener('move', catchMove);
-            };
-
-            cncserver.global.socket.on('move', catchMove);
-          }
-        }
-
-        // Leave this entire function to avoid doing the regular request.
-        return;
+      if (!point.abs) {
+        point.x = point.x > 100 ? 100 : point.x;
+        point.y = point.y > 100 ? 100 : point.y;
       }
 
       // Ignore timeout with no callback by default
