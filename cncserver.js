@@ -63,6 +63,9 @@ require('./src/cncserver.utils.js')(cncserver);
 // Settings shortcuts/utils & initialization.
 require('./src/cncserver.settings.js')(cncserver);
 
+// Maths for doing accelerated moves.
+require('./src/cncserver.accel.js')(cncserver);
+
 // Server setup and associated wrapper.
 require('./src/cncserver.server.js')(cncserver);
 

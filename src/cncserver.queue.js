@@ -243,11 +243,23 @@ module.exports = function(cncserver) {
     if (typeof item.command === "object") { // Detailed buffer object
       switch (item.command.type) {
         case 'absmove':
-          var change = cncserver.utils.getPosChangeData(
-            item.command.source,
-            item.command
-          );
-          commandOut = [cncserver.buffer.cmdstr('movexy', change)];
+          if (cncserver.botConf.get('acceleration')) {
+            // TODO: Add acceleration
+            commandOut = cncserver.accel.getAccelCommands(
+              item.command.source,
+              item.command
+            );
+
+            for (var i = 0; i < commandOut.length; i++) {
+              commandOut[i] = cncserver.buffer.cmdstr('movexy', commandOut[i]);
+            }
+          } else {
+            var change = cncserver.utils.getPosChangeData(
+              item.command.source,
+              item.command
+            );
+            commandOut = [cncserver.buffer.cmdstr('movexy', change)];
+          }
           break;
         case 'absheight':
           var hChange = cncserver.utils.getHeightChangeData(
