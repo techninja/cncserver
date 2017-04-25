@@ -39,7 +39,7 @@ continue on!
 
 #### Install Node.js
 CNC Server runs on node.js!  Download
-[the installer for your operating system](http://nodejs.org/download), following
+[the installer for your operating system](http://www.nodejs.com/download), following
 the instructions, and you should be up and running with node! To run a node
 application, simply type `node filename.js` into a command line or terminal.
 
@@ -47,8 +47,8 @@ application, simply type `node filename.js` into a command line or terminal.
 **npm** is the **N** ode **P** ackage **M** anager, and it makes installing stuff
 *really* easy. If you used the node installer for Windows or Mac, you should
 already have it! On Linux, (with curl installed), as an admin, simply run
-`curl https://npmjs.org/install.sh | sh` in a terminal. If you're having
-trouble read [here](https://npmjs.org/doc/README.html).
+`curl https://www.npmjs.com/install.sh | sh` in a terminal. If you're having
+trouble read [here](https://www.npmjs.com/doc/README.html).
 
 #### CNC server files
  * **For easy updating from master:** Use the handy GUI! Click the
