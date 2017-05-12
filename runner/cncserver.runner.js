@@ -313,5 +313,5 @@ function serialWrite (command, callback) {
  *   Incoming data from serial port
  */
 function serialReadline(data) {
-  sendMessage('serial.data', data);
+  sendMessage('serial.data', data.toString());
 }
