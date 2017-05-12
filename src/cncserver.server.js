@@ -7,6 +7,7 @@
 
 module.exports = function(cncserver) {
   var express = require('express'); // Express Webserver Requires
+  var bodyParser = require('body-parser'); // Body parser middleware.
   cncserver.app = express();
 
   // Setup the cental server object.
@@ -14,10 +15,12 @@ module.exports = function(cncserver) {
   cncserver.srv = {}; // Hold custom functions/wrappers.
 
   // Global express initialization (must run before any endpoint creation)
-  cncserver.app.configure(function() {
-    cncserver.app.use("/", express.static(__dirname + '/../example'));
-    cncserver.app.use(express.bodyParser());
-  });
+  cncserver.app.use("/", express.static(__dirname + '/../example'));
+  // Configure app to use bodyParser().
+  var jsonBodyParser = bodyParser.json();
+  var urlEncodedBodyParser = bodyParser.urlencoded({ extended: true });
+  cncserver.app.use(jsonBodyParser);
+  cncserver.app.use(urlEncodedBodyParser);
 
   // Start express HTTP server for API on the given port
   var serverStarted = false;

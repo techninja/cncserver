@@ -145,8 +145,10 @@ function gotMessage(packet) {
       break;
     case "buffer.clear": // Clear the entire buffer.
       buffer = [];
-      executeNext();
-      console.log('BUFFER CLEARED');
+      port.flush(function() {
+        executeNext();
+        console.log('BUFFER CLEARED');
+      });
       break;
   }
 }
@@ -154,7 +156,7 @@ function gotMessage(packet) {
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
   options.disconnectedCallback = disconnectSerial;
-  options.parser = SerialPort.parsers.readline("\r");
+  options.parser = new SerialPort.parsers.Readline();
 
   try {
     port = new SerialPort(options.port, options, function(err){

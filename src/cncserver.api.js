@@ -10,7 +10,7 @@ module.exports = function(cncserver) {
   // CNC Server API ============================================================
   // Return/Set CNCServer Configuration ========================================
   cncserver.createServerEndpoint("/v1/settings", function(req){
-    if (req.route.method === 'get') { // Get list of tools
+    if (req.method === 'GET') { // Get list of tools
       return {code: 200, body: {
         global: '/v1/settings/global',
         bot: '/v1/settings/bot'
@@ -47,9 +47,9 @@ module.exports = function(cncserver) {
     }
 
     // Get the full list for the type
-    if (req.route.method === 'get') {
+    if (req.method === 'GET') {
       return {code: 200, body: getSettings()};
-    } else if (req.route.method === 'put') {
+    } else if (req.method === 'PUT') {
       for (var i in req.body) {
         conf.set(i, req.body[i]);
       }
@@ -61,7 +61,7 @@ module.exports = function(cncserver) {
 
   // Return/Set PEN state  API =================================================
   cncserver.createServerEndpoint("/v1/pen", function(req, res){
-    if (req.route.method === 'put') {
+    if (req.method === 'PUT') {
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
         var code = 200;
@@ -80,12 +80,12 @@ module.exports = function(cncserver) {
         body = JSON.stringify(body);
         res.status(code).send(body);
         if (cncserver.gConf.get('debug')) {
-          console.log(">RESP", req.route.path, code, body);
+          console.log(">RESP", req.path, code, body);
         }
       });
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method === 'delete'){
+    } else if (req.method === 'DELETE'){
       // Reset pen to defaults (park)
       cncserver.control.setHeight('up', function(){
         cncserver.control.setPen({
@@ -108,13 +108,13 @@ module.exports = function(cncserver) {
           body = JSON.stringify(body);
           res.status(code).send(body);
           if (cncserver.gConf.get('debug')) {
-            console.log(">RESP", req.route.path, code, body);
+            console.log(">RESP", req.path, code, body);
           }
         });
       }, req.body.skipBuffer);
 
       return true; // Tell endpoint wrapper we'll handle the response
-    } else if (req.route.method === 'get'){
+    } else if (req.method === 'GET'){
       if (req.query.actual) {
         return {code: 200, body: cncserver.actualPen};
       } else {
@@ -128,7 +128,7 @@ module.exports = function(cncserver) {
   // Return/Set Motor state API ================================================
   cncserver.createServerEndpoint("/v1/motors", function(req){
     // Disable/unlock motors
-    if (req.route.method === 'delete') {
+    if (req.method === 'DELETE') {
       if (req.body.skipBuffer) {
         cncserver.ipc.sendMessage('serial.direct.command', {
           commands: cncserver.buffer.cmdstr('disablemotors')
@@ -138,7 +138,7 @@ module.exports = function(cncserver) {
         cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
         return [201, 'Motor Disable Queued'];
       }
-    } else if (req.route.method === 'put') {
+    } else if (req.method === 'PUT') {
       if (parseInt(req.body.reset, 10) === 1) {
         // ZERO motor position to park position
         var park = cncserver.utils.centToSteps(cncserver.bot.park, true);
@@ -182,7 +182,7 @@ module.exports = function(cncserver) {
   // Command buffer API ========================================================
   cncserver.createServerEndpoint("/v1/buffer", function(req, res){
     var buffer = cncserver.buffer;
-    if (req.route.method === 'get' || req.route.method === 'put') {
+    if (req.method === 'GET' || req.method === 'PUT') {
       // Pause/resume (normalize input)
       if (typeof req.body.paused === "string") {
         req.body.paused = req.body.paused === "true" ? true : false;
@@ -248,7 +248,7 @@ module.exports = function(cncserver) {
                   }));
 
                   if (cncserver.gConf.get('debug')) {
-                    console.log(">RESP", req.route.path, '200');
+                    console.log(">RESP", req.path, '200');
                   }
                 }
               );
@@ -285,13 +285,13 @@ module.exports = function(cncserver) {
           buffer.newlyPaused = false;
 
           if (cncserver.gConf.get('debug')) {
-            console.log(">RESP", req.route.path, 200);
+            console.log(">RESP", req.path, 200);
           }
         };
 
         return true; // Don't finish the response till later
       }
-    } else if (req.route.method === 'post') {
+    } else if (req.method === 'POST') {
       // Create a status message/callback and shuck it into the buffer
       if (typeof req.body.message === "string") {
         cncserver.run('message', req.body.message);
@@ -302,7 +302,7 @@ module.exports = function(cncserver) {
       } else {
         return [400, '/v1/buffer POST only accepts "message" or "callback"'];
       }
-    } else if (req.route.method === 'delete') {
+    } else if (req.method === 'DELETE') {
       buffer.clear();
       return [200, 'Buffer Cleared'];
     } else {
@@ -312,7 +312,7 @@ module.exports = function(cncserver) {
 
   // Get/Change Tool API =======================================================
   cncserver.createServerEndpoint("/v1/tools", function(req){
-    if (req.route.method === 'get') { // Get list of tools
+    if (req.method === 'GET') { // Get list of tools
       return {code: 200, body:{
         tools: Object.keys(cncserver.botConf.get('tools'))
       }};
@@ -324,7 +324,7 @@ module.exports = function(cncserver) {
   cncserver.createServerEndpoint("/v1/tools/:tool", function(req, res){
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
-    if (req.route.method === 'put') { // Set Tool
+    if (req.method === 'PUT') { // Set Tool
       // Filter non-exitant tools (ignoring virtual indexes).
       if (cncserver.botConf.get('tools:' + toolName.split('|')[0])){
         cncserver.control.setTool(toolName, function(){
@@ -334,7 +334,7 @@ module.exports = function(cncserver) {
           }));
 
           if (cncserver.gConf.get('debug')) {
-            console.log(">RESP", req.route.path, 200, 'Tool:' + toolName);
+            console.log(">RESP", req.path, 200, 'Tool:' + toolName);
           }
         }, req.body.ignoreTimeout);
         return true; // Tell endpoint wrapper we'll handle the response

@@ -22,15 +22,15 @@ module.exports = function(cncserver) {
 
       if (cncserver.gConf.get('debug') && path !== '/poll') {
         console.log(
-          req.route.method.toUpperCase(),
-          req.route.path,
+          req.method.toUpperCase(),
+          req.path,
           JSON.stringify(req.body)
         );
       }
 
       // Handle CORS Pre-flight OPTIONS request ourselves
       // TODO: Allow implementers to define options and allowed methods.
-      if (req.route.method === 'options') {
+      if (req.method === 'options') {
         res.set(
           'Access-Control-Allow-Methods',
           'PUT, POST, GET, DELETE'
@@ -48,7 +48,7 @@ module.exports = function(cncserver) {
       if (cbStat === false) { // Super simple "not supported"
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(">RESP", req.route.path, 405, 'Not Supported');
+          console.log(">RESP", req.path, 405, 'Not Supported');
         }
 
         res.status(405).send(JSON.stringify({
@@ -57,7 +57,7 @@ module.exports = function(cncserver) {
       } else if(what.call(cbStat) === '[object Array]') { // Just return message
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(">RESP", req.route.path, cbStat[0], cbStat[1]);
+          console.log(">RESP", req.path, cbStat[0], cbStat[1]);
         }
 
         // Array format: [/http code/, /status message/]
@@ -69,7 +69,7 @@ module.exports = function(cncserver) {
         if (cncserver.gConf.get('debug') && path !== '/poll') {
           console.log(
             ">RESP",
-            req.route.path,
+            req.path,
             cbStat.code,
             JSON.stringify(req.body)
           );
