@@ -155,16 +155,18 @@ function gotMessage(packet) {
 
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
-  options.disconnectedCallback = disconnectSerial;
-  options.parser = new SerialPort.parsers.Readline();
-
   try {
     port = new SerialPort(options.port, options, function(err){
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
         console.log('CONNECTED TO ', options.port);
-        port.on("data", serialReadline);
+
+        var Readline = SerialPort.parsers.Readline;
+        var parser = port.pipe(new Readline({delimiter: '\r'}));
+        parser.on("data", serialReadline);
+        port.on("disconnect", disconnectSerial);
+        port.on("close", disconnectSerial);
       } else {
         simulation = true;
         if (config.debug) console.log('SerialPort says:', err);
