@@ -7,13 +7,13 @@
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.17.1",
-    "express": "^4.1.5",
+    "express": "~3.0.0",
     "ini": "1.3.4",
     "nconf": "0.8.4",
     "node-ipc": "8.9.2",
     "request": "*",
     "serialport": "EmergingTechnologyAdvisors/node-serialport#5.0.0-beta3",
-    "socket.io": "^2.0.1"
+    "socket.io": "^1.4.8"
   },
   "devDependencies": {
     "mocha": "*",
