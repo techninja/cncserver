@@ -129,15 +129,8 @@ module.exports = function(cncserver) {
   cncserver.createServerEndpoint("/v1/motors", function(req){
     // Disable/unlock motors
     if (req.route.method === 'delete') {
-      if (req.body.skipBuffer) {
-        cncserver.ipc.sendMessage('serial.direct.command', {
-          commands: cncserver.buffer.cmdstr('disablemotors')
-        });
-        return [200, 'Motors Disabled'];
-      } else {
-        cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
-        return [201, 'Motor Disable Queued'];
-      }
+      cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
+      return [201, 'Disable Queued'];
     } else if (req.route.method === 'put') {
       if (parseInt(req.body.reset, 10) === 1) {
         // ZERO motor position to park position
@@ -325,8 +318,7 @@ module.exports = function(cncserver) {
     var toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
-      // Filter non-exitant tools (ignoring virtual indexes).
-      if (cncserver.botConf.get('tools:' + toolName.split('|')[0])){
+      if (cncserver.botConf.get('tools:' + toolName)){
         cncserver.control.setTool(toolName, function(){
           cncserver.pen.tool = toolName;
           res.status(200).send(JSON.stringify({
