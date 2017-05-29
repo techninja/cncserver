@@ -106,7 +106,7 @@ function gotMessage(packet) {
   switch(packet.command) {
     case "runner.config":
       config = data;
-      if (config.debug) console.log('Got Config data:', config);
+      if (config.debug) console.log('Config data:' + JSON.stringify(config));
       break;
     case "runner.shutdown":
       console.log('Recieved kill signal from host, shutting down runner.');
@@ -155,8 +155,9 @@ function gotMessage(packet) {
 
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
+  if (config.debug) console.log('Connect to:' + JSON.stringify(options));
   try {
-    port = new SerialPort(options.port, options, function(err){
+    port = new SerialPort(options.port, options, function(err) {
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
@@ -169,20 +170,20 @@ function connectSerial(options) {
         port.on("close", disconnectSerial);
       } else {
         simulation = true;
-        if (config.debug) console.log('SerialPort says:', err);
+        if (config.debug) console.log('SerialPort says:' + JSON.stringify(err));
         sendMessage('serial.error', {type:'connect', message: err});
       }
     });
   } catch(err) {
     simulation = true;
-    console.log('SerialPort says:', err);
+    console.log('SerialPort says:' + JSON.stringify(err));
     sendMessage('serial.error', {type:'connect', message: err});
   }
 }
 
-function disconnectSerial(e) {
-  console.log('Serial Disconnected!'.error, e);
-  sendMessage('serial.disconnected', {message: e});
+function disconnectSerial(err) {
+  console.log('Serial Disconnected!'.error + JSON.stringify(err));
+  sendMessage('serial.disconnected', {message: err});
 }
 
 
