@@ -300,10 +300,18 @@ function serialWrite (command, callback) {
     if (config.showSerial) console.info('Executing serial write: ' + command);
     if (config.debug) console.time('SerialSendtoDrain');
     try {
-      port.write(command + "\r", function() {
+      // It should realistically never take longer than half a second to send.
+      var writeTimeout = setTimeout(function() {
+        console.error('WRITE TIMEOUT, COMMAND FAILED:', command);
+      }, 500);
+
+      port.write(command + "\r", 'ascii', function() {
         port.drain(function() {
-          if (config.debug) console.timeEnd('SerialSendtoDrain');
-          if (callback) callback();
+          clearTimeout(writeTimeout);
+          port.flush(function() {
+            if (config.debug) console.timeEnd('SerialSendtoDrain');
+            if (callback) callback();
+          });
         });
       });
     } catch(e) {
