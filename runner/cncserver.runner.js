@@ -145,10 +145,15 @@ function gotMessage(packet) {
       break;
     case "buffer.clear": // Clear the entire buffer.
       buffer = [];
-      port.flush(function() {
+      if (simulation) {
         executeNext();
         console.log('BUFFER CLEARED');
-      });
+      } else {
+        port.flush(function() {
+          executeNext();
+          console.log('BUFFER CLEARED');
+        });
+      }
       break;
   }
 }
