@@ -106,7 +106,7 @@ function gotMessage(packet) {
   switch(packet.command) {
     case "runner.config":
       config = data;
-      if (config.debug) console.log('Got Config data:', config);
+      if (config.debug) console.log('Config data:' + JSON.stringify(config));
       break;
     case "runner.shutdown":
       console.log('Recieved kill signal from host, shutting down runner.');
@@ -145,40 +145,50 @@ function gotMessage(packet) {
       break;
     case "buffer.clear": // Clear the entire buffer.
       buffer = [];
-      executeNext();
-      console.log('BUFFER CLEARED');
+      if (simulation) {
+        executeNext();
+        console.log('BUFFER CLEARED');
+      } else {
+        port.flush(function() {
+          executeNext();
+          console.log('BUFFER CLEARED');
+        });
+      }
       break;
   }
 }
 
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
-  options.disconnectedCallback = disconnectSerial;
-  options.parser = SerialPort.parsers.readline("\r");
-
+  if (config.debug) console.log('Connect to:' + JSON.stringify(options));
   try {
-    port = new SerialPort(options.port, options, function(err){
+    port = new SerialPort(options.port, options, function(err) {
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
         console.log('CONNECTED TO ', options.port);
-        port.on("data", serialReadline);
+
+        var Readline = SerialPort.parsers.Readline;
+        var parser = port.pipe(new Readline({delimiter: '\r'}));
+        parser.on("data", serialReadline);
+        port.on("disconnect", disconnectSerial);
+        port.on("close", disconnectSerial);
       } else {
         simulation = true;
-        if (config.debug) console.log('SerialPort says:', err);
+        if (config.debug) console.log('SerialPort says:' + JSON.stringify(err));
         sendMessage('serial.error', {type:'connect', message: err});
       }
     });
   } catch(err) {
     simulation = true;
-    console.log('SerialPort says:', err);
+    console.log('SerialPort says:' + JSON.stringify(err));
     sendMessage('serial.error', {type:'connect', message: err});
   }
 }
 
-function disconnectSerial(e) {
-  console.log('Serial Disconnected!'.error, e);
-  sendMessage('serial.disconnected', {message: e});
+function disconnectSerial(err) {
+  console.log('Serial Disconnected!'.error + JSON.stringify(err));
+  sendMessage('serial.disconnected', {message: err});
 }
 
 
@@ -290,10 +300,18 @@ function serialWrite (command, callback) {
     if (config.showSerial) console.info('Executing serial write: ' + command);
     if (config.debug) console.time('SerialSendtoDrain');
     try {
-      port.write(command + "\r", function() {
+      // It should realistically never take longer than half a second to send.
+      var writeTimeout = setTimeout(function() {
+        console.error('WRITE TIMEOUT, COMMAND FAILED:', command);
+      }, 500);
+
+      port.write(command + "\r", 'ascii', function() {
         port.drain(function() {
-          if (config.debug) console.timeEnd('SerialSendtoDrain');
-          if (callback) callback();
+          clearTimeout(writeTimeout);
+          port.flush(function() {
+            if (config.debug) console.timeEnd('SerialSendtoDrain');
+            if (callback) callback();
+          });
         });
       });
     } catch(e) {
@@ -311,5 +329,5 @@ function serialWrite (command, callback) {
  *   Incoming data from serial port
  */
 function serialReadline(data) {
-  sendMessage('serial.data', data);
+  sendMessage('serial.data', data.toString());
 }
