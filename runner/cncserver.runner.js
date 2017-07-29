@@ -175,20 +175,20 @@ function connectSerial(options) {
         port.on("close", disconnectSerial);
       } else {
         simulation = true;
-        if (config.debug) console.log('SerialPort says:' + JSON.stringify(err));
-        sendMessage('serial.error', {type:'connect', message: err});
+        if (config.debug) console.log('SerialPort says:' + err.toString());
+        sendMessage('serial.error', {type:'connect', message: err.toString()});
       }
     });
   } catch(err) {
     simulation = true;
-    console.log('SerialPort says:' + JSON.stringify(err));
-    sendMessage('serial.error', {type:'connect', message: err});
+    console.log('SerialPort says:' + err.toString());
+    sendMessage('serial.error', {type:'connect', message: err.toString()});
   }
 }
 
 function disconnectSerial(err) {
-  console.log('Serial Disconnected!'.error + JSON.stringify(err));
-  sendMessage('serial.disconnected', {message: err});
+  console.log('Serial Disconnected!'.error + err.toString());
+  sendMessage('serial.disconnected', {message: err.toString()});
 }
 
 
