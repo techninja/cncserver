@@ -188,7 +188,9 @@ function connectSerial(options) {
 
 function disconnectSerial(err) {
   console.log('Serial Disconnected!'.error + err.toString());
-  sendMessage('serial.disconnected', {message: err.toString()});
+  sendMessage('serial.disconnected', {
+    type: 'disconnect', message: err.toString()
+  });
 }
 
 

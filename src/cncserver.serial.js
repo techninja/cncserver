@@ -68,7 +68,9 @@ module.exports = function(cncserver){
           "Are you sure it's connected? Error #22"
         );
 
-        if (options.error) options.error(botController.name + ' not found.');
+        if (options.error) options.error({
+          message: botController.name + ' not found.', type: 'notfound'
+        });
       } else {
         console.log('Attempting to open serial port: "' + connectPath + '"...');
 
