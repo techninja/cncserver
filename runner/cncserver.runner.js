@@ -308,8 +308,8 @@ function serialWrite (command, callback) {
       }, 500);
 
       port.write(command + "\r", 'ascii', function() {
+        clearTimeout(writeTimeout);
         port.drain(function() {
-          clearTimeout(writeTimeout);
           port.flush(function() {
             if (config.debug) console.timeEnd('SerialSendtoDrain');
             if (callback) callback();
