@@ -76,7 +76,7 @@ module.exports = function(cncserver){
 
         var connectData =  {
           port: connectPath,
-          baudrate : Number(botController.baudRate)
+          baudRate : Number(botController.baudRate)
         };
 
         cncserver.ipc.sendMessage('serial.connect', connectData);
@@ -104,6 +104,7 @@ module.exports = function(cncserver){
   cncserver.serial.autoDetectPort = function (botControllerConf, callback) {
     var botMaker = botControllerConf.manufacturer.toLowerCase();
     var botProductId = botControllerConf.productId.toLowerCase();
+    var botName = botControllerConf.name.toLowerCase();
 
     // Output data arrays.
     var detectList = [];
@@ -118,6 +119,7 @@ module.exports = function(cncserver){
       ports.forEach(function(port){
         var portMaker = (port.manufacturer || "").toLowerCase();
         var portProductId = (port.productId || "").toLowerCase();
+        var portPnpId = (port.pnpId || "").toLowerCase();
 
         // Add this port to the clean list if its vendor ID isn't undefined.
         if (typeof port.vendorId !== 'undefined') {
@@ -135,9 +137,10 @@ module.exports = function(cncserver){
 
           break;
         default: // includes 'darwin', 'linux'
-          // Match by contains productID and exact Manufacturer.
+          // Match by contains productID/pnpID and exact Manufacturer.
           if (portMaker === botMaker) {
-            if (portProductId.indexOf(botProductId) !== -1) {
+            if (portProductId.indexOf(botProductId) !== -1 ||
+                portPnpId.indexOf(botName) !== -1) {
               detectList.push(port.comName);
             }
           }
