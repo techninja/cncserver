@@ -139,7 +139,8 @@ module.exports = function(cncserver){
         default: // includes 'darwin', 'linux'
           // Match by contains productID/pnpID and exact Manufacturer.
           if (portMaker === botMaker) {
-            if (portProductId.indexOf(botProductId) !== -1 || portPnpId.indexOf(botName) !== -1) {
+            if (portProductId.indexOf(botProductId) !== -1 ||
+                portPnpId.indexOf(botName) !== -1) {
               detectList.push(port.comName);
             }
           }
