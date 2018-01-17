@@ -5,6 +5,22 @@
  */
 
 module.exports = function(cncserver) {
+  var express = require('express'); // Express object (for static).
+
+  /**
+   * Wrapper for creating a static (directory reading HTML) endpoint.
+   *
+   * @param  {string} userPath   [description]
+   *   Path a user would enter to get to the content.
+   * @param  {string} sourcePath
+   *   Path for source files to be served from.
+   * @param  {object} options
+   *   options object for static serving of files.
+   */
+  cncserver.createStaticEndpoint = function (userPath, sourcePath, options){
+    cncserver.app.use(userPath, express.static(sourcePath, options));
+  };
+
   /**
    * Wrapper for unifying the creation and logic of standard endpoints, their
    * headers and their responses and formats.
@@ -87,5 +103,6 @@ module.exports = function(cncserver) {
   };
 
   // Exports.
+  cncserver.exports.createStaticEndpoint = cncserver.createStaticEndpoint;
   cncserver.exports.createServerEndpoint = cncserver.createServerEndpoint;
 };

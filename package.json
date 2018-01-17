@@ -1,12 +1,13 @@
 {
   "name": "cncserver",
-  "version": "2.8.0",
+  "version": "2.8.5",
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.17.1",
+    "connect-slashes": "techninja/connect-slashes#ignore-files",
     "express": "~3.0.0",
     "ini": "1.3.4",
     "nconf": "0.8.4",
