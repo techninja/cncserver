@@ -103,7 +103,7 @@ module.exports = function(cncserver){
    */
   cncserver.serial.autoDetectPort = function (botControllerConf, callback) {
     var botMaker = botControllerConf.manufacturer.toLowerCase();
-    var botProductId = botControllerConf.productId.toLowerCase();
+    var botProductId = parseInt(botControllerConf.productId.toLowerCase());
     var botName = botControllerConf.name.toLowerCase();
 
     // Output data arrays.
@@ -118,7 +118,10 @@ module.exports = function(cncserver){
 
       ports.forEach(function(port){
         var portMaker = (port.manufacturer || "").toLowerCase();
-        var portProductId = (port.productId || "").toLowerCase();
+        // Convert reported product ID from hex string to decimal.
+        var portProductId = parseInt(
+          '0x' + (port.productId || "").toLowerCase()
+        );
         var portPnpId = (port.pnpId || "").toLowerCase();
 
         // Add this port to the clean list if its vendor ID isn't undefined.
@@ -137,9 +140,10 @@ module.exports = function(cncserver){
 
           break;
         default: // includes 'darwin', 'linux'
-          // Match by contains productID/pnpID and exact Manufacturer.
+          // Match by Exact Manufacturer...
           if (portMaker === botMaker) {
-            if (portProductId.indexOf(botProductId) !== -1 ||
+            // Match by exact product ID (hex to dec), or PNP ID partial
+            if (portProductId === botProductId ||
                 portPnpId.indexOf(botName) !== -1) {
               detectList.push(port.comName);
             }
