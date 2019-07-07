@@ -7,7 +7,8 @@
 
 module.exports = function(cncserver) {
   var express = require('express'); // Express Webserver Requires
-  cncserver.app = express();
+  var slashes = require('connect-slashes'); // Middleware to manage URI slashes
+  cncserver.app = express(); // Create router (app).
 
   // Setup the cental server object.
   cncserver.server = require('http').createServer(cncserver.app);
@@ -17,6 +18,7 @@ module.exports = function(cncserver) {
   cncserver.app.configure(function() {
     cncserver.app.use("/", express.static(__dirname + '/../example'));
     cncserver.app.use(express.bodyParser());
+    cncserver.app.use(slashes());
   });
 
   // Start express HTTP server for API on the given port

@@ -68,13 +68,15 @@ module.exports = function(cncserver){
           "Are you sure it's connected? Error #22"
         );
 
-        if (options.error) options.error(botController.name + ' not found.');
+        if (options.error) options.error({
+          message: botController.name + ' not found.', type: 'notfound'
+        });
       } else {
         console.log('Attempting to open serial port: "' + connectPath + '"...');
 
         var connectData =  {
           port: connectPath,
-          baudrate : Number(botController.baudRate)
+          baudRate : Number(botController.baudRate)
         };
 
         cncserver.ipc.sendMessage('serial.connect', connectData);
@@ -101,7 +103,8 @@ module.exports = function(cncserver){
    */
   cncserver.serial.autoDetectPort = function (botControllerConf, callback) {
     var botMaker = botControllerConf.manufacturer.toLowerCase();
-    var botProductId = botControllerConf.productId.toLowerCase();
+    var botProductId = parseInt(botControllerConf.productId.toLowerCase());
+    var botName = botControllerConf.name.toLowerCase();
 
     // Output data arrays.
     var detectList = [];
@@ -115,7 +118,11 @@ module.exports = function(cncserver){
 
       ports.forEach(function(port){
         var portMaker = (port.manufacturer || "").toLowerCase();
-        var portProductId = (port.productId || "").toLowerCase();
+        // Convert reported product ID from hex string to decimal.
+        var portProductId = parseInt(
+          '0x' + (port.productId || "").toLowerCase()
+        );
+        var portPnpId = (port.pnpId || "").toLowerCase();
 
         // Add this port to the clean list if its vendor ID isn't undefined.
         if (typeof port.vendorId !== 'undefined') {
@@ -133,9 +140,11 @@ module.exports = function(cncserver){
 
           break;
         default: // includes 'darwin', 'linux'
-          // Match by contains productID and exact Manufacturer.
+          // Match by Exact Manufacturer...
           if (portMaker === botMaker) {
-            if (portProductId.indexOf(botProductId) !== -1) {
+            // Match by exact product ID (hex to dec), or PNP ID partial
+            if (portProductId === botProductId ||
+                portPnpId.indexOf(botName) !== -1) {
               detectList.push(port.comName);
             }
           }
