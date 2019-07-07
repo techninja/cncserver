@@ -698,8 +698,7 @@ Content-Type: application/json; charset=UTF-8
 
 {
     // Because some batch processing takes longer than the connection would be
-    // held open for, we simply return a 201 that the command shave been read
-    // and that these will be pushed into the buffer as quickly as possible.
+    // held open for, the endpoint returns 201 once parsing the JSON is complete
     "status" : "Parsed 4 commands, queuing"
 }
 ```
