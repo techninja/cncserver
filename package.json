@@ -1,6 +1,6 @@
 {
   "name": "cncserver",
-  "version": "2.8.6",
+  "version": "3.0.0-beta1",
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
@@ -19,15 +19,18 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "mocha": "*",
+    "chai": "*",
+    "eslint": "^6.0.1",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.0",
     "grunt": "*",
     "grunt-cli": "*",
-    "grunt-mocha-test": "*",
     "grunt-contrib-jshint": "*",
-    "chai": "*"
+    "grunt-mocha-test": "*",
+    "mocha": "*"
   },
   "engines": {
-    "node": ">= 4.0.0"
+    "node": ">= 10.0.0"
   },
   "repository": {
     "type": "git",
