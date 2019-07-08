@@ -1,17 +1,14 @@
-/*jslint node: true */
-'use strict';
-
 /**
  * @file CNC Server scratch support module.
  */
-var turtle = {}; // Global turtle state object.
-var sizeMultiplier = 10; // Amount to increase size of steps
-var cncserver = {}; // Globally available cncserver obj (for this module).
+const sizeMultiplier = 10; // Amount to increase size of steps
+let turtle = {}; // Global turtle state object.
+let cncserver = {}; // Globally available cncserver obj (for this module).
 
-exports.initAPI = function (cncserverArg) {
+module.exports.initAPI = (cncserverArg) => {
   cncserver = cncserverArg;
   console.info('Scratch v2 Programming support ENABLED');
-  var pollData = {}; // "Array" of "sensor" data to be spat out to poll page
+  const pollData = {}; // "Array" of "sensor" data to be spat out to poll page
   turtle = { // Helper turtle for relative movement
     x: cncserver.bot.workArea.absCenter.x,
     y: cncserver.bot.workArea.absCenter.y,
@@ -23,35 +20,26 @@ exports.initAPI = function (cncserverArg) {
     distanceCounter: 0,
   };
 
-  pollData.render = function () {
-    var out = "";
+  pollData.render = function renderData() {
+    let out = '';
 
-    var workArea = cncserver.bot.workArea;
-    out += 'x ' + (turtle.x - workArea.absCenter.x) / sizeMultiplier  + "\n";
-    out += 'y ' + (turtle.y - workArea.absCenter.y) / sizeMultiplier + "\n";
-    out += 'z ' + (cncserver.utils.penDown() ? '1' : '0') + "\n";
+    const { bot: { workArea } } = cncserver;
+    out += `x ${(turtle.x - workArea.absCenter.x) / sizeMultiplier}\n`;
+    out += `y ${(turtle.y - workArea.absCenter.y) / sizeMultiplier}\n`;
+    out += `z ${cncserver.utils.penDown() ? '1' : '0'}\n`;
 
     // Correct for "standard" Turtle orientation in Scratch
-    var angleTemp = turtle.degrees + 90;
+    let angleTemp = turtle.degrees + 90;
     if (angleTemp > 360) {
       angleTemp -= 360;
     }
 
-    out += 'angle ' + angleTemp + "\n";
-    out += 'distanceCounter ' + turtle.distanceCounter / sizeMultiplier + "\n";
-    out += 'sleeping ' + (turtle.sleeping ? '1' : '0')  + "\n";
+    out += `angle ${angleTemp}\n`;
+    out += `distanceCounter ${turtle.distanceCounter / sizeMultiplier}\n`;
+    out += `sleeping ${turtle.sleeping ? '1' : '0'}\n`;
 
     // Loop through all existing/static pollData
-    var key = "";
-    for (key in this) {
-      if (typeof this[key] === 'object') {
-        var v = this[key].join(' ');
-
-        if (v !== '') {
-          out += key + ' ' + v + "\n";
-        }
-      }
-    }
+    out += Object.keys(this).reduce((line, item) => `${line}${key} ${this[item].join(' ')}\n`);
 
     // Throw in full pen data as well
     for (key in cncserver.pen) {
