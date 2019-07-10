@@ -1,18 +1,14 @@
-/*jslint node: true */
-"use strict";
-
 /**
  * @file Abstraction module for all Restful API related code for CNC Server!
- *
  */
 
-var fs = require('fs');
-var request = require('request');
-var _ = require('underscore');
-var querystring = require('querystring');
-var pathToRegexp = require('path-to-regexp');
+const fs = require('fs');
+const request = require('request');
+const _ = require('underscore');
+const querystring = require('querystring');
+const pathToRegexp = require('path-to-regexp');
 
-module.exports = function(cncserver) {
+module.exports = (cncserver = {}) => {
   // CNC Server API ============================================================
   // Enpoints are created and assigned via a server path to respond to, and
   // and callback function that manages handles the request and response.
@@ -23,19 +19,21 @@ module.exports = function(cncserver) {
   cncserver.api.handlers = {};
 
   // Return/Set CNCServer Configuration ========================================
-  //cncserver.createServerEndpoint("/v1/settings", );
   cncserver.api.handlers['/v1/settings'] = function settingsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
-      return {code: 200, body: {
-        global: '/v1/settings/global',
-        bot: '/v1/settings/bot'
-      }};
-    } else {
-      return false;
+      return {
+        code: 200,
+        body: {
+          global: '/v1/settings/global',
+          bot: '/v1/settings/bot',
+        }
+      };
     }
+
+    return false;
   };
 
-  cncserver.api.handlers['/v1/settings/:type'] = function settingsMain(req){
+  cncserver.api.handlers['/v1/settings/:type'] = function settingsMain(req) {
     // Sanity check type
     var setType = req.params.type;
     if (setType !== 'global' && setType !== 'bot'){

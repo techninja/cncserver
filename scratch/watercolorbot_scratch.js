@@ -1,9 +1,8 @@
-/*global console */
 /*
- * @file The official client-side JavaScript based Scratch 2.0 extension for
- * CNCServer and WaterColorBot. Should mirror the abilities of the .s2e
- * Scratch 2 Offline extension.
- */
+* @file The official client-side JavaScript based Scratch 2.0 extension for
+* CNCServer and WaterColorBot. Should mirror the abilities of the .s2e
+* Scratch 2 Offline extension.
+*/
 
 (function(ext) {
   "use strict";
