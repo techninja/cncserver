@@ -1,12 +1,9 @@
-"use strict";
-
 /**
  * @file Abstraction module for restful helper utilities createServerEndpoint.
  */
+const express = require('express'); // Express object (for static).
 
-module.exports = function(cncserver) {
-  var express = require('express'); // Express object (for static).
-
+module.exports = (cncserver) => {
   /**
    * Wrapper for creating a static (directory reading HTML) endpoint.
    *
@@ -17,7 +14,7 @@ module.exports = function(cncserver) {
    * @param  {object} options
    *   options object for static serving of files.
    */
-  cncserver.createStaticEndpoint = function (userPath, sourcePath, options){
+  cncserver.createStaticEndpoint = (userPath, sourcePath, options) => {
     cncserver.app.use(userPath, express.static(sourcePath, options));
   };
 
@@ -30,9 +27,9 @@ module.exports = function(cncserver) {
    * @param {function} callback
    *   Callback triggered on HTTP request
    */
-  cncserver.createServerEndpoint = function (path, callback){
-    var what = Object.prototype.toString;
-    cncserver.app.all(path, function(req, res){
+  cncserver.createServerEndpoint = (path, callback) => {
+    const what = Object.prototype.toString;
+    cncserver.app.all(path, (req, res) => {
       res.set('Content-Type', 'application/json; charset=UTF-8');
       res.set('Access-Control-Allow-Origin', cncserver.gConf.get('corsDomain'));
 
@@ -59,21 +56,21 @@ module.exports = function(cncserver) {
         return;
       }
 
-      var cbStat = callback(req, res);
+      const cbStat = callback(req, res);
 
       if (cbStat === false) { // Super simple "not supported"
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(">RESP", req.route.path, 405, 'Not Supported');
+          console.log('>RESP', req.route.path, 405, 'Not Supported');
         }
 
         res.status(405).send(JSON.stringify({
-          status: 'Not supported'
+          status: 'Not supported',
         }));
       } else if(what.call(cbStat) === '[object Array]') { // Just return message
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
-          console.log(">RESP", req.route.path, cbStat[0], cbStat[1]);
+          console.log('>RESP', req.route.path, cbStat[0], cbStat[1]);
         }
 
         // Array format: [/http code/, /status message/]
@@ -84,7 +81,7 @@ module.exports = function(cncserver) {
         // Debug Response
         if (cncserver.gConf.get('debug') && path !== '/poll') {
           console.log(
-            ">RESP",
+            '>RESP',
             req.route.path,
             cbStat.code,
             JSON.stringify(req.body)
@@ -92,7 +89,7 @@ module.exports = function(cncserver) {
         }
 
         // Send plaintext if body is string, otherwise convert to JSON.
-        if (typeof cbStat.body === "string") {
+        if (typeof cbStat.body === 'string') {
           res.set('Content-Type', 'text/plain; charset=UTF-8');
           res.status(cbStat.code).send(cbStat.body);
         } else {

@@ -1,6 +1,3 @@
-/*jslint node: true */
-"use strict";
-
 /**
  * @file CNC Server IPC runner. Handles outputting serial commands with the
  * correct timing, so the main thread can be as bogged down as it wants, this
@@ -11,8 +8,8 @@
  */
 
 // REQUIRES ====================================================================
-var SerialPort = require("serialport");
-var ipc = require('node-ipc');
+const SerialPort = require('serialport');
+const ipc = require('node-ipc');
 
 // CONFIGURATION ===============================================================
 ipc.config.id = 'cncrunner';
@@ -21,23 +18,23 @@ ipc.config.retry = 1000;
 ipc.config.maxRetries = 10;
 
 // RUNNER STATE ================================================================
-var simulation = true; // Assume simulation mode by default.
-var port = false; // The running port, once initiated.
-var buffer = [];
-var bufferRunning = false;
-var bufferPaused = false;
-var bufferExecuting = false;
-var bufferDirectBusy = false;
+let simulation = true; // Assume simulation mode by default.
+let port = false; // The running port, once initiated.
+let buffer = [];
+let bufferRunning = false;
+let bufferPaused = false;
+let bufferExecuting = false;
+let bufferDirectBusy = false;
 
 // Runner config defaults, overridden on ready.
-var config = {
-  ack: "OK",
+const config = {
+  ack: 'OK',
   debug: false,
-  showSerial: false
+  showSerial: false,
 };
 
 // Catch any uncaught error.
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', (err) => {
   // Assume Disconnection and kill the process.
   disconnectSerial(err);
   console.error('Uncaught error, disconnected from server, shutting down');
@@ -47,20 +44,20 @@ process.on('uncaughtException', function(err) {
 
 ipc.connectTo(
   'cncserver',
-  function(){
-    ipc.of.cncserver.on('connect', function(){
+  () => {
+    ipc.of.cncserver.on('connect', () => {
         console.log('Connected to CNCServer!');
         sendMessage('runner.ready');
       }
     );
 
-    ipc.of.cncserver.on('disconnect', function(){
+    ipc.of.cncserver.on('disconnect', () => {
         //ipc.log('Disconnected from server, shutting down'.notice);
         //process.exit(0);
       }
     );
 
-    ipc.of.cncserver.on('destroy', function(){
+    ipc.of.cncserver.on('destroy', () => {
         console.log('All Retries failed or disconnected, shutting down');
         process.exit(0);
       }
@@ -79,15 +76,8 @@ ipc.connectTo(
  *
  * @return {null}
  */
-function sendMessage(command, data) {
-  if (!data) {
-    data = {};
-  }
-
-  var packet = {
-    command: command,
-    data: data
-  };
+function sendMessage(command, data = {}) {
+  const packet = { command, data };
 
   ipc.of.cncserver.emit('app.message', packet);
 }
@@ -101,88 +91,96 @@ function sendMessage(command, data) {
  * @return {null}
  */
 function gotMessage(packet) {
-  var data = packet.data;
+  const { data } = packet;
 
   switch(packet.command) {
-    case "runner.config":
+    case 'runner.config':
       config = data;
       if (config.debug) console.log('Config data:' + JSON.stringify(config));
       break;
-    case "runner.shutdown":
+    case 'runner.shutdown':
       console.log('Recieved kill signal from host, shutting down runner.');
       process.exit(0);
       break;
-    case "serial.connect":
+    case 'serial.connect':
       connectSerial(data);
       break;
-    case "serial.direct.command":
+    case 'serial.direct.command':
       // Running a set of commands at exactly the same time as another with no
       // queue/buffer to manage it would be... a frightening mess.
       if (!bufferDirectBusy) {
         bufferDirectBusy = true;
-        executeCommands(data.commands, function(){
+        executeCommands(data.commands, () => {
           bufferDirectBusy = false;
         });
       }
       break;
-    case "serial.direct.write":
+    case 'serial.direct.write':
       serialWrite(data);
       break;
-    case "buffer.add": // Add to the end of the buffer, last to be executed.
+    case 'buffer.add': // Add to the end of the buffer, last to be executed.
       // Buffer item data comes in in the following object format:
       //   hash {string}      : The tracking hash for this buffer item.
       //   commands {array}   : Array of rendered serial command strings.
       buffer.unshift(data);
       break;
-    case "buffer.pause": // Pause the running of the buffer.
+    case 'buffer.pause': // Pause the running of the buffer.
       bufferPaused = true;
       console.log('BUFFER PAUSED');
       break;
-    case "buffer.resume": // Resume running of the buffer.
+    case 'buffer.resume': // Resume running of the buffer.
       bufferPaused = false;
       executeNext();
       console.log('BUFFER RESUMED');
       break;
-    case "buffer.clear": // Clear the entire buffer.
+    case 'buffer.clear': // Clear the entire buffer.
       buffer = [];
       if (simulation) {
         executeNext();
         console.log('BUFFER CLEARED');
       } else {
-        port.flush(function() {
+        port.flush(() => {
           executeNext();
           console.log('BUFFER CLEARED');
         });
       }
       break;
+    default:
   }
 }
 
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial(options) {
-  if (config.debug) console.log('Connect to:' + JSON.stringify(options));
+  if (config.debug) console.log(`Connect to: ${JSON.stringify(options)}`);
+
   try {
-    port = new SerialPort(options.port, options, function(err) {
+    port = new SerialPort(options.port, options, (err) => {
       if (!err) {
         simulation = false;
         sendMessage('serial.connected');
         console.log('CONNECTED TO ', options.port);
 
-        var Readline = SerialPort.parsers.Readline;
-        var parser = port.pipe(new Readline({delimiter: '\r'}));
-        parser.on("data", serialReadline);
-        port.on("disconnect", disconnectSerial);
-        port.on("close", disconnectSerial);
+        const { Readline } = SerialPort.parsers;
+        const parser = port.pipe(new Readline({ delimiter: '\r' }));
+        parser.on('data', serialReadline);
+        port.on('disconnect', disconnectSerial);
+        port.on('close', disconnectSerial);
       } else {
         simulation = true;
-        if (config.debug) console.log('SerialPort says:' + err.toString());
-        sendMessage('serial.error', {type:'connect', message: err.toString()});
+        if (config.debug) console.log(`SerialPort says: ${err.toString()}`);
+        sendMessage('serial.error', {
+          type: 'connect',
+          message: err.toString(),
+        });
       }
     });
-  } catch(err) {
+  } catch (err) {
     simulation = true;
-    console.log('SerialPort says:' + err.toString());
-    sendMessage('serial.error', {type:'connect', message: err.toString()});
+    console.log(`SerialPort says: ${err.toString()}`);
+    sendMessage('serial.error', {
+      type: 'connect',
+      message: err.toString(),
+    });
   }
 }
 
@@ -216,7 +214,7 @@ function executeCommands(commands, callback, index) {
   }
 
   // Run the command at the index.
-  serialWrite(commands[index], function(){
+  serialWrite(commands[index], () => {
     index++; // Increment the index.
 
     // Now that the serial command has drained to the bot, run the next, or end?
@@ -244,15 +242,15 @@ function executeNext() {
 
   // Process a single line of the buffer =====================================
   if (buffer.length) {
-    var item = buffer.pop();
-    if (config.debug) console.log('RUNNING ITEM: ' + item.hash);
+    const item = buffer.pop();
+    if (config.debug) console.log(`RUNNING ITEM: ${item.hash}`);
     sendMessage('buffer.item.start', item.hash);
     bufferExecuting = true;
 
     // Some items don't have any rendered commands, only run those that do!
     if (item.commands.length) {
-      executeCommands(item.commands, function(){
-        if (config.debug) console.log('ITEM DONE: ' + item.hash);
+      executeCommands(item.commands, () => {
+        if (config.debug) console.log(`ITEM DONE: ${item.hash}`);
         sendMessage('buffer.item.done', item.hash);
         bufferExecuting = false;
         executeNext();
@@ -261,7 +259,7 @@ function executeNext() {
       // This buffer item doesn't have any serial commands, we're done here :)
       sendMessage('buffer.item.done', item.hash);
       bufferExecuting = false;
-      if (config.debug) console.log('NO COMMANDS ITEM: ' + item.hash);
+      if (config.debug) console.log(`NO COMMANDS ITEM: ${item.hash}`);
       executeNext();
     }
   } else {
@@ -274,7 +272,7 @@ function executeNext() {
 }
 
 // Buffer interval catcher, starts running as soon as items exist in the buffer.
-setInterval(function(){
+setInterval(() => {
   if (buffer.length && !bufferRunning && !bufferPaused) {
     bufferRunning = true;
     sendMessage('buffer.running', bufferRunning);
@@ -293,32 +291,32 @@ setInterval(function(){
  */
 function serialWrite (command, callback) {
   if (simulation) {
-    if (config.showSerial) console.info('Simulating serial write: ' + command);
-    setTimeout(function(){
+    if (config.showSerial) console.info(`Simulating serial write: ${command}`);
+    setTimeout(() => {
       serialReadline(config.ack);
       if (callback) callback();
     }, 1);
   } else {
-    if (config.showSerial) console.info('Executing serial write: ' + command);
+    if (config.showSerial) console.info(`Executing serial write: ${command}`);
     if (config.debug) console.time('SerialSendtoDrain');
     try {
       // It should realistically never take longer than half a second to send.
-      var writeTimeout = setTimeout(function() {
+      const writeTimeout = setTimeout(() => {
         console.error('WRITE TIMEOUT, COMMAND FAILED:', command);
       }, 500);
 
-      port.write(command + "\r", 'ascii', function() {
+      port.write(`${command}\r`, 'ascii', () => {
         clearTimeout(writeTimeout);
-        port.drain(function() {
-          port.flush(function() {
+        port.drain(() => {
+          port.flush(() => {
             if (config.debug) console.timeEnd('SerialSendtoDrain');
             if (callback) callback();
           });
         });
       });
-    } catch(e) {
+    } catch (e) {
       console.error('Failed to write to the serial port!:', e);
-      sendMessage('serial.error', {type:'data', message: e});
+      sendMessage('serial.error', { type: 'data', message: e });
       if (callback) callback(false);
     }
   }

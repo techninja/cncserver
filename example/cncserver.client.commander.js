@@ -7,6 +7,8 @@
  * finish, handles all API callbacks internally.
  */
 
+/* globals cncserver */
+
 cncserver.cmd = {
   // Command buffer list
   buffer: [],
@@ -15,11 +17,11 @@ cncserver.cmd = {
   process: {
     paused: false,
     busy: false,
-    max: 0
+    max: 0,
   },
 
   // CMD specific callback handler
-  cb: function(d) {
+  cb: (d) => {
     if (!cncserver.cmd.buffer.length) {
       cncserver.cmd.process.busy = false;
       cncserver.cmd.process.max = 0;
@@ -28,64 +30,64 @@ cncserver.cmd = {
       if (!cncserver.cmd.process.paused) {
         // Execute next command
         cncserver.cmd.executeNext();
-      } else {
-        cncserver.cmd.process.pauseCallback();
       }
+
+      cncserver.cmd.process.pauseCallback();
     }
   },
 
-  executeNext: function(executeCallback) {
+  executeNext: (executeCallback) => {
     if (!cncserver.cmd.buffer.length) {
       cncserver.cmd.cb();
       return;
-    } else {
-      cncserver.cmd.process.busy = true;
-    };
+    }
 
-    var next = cncserver.cmd.buffer.pop();
+    cncserver.cmd.process.busy = true;
 
-    if (typeof next == "string"){
+    let next = cncserver.cmd.buffer.pop();
+
+    if (typeof next === 'string') {
       next = [next];
     }
 
     // These are all run as send and forgets, so ignore the timeout.
     switch (next[0]) {
-      case "move":
+      case 'move':
         next[1].ignoreTimeout = true;
         cncserver.api.pen.move(next[1], cncserver.cmd.cb);
         break;
-      case "tool":
+      case 'tool':
         next[1].ignoreTimeout = true;
         cncserver.api.tools.change(next[1], cncserver.cmd.cb);
         break;
-      case "up":
+      case 'up':
         cncserver.api.pen.up(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
-      case "down":
+      case 'down':
         cncserver.api.pen.down(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
-      case "status":
+      case 'status':
         cncserver.utils.status(next[1], next[2]);
         cncserver.cmd.cb(true);
         break;
-      case "park":
+      case 'park':
         cncserver.api.pen.park(cncserver.cmd.cb, {ignoreTimeout: true});
         break;
-      case "custom":
+      case 'custom':
         cncserver.cmd.cb();
         if (next[1]) next[1](); // Run custom passed callback
         break;
       default:
-        console.debug('Queue shortcut not found:' + next[0]);
+        console.debug(`Queue shortcut not found: ${next[0]}`);
     }
     if (executeCallback) executeCallback();
   },
 
   // Add a command to the queue! format is cmd short name, arguments
-  run: function(){
-    if (typeof arguments[0] == "object") {
-      cncserver.cmd.process.max+= arguments.length;
-      $.each(arguments[0], function(i, args){
+  run: () => {
+    if (typeof arguments[0] === 'object') {
+      cncserver.cmd.process.max += arguments.length;
+      $.each(arguments[0], (i, args) => {
         cncserver.cmd.buffer.unshift(args);
       });
     } else {
@@ -95,15 +97,17 @@ cncserver.cmd = {
   },
 
   // Clear out the buffer
-  clear: function() {
+  clear: () => {
     cncserver.cmd.buffer = [];
-  }
+  },
 };
 
 // Wait around for the buffer to contain elements, and for us to not be
 // currently processing the buffer queue
-setInterval(function(){
-  if (!cncserver.cmd.process.busy && cncserver.cmd.buffer.length && !cncserver.cmd.process.paused) {
+setInterval(() => {
+  if (!cncserver.cmd.process.busy
+      && cncserver.cmd.buffer.length
+      && !cncserver.cmd.process.paused) {
     cncserver.cmd.executeNext();
   }
 }, 10);

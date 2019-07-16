@@ -1,17 +1,15 @@
-"use strict";
-
 /**
  * @file Abstraction module for all serial related code for CNC Server!
  *
  * Taking in only the global CNCServer object, add's the "serial" object.
  *
  */
-var SerialPort = require("serialport");
+const SerialPort = require('serialport');
 
-module.exports = function(cncserver){
+module.exports = (cncserver) => {
   cncserver.serial = {
     callbacks: {}, // Hold global serial connection/error callbacks.
-    connectPath: '{auto}'
+    connectPath: '{auto}',
   };
 
   /**
@@ -25,7 +23,7 @@ module.exports = function(cncserver){
    *     disconnect: Callback for close/unexpected disconnect
    *     complete: Callback for general completion
    */
-  cncserver.serial.connect = function (options) {
+  cncserver.serial.connect = (options) => {
     // Apply any passed callbacks to a new serial callbacks object.
     cncserver.serial.callbacks = {
       connect: options.connect,
@@ -36,47 +34,50 @@ module.exports = function(cncserver){
 
     // Run everything through the callback as port list is async.
     console.log('Finding available serial ports...');
-    var botController = cncserver.botConf.get('controller');
-    cncserver.serial.autoDetectPort(botController, function(ports){
+    const botController = cncserver.botConf.get('controller');
+    cncserver.serial.autoDetectPort(botController, (ports) => {
       // Give some console feedback on ports.
       if (cncserver.gConf.get('debug')) {
         console.log('Full Available Port Data:', ports.full);
       } else {
-        var names = ports.names.length ? ports.names.join(', ') : '[NONE]';
-        console.log('Available Serial ports: ' + names);
+        const names = ports.names.length ? ports.names.join(', ') : '[NONE]';
+        console.log(`Available Serial ports: ${names}`);
       }
 
-      var passedPort = cncserver.gConf.get('serialPath');
-      if (passedPort === "" || passedPort === '{auto}') {
+      const passedPort = cncserver.gConf.get('serialPath');
+      if (passedPort === '' || passedPort === '{auto}') {
         if (ports.auto.length) {
           cncserver.gConf.set('serialPath', ports.auto[0]);
-          console.log('Using first detected port: "' + ports.auto[0] + '"...');
+          console.log(`Using first detected port: "${ports.auto[0]}"...`);
         } else {
           console.error('No matching serial ports detected.');
         }
       } else {
-        console.log('Using passed serial port "' + passedPort + '"...');
+        console.log(`Using passed serial port "${passedPort}"...`);
       }
 
       // Send connect to runner...
-      var connectPath = cncserver.gConf.get('serialPath');
+      const connectPath = cncserver.gConf.get('serialPath');
 
       // Try to connect to serial, or exit with error code.
-      if (connectPath === "" || connectPath === '{auto}') {
+      if (connectPath === '' || connectPath === '{auto}') {
         console.log(
-          botController.name + " not found. " +
-          "Are you sure it's connected? Error #22"
+          `${botController.name} not found.
+          Are you sure it's connected? Error #22`
         );
 
-        if (options.error) options.error({
-          message: botController.name + ' not found.', type: 'notfound'
-        });
+        if (options.error) {
+          options.error({
+            message: `${botController.name} not found.`,
+            type: 'notfound',
+          });
+        }
       } else {
-        console.log('Attempting to open serial port: "' + connectPath + '"...');
+        console.log(`Attempting to open serial port: "${connectPath}"...`);
 
-        var connectData =  {
+        const connectData = {
           port: connectPath,
-          baudRate : Number(botController.baudRate)
+          baudRate: Number(botController.baudRate),
         };
 
         cncserver.ipc.sendMessage('serial.connect', connectData);
@@ -101,28 +102,28 @@ module.exports = function(cncserver){
    *     names {array}: Clean flat array of all available comm paths/port names.
    *     full {array}: Array of all valid serial port objects for debugging.
    */
-  cncserver.serial.autoDetectPort = function (botControllerConf, callback) {
-    var botMaker = botControllerConf.manufacturer.toLowerCase();
-    var botProductId = parseInt(botControllerConf.productId.toLowerCase());
-    var botName = botControllerConf.name.toLowerCase();
+  cncserver.serial.autoDetectPort = (botControllerConf, callback) => {
+    const botMaker = botControllerConf.manufacturer.toLowerCase();
+    const botProductId = parseInt(botControllerConf.productId.toLowerCase(), 10);
+    const botName = botControllerConf.name.toLowerCase();
 
     // Output data arrays.
-    var detectList = [];
-    var portNames = [];
-    var cleanList = [];
+    const detectList = [];
+    const portNames = [];
+    const cleanList = [];
 
-    SerialPort.list(function (err, ports) {
-
+    SerialPort.list((err, ports) => {
       // TODO: Catch errors thrown here.
       err = err;
 
-      ports.forEach(function(port){
-        var portMaker = (port.manufacturer || "").toLowerCase();
+      ports.forEach((port) => {
+        const portMaker = (port.manufacturer || '').toLowerCase();
         // Convert reported product ID from hex string to decimal.
-        var portProductId = parseInt(
-          '0x' + (port.productId || "").toLowerCase()
+        const portProductId = parseInt(
+          `0x${(port.productId || '').toLowerCase()}`,
+          16 // TODO: Is this right?
         );
-        var portPnpId = (port.pnpId || "").toLowerCase();
+        const portPnpId = (port.pnpId || '').toLowerCase();
 
         // Add this port to the clean list if its vendor ID isn't undefined.
         if (typeof port.vendorId !== 'undefined') {
@@ -132,54 +133,55 @@ module.exports = function(cncserver){
 
         // OS specific board detection based on serialport 2.0.5
         switch (process.platform) {
-        case 'win32':
-          // Match by manufacturer partial only.
-          if (portMaker.indexOf(botMaker) !== -1) {
-            detectList.push(port.comName);
-          }
-
-          break;
-        default: // includes 'darwin', 'linux'
-          // Match by Exact Manufacturer...
-          if (portMaker === botMaker) {
-            // Match by exact product ID (hex to dec), or PNP ID partial
-            if (portProductId === botProductId ||
-                portPnpId.indexOf(botName) !== -1) {
+          case 'win32':
+            // Match by manufacturer partial only.
+            if (portMaker.indexOf(botMaker) !== -1) {
               detectList.push(port.comName);
             }
-          }
+
+            break;
+          default: // includes 'darwin', 'linux'
+            // Match by Exact Manufacturer...
+            if (portMaker === botMaker) {
+              // Match by exact product ID (hex to dec), or PNP ID partial
+              if (portProductId === botProductId ||
+                  portPnpId.indexOf(botName) !== -1) {
+                detectList.push(port.comName);
+              }
+            }
         }
       });
 
-      callback({auto: detectList, names: portNames, full: cleanList});
+      callback({ auto: detectList, names: portNames, full: cleanList });
     });
   };
 
   // Cheap wrapper!
-  cncserver.serial.command = function(cmd) {
+  cncserver.serial.command = (cmd) => {
     cncserver.ipc.sendMessage('serial.direct.write', cmd);
   };
 
   // Util function to just get the full port output from exports.
-  cncserver.serial.getPorts = function(cb) {
-    SerialPort.list(function (err, ports) {
+  cncserver.serial.getPorts = (cb) => {
+    SerialPort.list((err, ports) => {
       cb(ports, err);
     });
   };
 
+  const restriction = cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*';
+  const port = cncserver.gConf.get('httpPort');
+  const isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
+
   // Local triggers.
-  cncserver.serial.localTrigger = function(event) {
-    switch(event) {
+  cncserver.serial.localTrigger = (event) => {
+    switch (event) {
       case 'simulationStart':
-        console.log("=======Continuing in SIMULATION MODE!!!============");
+        console.log('=======Continuing in SIMULATION MODE!!!============');
         cncserver.pen.simulation = 1;
         break;
 
       case 'serialReady':
-        console.log('CNC server API listening on ' +
-          (cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*') +
-          ':' + cncserver.gConf.get('httpPort')
-        );
+        console.log(`CNC server API listening on ${restriction}:${port}`);
 
         cncserver.serial.localTrigger('botInit');
         cncserver.srv.start();
@@ -192,9 +194,9 @@ module.exports = function(cncserver){
 
       case 'serialClose':
         console.log(
-          'Serialport connection to "' +
-          cncserver.gConf.get('serialPath') +
-          '" lost!! Did it get unplugged?'
+          `Serialport connection to "${cncserver.gConf.get(
+            'serialPath'
+          )}" lost!! Did it get unplugged?`
         );
 
         // Assume the serialport isn't coming back... It's on a long vacation!
@@ -215,26 +217,24 @@ module.exports = function(cncserver){
           );
 
           // Send twice for good measure
-          var rate = cncserver.botConf.get('servo:rate');
+          const rate = cncserver.botConf.get('servo:rate');
           cncserver.run(
             'custom',
-            cncserver.buffer.cmdstr('configureservo', {r: rate})
+            cncserver.buffer.cmdstr('configureservo', { r: rate })
           );
           cncserver.run(
             'custom',
-            cncserver.buffer.cmdstr('configureservo', {r: rate})
+            cncserver.buffer.cmdstr('configureservo', { r: rate })
           );
         }
 
-        var isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
         console.info(
-          '---=== ' +
-          cncserver.botConf.get('name') +
-          isVirtual +
-          ' is ready to receive commands ===---'
+          `---=== ${cncserver.botConf.get(
+            'name'
+          )}${isVirtual} is ready to receive commands ===---`
         );
         break;
-
+      default:
     }
   };
 
@@ -246,8 +246,8 @@ module.exports = function(cncserver){
    * @param {integer} value
    *   Value to set to
    */
-  cncserver.serial.sendEBBSetup = function(id, value) {
-    cncserver.run('custom', 'SC,' + id + ',' + value);
+  cncserver.serial.sendEBBSetup = (id, value) => {
+    cncserver.run('custom', `SC,${id},${value}`);
   };
 
   // Exports...

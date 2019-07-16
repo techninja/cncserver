@@ -1,16 +1,13 @@
-/*jslint node: true */
-"use strict";
-
 /**
  * @file Abstraction module for all Inter Process Communication related code
  * for talking to the "runner" process, for CNC Server!
  *
  */
+const { spawn } = require('child_process'); // Process spawner.
+const ipc = require('node-ipc'); // Inter Process Comms for runner.
 
-module.exports = function(cncserver) {
-  var spawn = require('child_process').spawn; // Process spawner.
-  var ipc = require('node-ipc');       // Inter Process Comms for runner.
-  var runnerInitCallback = null;       // Placeholder for init set callback.
+module.exports = (cncserver) => {
+  let runnerInitCallback = null; // Placeholder for init set callback.
   cncserver.ipc = {
     runnerSocket: {} // The IPC socket for communicating to the runner
   };
@@ -32,14 +29,14 @@ module.exports = function(cncserver) {
    *
    * @return {null}
    */
-  cncserver.ipc.sendMessage = function(command, data, socket) {
+  cncserver.ipc.sendMessage = (command, data, socket) => {
     if (typeof socket === 'undefined') {
       socket = cncserver.ipc.runnerSocket;
     }
 
-    var packet = {
-      command: command,
-      data: data
+    const packet = {
+      command,
+      data,
     };
 
     ipc.server.emit(socket, 'app.message', packet);
@@ -56,11 +53,11 @@ module.exports = function(cncserver) {
    *
    * @return {null}
    */
-  cncserver.ipc.initServer = function(options, callback) {
+  cncserver.ipc.initServer = (options, callback) => {
     runnerInitCallback = callback;
 
     // Initialize and start the IPC Server...
-    ipc.serve(function(){
+    ipc.serve(() => {
       ipc.server.on('app.message', ipcGotMessage);
     });
 
@@ -82,30 +79,31 @@ module.exports = function(cncserver) {
     /**
      * Start up & init the Runner process via node
      */
-    init: function (){
+    init: () => {
+      // TODO: Use FS path to join instead of fixed slashes.
       cncserver.ipc.runner.process = spawn(
         'node',
-        [__dirname + '/../runner/cncserver.runner']
+        [`${__dirname}/../runner/cncserver.runner`]
       );
 
-      cncserver.ipc.runner.process.stdout.on('data', function (data) {
-        data = data.toString().split("\n");
-        for (var i in data) {
-          if (data[i].length) console.log("RUNNER:" + data[i]);
+      cncserver.ipc.runner.process.stdout.on('data', (data) => {
+        data = data.toString().split('\n');
+        for (let i in data) {
+          if (data[i].length) console.log(`RUNNER:${data[i]}`);
         }
       });
 
-      cncserver.ipc.runner.process.stderr.on('data', function (data) {
-        console.log('RUNNER ERROR: ' + data);
+      cncserver.ipc.runner.process.stderr.on('data', (data) => {
+        console.log(`RUNNER ERROR: ${data}`);
       });
 
-      cncserver.ipc.runner.process.on('exit', function (exitCode) {
+      cncserver.ipc.runner.process.on('exit', (exitCode) => {
         // TODO: Restart it? Who knows.
-        console.log('RUNNER EXITED: ' + exitCode);
+        console.log(`RUNNER EXITED: ${exitCode}`);
       });
     },
 
-    shutdown: function() {
+    shutdown: () => {
       console.log('Killing runner process before exiting...');
       cncserver.ipc.runner.process.kill();
       process.exit();
@@ -123,11 +121,11 @@ module.exports = function(cncserver) {
    * @return {null}
    */
   function ipcGotMessage(packet, socket) {
-    var serialCallbacks = cncserver.serial.callbacks;
-    var data = packet.data;
+    const { callbacks: serialCallbacks } = cncserver.serial;
+    const { data } = packet;
 
     switch(packet.command) {
-      case "runner.ready":
+      case 'runner.ready':
         cncserver.ipc.runnerSocket = socket;
         cncserver.ipc.sendMessage('runner.config', {
           debug: cncserver.gConf.get('debug'),
@@ -137,56 +135,64 @@ module.exports = function(cncserver) {
 
         if (runnerInitCallback) runnerInitCallback();
         break;
-      case "serial.connected":
+
+      case 'serial.connected':
         console.log(
-          'Serial connection open at ' +
-          cncserver.botConf.get('controller').baudRate + 'bps'
+          `Serial connection open at ${cncserver.botConf.get('controller').baudRate}bps`
         );
         cncserver.pen.simulation = 0;
 
         if (serialCallbacks.connect) serialCallbacks.connect(data);
         if (serialCallbacks.success) serialCallbacks.success(data);
         break;
-      case "serial.disconnected":
+
+      case 'serial.disconnected':
         if (serialCallbacks.disconnect) serialCallbacks.disconnect(data);
         break;
-      case "serial.error":
+
+      case 'serial.error':
         if (packet.type === 'connect') {
           console.log(
-            "Serial port failed to connect. Is it busy or in use? Error #10"
+            'Serial port failed to connect. Is it busy or in use? Error #10'
           );
           console.log('SerialPort says:', packet.message);
           if (serialCallbacks.complete) serialCallbacks.complete(data);
         } else {
           // TODO: Add better error message here, or figure out when this
           // happens.
-          console.log("Serial failed to send data. Error #44");
+          console.log('Serial failed to send data. Error #44');
         }
 
         if (serialCallbacks.error) serialCallbacks.error(data);
-       break;
-      case "serial.data":
+        break;
+
+      case 'serial.data':
         if (data.trim() !== cncserver.botConf.get('controller').ack) {
-          console.error('Message From Controller: ' + data);
+          console.error('Message From Controller: ', data);
 
           // Assume error was on startup, and resend setup.
           cncserver.serial.localTrigger('botInit');
         }
         break;
-      case "buffer.item.start":
+
+      case 'buffer.item.start':
         // Buffer action item begun to run.
         cncserver.buffer.startItem(data);
         break;
-      case "buffer.item.done":
+
+      case 'buffer.item.done':
         // Buffer item has completed.
         cncserver.buffer.removeItem(data);
         break;
-      case "buffer.empty":
+
+      case 'buffer.empty':
         // TODO: Is this needed?
         break;
-      case "buffer.running":
+
+      case 'buffer.running':
         cncserver.buffer.running = data;
         break;
+      default:
     }
   }
 

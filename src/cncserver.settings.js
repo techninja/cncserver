@@ -1,15 +1,13 @@
-"use strict";
-
 /**
  * @file Abstraction module for all settings related code for CNC Server!
  *
  */
+const nconf = require('nconf'); // Configuration and INI file.
+const fs = require('fs'); // File System management.
+const path = require('path'); // Path management and normalization.
+const ini = require('ini'); // Reading INI files.
 
-module.exports = function(cncserver) {
-  var nconf = require('nconf'); // Configuration and INI file.
-  var fs = require('fs');       // File System management.
-  var path = require('path');   // Path management and normalization.
-
+module.exports = (cncserver) => {
   cncserver.gConf = new nconf.Provider();
   cncserver.botConf= new nconf.Provider();
   cncserver.bot = {};
@@ -25,23 +23,23 @@ module.exports = function(cncserver) {
    * @param {function} cb
    *   Optional callback triggered when complete.
    */
-  cncserver.settings.loadGlobalConfig = function(cb) {
+  cncserver.settings.loadGlobalConfig = (cb) => {
     // Pull conf from file
-    var configPath = path.resolve(__dirname, '..', 'config.ini');
+    const configPath = path.resolve(__dirname, '..', 'config.ini');
     cncserver.gConf.reset();
     cncserver.gConf.use('file', {
       file: configPath,
-      format: nconf.formats.ini
-    }).load(function (){
+      format: nconf.formats.ini,
+    }).load(() => {
       // Set Global Config Defaults
       cncserver.gConf.defaults(cncserver.globalConfigDefaults);
 
       // Save Global Conf file defaults if not saved
-      if(!fs.existsSync(configPath)) {
-        var def = cncserver.gConf.stores.defaults.store;
-        for(var key in def) {
-          if (key !== 'type'){
-            cncserver.gConf.set(key, def[key]);
+      if (!fs.existsSync(configPath)) {
+        const def = cncserver.gConf.stores.defaults.store;
+        for (const [key, value] in Object.entries(def)) {
+          if (key !== 'type') {
+            cncserver.gConf.set(key, value);
           }
         }
 
@@ -67,122 +65,119 @@ module.exports = function(cncserver) {
    *   Optional, the machine name for the bot type to load. Defaults to the
    *   globally configured bot type.
    */
-  cncserver.settings.loadBotConfig = function (cb, botType) {
-    if (!botType) botType = cncserver.gConf.get('botType');
-
-    var botFile = path.resolve(
+  cncserver.settings.loadBotConfig = (cb, botType = cncserver.gConf.get('botType')) => {
+    const botFile = path.resolve(
       __dirname,
       '..',
       'machine_types',
-      botType + '.ini'
+      `${botType}.ini`
     );
 
-    if (!fs.existsSync(botFile)){
+    if (!fs.existsSync(botFile)) {
       console.error(
-        'Bot configuration file "' +
-        botFile +
-        '" doesn\'t exist. Error #16'
+        `Bot configuration file "${botFile}" doesn't exist. Error #16`
       );
 
       process.exit(16);
     } else {
       cncserver.botConf.reset();
-      cncserver.botConf.use('file', {
-        file: botFile,
-        format: nconf.formats.ini
-      }).load(function(){
-
-        // Mesh in bot overrides from main config
-        var overrides = cncserver.gConf.get('botOverride');
-        if (overrides) {
-          if (overrides[botType]) {
-            for(var key in overrides[botType]) {
-              cncserver.botConf.set(key, overrides[botType][key]);
+      cncserver.botConf
+        .use('file', {
+          file: botFile,
+          format: nconf.formats.ini,
+        })
+        .load(() => {
+          // Mesh in bot overrides from main config
+          const overrides = cncserver.gConf.get('botOverride');
+          if (overrides) {
+            if (overrides[botType]) {
+              for (const [key, value] of Object.entries(overrides[botType])) {
+                cncserver.botConf.set(key, value);
+              }
             }
           }
-        }
 
-        // Handy bot constant for easy number from string conversion
-        cncserver.bot = {
-          workArea: {
-            left: Number(cncserver.botConf.get('workArea:left')),
-            top: Number(cncserver.botConf.get('workArea:top')),
-            right: Number(cncserver.botConf.get('maxArea:width')),
-            bottom: Number(cncserver.botConf.get('maxArea:height'))
-          },
-          maxArea: {
-            width: Number(cncserver.botConf.get('maxArea:width')),
-            height: Number(cncserver.botConf.get('maxArea:height'))
-          },
-          maxAreaMM: {
-            width: Number(cncserver.botConf.get('maxAreaMM:width')),
-            height: Number(cncserver.botConf.get('maxAreaMM:height'))
-          },
-          park: {
-            x: Number(cncserver.botConf.get('park:x')),
-            y: Number(cncserver.botConf.get('park:y'))
-          },
-          commands : cncserver.botConf.get('controller').commands
-        };
-
-        // Check if a point is within the work area.
-        cncserver.bot.inWorkArea = function(point) {
-          var area = cncserver.bot.workArea;
-          if (point.x > area.right || point.x < area.left) {
-            return false;
-          }
-          if (point.y > area.bottom || point.y < area.top) {
-            return false;
-          }
-          return true;
-        };
-
-        // Store assumed constants.
-        var bot = cncserver.bot;
-        bot.workArea.width = bot.maxArea.width - bot.workArea.left;
-        bot.workArea.height = bot.maxArea.height - bot.workArea.top;
-
-        bot.workArea.relCenter = {
-          x: bot.workArea.width / 2,
-          y: bot.workArea.height / 2
-        };
-
-        bot.workArea.absCenter = {
-          x: bot.workArea.relCenter.x + bot.workArea.left,
-          y: bot.workArea.relCenter.y + bot.workArea.top
-        };
-
-        // If supplied, add conversions for abs distance.
-        if (bot.maxAreaMM.width) {
-          bot.stepsPerMM = {
-            x: bot.maxArea.width / bot.maxAreaMM.width,
-            y: bot.maxArea.height / bot.maxAreaMM.height
+          // Handy bot constant for easy number from string conversion
+          cncserver.bot = {
+            workArea: {
+              left: Number(cncserver.botConf.get('workArea:left')),
+              top: Number(cncserver.botConf.get('workArea:top')),
+              right: Number(cncserver.botConf.get('maxArea:width')),
+              bottom: Number(cncserver.botConf.get('maxArea:height')),
+            },
+            maxArea: {
+              width: Number(cncserver.botConf.get('maxArea:width')),
+              height: Number(cncserver.botConf.get('maxArea:height')),
+            },
+            maxAreaMM: {
+              width: Number(cncserver.botConf.get('maxAreaMM:width')),
+              height: Number(cncserver.botConf.get('maxAreaMM:height')),
+            },
+            park: {
+              x: Number(cncserver.botConf.get('park:x')),
+              y: Number(cncserver.botConf.get('park:y')),
+            },
+            commands: cncserver.botConf.get('controller').commands,
           };
-          //bot.stepsPerMM
-        } else {
-          cncserver.bot.maxAreaMM = false;
-        }
 
-        // Set initial pen position at park position
-        var park = cncserver.utils.centToSteps(bot.park, true);
-        cncserver.pen.x = park.x;
-        cncserver.pen.y = park.y;
+          // Check if a point is within the work area.
+          cncserver.bot.inWorkArea = ({ x, y }) => {
+            const area = cncserver.bot.workArea;
+            if (x > area.right || x < area.left) {
+              return false;
+            }
+            if (y > area.bottom || y < area.top) {
+              return false;
+            }
+            return true;
+          };
 
-        // Set global override for swapMotors if set by bot config
-        var swapMotors = cncserver.botConf.get('controller:swapMotors');
-        if (typeof swapMotors !== 'undefined') {
-          cncserver.gConf.set('swapMotors', swapMotors);
-        }
+          // Store assumed constants.
+          const { bot } = cncserver;
+          bot.workArea.width = bot.maxArea.width - bot.workArea.left;
+          bot.workArea.height = bot.maxArea.height - bot.workArea.top;
 
-        console.log(
-          'Successfully loaded config for ' +
-          cncserver.botConf.get('name') +
-          '! Initializing...'
-        );
+          bot.workArea.relCenter = {
+            x: bot.workArea.width / 2,
+            y: bot.workArea.height / 2,
+          };
 
-        // Trigger the callback once we're done
-        if (cb) cb();
-      });
+          bot.workArea.absCenter = {
+            x: bot.workArea.relCenter.x + bot.workArea.left,
+            y: bot.workArea.relCenter.y + bot.workArea.top,
+          };
+
+          // If supplied, add conversions for abs distance.
+          if (bot.maxAreaMM.width) {
+            bot.stepsPerMM = {
+              x: bot.maxArea.width / bot.maxAreaMM.width,
+              y: bot.maxArea.height / bot.maxAreaMM.height,
+            };
+            //bot.stepsPerMM
+          } else {
+            cncserver.bot.maxAreaMM = false;
+          }
+
+          // Set initial pen position at park position
+          const park = cncserver.utils.centToSteps(bot.park, true);
+          cncserver.pen.x = park.x;
+          cncserver.pen.y = park.y;
+
+          // Set global override for swapMotors if set by bot config
+          const swapMotors = cncserver.botConf.get('controller:swapMotors');
+          if (typeof swapMotors !== 'undefined') {
+            cncserver.gConf.set('swapMotors', swapMotors);
+          }
+
+          console.log(
+            `Successfully loaded config for ${cncserver.botConf.get(
+              'name'
+            )}! Initializing...`
+          );
+
+          // Trigger the callback once we're done
+          if (cb) cb();
+        });
     }
   };
 
@@ -192,17 +187,16 @@ module.exports = function(cncserver) {
    * @return {object}
    *   A keyed array/object of all supported bot configurations and data.
    */
-  cncserver.settings.getSupportedBots = function() {
-    var ini = require('ini');
-    var list = fs.readdirSync(path.resolve(__dirname, '..', 'machine_types'));
-    var out = {};
-    for(var i in list) {
-      var file = path.resolve(__dirname, '..', 'machine_types', list[i]);
-      var data = ini.parse(fs.readFileSync(file, 'utf-8'), 'utf-8');
-      var type = list[i].split('.')[0];
+  cncserver.settings.getSupportedBots = () => {
+    const list = fs.readdirSync(path.resolve(__dirname, '..', 'machine_types'));
+    const out = {};
+    for (const i of list) {
+      const file = path.resolve(__dirname, '..', 'machine_types', list[i]);
+      const data = ini.parse(fs.readFileSync(file, 'utf-8'), 'utf-8');
+      const type = list[i].split('.')[0];
       out[type] = {
         name: data.name,
-        data: data
+        data,
       };
     }
     return out;

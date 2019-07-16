@@ -57,6 +57,11 @@ cncserver.globalConfigDefaults = {
 
 // COMPONENT REQUIRES ==========================================================
 
+// TODO: as part of refactor, each plugin extender returns a single object
+// that only it is allowed to mess with. This is attached directly to the
+// primary CNCSERVER object, also passed through the index.js includer for
+// every plugin.
+
 // Utlities and wrappers.
 require('./src/cncserver.utils.js')(cncserver);
 
