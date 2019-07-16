@@ -3,6 +3,7 @@ module.exports = {
   "rules": {
     "no-restricted-syntax": "off",
     "no-underscore-dangle": "off",
+    "no-plusplus": "off",
     "max-len": ["error", { "code": 90 }],
     "comma-dangle": ["error", {
       "exports": "never",
