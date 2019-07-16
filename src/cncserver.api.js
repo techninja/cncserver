@@ -289,23 +289,33 @@ module.exports = (cncserver = {}) => {
       if (!buffer.newlyPaused || buffer.data.length === 0) {
         buffer.newlyPaused = false;
         cncserver.io.sendBufferVars();
-        return {code: 200, body: {
-          running: buffer.running,
-          paused: buffer.paused,
-          count: buffer.data.length
-        }};
-      } else { // Buffer isn't empty and we're newly paused
-        // Wait until last item has finished before returning
-        console.log('Waiting for last item to finish...');
-
-        buffer.pauseCallback = function(){
-          res.status(200).send(JSON.stringify({
+        return {
+          code: 200,
+          body: {
             running: buffer.running,
             paused: buffer.paused,
-            count: buffer.length
-          }));
-          cncserver.io.sendBufferVars();
-          buffer.newlyPaused = false;
+            count: buffer.data.length,
+          },
+        };
+      }
+
+      // Buffer isn't empty and we're newly paused
+      // Wait until last item has finished before returning
+      console.log('Waiting for last item to finish...');
+
+      buffer.pauseCallback = () => {
+        res.status(200).send(JSON.stringify({
+          running: buffer.running,
+          paused: buffer.paused,
+          count: buffer.length,
+        }));
+        cncserver.io.sendBufferVars();
+        buffer.newlyPaused = false;
+
+        if (cncserver.gConf.get('debug')) {
+          console.log('>RESP', req.route.path, 200);
+        }
+      };
 
           if (cncserver.gConf.get('debug')) {
             console.log(">RESP", req.route.path, 200);

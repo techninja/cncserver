@@ -699,7 +699,8 @@ Content-Type: application/json; charset=UTF-8
 {
     // Because some batch processing takes longer than the connection would be
     // held open for, the endpoint returns 201 once parsing the JSON is complete
-    "status" : "Parsed 4 commands, queuing"
+    "status" : "Parsed 4 commands, queuing",
+    "count" : 4
 }
 ```
 
