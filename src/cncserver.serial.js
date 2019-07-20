@@ -168,12 +168,12 @@ module.exports = (cncserver) => {
     });
   };
 
-  const restriction = cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*';
-  const port = cncserver.gConf.get('httpPort');
-  const isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
-
   // Local triggers.
   cncserver.serial.localTrigger = (event) => {
+    const restriction = cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*';
+    const port = cncserver.gConf.get('httpPort');
+    const isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
+
     switch (event) {
       case 'simulationStart':
         console.log('=======Continuing in SIMULATION MODE!!!============');

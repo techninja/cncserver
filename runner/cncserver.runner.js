@@ -27,7 +27,7 @@ let bufferExecuting = false;
 let bufferDirectBusy = false;
 
 // Runner config defaults, overridden on ready.
-const config = {
+let config = {
   ack: 'OK',
   debug: false,
   showSerial: false,
