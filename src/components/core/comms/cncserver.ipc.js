@@ -4,18 +4,19 @@
  *
  */
 const { spawn } = require('child_process'); // Process spawner.
-const ipc = require('node-ipc'); // Inter Process Comms for runner.
+const nodeIPC = require('node-ipc'); // Inter Process Comms for runner.
+
+// Export object.
+const ipc = {};
 
 module.exports = (cncserver) => {
   let runnerInitCallback = null; // Placeholder for init set callback.
-  cncserver.ipc = {
-    runnerSocket: {} // The IPC socket for communicating to the runner
-  };
+  ipc.runnerSocket = {}; // The IPC socket for communicating to the runner
 
   // IPC server config.
-  ipc.config.silent = true;
-  ipc.config.id = 'cncserver';
-  ipc.config.retry = 1500;
+  nodeIPC.config.silent = true;
+  nodeIPC.config.id = 'cncserver';
+  nodeIPC.config.retry = 1500;
 
   /**
    * Send a message to the runner.
@@ -29,17 +30,13 @@ module.exports = (cncserver) => {
    *
    * @return {null}
    */
-  cncserver.ipc.sendMessage = (command, data, socket) => {
-    if (typeof socket === 'undefined') {
-      socket = cncserver.ipc.runnerSocket;
-    }
-
+  ipc.sendMessage = (command, data, socket = cncserver.ipc.runnerSocket) => {
     const packet = {
       command,
       data,
     };
 
-    ipc.server.emit(socket, 'app.message', packet);
+    nodeIPC.server.emit(socket, 'app.message', packet);
   };
 
   /**
@@ -53,60 +50,22 @@ module.exports = (cncserver) => {
    *
    * @return {null}
    */
-  cncserver.ipc.initServer = (options, callback) => {
+  ipc.initServer = (options, callback) => {
     runnerInitCallback = callback;
 
     // Initialize and start the IPC Server...
-    ipc.serve(() => {
-      ipc.server.on('app.message', ipcGotMessage);
+    nodeIPC.serve(() => {
+      nodeIPC.server.on('app.message', ipc.ipcGotMessage);
     });
 
-    ipc.server.start();
+    nodeIPC.server.start();
     console.log('Starting IPC server, waiting for runner client to start...');
 
     if (options.localRunner) {
       // Register an event callback to shutdown the runner if we're exiting.
-      process.on('SIGTERM', cncserver.ipc.runner.shutdown);
-      process.on('SIGINT', cncserver.ipc.runner.shutdown);
-      cncserver.ipc.runner.init();
-    }
-  };
-
-  // Define the runner tracker object.
-  cncserver.ipc.runner = {
-    process: {},
-
-    /**
-     * Start up & init the Runner process via node
-     */
-    init: () => {
-      // TODO: Use FS path to join instead of fixed slashes.
-      cncserver.ipc.runner.process = spawn(
-        'node',
-        [`${__dirname}/../runner/cncserver.runner`]
-      );
-
-      cncserver.ipc.runner.process.stdout.on('data', (data) => {
-        data = data.toString().split('\n');
-        for (let i in data) {
-          if (data[i].length) console.log(`RUNNER:${data[i]}`);
-        }
-      });
-
-      cncserver.ipc.runner.process.stderr.on('data', (data) => {
-        console.log(`RUNNER ERROR: ${data}`);
-      });
-
-      cncserver.ipc.runner.process.on('exit', (exitCode) => {
-        // TODO: Restart it? Who knows.
-        console.log(`RUNNER EXITED: ${exitCode}`);
-      });
-    },
-
-    shutdown: () => {
-      console.log('Killing runner process before exiting...');
-      cncserver.ipc.runner.process.kill();
-      process.exit();
+      process.on('SIGTERM', ipc.runner.shutdown);
+      process.on('SIGINT', ipc.runner.shutdown);
+      ipc.runner.init();
     }
   };
 
@@ -120,17 +79,18 @@ module.exports = (cncserver) => {
    *
    * @return {null}
    */
-  function ipcGotMessage(packet, socket) {
+  ipc.ipcGotMessage = (packet, socket) => {
     const { callbacks: serialCallbacks } = cncserver.serial;
     const { data } = packet;
+    const { baudRate } = cncserver.settings.botConf.get('controller');
 
-    switch(packet.command) {
+    switch (packet.command) {
       case 'runner.ready':
-        cncserver.ipc.runnerSocket = socket;
-        cncserver.ipc.sendMessage('runner.config', {
-          debug: cncserver.gConf.get('debug'),
-          ack: cncserver.botConf.get('controller').ack,
-          showSerial: cncserver.gConf.get('showSerial')
+        ipc.runnerSocket = socket;
+        ipc.sendMessage('runner.config', {
+          debug: cncserver.settings.gConf.get('debug'),
+          ack: cncserver.settings.botConf.get('controller').ack,
+          showSerial: cncserver.settings.gConf.get('showSerial'),
         });
 
         if (runnerInitCallback) runnerInitCallback();
@@ -138,9 +98,9 @@ module.exports = (cncserver) => {
 
       case 'serial.connected':
         console.log(
-          `Serial connection open at ${cncserver.botConf.get('controller').baudRate}bps`
+          `Serial connection open at ${baudRate}bps`
         );
-        cncserver.pen.simulation = 0;
+        cncserver.pen.forceState({ simulation: 0 });
 
         if (serialCallbacks.connect) serialCallbacks.connect(data);
         if (serialCallbacks.success) serialCallbacks.success(data);
@@ -167,7 +127,7 @@ module.exports = (cncserver) => {
         break;
 
       case 'serial.data':
-        if (data.trim() !== cncserver.botConf.get('controller').ack) {
+        if (data.trim() !== cncserver.settings.botConf.get('controller').ack) {
           console.error('Message From Controller: ', data);
 
           // Assume error was on startup, and resend setup.
@@ -190,10 +150,49 @@ module.exports = (cncserver) => {
         break;
 
       case 'buffer.running':
-        cncserver.buffer.running = data;
+        cncserver.buffer.setRunning(data);
         break;
       default:
     }
-  }
+  };
 
+  // Define the runner tracker object.
+  ipc.runner = {
+    process: {},
+
+    /**
+     * Start up & init the Runner process via node
+     */
+    init: () => {
+      // TODO: Use FS path to join instead of fixed slashes.
+      ipc.runner.process = spawn(
+        'node',
+        [`${__dirname}/../runner/cncserver.runner`]
+      );
+
+      ipc.runner.process.stdout.on('data', (rawData) => {
+        const data = rawData.toString().split('\n');
+        for (const i in data) {
+          if (data[i].length) console.log(`RUNNER:${data[i]}`);
+        }
+      });
+
+      ipc.runner.process.stderr.on('data', (data) => {
+        console.log(`RUNNER ERROR: ${data}`);
+      });
+
+      ipc.runner.process.on('exit', (exitCode) => {
+        // TODO: Restart it? Who knows.
+        console.log(`RUNNER EXITED: ${exitCode}`);
+      });
+    },
+
+    shutdown: () => {
+      console.log('Killing runner process before exiting...');
+      ipc.runner.process.kill();
+      process.exit();
+    },
+  };
+
+  return ipc;
 };

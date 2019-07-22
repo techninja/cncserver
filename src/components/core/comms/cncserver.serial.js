@@ -6,11 +6,11 @@
  */
 const SerialPort = require('serialport');
 
+const serial = {}; // Export interface object;
+
 module.exports = (cncserver) => {
-  cncserver.serial = {
-    callbacks: {}, // Hold global serial connection/error callbacks.
-    connectPath: '{auto}',
-  };
+  serial.callbacks = {}; // Hold global serial connection/error callbacks.
+  serial.connectPath = '{auto}';
 
   /**
    * Helper function to manage initial serial connection and reconnection.
@@ -23,9 +23,9 @@ module.exports = (cncserver) => {
    *     disconnect: Callback for close/unexpected disconnect
    *     complete: Callback for general completion
    */
-  cncserver.serial.connect = (options) => {
+  serial.connect = (options) => {
     // Apply any passed callbacks to a new serial callbacks object.
-    cncserver.serial.callbacks = {
+    serial.callbacks = {
       connect: options.connect,
       disconnect: options.disconnect,
       error: options.error,
@@ -34,20 +34,20 @@ module.exports = (cncserver) => {
 
     // Run everything through the callback as port list is async.
     console.log('Finding available serial ports...');
-    const botController = cncserver.botConf.get('controller');
+    const botController = cncserver.settings.botConf.get('controller');
     cncserver.serial.autoDetectPort(botController, (ports) => {
       // Give some console feedback on ports.
-      if (cncserver.gConf.get('debug')) {
+      if (cncserver.settings.gConf.get('debug')) {
         console.log('Full Available Port Data:', ports.full);
       } else {
         const names = ports.names.length ? ports.names.join(', ') : '[NONE]';
         console.log(`Available Serial ports: ${names}`);
       }
 
-      const passedPort = cncserver.gConf.get('serialPath');
+      const passedPort = cncserver.settings.gConf.get('serialPath');
       if (passedPort === '' || passedPort === '{auto}') {
         if (ports.auto.length) {
-          cncserver.gConf.set('serialPath', ports.auto[0]);
+          cncserver.settings.gConf.set('serialPath', ports.auto[0]);
           console.log(`Using first detected port: "${ports.auto[0]}"...`);
         } else {
           console.error('No matching serial ports detected.');
@@ -57,7 +57,7 @@ module.exports = (cncserver) => {
       }
 
       // Send connect to runner...
-      const connectPath = cncserver.gConf.get('serialPath');
+      const connectPath = cncserver.settings.gConf.get('serialPath');
 
       // Try to connect to serial, or exit with error code.
       if (connectPath === '' || connectPath === '{auto}') {
@@ -102,7 +102,7 @@ module.exports = (cncserver) => {
    *     names {array}: Clean flat array of all available comm paths/port names.
    *     full {array}: Array of all valid serial port objects for debugging.
    */
-  cncserver.serial.autoDetectPort = (botControllerConf, callback) => {
+  serial.autoDetectPort = (botControllerConf, callback) => {
     const botMaker = botControllerConf.manufacturer.toLowerCase();
     const botProductId = parseInt(botControllerConf.productId.toLowerCase(), 10);
     const botName = botControllerConf.name.toLowerCase();
@@ -144,8 +144,8 @@ module.exports = (cncserver) => {
             // Match by Exact Manufacturer...
             if (portMaker === botMaker) {
               // Match by exact product ID (hex to dec), or PNP ID partial
-              if (portProductId === botProductId ||
-                  portPnpId.indexOf(botName) !== -1) {
+              if (portProductId === botProductId
+                  || portPnpId.indexOf(botName) !== -1) {
                 detectList.push(port.comName);
               }
             }
@@ -157,67 +157,68 @@ module.exports = (cncserver) => {
   };
 
   // Cheap wrapper!
-  cncserver.serial.command = (cmd) => {
+  serial.command = (cmd) => {
     cncserver.ipc.sendMessage('serial.direct.write', cmd);
   };
 
   // Util function to just get the full port output from exports.
-  cncserver.serial.getPorts = (cb) => {
+  serial.getPorts = (cb) => {
     SerialPort.list((err, ports) => {
       cb(ports, err);
     });
   };
 
   // Local triggers.
-  cncserver.serial.localTrigger = (event) => {
-    const restriction = cncserver.gConf.get('httpLocalOnly') ? 'localhost' : '*';
-    const port = cncserver.gConf.get('httpPort');
-    const isVirtual = cncserver.pen.simulation ? ' (simulated)' : '';
+  serial.localTrigger = (event) => {
+    const restriction = cncserver.settings.gConf.get('httpLocalOnly') ? 'localhost' : '*';
+    const port = cncserver.settings.gConf.get('httpPort');
+    const isVirtual = cncserver.pen.state.simulation ? ' (simulated)' : '';
 
     switch (event) {
       case 'simulationStart':
         console.log('=======Continuing in SIMULATION MODE!!!============');
-        cncserver.pen.simulation = 1;
+        cncserver.pen.forceState({ simulation: 1 });
         break;
 
       case 'serialReady':
         console.log(`CNC server API listening on ${restriction}:${port}`);
 
         cncserver.serial.localTrigger('botInit');
-        cncserver.srv.start();
+        cncserver.server.start();
 
         // Initialize scratch v2 endpoint & API.
-        if (cncserver.gConf.get('scratchSupport')) {
-          cncserver.scratch.initAPI(cncserver);
+        // TODO: This needs to be moved out into something more self contained.
+        if (cncserver.settings.gConf.get('scratchSupport')) {
+          cncserver.scratch.initAPI();
         }
         break;
 
       case 'serialClose':
         console.log(
-          `Serialport connection to "${cncserver.gConf.get(
+          `Serialport connection to "${cncserver.settings.gConf.get(
             'serialPath'
           )}" lost!! Did it get unplugged?`
         );
 
         // Assume the serialport isn't coming back... It's on a long vacation!
-        cncserver.gConf.set('serialPath', '');
+        cncserver.settings.gConf.set('serialPath', '');
         cncserver.serial.localTrigger('simulationStart');
         break;
 
       case 'botInit':
         // EBB Specific Config =================================
-        if (cncserver.botConf.get('controller').name === 'EiBotBoard') {
+        if (cncserver.settings.botConf.get('controller').name === 'EiBotBoard') {
           console.log('Sending EBB config...');
           cncserver.run(
             'custom',
             cncserver.buffer.cmdstr(
               'enablemotors',
-              {p: cncserver.botConf.get('speed:precision')}
+              { p: cncserver.settings.botConf.get('speed:precision') }
             )
           );
 
           // Send twice for good measure
-          const rate = cncserver.botConf.get('servo:rate');
+          const rate = cncserver.settings.botConf.get('servo:rate');
           cncserver.run(
             'custom',
             cncserver.buffer.cmdstr('configureservo', { r: rate })
@@ -229,7 +230,7 @@ module.exports = (cncserver) => {
         }
 
         console.info(
-          `---=== ${cncserver.botConf.get(
+          `---=== ${cncserver.settings.botConf.get(
             'name'
           )}${isVirtual} is ready to receive commands ===---`
         );
@@ -246,11 +247,15 @@ module.exports = (cncserver) => {
    * @param {integer} value
    *   Value to set to
    */
-  cncserver.serial.sendEBBSetup = (id, value) => {
+  serial.sendEBBSetup = (id, value) => {
     cncserver.run('custom', `SC,${id},${value}`);
   };
 
   // Exports...
-  cncserver.exports.getPorts = cncserver.serial.getPorts;
-  cncserver.exports.sendEBBSetup = cncserver.serial.sendEBBSetup;
+  serial.exports = {
+    getPorts: serial.getPorts,
+    sendEBBSetup: serial.sendEBBSetup,
+  };
+
+  return serial;
 };

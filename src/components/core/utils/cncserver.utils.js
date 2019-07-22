@@ -4,9 +4,9 @@
 const crypto = require('crypto'); // Crypto library for hashing.
 const extend = require('util')._extend; // Util for cloning objects
 
-module.exports = (cncserver) => {
-  cncserver.utils = { extend };
+const utils = { extend }; // Final Object to be exported.
 
+module.exports = (cncserver) => {
   /**
    * Sanity check a given coordinate within the absolute area.
    * @param  {object} point
@@ -14,14 +14,13 @@ module.exports = (cncserver) => {
    *    // TODO: It's an antipattern to operate by ref, refactor.
    * @return {null}
    */
-  cncserver.utils.sanityCheckAbsoluteCoord = ({x, y}) => {
-    const { maxArea } = cncserver.bot;
-    x = x > maxArea.width ? maxArea.width : x;
-    y = y > maxArea.height ? maxArea.height : y;
-    x = x < 0 ? 0 : x;
-    y = y < 0 ? 0 : y;
+  utils.sanityCheckAbsoluteCoord = ({ x, y }) => {
+    const { maxArea } = cncserver.settings.bot;
+    return {
+      x: Math.max(0, x > maxArea.width ? maxArea.width : x),
+      y: Math.max(0, y > maxArea.height ? maxArea.height : y),
+    };
   };
-
 
   /**
    * Create has using passed data (and current time).
@@ -33,7 +32,7 @@ module.exports = (cncserver) => {
    *   16 char hash of data and current time in ms.
    */
   let hashSequence = 0;
-  cncserver.utils.getHash = (data) => {
+  utils.getHash = (data) => {
     const md5sum = crypto.createHash('md5');
     md5sum.update(JSON.stringify(data) + hashSequence);
     hashSequence++;
@@ -53,11 +52,11 @@ module.exports = (cncserver) => {
    * @returns {number}
    *   Millisecond duration of how long the move should take
    */
-  cncserver.utils.getDurationFromDistance = (distance, min = 1, inPen) => {
-    const minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
-    const maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
-    const drawingSpeed = cncserver.botConf.get('speed:drawing');
-    const movingSpeed = cncserver.botConf.get('speed:moving');
+  utils.getDurationFromDistance = (distance, min = 1, inPen) => {
+    const minSpeed = parseFloat(cncserver.settings.botConf.get('speed:min'));
+    const maxSpeed = parseFloat(cncserver.settings.botConf.get('speed:max'));
+    const drawingSpeed = cncserver.settings.botConf.get('speed:drawing');
+    const movingSpeed = cncserver.settings.botConf.get('speed:moving');
 
     // Use given speed over distance to calculate duration
     let speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
@@ -86,7 +85,7 @@ module.exports = (cncserver) => {
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  cncserver.utils.getPosChangeData = (src, dest) => {
+  utils.getPosChangeData = (src, dest) => {
     let change = {
       x: Math.round(dest.x - src.x),
       y: Math.round(dest.y - src.y),
@@ -100,17 +99,17 @@ module.exports = (cncserver) => {
     );
 
     // Adjust change direction/inversion
-    if (cncserver.botConf.get('controller').position === 'relative') {
+    if (cncserver.settings.botConf.get('controller').position === 'relative') {
       // Invert X or Y to match stepper direction
-      change.x = cncserver.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
-      change.y = cncserver.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+      change.x = cncserver.settings.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+      change.y = cncserver.settings.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
     } else { // Absolute! Just use the "new" absolute X & Y locations
-      change.x = cncserver.pen.x;
-      change.y = cncserver.pen.y;
+      change.x = cncserver.pen.state.x;
+      change.y = cncserver.pen.state.y;
     }
 
     // Swap motor positions
-    if (cncserver.gConf.get('swapMotors')) {
+    if (cncserver.settings.gConf.get('swapMotors')) {
       change = {
         x: change.y,
         y: change.x,
@@ -132,13 +131,13 @@ module.exports = (cncserver) => {
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  cncserver.utils.getHeightChangeData = (src, dest) => {
-    const sd = cncserver.botConf.get('servo:duration');
+  utils.getHeightChangeData = (src, dest) => {
+    const sd = cncserver.settings.botConf.get('servo:duration');
 
     // Get the amount of change from difference between actualPen and absolute
     // height position, pro-rating the duration depending on amount of change
-    const range = parseInt(cncserver.botConf.get('servo:max'), 10)
-      - parseInt(cncserver.botConf.get('servo:min'), 10);
+    const range = parseInt(cncserver.settings.botConf.get('servo:max'), 10)
+      - parseInt(cncserver.settings.botConf.get('servo:min'), 10);
 
     const duration = Math.max(1, Math.round((Math.abs(dest - src) / range) * sd));
 
@@ -153,9 +152,9 @@ module.exports = (cncserver) => {
    * @returns {Boolean}
    *   False if pen is considered up, true if pen is considered down.
    */
-  cncserver.utils.penDown = (inPen) => {
+  utils.penDown = (inPen) => {
     // TODO: Refactor to ensure no modification by reference/intent.
-    if (!inPen || !inPen.state) inPen = cncserver.pen;
+    if (!inPen || !inPen.state) inPen = cncserver.pen.state;
 
     if (inPen.state === 'up' || inPen.state < 0.5) {
       return false;
@@ -174,7 +173,7 @@ module.exports = (cncserver) => {
    * @returns {{x: number, y: number}}
    *   Converted coordinate in absolute steps.
    */
-  cncserver.utils.inPenToSteps = (inPen) => {
+  utils.inPenToSteps = (inPen) => {
     if (inPen.abs === 'in' || inPen.abs === 'mm') {
       return cncserver.utils.absToSteps({ x: inPen.x, y: inPen.y }, inPen.abs);
     }
@@ -197,7 +196,7 @@ module.exports = (cncserver) => {
    * @returns {{x: number, y: number}}
    *   Converted coordinate in absolute steps.
    */
-  cncserver.utils.absToSteps = (point, scale, inMaxArea) => {
+  utils.absToSteps = (point, scale, inMaxArea) => {
     const { bot } = cncserver;
 
     // TODO: Don't operate by reference (intionally or otherwise), refactor.
@@ -226,12 +225,12 @@ module.exports = (cncserver) => {
    * @returns {{x: number, y: number}}
    *   Converted coordinate in steps.
    */
-  cncserver.utils.centToSteps = (point, inMaxArea) => {
-    const { bot } = cncserver;
+  utils.centToSteps = (point, inMaxArea) => {
+    const { bot } = cncserver.settings;
     if (!inMaxArea) { // Calculate based on workArea
       return {
         x: bot.workArea.left + ((point.x / 100) * bot.workArea.width),
-        y: bot.workArea.top + ((point.y / 100) * bot.workArea.height)
+        y: bot.workArea.top + ((point.y / 100) * bot.workArea.height),
       };
     }
     // Calculate based on ALL area
@@ -241,7 +240,6 @@ module.exports = (cncserver) => {
     };
   };
 
-
   /**
    * Get the distance/length of the given vector coordinate
    *
@@ -250,7 +248,7 @@ module.exports = (cncserver) => {
    * @returns {number}
    *   Length (in steps) of the given vector point
    */
-  cncserver.utils.getVectorLength = vector => Math.sqrt((vector.x ** 2) + (vector.y ** 2));
+  utils.getVectorLength = vector => Math.sqrt((vector.x ** 2) + (vector.y ** 2));
 
   /**
    * Perform conversion from named/0-1 number state value to given pen height
@@ -262,15 +260,15 @@ module.exports = (cncserver) => {
    *   Object containing normalized state, and numeric height value. As:
    *   {state: [integer|string], height: [float]}
    */
-  cncserver.utils.stateToHeight = (state) => {
+  utils.stateToHeight = (state) => {
     // Whether to use the full min/max range (used for named presets only)
     let fullRange = false;
-    let min = parseInt(cncserver.botConf.get('servo:min'), 10);
-    let max = parseInt(cncserver.botConf.get('servo:max'), 10);
+    let min = parseInt(cncserver.settings.botConf.get('servo:min'), 10);
+    let max = parseInt(cncserver.settings.botConf.get('servo:max'), 10);
     let range = max - min;
     let normalizedState = state; // Normalize/sanitize the incoming state
 
-    const presets = cncserver.botConf.get('servo:presets');
+    const presets = cncserver.settings.botConf.get('servo:presets');
     let height = 0; // Placeholder for height output
 
     // Validate Height, and conform to a bottom to top based percentage 0 to 100
@@ -285,7 +283,7 @@ module.exports = (cncserver) => {
       fullRange = true;
     } else { // Numerical position (0 to 1), moves between up (0) and draw (1)
       height = Math.abs(parseFloat(state));
-      height = height > 1 ?  1 : height; // Limit to 1
+      height = height > 1 ? 1 : height; // Limit to 1
       normalizedState = height;
 
       // Reverse value and lock to 0 to 100 percentage with 1 decimal place
@@ -296,7 +294,7 @@ module.exports = (cncserver) => {
     if (!fullRange) {
       min = ((presets.draw / 100) * range) + min;
       max = ((presets.up / 100) * range);
-      max += parseInt(cncserver.botConf.get('servo:min'), 10);
+      max += parseInt(cncserver.settings.botConf.get('servo:min'), 10);
 
       range = max - min;
     }
@@ -309,4 +307,6 @@ module.exports = (cncserver) => {
     height = Math.round(((height / 100) * range) + min);
     return { height, state: normalizedState };
   };
+
+  return utils;
 };

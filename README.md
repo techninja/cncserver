@@ -1,7 +1,7 @@
 CNC server
 =========
 A node.js based RESTful API to serial interface control for plotters, originally
-created for ["Super-Awesome" Sylvia's WaterColorBot](http://watercolorbot.com),
+created for the [WaterColorBot](http://watercolorbot.com),
 the awesome pen plotter that paints with watercolors, thought up by
 [MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
 staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).

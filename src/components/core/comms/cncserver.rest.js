@@ -3,6 +3,8 @@
  */
 const express = require('express'); // Express object (for static).
 
+const rest = {};
+
 module.exports = (cncserver) => {
   /**
    * Wrapper for creating a static (directory reading HTML) endpoint.
@@ -14,8 +16,8 @@ module.exports = (cncserver) => {
    * @param  {object} options
    *   options object for static serving of files.
    */
-  cncserver.createStaticEndpoint = (userPath, sourcePath, options) => {
-    cncserver.app.use(userPath, express.static(sourcePath, options));
+  rest.createStaticEndpoint = (userPath, sourcePath, options) => {
+    cncserver.server.app.use(userPath, express.static(sourcePath, options));
   };
 
   /**
@@ -27,13 +29,13 @@ module.exports = (cncserver) => {
    * @param {function} callback
    *   Callback triggered on HTTP request
    */
-  cncserver.createServerEndpoint = (path, callback) => {
+  rest.createServerEndpoint = (path, callback) => {
     const what = Object.prototype.toString;
-    cncserver.app.all(path, (req, res) => {
+    cncserver.server.app.all(path, (req, res) => {
       res.set('Content-Type', 'application/json; charset=UTF-8');
-      res.set('Access-Control-Allow-Origin', cncserver.gConf.get('corsDomain'));
+      res.set('Access-Control-Allow-Origin', cncserver.settings.gConf.get('corsDomain'));
 
-      if (cncserver.gConf.get('debug') && path !== '/poll') {
+      if (cncserver.settings.gConf.get('debug') && path !== '/poll') {
         console.log(
           req.route.method.toUpperCase(),
           req.route.path,
@@ -60,26 +62,24 @@ module.exports = (cncserver) => {
 
       if (cbStat === false) { // Super simple "not supported"
         // Debug Response
-        if (cncserver.gConf.get('debug') && path !== '/poll') {
+        if (cncserver.settings.gConf.get('debug') && path !== '/poll') {
           console.log('>RESP', req.route.path, 405, 'Not Supported');
         }
 
         res.status(405).send(JSON.stringify({
           status: 'Not supported',
         }));
-      } else if(what.call(cbStat) === '[object Array]') { // Just return message
+      } else if (what.call(cbStat) === '[object Array]') { // Just return message
         // Debug Response
-        if (cncserver.gConf.get('debug') && path !== '/poll') {
+        if (cncserver.settings.gConf.get('debug') && path !== '/poll') {
           console.log('>RESP', req.route.path, cbStat[0], cbStat[1]);
         }
 
         // Array format: [/http code/, /status message/]
-        res.status(cbStat[0]).send(JSON.stringify({
-          status: cbStat[1]
-        }));
-      } else if(what.call(cbStat) === '[object Object]') { // Full message
+        res.status(cbStat[0]).send(JSON.stringify({ status: cbStat[1] }));
+      } else if (what.call(cbStat) === '[object Object]') { // Full message
         // Debug Response
-        if (cncserver.gConf.get('debug') && path !== '/poll') {
+        if (cncserver.settings.gConf.get('debug') && path !== '/poll') {
           console.log(
             '>RESP',
             req.route.path,
@@ -100,6 +100,10 @@ module.exports = (cncserver) => {
   };
 
   // Exports.
-  cncserver.exports.createStaticEndpoint = cncserver.createStaticEndpoint;
-  cncserver.exports.createServerEndpoint = cncserver.createServerEndpoint;
+  rest.exports = {
+    createStaticEndpoint: rest.createStaticEndpoint,
+    createServerEndpoint: rest.createServerEndpoint,
+  };
+
+  return rest;
 };

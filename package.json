@@ -38,6 +38,6 @@
   },
   "scripts": {
     "test": "grunt --verbose",
-    "start": "node cncserver"
+    "start": "node ./src/cncserver"
   }
 }

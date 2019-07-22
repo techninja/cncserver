@@ -2,7 +2,7 @@
  * @file CNC Server for communicating with hardware via serial commands!
  * Officially Supports:
  *  - EiBotBoard for Eggbot/Ostrich Eggbot: http://egg-bot.com
- *  - Sylvia's Super-Awesome WaterColorBot: http://WaterColorBot.com
+ *  - WaterColorBot: http://WaterColorBot.com
  *  - The Axidraw Drawing machine: http://AxiDraw.com
  *
  * This script can be run standalone via 'node cncserver.js' with command line
@@ -23,14 +23,13 @@
  *
  */
 
-const scratch = require('./scratch/cncserver.scratch.js');
-
 // CONFIGURATION ===============================================================
 const cncserver = { // Master object for holding/passing stuff!
   bot: {}, // Holds clean rendered settings set after botConfig is loaded
-  exports: {}, // This entire object will be added to the module.exports
-  scratch,
+  exports: {}, // This entire object will be added to the module.exports,
 };
+
+global.__basedir = __dirname;
 
 // Global Defaults (also used to write the initial config.ini)
 cncserver.globalConfigDefaults = {
@@ -57,66 +56,40 @@ cncserver.globalConfigDefaults = {
 
 // COMPONENT REQUIRES ==========================================================
 
-// TODO: as part of refactor, each plugin extender returns a single object
-// that only it is allowed to mess with. This is attached directly to the
-// primary CNCSERVER object, also passed through the index.js includer for
-// every plugin.
+// Load all components.
+const components = require('./components');
 
-// Utlities and wrappers.
-require('./src/cncserver.utils.js')(cncserver);
+// TODO: Find a better way to do this.
+for (const [key, path] of Object.entries(components)) {
+  // eslint-disable-next-line global-require, import/no-dynamic-require
+  const component = require(path)(cncserver);
+  cncserver[key] = component;
+  if (component && component.exports) {
+    cncserver.exports = { ...cncserver.exports, ...component.exports };
+    delete component.exports;
+  }
+}
 
-// Settings shortcuts/utils & initialization.
-require('./src/cncserver.settings.js')(cncserver);
+// TODO: Convert to promises instaed of endless callbacks and error management.
 
-// Server setup and associated wrapper.
-require('./src/cncserver.server.js')(cncserver);
-
-// ReSTFul endpoint helper utilities.
-require('./src/cncserver.rest.js')(cncserver);
-
-// Register restful API endpoints.
-require('./src/cncserver.api.js')(cncserver);
-
-// IPC server and runner components.
-require('./src/cncserver.ipc.js')(cncserver);
-
-// Serial Components.
-require('./src/cncserver.serial.js')(cncserver);
-
-// Socket I/O Components.
-require('./src/cncserver.sockets.js')(cncserver);
-
-// Control/movement functionality.
-require('./src/cncserver.control.js')(cncserver);
-
-// Run/Queue/Buffer management functionality.
-require('./src/cncserver.queue.js')(cncserver);
-
-
-// STATE VARIABLES =============================================================
-
-// The pen: this holds the state of the pen at the "latest tip" of the buffer,
-// meaning that as soon as an instruction intended to be run in the buffer is
-// received, this is updated to reflect the intention of the buffered item.
-cncserver.pen = {
-  x: null, // XY set by bot defined park position (assumed initial location)
-  y: null,
-  state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
-  height: 0, // Last set pen height in output servo value
-  power: 0,
-  busy: false,
-  tool: 'color0',
-  offCanvas: false,
-  lastDuration: 0, // Holds the last movement timing in milliseconds
-  distanceCounter: 0, // Holds a running tally of distance travelled
-  simulation: 0, // Fake everything and act like it's working, no serial
-};
-
-// actualPen: This is set to the state of the pen variable as it passes through
-// the buffer queue and into the robot, meant to reflect the actual position and
-// state of the robot, and will be where the pen object is reset to when the
-// buffer is cleared and the future state is lost.
-cncserver.actualPen = cncserver.utils.extend({}, cncserver.pen);
+// Describe the API via the OpenAPI v3 standard.
+// API changes:
+// * Allow X, Y, Z in one request
+// * Multiple pausable & injectable generic to specific rendering buffers/queues
+// * Manages refilling via buffer middleware "hooks"(?)
+// * Provides all RP SVG draw rendering, returns simplified path plan as SVG or
+//   list of paths to be drawn.
+// * Individual stateless closed path filling
+// * Decent looking basic HTML control interface with hand drawing, mobile.
+// * Ensure full redrawing via paper of current progress via Paper.js.
+// * Full 2D path planning (used for shape fill, etc), allows for Z control as well
+// * Compression for update streams, possibly binary?
+// * Move client to axios
+// * Allow server IP to be discoverable (https://www.npmjs.com/package/bonjour)
+// * Version checking/Range management for supported bots?
+// * Support all RoboPaint APIs and update status on the HTML app
+// * Support all RP settings, groupings, GET/POST etc.
+// * More testing?
 
 // INTIAL SETUP ================================================================
 
@@ -190,8 +163,8 @@ cncserver.settings.loadGlobalConfig(() => {
 
     // Direct configuration access (use the getters and override setters!)
     module.exports.conf = {
-      bot: cncserver.botConf,
-      global: cncserver.gConf,
+      bot: cncserver.settings.botConf,
+      global: cncserver.settings.gConf,
     };
 
     // Continue with simulation mode

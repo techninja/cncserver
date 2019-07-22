@@ -4,27 +4,26 @@
  */
 const socketio = require('socket.io');
 
-module.exports = (cncserver) => {
-  const io = socketio(cncserver.server);
+const sockets = {}; // Export interface.
 
-  // Central Socket.io object for streaming state data
-  cncserver.io = {};
+module.exports = (cncserver) => {
+  const io = socketio(cncserver.server.httpServer);
 
   // SOCKET DATA STREAM ========================================================
   io.on('connection', (socket) => {
     // Send buffer and pen updates on user connect
-    cncserver.io.sendPenUpdate();
+    cncserver.sockets.sendPenUpdate();
 
     // TODO: this likely needs to be sent ONLY to new connections
-    cncserver.io.sendBufferComplete();
+    cncserver.sockets.sendBufferComplete();
 
     socket.on('disconnect', () => {
-      //console.log('user disconnected');
+      // console.log('user disconnected');
     });
 
     // Shortcuts for moving and height for streaming lots of commands.
-    socket.on('move', cncserver.io.shortcut.move);
-    socket.on('height', cncserver.io.shortcut.height);
+    socket.on('move', cncserver.sockets.shortcut.move);
+    socket.on('height', cncserver.sockets.shortcut.height);
   });
 
 
@@ -33,18 +32,18 @@ module.exports = (cncserver) => {
    * Called whenever actualPen object has been changed, E.G.: right before
    * a serial command is run, or internal state changes.
    */
-  cncserver.io.sendPenUpdate = () => {
+  sockets.sendPenUpdate = () => {
     if (cncserver.exports.penUpdateTrigger) {
-      cncserver.exports.penUpdateTrigger(cncserver.actualPen);
+      cncserver.exports.penUpdateTrigger(cncserver.actualPen.state);
     }
-    io.emit('pen update', cncserver.actualPen);
+    io.emit('pen update', cncserver.actualPen.state);
   };
 
   /**
    * Send an update to all stream clients when something is added to the buffer.
    * Includes only the item added to the buffer, expects the client to handle.
    */
-  cncserver.io.sendBufferAdd = (item, hash) => {
+  sockets.sendBufferAdd = (item, hash) => {
     const data = {
       type: 'add',
       item,
@@ -62,7 +61,7 @@ module.exports = (cncserver) => {
    * Send an update to all stream clients when something is removed from the
    * buffer. Assumes the client knows where to remove from.
    */
-  cncserver.io.sendBufferRemove = () => {
+  sockets.sendBufferRemove = () => {
     const data = {
       type: 'remove',
     };
@@ -77,7 +76,7 @@ module.exports = (cncserver) => {
    * Send an update to all stream clients when something is added to the buffer.
    * Includes only the item added to the buffer, expects the client to handle.
    */
-  cncserver.io.sendBufferVars = () => {
+  sockets.sendBufferVars = () => {
     const data = {
       type: 'vars',
       bufferRunning: cncserver.buffer.running,
@@ -95,7 +94,7 @@ module.exports = (cncserver) => {
    * Send an update to all stream clients about everything buffer related.
    * Called only during connection inits.
    */
-  cncserver.io.sendBufferComplete = () => {
+  sockets.sendBufferComplete = () => {
     const data = {
       type: 'complete',
       bufferList: cncserver.buffer.data,
@@ -118,7 +117,7 @@ module.exports = (cncserver) => {
    * @param {string} message
    *   Message to send out to all clients.
    */
-  cncserver.io.sendMessageUpdate = (message) => {
+  sockets.sendMessageUpdate = (message) => {
     io.emit('message update', {
       message,
       timestamp: new Date().toString(),
@@ -131,7 +130,7 @@ module.exports = (cncserver) => {
    * @param {string} name
    *   Machine name of callback to send to clients
    */
-  cncserver.io.sendCallbackUpdate = (name) => {
+  sockets.sendCallbackUpdate = (name) => {
     io.emit('callback update', {
       name,
       timestamp: new Date().toString(),
@@ -144,26 +143,27 @@ module.exports = (cncserver) => {
    * @param {int} vIndex
    *   Virtual index of manual swap
    */
-  cncserver.io.manualSwapTrigger = (vIndex) => {
+  sockets.manualSwapTrigger = (vIndex) => {
     io.emit('manualswap trigger', { index: vIndex });
   };
 
   // Shortcut functions for move/height streaming.
-  cncserver.io.shortcut = {
+  sockets.shortcut = {
     move: (data) => {
-      data.ignoreTimeout = 1;
-      cncserver.control.setPen(data, () => {
-        if (data.returnData) io.emit('move', cncserver.pen);
+      cncserver.pen.setPen({ ...data, ignoreTimeout: 1 }, () => {
+        if (data.returnData) io.emit('move', cncserver.pen.state);
       });
     },
 
     height: (data) => {
-      cncserver.control.setPen(
+      cncserver.pen.setPen(
         { ignoreTimeout: 1, state: data.state },
         () => {
-          if (data.returnData) io.emit('height', cncserver.pen);
+          if (data.returnData) io.emit('height', cncserver.pen.state);
         }
       );
     },
   };
+
+  return sockets;
 };

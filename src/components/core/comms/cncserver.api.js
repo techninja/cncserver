@@ -8,39 +8,43 @@ const _ = require('underscore');
 const querystring = require('querystring');
 const pathToRegexp = require('path-to-regexp');
 
-module.exports = (cncserver = {}) => {
+const api = {};
+
+module.exports = (cncserver) => {
   // CNC Server API ============================================================
   // Enpoints are created and assigned via a server path to respond to, and
   // and callback function that manages handles the request and response.
-  // We hold all of these in cncserver.api.handlers to be able to call them
+  // We hold all of these in api.handlers to be able to call them
   // directly from the batch API endpoint. These are actually only turned into
   // endpoints at the end via createServerEndpoint().
-  cncserver.api = {};
-  cncserver.api.handlers = {};
+  api.handlers = {};
 
   // Return/Set CNCServer Configuration ========================================
-  cncserver.api.handlers['/v1/settings'] = function settingsGet(req) {
+  api.handlers['/v1/settings'] = function settingsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {
         code: 200,
         body: {
           global: '/v1/settings/global',
           bot: '/v1/settings/bot',
-        }
+        },
       };
     }
 
     return false;
   };
 
-  cncserver.api.handlers['/v1/settings/:type'] = function settingsMain(req) {
+  api.handlers['/v1/settings/:type'] = function settingsMain(req) {
     // Sanity check type
     const setType = req.params.type;
     if (!['global', 'bot'].includes(setType)) {
       return [404, 'Settings group not found'];
     }
 
-    const conf = setType === 'global' ? cncserver.gConf : cncserver.botConf;
+    let conf = cncserver.settings.botConf;
+    if (setType === 'global') {
+      conf = cncserver.settings.gConf;
+    }
 
     function getSettings() {
       let out = {};
@@ -75,7 +79,7 @@ module.exports = (cncserver = {}) => {
   };
 
   // Return/Set PEN state  API =================================================
-  cncserver.api.handlers['/v1/pen'] = function penMain(req, res) {
+  api.handlers['/v1/pen'] = function penMain(req, res) {
     if (req.route.method === 'put') {
       // Verify absolute measurement input.
       if (req.body.abs) {
@@ -86,7 +90,7 @@ module.exports = (cncserver = {}) => {
           ];
         }
 
-        if (!cncserver.bot.maxAreaMM) {
+        if (!cncserver.settings.bot.maxAreaMM) {
           return [
             406,
             'Input not acceptable, bot does not support absolute position.',
@@ -95,7 +99,7 @@ module.exports = (cncserver = {}) => {
       }
 
       // SET/UPDATE pen status
-      cncserver.control.setPen(req.body, (stat) => {
+      cncserver.pen.setPen(req.body, (stat) => {
         let code = 200;
         let body = {};
 
@@ -107,13 +111,13 @@ module.exports = (cncserver = {}) => {
           if (req.body.ignoreTimeout) {
             code = 202;
           }
-          body = cncserver.pen;
+          body = cncserver.pen.state;
         }
 
         body = JSON.stringify(body);
         res.status(code).send(body);
 
-        if (cncserver.gConf.get('debug')) {
+        if (cncserver.settings.gConf.get('debug')) {
           console.log('>RESP', req.route.path, code, body);
         }
       });
@@ -123,10 +127,10 @@ module.exports = (cncserver = {}) => {
 
     if (req.route.method === 'delete') {
       // Reset pen to defaults (park)
-      cncserver.control.setHeight('up', () => {
-        cncserver.control.setPen({
-          x: cncserver.bot.park.x,
-          y: cncserver.bot.park.y,
+      cncserver.pen.setHeight('up', () => {
+        cncserver.pen.setPen({
+          x: cncserver.settings.bot.park.x,
+          y: cncserver.settings.bot.park.y,
           park: true,
           ignoreTimeout: req.body.ignoreTimeout,
           skipBuffer: req.body.skipBuffer,
@@ -138,13 +142,13 @@ module.exports = (cncserver = {}) => {
             code = 500;
             body.status = 'Error parking pen!';
           } else {
-            body = cncserver.pen;
+            body = cncserver.pen.state;
           }
 
           body = JSON.stringify(body);
           res.status(code).send(body);
 
-          if (cncserver.gConf.get('debug')) {
+          if (cncserver.settings.gConf.get('debug')) {
             console.log('>RESP', req.route.path, code, body);
           }
         });
@@ -155,10 +159,10 @@ module.exports = (cncserver = {}) => {
 
     if (req.route.method === 'get') {
       if (req.query.actual) {
-        return { code: 200, body: cncserver.actualPen };
+        return { code: 200, body: cncserver.actualPen.state };
       }
 
-      return { code: 200, body: cncserver.pen };
+      return { code: 200, body: cncserver.pen.state };
     }
 
     // Error to client for unsupported request types.
@@ -166,7 +170,7 @@ module.exports = (cncserver = {}) => {
   };
 
   // Return/Set Motor state API ================================================
-  cncserver.api.handlers['/v1/motors'] = function motorsMain(req) {
+  api.handlers['/v1/motors'] = function motorsMain(req) {
     // Disable/unlock motors
     if (req.route.method === 'delete') {
       cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));
@@ -176,7 +180,7 @@ module.exports = (cncserver = {}) => {
     if (req.route.method === 'put') {
       if (parseInt(req.body.reset, 10) === 1) {
         // ZERO motor position to park position
-        const park = cncserver.utils.centToSteps(cncserver.bot.park, true);
+        const park = cncserver.utils.centToSteps(cncserver.settings.bot.park, true);
         // It is at this point assumed that one would *never* want to do this as
         // a buffered operation as it implies *manually* moving the bot to the
         // parking location, so we're going to man-handle the variables a bit.
@@ -188,20 +192,24 @@ module.exports = (cncserver = {}) => {
         // should still want the ability to do this.
 
         // Set tip of buffer to current
-        cncserver.pen.x = park.x;
-        cncserver.pen.y = park.y;
+        cncserver.pen.forceState({
+          x: park.x,
+          y: park.y,
+        });
 
         cncserver.run('callback', () => {
           // Set actualPen position. This is the ONLY place we set this value
           // without a movement, because it's assumed to have been moved there
           // physically by a user. Also we're assuming they did it instantly!
-          cncserver.actualPen.x = park.x;
-          cncserver.actualPen.y = park.y;
-          cncserver.actualPen.lastDuration = 0;
+          cncserver.actualPen.forceState({
+            x: park.x,
+            y: park.y,
+            lastDuration: 0,
+          });
 
-          cncserver.io.sendPenUpdate();
+          cncserver.sockets.sendPenUpdate();
 
-          if (cncserver.gConf.get('debug')) {
+          if (cncserver.settings.gConf.get('debug')) {
             console.log('Motor offset reset to park position');
           }
         });
@@ -217,7 +225,7 @@ module.exports = (cncserver = {}) => {
   };
 
   // Command buffer API ========================================================
-  cncserver.api.handlers['/v1/buffer'] = function bufferMain(req, res) {
+  api.handlers['/v1/buffer'] = function bufferMain(req, res) {
     const { buffer } = cncserver;
     if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
@@ -231,7 +239,7 @@ module.exports = (cncserver = {}) => {
           // Resuming can't do this if returning from another position.
           if (req.body.paused) {
             buffer.pause();
-            cncserver.control.setHeight('up', null, true); // Pen up for safety!
+            cncserver.pen.setHeight('up', null, true); // Pen up for safety!
             console.log('Run buffer paused!');
           } else {
             console.log('Resume to begin shortly...');
@@ -245,9 +253,9 @@ module.exports = (cncserver = {}) => {
       // Did we actually change position since pausing?
       let changedSincePause = false;
       if (buffer.pausePen) {
-        if (buffer.pausePen.x !== cncserver.actualPen.x
-            || buffer.pausePen.y !== cncserver.actualPen.y
-            || buffer.pausePen.height !== cncserver.actualPen.height) {
+        if (buffer.pausePen.x !== cncserver.actualPen.state.x
+            || buffer.pausePen.y !== cncserver.actualPen.state.y
+            || buffer.pausePen.height !== cncserver.actualPen.state.height) {
           changedSincePause = true;
           console.log('CHANGED SINCE PAUSE');
         } else if (!req.body.paused) {
@@ -264,7 +272,7 @@ module.exports = (cncserver = {}) => {
           console.log('Moving back to pre-pause position...');
 
           // Set the pen up before moving to resume position
-          cncserver.control.setHeight('up', () => {
+          cncserver.pen.setHeight('up', () => {
             cncserver.control.actuallyMove(buffer.pausePen, () => {
               // Set the height back to what it was AFTER moving
               cncserver.control.actuallyMoveHeight(
@@ -278,10 +286,10 @@ module.exports = (cncserver = {}) => {
                     running: buffer.running,
                     paused: buffer.paused,
                     count: buffer.data.length,
-                    buffer: "This isn't a great idea..." // TODO: FIX <<
+                    buffer: "This isn't a great idea...", // TODO: FIX <<
                   }));
 
-                  if (cncserver.gConf.get('debug')) {
+                  if (cncserver.settings.gConf.get('debug')) {
                     console.log('>RESP', req.route.path, '200');
                   }
                 }
@@ -299,7 +307,7 @@ module.exports = (cncserver = {}) => {
       // In case paused with 0 items in buffer...
       if (!buffer.newlyPaused || buffer.data.length === 0) {
         buffer.newlyPaused = false;
-        cncserver.io.sendBufferVars();
+        cncserver.sockets.sendBufferVars();
         return {
           code: 200,
           body: {
@@ -320,16 +328,15 @@ module.exports = (cncserver = {}) => {
           paused: buffer.paused,
           count: buffer.length,
         }));
-        cncserver.io.sendBufferVars();
+        cncserver.sockets.sendBufferVars();
         buffer.newlyPaused = false;
 
-        if (cncserver.gConf.get('debug')) {
+        if (cncserver.settings.gConf.get('debug')) {
           console.log('>RESP', req.route.path, 200);
         }
       };
 
       return true; // Don't finish the response till later
-
     }
 
     if (req.route.method === 'post') {
@@ -357,13 +364,13 @@ module.exports = (cncserver = {}) => {
   };
 
   // Get/Change Tool API =======================================================
-  cncserver.api.handlers['/v1/tools'] = function toolsGet(req) {
+  api.handlers['/v1/tools'] = function toolsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {
         code: 200,
         body: {
-          tools: Object.keys(cncserver.botConf.get('tools')),
-        }
+          tools: Object.keys(cncserver.settings.botConf.get('tools')),
+        },
       };
     }
 
@@ -371,18 +378,18 @@ module.exports = (cncserver = {}) => {
     return false;
   };
 
-  cncserver.api.handlers['/v1/tools/:tool'] = function toolsMain(req, res) {
+  api.handlers['/v1/tools/:tool'] = function toolsMain(req, res) {
     const toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
-      if (cncserver.botConf.get(`tools:${toolName}`)) {
+      if (cncserver.settings.botConf.get(`tools:${toolName}`)) {
         cncserver.control.setTool(toolName, () => {
-          cncserver.pen.tool = toolName;
+          cncserver.pen.forceState({ tool: toolName });
           res.status(200).send(JSON.stringify({
             status: `Tool changed to ${toolName}`,
           }));
 
-          if (cncserver.gConf.get('debug')) {
+          if (cncserver.settings.gConf.get('debug')) {
             console.log('>RESP', req.route.path, 200, `Tool:${toolName}`);
           }
         }, req.body.ignoreTimeout);
@@ -397,12 +404,161 @@ module.exports = (cncserver = {}) => {
   };
 
   // Bind all the api.handlers into endpoints ==================================
-  _.each(cncserver.api.handlers, (callback, path) => {
-    cncserver.createServerEndpoint(path, callback);
+  _.each(api.handlers, (callback, path) => {
+    cncserver.rest.createServerEndpoint(path, callback);
   });
 
+  /**
+   * Return a dummy 'request' or 'response' object for faking express requests.
+   *
+   * @param  {string} type
+   *   Either 'request' or 'response'.
+   *
+   * @return {object}
+   *   The dummy object with minimum required parts for the handlers to use the
+   *   same code as the express handler arguments.
+   */
+  function getDummyObject(type) {
+    let out = {};
+
+    switch (type) {
+      case 'request':
+        out = {
+          route: {
+            method: '',
+            path: '',
+          },
+          query: {},
+          params: {},
+          body: {},
+        };
+        break;
+
+      case 'response':
+        out = { status: () => ({ send: () => { } }) };
+        break;
+      default:
+    }
+
+    return out;
+  }
+
+
+  /**
+   * Process a flat array of semi-abstracted commands into the queue.
+   *
+   * @param {array} commands
+   *   Flat array of command objects in the following format:
+   *   {"[POST|PUT|DELETE] /v1/[ENDPOINT]": {data: 'for the endpoint'}}
+   * @param {function} callback
+   *   Callback function when command processing is complete.
+   * @param {number} index
+   *   Array index of commands to process. Ignore/Pass as undefined to init.
+   *   Function calls itself via callbacks to ensure delayed api handlers remain
+   *   queued in order while async.
+   * @param {number} goodCount
+   *   Running tally of successful commands, to be returned to callback once
+   *   complete.
+   */
+  function processBatchData(commands, callback, index, goodCount) {
+    // Initiate for the first loop run.
+    if (typeof index === 'undefined') {
+      // eslint-disable-next-line no-param-reassign
+      index = 0;
+      // eslint-disable-next-line no-param-reassign
+      goodCount = 0;
+
+      api.batchRunning = true;
+    }
+
+    const command = commands[index];
+    if (typeof command !== 'undefined' && api.batchRunning) {
+      const key = Object.keys(command)[0];
+      const data = command[key];
+      const method = key.split(' ')[0];
+      let path = key.split(' ')[1].split('?')[0];
+      if (path[0] !== '/') path = `/${path}`;
+
+      const query = path.split('?')[1]; // Query params.
+      const params = {}; // URL Params.
+
+      // Batch runs are send and forget, force ignoreTimeout.
+      data.ignoreTimeout = '1';
+
+      const req = getDummyObject('request');
+      const res = getDummyObject('response');
+      let handlerKey = '';
+
+      // Attempt to match the path to a requstHandler by express path match.
+      _.each(Object.keys(api.handlers), (pattern) => {
+        const keys = [];
+        const match = pathToRegexp(pattern, keys).exec(path);
+        if (match) {
+          handlerKey = pattern;
+
+          // If there's keyed url params, inject them.
+          if (keys.length) {
+            _.each(keys, (p, id) => {
+              params[p.name] = match[id + 1];
+            });
+          }
+        }
+      });
+
+      // Fill out request details:
+      req.route.method = method.toLowerCase();
+      req.route.path = path;
+      req.query = query ? querystring.parse(query) : {};
+      req.params = params;
+      req.body = data;
+
+      // Call the api handler (send and forget via batch!)
+      if (api.handlers[handlerKey]) {
+        res.status = code => ({
+          send: (sendData) => {
+            if (cncserver.settings.gConf.get('debug')) {
+              console.log(`#${index}, Batch Delay:`, handlerKey, code, sendData);
+            }
+
+            if (code.toString()[0] === '2') goodCount++;
+            process.nextTick(() => {
+              processBatchData(commands, callback, index + 1, goodCount);
+            });
+          },
+        });
+
+        // Naively check to see if the request was successful.
+        // Technically if there's a wait for return (=== true), we could only
+        // see it in the .status() return callback.
+        const response = api.handlers[handlerKey](req, res);
+        if (response !== true) {
+          if (cncserver.settings.gConf.get('debug')) {
+            console.log(`#${index}, Batch Immediate:`, handlerKey, response);
+          }
+
+          if (response !== false) goodCount++;
+          process.nextTick(() => {
+            processBatchData(commands, callback, index + 1, goodCount);
+          });
+        }
+      } else {
+        // Unhandled path, not a valid API handler available. Move on.
+        processBatchData(commands, callback, index + 1, goodCount);
+      }
+    } else {
+      // We're out of commands, or batch was cancelled.
+      api.batchRunning = false;
+      if (callback) callback(goodCount);
+    }
+  }
+
   // Batch Command API =========================================================
-  cncserver.createServerEndpoint('/v1/batch', (req, res) => {
+  api.batchRunning = false;
+  api.setBatchRunningState = (runningState = false) => {
+    api.batchRunning = !!runningState;
+  };
+
+  cncserver.rest.createServerEndpoint('/v1/batch', (req, res) => {
     // Create a new batch set.
     if (req.route.method === 'post') {
       // For exceedingly large batches over 50k commands, batching in takes
@@ -487,143 +643,5 @@ module.exports = (cncserver = {}) => {
     return false;
   });
 
-  /**
-   * Process a flat array of semi-abstracted commands into the queue.
-   *
-   * @param {array} commands
-   *   Flat array of command objects in the following format:
-   *   {"[POST|PUT|DELETE] /v1/[ENDPOINT]": {data: 'for the endpoint'}}
-   * @param {function} callback
-   *   Callback function when command processing is complete.
-   * @param {number} index
-   *   Array index of commands to process. Ignore/Pass as undefined to init.
-   *   Function calls itself via callbacks to ensure delayed api handlers remain
-   *   queued in order while async.
-   * @param {number} goodCount
-   *   Running tally of successful commands, to be returned to callback once
-   *   complete.
-   */
-  function processBatchData(commands, callback, index, goodCount) {
-    // Initiate for the first loop run.
-    if (typeof index === 'undefined') {
-      index = 0;
-      goodCount = 0;
-      cncserver.api.batchRunning = true;
-    }
-
-    const command = commands[index];
-    if (typeof command !== 'undefined' && cncserver.api.batchRunning) {
-      const key = Object.keys(command)[0];
-      const data = command[key];
-      const method = key.split(' ')[0];
-      let path = key.split(' ')[1].split('?')[0];
-      if (path[0] !== '/') path = `/${path}`;
-
-      const query = path.split('?')[1]; // Query params.
-      const params = {}; // URL Params.
-
-      // Batch runs are send and forget, force ignoreTimeout.
-      data.ignoreTimeout = '1';
-
-      const req = getDummyObject('request');
-      const res = getDummyObject('response');
-      let handlerKey = '';
-
-      // Attempt to match the path to a requstHandler by express path match.
-      _.each(Object.keys(cncserver.api.handlers), (pattern) => {
-        const keys = [];
-        const match = pathToRegexp(pattern, keys).exec(path);
-        if (match) {
-          handlerKey = pattern;
-
-          // If there's keyed url params, inject them.
-          if (keys.length) {
-            _.each(keys, (p, index) => {
-              params[p.name] = match[index + 1];
-            });
-          }
-        }
-      });
-
-      // Fill out request details:
-      req.route.method = method.toLowerCase();
-      req.route.path = path;
-      req.query = query ? querystring.parse(query) : {};
-      req.params = params;
-      req.body = data;
-
-      // Call the api handler (send and forget via batch!)
-      if (cncserver.api.handlers[handlerKey]) {
-        res.status = code => ({
-          send: (sendData) => {
-            if (cncserver.gConf.get('debug')) {
-              console.log(`#${index}, Batch Delay:`, handlerKey, code, sendData);
-            }
-
-            if (code.toString()[0] === '2') goodCount++;
-            process.nextTick(() => {
-              processBatchData(commands, callback, index + 1, goodCount);
-            });
-          },
-        });
-
-        // Naively check to see if the request was successful.
-        // Technically if there's a wait for return (=== true), we could only
-        // see it in the .status() return callback.
-        const response = cncserver.api.handlers[handlerKey](req, res);
-        if (response !== true) {
-          if (cncserver.gConf.get('debug')) {
-            console.log(`#${index}, Batch Immediate:`, handlerKey, response);
-          }
-
-          if (response !== false) goodCount++;
-          process.nextTick(() => {
-            processBatchData(commands, callback, index + 1, goodCount);
-          });
-        }
-      } else {
-        // Unhandled path, not a valid API handler available. Move on.
-        processBatchData(commands, callback, index + 1, goodCount);
-      }
-    } else {
-      // We're out of commands, or batch was cancelled.
-      cncserver.api.batchRunning = false;
-      if (callback) callback(goodCount);
-    }
-  }
-
-  /**
-   * Return a dummy 'request' or 'response' object for faking express requests.
-   *
-   * @param  {string} type
-   *   Either 'request' or 'response'.
-   *
-   * @return {object}
-   *   The dummy object with minimum required parts for the handlers to use the
-   *   same code as the express handler arguments.
-   */
-  function getDummyObject(type) {
-    let out = {};
-
-    switch (type) {
-      case 'request':
-        out = {
-          route: {
-            method: '',
-            path: ''
-          },
-          query: {},
-          params: {},
-          body: {},
-        };
-        break;
-
-      case 'response':
-        out = { status: () => ({ send: () => { } }) };
-        break;
-      default:
-    }
-
-    return out;
-  }
+  return api;
 };
