@@ -62,7 +62,7 @@ module.exports = (cncserver) => {
       // Try to connect to serial, or exit with error code.
       if (connectPath === '' || connectPath === '{auto}') {
         console.log(
-          `${botController.name} not found.
+          `${botController.name} not found. \
           Are you sure it's connected? Error #22`
         );
 

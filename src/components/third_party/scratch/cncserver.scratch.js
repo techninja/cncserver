@@ -326,8 +326,9 @@ module.exports = (cncserver) => {
     cncserver.rest.createServerEndpoint('/crossdomain.xml', () => ({
       code: 200,
       body:
-        `<?xml version="1.0" ?><cross-domain-policy>
-        <allow-access-from domain="*" to-ports="${cncserver.settings.gConf.get('httpPort')}
+        `<?xml version="1.0" ?><cross-domain-policy>\
+        <allow-access-from domain="*" \
+        to-ports="${cncserver.settings.gConf.get('httpPort')}\
         "/></cross-domain-policy>`,
     }));
 
