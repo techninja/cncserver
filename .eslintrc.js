@@ -10,6 +10,7 @@ module.exports = {
       "functions": "never",
       "arrays": "always-multiline",
       "objects": "always-multiline"
-    }]
+    }],
+    "no-console": "off", // TODO: Move to some other logging method.
   }
 };
