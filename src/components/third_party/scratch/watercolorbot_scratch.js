@@ -1,10 +1,12 @@
-/* eslint-disable strict */
-/* eslint-disable no-param-reassign */
 /**
  * @file The official client-side JavaScript based Scratch 2.0 extension for
  * CNCServer and WaterColorBot. Should mirror the abilities of the .s2e
  * Scratch 2 Offline extension.
  */
+/* eslint-disable no-param-reassign, strict */
+/* eslint-env browser */
+/* globals $, ScratchExtensions */
+
 ((ext) => {
   'use strict';
 
@@ -19,7 +21,7 @@
     },
   };
 
-  // Cleanup function when the extension is unloaded
+  // Cleanup  when the => extension is unloaded
   ext._shutdown = () => {};
 
   // Status reporting code
@@ -69,79 +71,77 @@
       positionX: ['left', 'center', 'right'],
       positionY: ['top', 'center', 'bottom'],
       angle: [0, 5, 15, 30, 45, 90, 135, 180, 270],
-      time: [0.25, 0.5, 0.75, 1, 2, 5, 10]
+      time: [0.25, 0.5, 0.75, 1, 2, 5, 10],
     },
   };
-
-  // ===========================================================================
-  // Convert all the function endpoint wrappers into something real!
-  // ===========================================================================
-  ext.park = () => { _get('park');};
-  ext.pen_wash = () => { _get('pen.wash');};
-  ext.pen_up = () => { _get('pen.up');};
-  ext.pen_down = () => { _get('pen.down');};
-  ext.penreink = function(d) { _get('penreink/' + d);};
-  ext.penstopreink = () => { _get('penstopreink');};
-  ext.move_wait = function(w) { _get('move.wait./' + w);};
-  ext.coord = function(x, y) { _get('coord/' + [x, y].join('/'));};
-  ext.tool_color = function(c) { _get('tool.color./' + c);};
-  ext.tool_water = function(c) { _get('tool.water./' + c);};
-  ext.move_forward = function(d) { _get('move.forward./' + d);};
-  ext.move_nudge_x = function(d) { _get('move.nudge.x./' + d);};
-  ext.move_nudge_y = function(d) { _get('move.nudge.y./' + d);};
-  ext.move_right = function(d) { _get('move.right./' + d);};
-  ext.move_left = function(d) { _get('move.left./' + d);};
-  ext.move_absturn = function(d) { _get('move.absturn./' + d);};
-  ext.move_toward = function(x, y) { _get('move.toward./' + [x, y].join('/'));};
-  ext.move_speed = function(s) { _get('move.speed./' + s);};
-  ext.pen_off = () => { _get('pen.off');};
-  ext.pen_resetDistance = () => { _get('pen.resetDistance');};
-  ext.pen_sleep_1 = () => { _get('pen.sleep.1');};
-  ext.pen_sleep_0 = () => { _get('pen.sleep.0');};
-
-
-  ext.get_x = function(cb) { _report('x', cb); };
-  ext.get_y = function(cb) { _report('y', cb); };
-  ext.get_z = function(cb) { _report('z', cb); };
-  ext.get_distanceCounter = function(cb) { _report('distanceCounter', cb); };
-  ext.get_sleeping = function(cb) { _report('sleeping', cb); };
-  ext.get_angle = function(cb) { _report('angle', cb); };
-
-  // Helper function for parsing data from the "/poll" Scratch offline endpoint
-  function _report(name, cb) {
-    _get('poll', {
-      complete: function(data) {
-        var lines = data.split('\n');
-        for (var i in lines) {
-          var line = lines[i].split(' ');
-          if (name === line[0]) {
-            cb(line[1]);
-            return;
-          }
-        }
-      }
-    });
-  }
 
   // ===========================================================================
   // CNCServer API wrapper GET approximation for all requests. This is a very
   // dumbed down wrapper to allow for only the common Scratch API GET requests.
   // ===========================================================================
   function _get(path, options) {
-    var srv = cncserver.api.server;
-    var url = srv.protocol + '://' + srv.domain + ':' + srv.port + '/' + path;
+    const srv = cncserver.api.server;
+    const url = `${srv.protocol}://${srv.domain}:${srv.port}/${path}`;
 
     if (!options) options = {}; // Default to object if not passed
 
     console.log('Getting: ', url);
     $.ajax({
-      url: url,
+      url,
       type: 'GET',
       success: options.complete,
       error: options.complete,
-      timeout: options.complete
+      timeout: options.complete,
     });
   }
+
+  // Helper function for parsing data from the "/poll" Scratch offline endpoint
+  function _report(name, cb) {
+    _get('poll', {
+      complete: (data) => {
+        const lines = data.split('\n');
+        lines.forEach((pollLine) => {
+          const line = pollLine.split(' ');
+          if (name === line[0]) {
+            cb(line[1]);
+          }
+        });
+      },
+    });
+  }
+
+  // ===========================================================================
+  // Convert all the function endpoint wrappers into something real!
+  // ===========================================================================
+  ext.park = () => { _get('park'); };
+  ext.pen_wash = () => { _get('pen.wash'); };
+  ext.pen_up = () => { _get('pen.up'); };
+  ext.pen_down = () => { _get('pen.down'); };
+  ext.penreink = (d) => { _get(`penreink/${d}`); };
+  ext.penstopreink = () => { _get('penstopreink'); };
+  ext.move_wait = (w) => { _get(`move.wait./${w}`); };
+  ext.coord = (x, y) => { _get(`coord/${[x, y].join('/')}`); };
+  ext.tool_color = (c) => { _get(`tool.color./${c}`); };
+  ext.tool_water = (c) => { _get(`tool.water./${c}`); };
+  ext.move_forward = (d) => { _get(`move.forward./${d}`); };
+  ext.move_nudge_x = (d) => { _get(`move.nudge.x./${d}`); };
+  ext.move_nudge_y = (d) => { _get(`move.nudge.y./${d}`); };
+  ext.move_right = (d) => { _get(`move.right./${d}`); };
+  ext.move_left = (d) => { _get(`move.left./${d}`); };
+  ext.move_absturn = (d) => { _get(`move.absturn./${d}`); };
+  ext.move_toward = (x, y) => { _get(`move.toward./${[x, y].join('/')}`); };
+  ext.move_speed = (s) => { _get(`move.speed./${s}`); };
+  ext.pen_off = () => { _get('pen.off'); };
+  ext.pen_resetDistance = () => { _get('pen.resetDistance'); };
+  ext.pen_sleep_1 = () => { _get('pen.sleep.1'); };
+  ext.pen_sleep_0 = () => { _get('pen.sleep.0'); };
+
+  ext.get_x = (cb) => { _report('x', cb); };
+  ext.get_y = (cb) => { _report('y', cb); };
+  ext.get_z = (cb) => { _report('z', cb); };
+  ext.get_distanceCounter = (cb) => { _report('distanceCounter', cb); };
+  ext.get_sleeping = (cb) => { _report('sleeping', cb); };
+  ext.get_angle = (cb) => { _report('angle', cb); };
 
   // Register the extension
   ScratchExtensions.register('WaterColorBlocks', descriptor, ext);
