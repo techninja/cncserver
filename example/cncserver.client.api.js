@@ -12,8 +12,8 @@
  *   version: '1'
  * }
  */
-
-/* globals $, window */
+/* eslint-env browser, node */
+/* globals $ */
 
 // Initialize wrapper object is this library is being used elsewhere
 const cncserver = window.cncserver || {};
