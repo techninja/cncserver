@@ -18,4 +18,5 @@ module.exports = {
   buffer: './components/core/utils/cncserver.buffer',
   run: './components/core/utils/cncserver.run',
   scratch: './components/third_party/scratch/cncserver.scratch',
+  bots: './components/machine_support/',
 };

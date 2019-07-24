@@ -36,15 +36,14 @@ module.exports = (cncserver) => {
       return false;
     }
 
-    // Set the height based on what kind of tool it is
-    // TODO: fold this into bot specific tool change logic
-    const downHeight = currentToolName.indexOf('water') !== -1 ? 'wash' : 'draw';
-
     // Pen Up
     cncserver.pen.setHeight('up');
 
     // Move to the tool
     cncserver.control.movePenAbs(tool);
+
+    // Trigger the binder event.
+    cncserver.binder.trigger('tool.change', { name: currentToolName, ...tool });
 
     // A "wait" tool requires user feedback before it can continue.
     if (typeof tool.wait !== 'undefined') {
@@ -63,19 +62,6 @@ module.exports = (cncserver) => {
           });
         });
       }
-    } else { // "Standard" WaterColorBot toolchange
-      // Pen down
-      cncserver.pen.setHeight(downHeight);
-
-      // Wiggle the brush a bit
-      cncserver.control.wigglePen(
-        tool.wiggleAxis,
-        tool.wiggleTravel,
-        tool.wiggleIterations
-      );
-
-      // Put the pen back up when done!
-      cncserver.pen.setHeight('up');
     }
 
     // If there's a callback to run...
@@ -405,62 +391,6 @@ module.exports = (cncserver) => {
         cb(1);
       }, Math.max(cncserver.control.commandDuration, 0));
     }
-  };
-
-  /**
-   * Util function to buffer the "wiggle" movement for WaterColorBot Tool
-   * changes. TODO: Replace this with a real API for tool changes.
-   *
-   * @param {string} axis
-   *   Which axis to move along. Either 'xy' or 'y'
-   * @param {integer} rawTravel
-   *   How much to move during the wiggle.
-   * @param {integer} iterations
-   *   How many times to move.
-   */
-  control.wigglePen = (axis, rawTravel, iterations) => {
-    const start = { x: Number(cncserver.pen.state.x), y: Number(cncserver.pen.state.y) };
-    let i = 0;
-    const travel = Number(rawTravel); // Make sure it's not a string
-
-    function _wiggleSlave(toggle) {
-      const point = { x: start.x, y: start.y };
-
-      if (axis === 'xy') {
-        const rot = i % 4; // Ensure rot is always 0-3
-
-        // This convoluted series ensure the wiggle moves in a proper diamond
-        if (rot % 3) { // Results in F, T, T, F
-          if (toggle) {
-            point.y += travel / 2; // Down
-          } else {
-            point.x -= travel; // Left
-          }
-        }
-
-        if (toggle) {
-          point.y -= travel / 2; // Up
-        } else {
-          point.x += travel; // Right
-        }
-      } else {
-        point[axis] += (toggle ? travel : travel * -1);
-      }
-
-      cncserver.control.movePenAbs(point);
-
-      i++;
-
-      // Wiggle again!
-      if (i <= iterations) {
-        _wiggleSlave(!toggle);
-      } else { // Done wiggling, go back to start
-        control.movePenAbs(start);
-      }
-    }
-
-    // Start the wiggle!
-    _wiggleSlave(true);
   };
 
   // Exports...
