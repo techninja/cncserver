@@ -4,6 +4,7 @@
 
 module.exports = {
   utils: './components/core/utils/cncserver.utils',
+  binder: './components/core/utils/cncserver.binder',
   settings: './components/core/utils/cncserver.settings',
   server: './components/core/comms/cncserver.server',
   rest: './components/core/comms/cncserver.rest',
