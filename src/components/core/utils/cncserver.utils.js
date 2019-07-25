@@ -59,7 +59,7 @@ module.exports = (cncserver) => {
     const movingSpeed = cncserver.settings.botConf.get('speed:moving');
 
     // Use given speed over distance to calculate duration
-    let speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
+    let speed = (utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
     speed = parseFloat(speed) / 100;
 
     // Convert to steps from percentage
@@ -92,8 +92,8 @@ module.exports = (cncserver) => {
     };
 
     // Calculate distance
-    const duration = cncserver.utils.getDurationFromDistance(
-      cncserver.utils.getVectorLength(change),
+    const duration = utils.getDurationFromDistance(
+      utils.getVectorLength(change),
       1,
       src
     );
@@ -175,10 +175,10 @@ module.exports = (cncserver) => {
    */
   utils.inPenToSteps = (inPen) => {
     if (inPen.abs === 'in' || inPen.abs === 'mm') {
-      return cncserver.utils.absToSteps({ x: inPen.x, y: inPen.y }, inPen.abs);
+      return utils.absToSteps({ x: inPen.x, y: inPen.y }, inPen.abs);
     }
 
-    return cncserver.utils.centToSteps({ x: inPen.x, y: inPen.y });
+    return utils.centToSteps({ x: inPen.x, y: inPen.y });
   };
 
   /**
