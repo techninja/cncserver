@@ -270,7 +270,8 @@ module.exports = (cncserver) => {
     pollData.render = function renderData() {
       let out = '';
 
-      const { bot: { workArea } } = cncserver;
+      const { settings: { bot: { workArea } } } = cncserver;
+
       out += `x ${(turtle.x - workArea.absCenter.x) / sizeMultiplier}\n`;
       out += `y ${(turtle.y - workArea.absCenter.y) / sizeMultiplier}\n`;
       out += `z ${cncserver.utils.penDown() ? '1' : '0'}\n`;
@@ -286,9 +287,10 @@ module.exports = (cncserver) => {
       out += `sleeping ${turtle.sleeping ? '1' : '0'}\n`;
 
       // Loop through all existing/static pollData
-      out += Object.keys(this).reduce(
-        (line, key) => `${line}${key} ${this[key].join(' ')}\n`
-      );
+      // TODO: Fix this from original source, this is just wrong :/
+      /*out += Object.keys(pollData).reduce(
+        (line, key) => `${line}${key} ${pollData[key].join(' ')}\n`
+      );*/
 
       // Throw in full pen data as well
       for (const [key, value] of Object.entries(cncserver.pen.state)) {
