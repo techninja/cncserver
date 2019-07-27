@@ -2,56 +2,121 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-    <script src="jquery.js"></script>
+    <script src="/jquery/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="cncserver.client.api.js"></script>
-    <script src="cncserver.client.commander.js"></script>
-    <style type="text/css">
-      body {
-        font-family: sans-serif;
-      }
-
-      #buffer {
-        width: 200px;
-        height: 200px;
-        float: right;
-      }
-
-      #simwrap {
-        position: relative;
-      }
-
-      canvas.simcanvas {
-        border: 1px solid black;
-        width: 100%;
-        max-width: 600px;
-        max-height: 400px;
-        display: block;
-      }
-
-      #bufferarea {
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
-
-      #scratch button {
-        font-size: 30px;
-        height: 50px;
-        width: 50px;
-        line-height: 24px;
-      }
-
-      #scratch turtle {
-        font-size: 50px;
-        width: 50px;
-        display: block;
-      }
-    </style>
+    <script src="/paper/paper-full.min.js"></script>
+    <script src="/axios/axios.min.js"></script>
+    <script src="/lib/cncserver.client.api.js"></script>
+    <script src="/lib/cncserver.client.commander.js"></script>
+    <link rel="stylesheet" href="/font-awesome/fontawesome.min.css">
+    <link rel="stylesheet" href="/font-awesome/solid.min.css">
+    <link rel="stylesheet" href="/bulma/bulma.min.css">
+    <link rel="stylesheet" href="/styles/interface.css">
   </head>
-  <title>CNC Server Controller</title>
+  <title>CNC Server client</title>
 <body>
-  <h3>CNC Server example Controller</h3>
+  <section class="hero is-dark is-bold">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title">CNC Server client v3.0-beta1</h1>
+        <p class="subtitle"></p>
+      </div>
+    </div>
+  </section>
+  <div class="section columns is-multiline">
+    <section class="column is-half">
+      <div class="tabs is-boxed">
+        <ul>
+          <li class="is-active" data-tab="1"><a>
+            <span class="icon is-small"><i class="fas fa-vial" aria-hidden="true"></i></span>
+            <span>Basic</span>
+          </a></li>
+          <li data-tab="2"><a>
+            <span class="icon is-small"><i class="fas fa-vials" aria-hidden="true"></i></span>
+            <span>Advanced</span>
+          </a></li>
+          <li data-tab="3"><a>
+            <span class="icon is-small"><i class="fas fa-cogs" aria-hidden="true"></i></span>
+            <span>Settings</span>
+          </a></li>
+          <li data-tab="4"><a>
+            <span class="icon is-small"><i class="fas fa-tasks" aria-hidden="true"></i></span>
+            <span>Diagnostics</span>
+          </a></li>
+        </ul>
+      </div>
+      <div class="tabs-content">
+        <div class="tab-content is-active" data-content="1"><!-- Basic -->
+
+          <label class="label">Tools:</label>
+          <fieldset id="tools">
+            <legend>Available Tools</legend>
+            <h4>Loading tool set...</h4>
+          </fieldset>
+
+
+        </div>
+        <div class="tab-content" data-content="2"><!-- Advanced -->
+
+          <label class="label">Select an SVG file:</label>
+          <div class="field has-addons has-addons">
+            <div class="control">
+              <input class="input" type="file" id="svgfile">
+            </div>
+            <div class="control">
+              <button id="plotstart" class="button is-primary" disabled="disabled">
+                <span>Plot Selected File</span>
+                <span class="icon is-small">
+                  <i class="fa fa-print"></i>
+                </span>
+              </button>
+            </div>
+          </div>
+          <div class="field is-grouped">
+            <p class="control">
+              <button class="button is-success" id="forceready">Force Ready State</button>
+            </p>
+            <p class="control">
+              <button id="plotend" class="button is-light is-danger is-outlined">CANCEL</button>
+            </p>
+          </div>
+        </div>
+        <div class="tab-content" data-content="3"><!-- Settings -->
+          SETTINGS
+        </div>
+        <div class="tab-content" data-content="4"><!-- Diagnostics -->
+
+          <fieldset>
+            <legend>Composite Functions</legend>
+            <button id="diagtest">Run Diag Test</button>
+          </fieldset>
+
+          <fieldset>
+            <legend>Composite Functions</legend>
+            <button class="button" id="diagtest">Draw Ruler</button>
+          </fieldset>
+
+        </div>
+      </div>
+
+
+    </section>
+
+
+    <section class="column is-half">
+      <canvas class="simcanvas" id="paper"></canvas>
+    </section>
+
+    <section class="column">
+      <div class="box">
+        <label class="subtitle is-4 is-bold">Current Status</label>
+        <progress class="progress is-primary is-large" value="0" max="100"></progress>
+        <div class="subtitle has-text-centered has-text-dark" id="status"></div>
+      </div>
+    </section>
+  </div>
+
+
 
   <fieldset id="bot"><legend>Live Status</legend>
     <div id="simwrap">
@@ -132,13 +197,7 @@
     </div>
   </fieldset>
 
-  <fieldset id="tools"><legend>Available Tools</legend>
-    <h4>Loading tool set...</h4>
-  </fieldset>
 
-  <fieldset><legend>Composite Functions</legend>
-    <button id="diagtest">Run Diag Test</button>
-  </fieldset>
 
 <script>
   var socket = io();
@@ -161,6 +220,20 @@
     protocol: 'http',
     version: '1'
   };
+
+  // Manage control tabs.
+  $('.tabs li').on('click', function () {
+    const $item = $(this);
+    const $content = $item.parents('.tabs').next();
+    const tab = $item.data('tab');
+
+    $item.siblings('li').removeClass('is-active');
+    $item.addClass('is-active');
+
+    $content.find('.tab-content').removeClass('is-active');
+    $(`.tab-content[data-content="${tab}"]`).addClass('is-active');
+  });
+
 
 
   // Socket.io stream data events =========================
@@ -186,7 +259,7 @@
       }
     } else {
       $(lastPen).stop();
-      $draw.update(pen);
+      //$draw.update(pen);
       lastPen = $.extend({}, pen);
     }
   });
@@ -290,8 +363,17 @@
 
 
   // Setup live display box, pull in the bot specific settings
-  cncserver.api.settings.bot(function(bot) {
+  cncserver.api.settings.bot().then((response) => {
+    const { data: bot } = response;
+
     $('#bot legend:first').text('Live Status: ' + bot.name);
+
+    // Set subtitle text.
+    cncserver.api.settings.global().then((global) => {
+      $('.hero-body p.subtitle').text(
+        `Controlling ${bot.name} through ${global.data.serialPath} on ${cncserver.api.server.domain}.`
+      );
+    });
 
     // Find the view scale
     if (bot.maxArea.width > bot.maxArea.height) {
@@ -353,10 +435,10 @@
     }
 
     // Initially set the pen from the bot
-    cncserver.api.pen.stat(function(data){
-      pen = data;
-      lastPen = $.extend({}, data);
-      $draw.update(data);
+    cncserver.api.pen.stat().then((response) => {
+      pen = response.data;
+      lastPen = $.extend({}, response.data);
+      $draw.update(response.data);
     });
   });
 
@@ -446,11 +528,11 @@
   });
 
   // Populate tool buttons
-  cncserver.api.tools.list(function(data){
-    if (data) {
+  cncserver.api.tools.list().then((response) => {
+    if (response.data) {
       $('#tools h4').remove();
-      for (var i in data.tools) {
-        $('<button>').text(data.tools[i]).appendTo('#tools');
+      for (var i in response.data.tools) {
+        $('<button>').text(response.data.tools[i]).appendTo('#tools');
       }
       $('#tools button').click(function(){
         cncserver.api.tools.change($(this).text());

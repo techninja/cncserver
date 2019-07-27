@@ -16,7 +16,19 @@ module.exports = (cncserver) => {
 
   // Global express initialization (must run before any endpoint creation)
   server.app.configure(() => {
-    server.app.use('/', express.static(`${__dirname}/../example`));
+    // Base static path for remote interface.
+    server.app.use('/', express.static(`${global.__basedir}/interface/`));
+
+    // Add static libraries from node_modules.
+    const nm = `${global.__basedir}/../node_modules`;
+    server.app.use('/paper', express.static(`${nm}/paper/dist/`));
+    server.app.use('/axios', express.static(`${nm}/axios/dist/`));
+    server.app.use('/jquery', express.static(`${nm}/jquery/dist/`));
+    server.app.use('/bulma', express.static(`${nm}/bulma/css/`));
+    server.app.use('/font-awesome', express.static(`${nm}/@fortawesome/fontawesome-free/css/`));
+    server.app.use('/webfonts', express.static(`${nm}/@fortawesome/fontawesome-free/webfonts/`));
+
+    // Setup remaining middleware.
     server.app.use(express.bodyParser());
     server.app.use(slashes());
   });

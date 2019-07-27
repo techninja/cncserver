@@ -1,0 +1,48 @@
+body {
+  font-family: sans-serif;
+}
+
+#buffer {
+  width: 200px;
+  height: 200px;
+  float: right;
+}
+
+#simwrap {
+  position: relative;
+}
+
+canvas.simcanvas {
+  border: 1px solid black;
+  width: 100%;
+  max-width: 600px;
+  max-height: 400px;
+  display: block;
+}
+
+#bufferarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#scratch button {
+  font-size: 30px;
+  height: 50px;
+  width: 50px;
+  line-height: 24px;
+}
+
+#scratch turtle {
+  font-size: 50px;
+  width: 50px;
+  display: block;
+}
+
+.tabs-content .tab-content {
+  display: none;
+}
+
+.tabs-content .tab-content.is-active {
+  display: block;
+}
