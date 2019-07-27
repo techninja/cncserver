@@ -12,5 +12,6 @@ module.exports = {
       "objects": "always-multiline"
     }],
     "no-console": "off", // TODO: Move to some other logging method.
+    "no-multi-str": "off",
   }
 };
