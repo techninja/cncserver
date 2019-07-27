@@ -23,7 +23,7 @@ module.exports = (cncserver) => {
     // These are passed by clients to assist users for manual tool swaps, but
     // doesn't actually do anything differently.
     const toolNameData = toolName.split('|');
-    const [currentToolName, vIndex] = toolNameData[1];
+    const [currentToolName, index] = toolNameData[1];
 
     // Get the matching tool object from the bot configuration.
     const tool = cncserver.settings.botConf.get(`tools:${currentToolName}`);
@@ -43,26 +43,11 @@ module.exports = (cncserver) => {
     cncserver.control.movePenAbs(tool);
 
     // Trigger the binder event.
-    cncserver.binder.trigger('tool.change', { name: currentToolName, ...tool });
-
-    // A "wait" tool requires user feedback before it can continue.
-    if (typeof tool.wait !== 'undefined') {
-      // Queue a callback to pause continued execution on tool.wait value
-      if (tool.wait) {
-        const { lastDuration: moveDuration } = cncserver.pen.state;
-        cncserver.run('callback', () => {
-          cncserver.buffer.pause();
-          cncserver.buffer.setNewlyPaused(true);
-
-          // Trigger the manualswap with virtual index for the client/user.
-          cncserver.buffer.setPauseCallback(() => {
-            setTimeout(() => {
-              cncserver.sockets.manualSwapTrigger(vIndex);
-            }, moveDuration);
-          });
-        });
-      }
-    }
+    cncserver.binder.trigger('tool.change', {
+      index,
+      name: currentToolName,
+      ...tool,
+    });
 
     // If there's a callback to run...
     if (callback) {

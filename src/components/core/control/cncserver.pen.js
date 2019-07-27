@@ -22,6 +22,8 @@ module.exports = (cncserver) => {
     simulation: 0, // Fake everything and act like it's working, no serial
   };
 
+  const debug = cncserver.settings.gConf.get('debug');
+
   /**
    * General logic sorting function for most "pen" requests.
    *
@@ -97,17 +99,25 @@ module.exports = (cncserver) => {
     // Absolute positions are set
     if (inPenState.x !== undefined) {
       // Input values are given as percentages of working area (not max area)
+      const point = {
+        abs: inPenState.abs,
+        x: Number(inPenState.x),
+        y: Number(inPenState.y),
+      };
 
       // Don't accept bad input
-      const penNaN = Number.isNaN(inPenState.x) || Number.isNaN(inPenState.y);
-      const penFinite = Number.isFinite(inPenState.x) && Number.isFinite(inPenState.y);
+      const penNaN = Number.isNaN(point.x) || Number.isNaN(point.y);
+      const penFinite = Number.isFinite(point.x) && Number.isFinite(point.y);
       if (penNaN || !penFinite) {
+        if (debug) {
+          console.log('setPen: Either X/Y not valid numbers.');
+        }
         callback(false);
         return;
       }
 
       // Convert the percentage or absolute in/mm XY values into absolute steps.
-      const absInput = cncserver.utils.inPenToSteps(inPenState);
+      const absInput = cncserver.utils.inPenToSteps(point);
       absInput.limit = 'workArea';
 
       // Are we parking?
@@ -119,6 +129,9 @@ module.exports = (cncserver) => {
           && pen.state.y === park.y
           && !inPenState.skipBuffer
         ) {
+          if (debug) {
+            console.log('setPen: Can\'t park when already parked.');
+          }
           if (callback) callback(false);
           return;
         }

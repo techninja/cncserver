@@ -1,7 +1,7 @@
 /**
  * @file Abstraction module for watercolorbot specific stuff.
  */
-const watercolorbot = {}; // Exposed export.
+const watercolorbot = { id: 'watercolorbot' }; // Exposed export.
 
 module.exports = (cncserver) => {
   /**
@@ -61,7 +61,7 @@ module.exports = (cncserver) => {
   };
 
   // Bind the wiggle to the toolchange event.
-  cncserver.binder.bindTo('tool.change', 'watercolorbot', (tool) => {
+  cncserver.binder.bindTo('tool.change', watercolorbot.id, (tool) => {
     // Only trigger this when the current tool isn't a wait.
     if (typeof tool.wait === 'undefined') {
       // Set the height based on what kind of tool it is.
@@ -71,7 +71,7 @@ module.exports = (cncserver) => {
       cncserver.pen.setHeight(downHeight);
 
       // Wiggle the brush a bit
-      cncserver.watercolorbot.wigglePen(
+      watercolorbot.wigglePen(
         tool.wiggleAxis,
         tool.wiggleTravel,
         tool.wiggleIterations
