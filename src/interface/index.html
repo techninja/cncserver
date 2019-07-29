@@ -10,6 +10,7 @@
     <script src="/lib/cncserver.client.commander.js"></script>
     <link rel="stylesheet" href="/font-awesome/fontawesome.min.css">
     <link rel="stylesheet" href="/font-awesome/solid.min.css">
+    <link rel="stylesheet" href="/font-awesome/brands.min.css">
     <link rel="stylesheet" href="/bulma/bulma.min.css">
     <link rel="stylesheet" href="/styles/interface.css">
   </head>
@@ -48,12 +49,42 @@
       <div class="tabs-content">
         <div class="tab-content is-active" data-content="1"><!-- Basic -->
 
-          <label class="label">Tools:</label>
-          <fieldset id="tools">
-            <legend>Available Tools</legend>
+          <label class="label">
+            <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
+            <span>Tools:</span>
+          </label>
+          <div class="field is-grouped" id="tools">
             <h4>Loading tool set...</h4>
+          </div>
+
+          <fieldset>
+            <legend>General</legend>
+            <a class="button is-primary" id="unlock">
+              <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
+              <span>Unlock Motors</span>
+            </a>
+            <a class="button is-primary" id="zero">
+              <span class="icon"><i class="fab fa-creative-commons-zero" aria-hidden="true"></i></span>
+              <span>Zero</span>
+            </a>
           </fieldset>
 
+          <fieldset id="scratch">
+            <legend>Scratch API / Turtle Control</legend>
+            <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
+            <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
+            <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
+            <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
+            <turtle title="Turtle angle">&#10140;</turtle>
+          </fieldset>
+
+          <fieldset id="heightbuttons">
+            <legend>Z/Servo Control</legend>
+            <div>
+              <label for="skipbufferz">Bypass buffer</label>
+              <input id="skipbufferz" type="checkbox">
+            </div>
+          </fieldset>
 
         </div>
         <div class="tab-content" data-content="2"><!-- Advanced -->
@@ -86,15 +117,9 @@
         </div>
         <div class="tab-content" data-content="4"><!-- Diagnostics -->
 
-          <fieldset>
-            <legend>Composite Functions</legend>
-            <button id="diagtest">Run Diag Test</button>
-          </fieldset>
-
-          <fieldset>
-            <legend>Composite Functions</legend>
-            <button class="button" id="diagtest">Draw Ruler</button>
-          </fieldset>
+          <legend>Composite Functions</legend>
+          <button class="button" id="diagtest">Run Diag Test</button>
+          <button class="button" id="ruler">Draw Ruler</button>
 
         </div>
       </div>
@@ -117,7 +142,6 @@
   </div>
 
 
-
   <fieldset id="bot"><legend>Live Status</legend>
     <div id="simwrap">
       <canvas class="simcanvas" id="drawarea"></canvas>
@@ -135,69 +159,6 @@
     </fieldset>
   </fieldset>
 
-  <fieldset><legend>General</legend>
-    <button id="unlock">Unlock</button>
-    <button id="zero">Zero</button>
-  </fieldset>
-
-  <fieldset><legend>X,Y Movement</legend>
-    <button id="park">PARK</button>
-    <label for="skipbuffer">Bypass buffer</label><input id="skipbuffer" type="checkbox">
-    <table>
-      <tr>
-        <td><button class="move">0,0</button></td>
-        <td><button class="move">25,0</button></td>
-        <td><button class="move">50,0</button></td>
-        <td><button class="move">75,0</button></td>
-        <td><button class="move">100,0</button></td>
-      </tr>
-      <tr>
-        <td><button class="move">0,25</button></td>
-        <td><button class="move">25,25</button></td>
-        <td><button class="move">50,25</button></td>
-        <td><button class="move">75,25</button></td>
-        <td><button class="move">100,25</button></td>
-      </tr>
-      <tr>
-        <td><button class="move">0,50</button></td>
-        <td><button class="move">25,50</button></td>
-        <td><button class="move">50,50</button></td>
-        <td><button class="move">75,50</button></td>
-        <td><button class="move">100,50</button></td>
-      </tr>
-      <tr>
-        <td><button class="move">0,75</button></td>
-        <td><button class="move">25,75</button></td>
-        <td><button class="move">50,75</button></td>
-        <td><button class="move">75,75</button></td>
-        <td><button class="move">100,75</button></td>
-      </tr>
-      <tr>
-        <td><button class="move">0,100</button></td>
-        <td><button class="move">25,100</button></td>
-        <td><button class="move">50,100</button></td>
-        <td><button class="move">75,100</button></td>
-        <td><button class="move">100,100</button></td>
-      </tr>
-    </table>
-  </fieldset>
-
-  <fieldset id="scratch"><legend>Scratch API / Turtle Control</legend>
-    <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
-    <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
-    <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
-    <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
-    <turtle title="Turtle angle">&#10140;</turtle>
-  </fieldset>
-
-  <fieldset id="heightbuttons"><legend>Z/Servo Control</legend>
-    <div>
-      <label for="skipbufferz">Bypass buffer</label>
-      <input id="skipbufferz" type="checkbox">
-    </div>
-  </fieldset>
-
-
 
 <script>
   var socket = io();
@@ -211,6 +172,14 @@
 
   var viewScale = 1; // The scale to adjust bot steps by for viewing
   var viewMax = {x: 600, y: 400}; // The maximum view size to constrain to
+
+  // Paper and canvas vars.
+  var crosshair;
+  var crosshairTip;
+  var workarea;
+  var layers = {};
+
+
 
   // Initialize CNC Server connection details
   // (thanks to CORS support, this should be fully portable)
@@ -253,13 +222,13 @@
           easing: 'linear',
           step: function(val, fx) {
             animPen[fx.prop] = val;
-            $draw.update(animPen, pen);
+            drawUpdate(animPen, pen);
           }
         });
       }
     } else {
       $(lastPen).stop();
-      //$draw.update(pen);
+      drawUpdate(pen);
       lastPen = $.extend({}, pen);
     }
   });
@@ -375,6 +344,8 @@
       );
     });
 
+    console.dir(bot);
+
     // Find the view scale
     if (bot.maxArea.width > bot.maxArea.height) {
       viewScale = viewMax.x / bot.maxArea.width;
@@ -382,46 +353,40 @@
       viewScale = viewMax.y / bot.maxArea.height;
     }
 
-    $('.simcanvas').attr({
-      width: bot.maxArea.width * viewScale,
-      height: bot.maxArea.height * viewScale
-    });
+    // Set the scale and setup paper.
+    paper.setup($('#paper')[0]);
+    paper.project.view.viewSize = [bot.maxArea.width * viewScale, bot.maxArea.height * viewScale];
+    paper.project.view.scale(viewScale, [0, 0]);
 
-    $draw.update = function(current, dest) {
-      var ctx = $draw[0].getContext('2d');
-      // Clear it out
-      ctx.clearRect(0, 0, $draw[0].width, $draw[0].height);
+    // Setup 3 layers: Drawing, moving, and overlay.
+    layers.drawing = new paper.Layer([]);
+    layers.moving = new paper.Layer([]);
+    layers.overlay = new paper.Layer([]);
 
-      // Draw directional path to DEST
-      if (dest) {
-        ctx.beginPath();
-        ctx.lineWidth = '4';
-        ctx.strokeStyle = "green";
-        ctx.moveTo(current.x * viewScale, current.y * viewScale);
-        ctx.lineTo(dest.x * viewScale, dest.y * viewScale);
-        ctx.stroke();
-        ctx.closePath();
-      }
+    // Make crosshair (on active overlay layer).
+    var size = 250;
+    crosshair = new paper.Group([
+      new paper.Shape.Circle([0, 0], size),
+      new paper.Path.Line([-size * 1.5, 0], [-size / 5, 0]),
+      new paper.Path.Line([size * 1.5, 0], [size / 5, 0]),
+      new paper.Path.Line([0, -size * 1.5], [0, -size / 5]),
+      new paper.Path.Line([0, size * 1.5], [0, size / 5]),
+    ]);
+    crosshair.strokeColor = 'black';
+    crosshair.strokeWidth = 40;
 
+    crosshairTip = crosshair.clone();
+    crosshairTip.strokeColor = 'green';
+    crosshairTip.strokeWidth = 80;
+    crosshairTip.sendToBack();
 
-      // Red outline the work area
-      ctx.beginPath();
-      ctx.lineWidth = '1';
-      ctx.strokeStyle = 'red';
-      ctx.rect(
-        bot.workArea.left * viewScale,
-        bot.workArea.top * viewScale,
-        bot.maxArea.width * viewScale,
-        bot.maxArea.height * viewScale
-      );
-      ctx.stroke();
-      ctx.closePath();
-
-
-      if (dest) drawCrosshair(ctx, 10, 'orange', dest); // Draw destination
-      drawCrosshair(ctx, 20, 'black', current); // Draw Current Position
-
-    };
+    // Show workarea
+    workarea = new paper.Path.Rectangle(
+      [bot.workArea.left, bot.workArea.top],
+      [bot.maxArea.width, bot.maxArea.height],
+    );
+    workarea.strokeWidth = 20;
+    workarea.strokeColor = 'red';
 
     // Setup the height option buttons for the bot
     for (var name in bot.servo.presets) {
@@ -438,30 +403,27 @@
     cncserver.api.pen.stat().then((response) => {
       pen = response.data;
       lastPen = $.extend({}, response.data);
-      $draw.update(response.data);
+      drawUpdate(response.data);
     });
   });
 
-  // Util function for drawing crosshairs
-  function drawCrosshair(ctx, size, color, pos) {
-    ctx.beginPath();
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = color;
-    var x = pos.x * viewScale;
-    var y = pos.y * viewScale;
 
-    ctx.arc(x, y, size/2, 0, 2*Math.PI); // Circle
+  function drawUpdate(current, dest) {
+    console.log('UPDATE', current, dest);
 
-    // Cross lines
-    ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
-    ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
+    // Draw directional path to DEST
+    if (dest) {
+      crosshairTip.position = [dest.x, dest.y];
+    }
 
-    ctx.stroke();
-    ctx.closePath();
-  }
-
+    crosshair.position = [current.x, current.y];
+  };
 
   var run = cncserver.cmd.run; // Shortcut!
+
+  function drawUpdate(current, dest) {
+
+  }
 
   // Bind button action click
   $('button').click(function(){
@@ -532,7 +494,14 @@
     if (response.data) {
       $('#tools h4').remove();
       for (var i in response.data.tools) {
-        $('<button>').text(response.data.tools[i]).appendTo('#tools');
+        $('<p>')
+          .addClass('control')
+          .append(
+            $('<button>')
+              .text(response.data.tools[i])
+              .addClass('button is-info is-small')
+          )
+          .appendTo('#tools');
       }
       $('#tools button').click(function(){
         cncserver.api.tools.change($(this).text());
