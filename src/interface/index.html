@@ -53,34 +53,52 @@
       <div class="tabs-content">
         <div class="tab-content is-active" data-content="1"><!-- Basic -->
 
-          <label class="label">
-            <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
-            <span>Tools:</span>
-          </label>
-          <div class="field is-grouped" id="tools">
-            <h4>Loading tool set...</h4>
+          <div class="tile is-ancestor">
+
+            <div class="tile box">
+              <label class="label">
+                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
+                <span>Tools:</span>
+              </label>
+              <div class="field is-grouped" id="tools">
+                <h4>Loading tool set...</h4>
+              </div>
+            </div>
+
+            <div class="tile box">
+              <label class="label">
+                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
+                <span>General:</span>
+              </label>
+              <a class="button is-primary" id="unlock">
+                <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
+                <span>Unlock Motors</span>
+              </a>
+              <a class="button is-primary" id="zero">
+                <span class="icon"><i class="fab fa-creative-commons-zero" aria-hidden="true"></i></span>
+                <span>Zero</span>
+              </a>
+            </div>
+
+            <div class="tile box">
+              <label class="label">
+                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
+                <span>Scratch Turtle:</span>
+              </label>
+              <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
+              <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
+              <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
+              <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
+              <turtle title="Turtle angle">&#10140;</turtle>
+            </div>
+
+            <div class="tile box">
+
+            </div>
+
           </div>
 
-          <fieldset>
-            <legend>General</legend>
-            <a class="button is-primary" id="unlock">
-              <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
-              <span>Unlock Motors</span>
-            </a>
-            <a class="button is-primary" id="zero">
-              <span class="icon"><i class="fab fa-creative-commons-zero" aria-hidden="true"></i></span>
-              <span>Zero</span>
-            </a>
-          </fieldset>
 
-          <fieldset id="scratch">
-            <legend>Scratch API / Turtle Control</legend>
-            <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
-            <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
-            <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
-            <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
-            <turtle title="Turtle angle">&#10140;</turtle>
-          </fieldset>
 
           <fieldset id="heightbuttons">
             <legend>Z/Servo Control</legend>
