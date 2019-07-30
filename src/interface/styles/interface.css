@@ -39,6 +39,16 @@ canvas.simcanvas {
   display: block;
 }
 
+.logo {
+  float: left;
+  margin-right: 1em;
+  margin-top: -2em;
+}
+
+.hero-body {
+  padding-bottom: 1em;
+}
+
 .tabs-content .tab-content {
   display: none;
 }
