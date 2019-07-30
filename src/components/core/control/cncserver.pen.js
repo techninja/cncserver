@@ -142,16 +142,10 @@ module.exports = (cncserver) => {
         absInput.limit = 'maxArea';
       }
 
-      // Sanity check and format ignoreTimeout as clean triple equals boolean.
-      let { ignoreTimeout } = inPenState;
-      if (typeof ignoreTimeout !== 'undefined') {
-        ignoreTimeout = parseInt(ignoreTimeout, 10) === 1;
-      }
-
       cncserver.control.movePenAbs(
         absInput,
         callback,
-        ignoreTimeout,
+        inPenState.waitForCompletion,
         inPenState.skipBuffer
       );
 

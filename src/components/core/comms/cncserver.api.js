@@ -100,16 +100,16 @@ module.exports = (cncserver) => {
 
       // SET/UPDATE pen status
       cncserver.pen.setPen(req.body, (stat) => {
-        let code = 200;
+        let code = 202;
         let body = {};
 
         if (!stat) {
           code = 500;
           body.status = 'Error setting pen!';
         } else {
-          // Immediate return.
-          if (req.body.ignoreTimeout) {
-            code = 202;
+          // Wait return.
+          if (req.body.waitForCompletion) {
+            code = 200;
           }
           body = cncserver.pen.state;
         }
@@ -132,7 +132,6 @@ module.exports = (cncserver) => {
           x: cncserver.settings.bot.park.x,
           y: cncserver.settings.bot.park.y,
           park: true,
-          ignoreTimeout: req.body.ignoreTimeout,
           skipBuffer: req.body.skipBuffer,
         }, (stat) => {
           let code = 200;
@@ -392,7 +391,7 @@ module.exports = (cncserver) => {
           if (cncserver.settings.gConf.get('debug')) {
             console.log('>RESP', req.route.path, 200, `Tool:${toolName}`);
           }
-        }, req.body.ignoreTimeout);
+        }, req.body.waitForCompletion);
         return true; // Tell endpoint wrapper we'll handle the response
       }
 
@@ -482,8 +481,8 @@ module.exports = (cncserver) => {
       const query = path.split('?')[1]; // Query params.
       const params = {}; // URL Params.
 
-      // Batch runs are send and forget, force ignoreTimeout.
-      data.ignoreTimeout = '1';
+      // Batch runs are send and forget, force waitForCompletion false.
+      data.waitForCompletion = false;
 
       const req = getDummyObject('request');
       const res = getDummyObject('response');

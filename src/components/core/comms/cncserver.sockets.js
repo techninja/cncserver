@@ -150,14 +150,14 @@ module.exports = (cncserver) => {
   // Shortcut functions for move/height streaming.
   sockets.shortcut = {
     move: (data) => {
-      cncserver.pen.setPen({ ...data, ignoreTimeout: 1 }, () => {
+      cncserver.pen.setPen(data, () => {
         if (data.returnData) io.emit('move', cncserver.pen.state);
       });
     },
 
     height: (data) => {
       cncserver.pen.setPen(
-        { ignoreTimeout: 1, state: data.state },
+        { state: data.state },
         () => {
           if (data.returnData) io.emit('height', cncserver.pen.state);
         }

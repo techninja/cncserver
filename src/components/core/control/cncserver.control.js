@@ -14,11 +14,14 @@ module.exports = (cncserver) => {
    * @param callback
    *   Triggered when the full tool change is to have been completed, or on
    *   failure.
+   * @param waitForCompletion
+   *   Pass false to call callback immediately after calculation, true to
+   *   callback only after physical movement is complete.
    *
    * @returns {boolean}
    *   True if success, false on failure.
    */
-  control.setTool = (toolName, callback, ignoreTimeout) => {
+  control.setTool = (toolName, callback, waitForCompletion = false) => {
     // Parse out any virtual indexes (pipe delimited) from the tool name.
     // These are passed by clients to assist users for manual tool swaps, but
     // doesn't actually do anything differently.
@@ -51,7 +54,7 @@ module.exports = (cncserver) => {
 
     // If there's a callback to run...
     if (callback) {
-      if (!ignoreTimeout) { // Run inside the buffer
+      if (waitForCompletion) { // Run inside the buffer
         cncserver.run('callback', callback);
       } else { // Run as soon as items have been buffered
         callback(1);
@@ -80,7 +83,7 @@ module.exports = (cncserver) => {
    * @returns {number}
    *   Distance moved from previous position, in steps.
    */
-  control.movePenAbs = (inPoint, callback, immediate, skip) => {
+  control.movePenAbs = (inPoint, callback, immediate = true, skip) => {
     // Something really bad happened here...
     if (Number.isNaN(inPoint.x) || Number.isNaN(inPoint.y)) {
       console.error('INVALID Move pen input, given:', inPoint);

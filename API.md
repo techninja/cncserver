@@ -164,7 +164,7 @@ Content-Type: application/json; charset=UTF-8
 
 #### Response
 ```javascript
-HTTP/1.1 200 OK
+HTTP/1.1 202 Accepted
 Content-Type: application/json; charset=UTF-8
 
 ( RETURNS FULL PEN STATUS, SEE ABOVE EXAMPLE IN: GET /v1/pen RESPONSE )
@@ -188,12 +188,12 @@ via the API without this named preset. Used to squash the bristles down to clean
  * Tools can't be changed here. See `/tools` resource below.
  * Request will not complete until movement is actually complete, though you can
 send more requests through separate channels.
- * Passing the variable `ignoreTimeout` as `1` for x/y movements will
-finish the request immediately, even though it may still be moving to that
-position. In those cases, the response will return a `202 Accepted` instead of a
-`200 OK`.
- * `lastDuration` in return data can be used in conjunction with ignoreTimeout
-to allow the client to manage timings instead of waiting on the server.
+ * All movement requests that take time to complete will return a `202 Accepted`
+ as otherwise the connection would be held open and possibly timeout. Pass the
+ variable `waitForCompletion: true` to have the request return only when the
+ movement is fully completed.
+ * `lastDuration` in return data can be used to allow the client to manage
+ timings instead of waiting on the server.
  * Absolute measurement is only supported by bot configurations that define
 `maxAreaMM` width and height. For non-planar bots like the EggBot, absolute
 measurements of the X axis could never reliably match to real world constants as
@@ -707,8 +707,6 @@ Content-Type: application/json; charset=UTF-8
 ##### Usage Notes
  * Command items are parsed and run semi-asynchronously, with each being run as
  if an individual ReSTful request had been called, without the overhead.
- * Every command is run with `ignoreTimeout` set, so no need to include it in
- batch command data. If using the JS wrapper, this is done for you.
  * Detailed error catching is mostly non-existent, make sure your data is well
  formed and tested without batching before moving to batch submission.
  * Return data reporting is exceedingly minimal, so make sure you've

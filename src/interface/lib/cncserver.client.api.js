@@ -301,8 +301,8 @@ cncserver.api = {
      *   The data arguments being sent to modify the command.
      */
     addEntry: (key, data) => {
-      // Unset ignore timeout as it's just dead weight with batch.
-      if (data.ignoreTimeout) delete data.ignoreTimeout;
+      // Unset waitForCompletion as it's not allowed with batch.
+      if (data.waitForCompletion) delete data.waitForCompletion;
 
       const entry = {};
       entry[key] = data;

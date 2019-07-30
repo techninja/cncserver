@@ -53,25 +53,24 @@ cncserver.cmd = {
     // These are all run as send and forgets, so ignore the timeout.
     switch (next[0]) {
       case 'move':
-        next[1].ignoreTimeout = true;
-        cncserver.api.pen.move(next[1], cncserver.cmd.cb);
+        console.log(next[1]);
+        cncserver.api.pen.move(next[1]).then(cncserver.cmd.cb);
         break;
       case 'tool':
-        next[1].ignoreTimeout = true;
-        cncserver.api.tools.change(next[1], cncserver.cmd.cb);
+        cncserver.api.tools.change(next[1]).then(cncserver.cmd.cb);
         break;
       case 'up':
-        cncserver.api.pen.up(cncserver.cmd.cb, {ignoreTimeout: true});
+        cncserver.api.pen.up().then(cncserver.cmd.cb);
         break;
       case 'down':
-        cncserver.api.pen.down(cncserver.cmd.cb, {ignoreTimeout: true});
+        cncserver.api.pen.down().then(cncserver.cmd.cb);
         break;
       case 'status':
         cncserver.utils.status(next[1], next[2]);
         cncserver.cmd.cb(true);
         break;
       case 'park':
-        cncserver.api.pen.park(cncserver.cmd.cb, {ignoreTimeout: true});
+        cncserver.api.pen.park().then(cncserver.cmd.cb);
         break;
       case 'custom':
         cncserver.cmd.cb();
@@ -84,15 +83,15 @@ cncserver.cmd = {
   },
 
   // Add a command to the queue! format is cmd short name, arguments
-  run: () => {
-    if (typeof arguments[0] === 'object') {
-      cncserver.cmd.process.max += arguments.length;
-      $.each(arguments[0], (i, args) => {
-        cncserver.cmd.buffer.unshift(args);
+  run: (...args) => {
+    if (typeof args[0] === 'object') {
+      cncserver.cmd.process.max += args.length;
+      $.each(args[0], (i, loopArgs) => {
+        cncserver.cmd.buffer.unshift(loopArgs);
       });
     } else {
       cncserver.cmd.process.max++;
-      cncserver.cmd.buffer.unshift(arguments);
+      cncserver.cmd.buffer.unshift(args);
     }
   },
 
