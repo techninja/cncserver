@@ -287,7 +287,7 @@ module.exports = (cncserver) => {
    *   Serial command string intended to be outputted directly, empty string
    *   if error.
    */
-  buffer.cmdstr = (name, values) => {
+  buffer.cmdstr = (name, values = {}) => {
     if (!name || !cncserver.settings.bot.commands[name]) return ''; // Sanity check
 
     let out = cncserver.settings.bot.commands[name];
