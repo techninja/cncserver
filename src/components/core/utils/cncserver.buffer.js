@@ -103,6 +103,7 @@ module.exports = (cncserver) => {
     });
 
     cncserver.sockets.sendBufferAdd(item, hash); // Alert clients.
+    return hash;
   };
 
   // Event for when a buffer has been started.
@@ -112,6 +113,7 @@ module.exports = (cncserver) => {
       const item = buffer.dataSet[hash];
 
       // Update the state of the actualPen to match the one in the buffer.
+      item.pen.bufferHash = hash;
       cncserver.actualPen.updateState(item.pen);
 
       // Trigger an update for actualPen change.

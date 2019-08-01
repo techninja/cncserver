@@ -17,6 +17,7 @@ module.exports = (cncserver) => {
     busy: false,
     tool: 'color0', // TODO: This seems wrong and assuming.
     offCanvas: false,
+    bufferHash: '', // Holds the last pen buffer hash.
     lastDuration: 0, // Holds the last movement timing in milliseconds
     distanceCounter: 0, // Holds a running tally of distance travelled
     simulation: 0, // Fake everything and act like it's working, no serial
@@ -231,6 +232,16 @@ module.exports = (cncserver) => {
         pen.state[key] = value;
       }
     }
+  };
+
+  /**
+   * Set the internal state hash value.
+   *
+   * @param {string} hash
+   *   Buffer hash to set.
+   */
+  pen.setHash = (hash) => {
+    pen.state.bufferHash = hash;
   };
 
   // Exports...
