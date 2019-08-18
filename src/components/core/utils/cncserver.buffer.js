@@ -99,7 +99,7 @@ module.exports = (cncserver) => {
     // Add the item to the runner's buffer.
     cncserver.ipc.sendMessage('buffer.add', {
       hash,
-      commands: buffer.render(item),
+      ...buffer.render(item),
     });
 
     cncserver.sockets.sendBufferAdd(item, hash); // Alert clients.
@@ -191,32 +191,34 @@ module.exports = (cncserver) => {
    * @param  {object} item
    *   The raw buffer "action" item.
    *
-   * @return {array}
-   *   Array of all serial command strings rendered from buffer item.
+   * @return {object}
+   *   Object containing keys:
+   *     commands: array of all serial command strings rendered from item.
+   *     duration: numeric duration (in milliseconds) that item should take.
    */
   buffer.render = (item) => {
-    let commandOut = [];
+    let commands = [];
+    let duration = 0;
 
     if (typeof item.command === 'object') { // Detailed buffer object
       switch (item.command.type) {
         case 'absmove':
-          commandOut = [
-            buffer.cmdstr(
-              'movexy',
-              cncserver.utils.getPosChangeData(
-                item.command.source,
-                item.command
-              )
-            ),
-          ];
+          // eslint-disable-next-line
+          const posChangeData = cncserver.utils.getPosChangeData(
+            item.command.source,
+            item.command
+          );
+
+          duration = posChangeData.d;
+          commands = [buffer.cmdstr('movexy', posChangeData)];
           break;
 
         case 'absheight':
-          commandOut = [buffer.cmdstr('movez', { z: item.command.z })];
+          commands = [buffer.cmdstr('movez', { z: item.command.z })];
 
           // If there's a togglez, run it after setting Z
           if (cncserver.settings.bot.commands.togglez) {
-            commandOut.push(
+            commands.push(
               buffer.cmdstr(
                 'togglez',
                 { t: cncserver.settings.gConf.get('flipZToggleBit') ? 1 : 0 }
@@ -224,23 +226,23 @@ module.exports = (cncserver) => {
             );
           }
 
-          commandOut.push(
-            buffer.cmdstr('wait', {
-              d: cncserver.utils.getHeightChangeData(
-                item.command.source,
-                item.command.z
-              ).d,
-            })
+          duration = cncserver.utils.getHeightChangeData(
+            item.command.source,
+            item.command.z
+          ).d;
+
+          commands.push(
+            buffer.cmdstr('wait', { d: duration })
           );
           break;
         default:
       }
     } else if (typeof item.command === 'string') {
       // Serial command is direct string in item.command, no render needed.
-      commandOut = [item.command];
+      commands = [item.command];
     }
 
-    return commandOut;
+    return { commands, duration };
   };
 
   /**

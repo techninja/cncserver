@@ -293,17 +293,16 @@ module.exports = (cncserver) => {
     control.commandDuration = Math.max(change.d, 0);
 
     // Execute the command immediately via serial.direct.command.
-    cncserver.ipc.sendMessage('serial.direct.command', {
-      commands: cncserver.buffer.render({
+    cncserver.ipc.sendMessage('serial.direct.command',
+      cncserver.buffer.render({
         command: {
           type: 'absmove',
           x: destination.x,
           y: destination.y,
           source: cncserver.actualPen.state,
         },
-        duration: cncserver.control.commandDuration,
-      }),
-    });
+      })
+    );
 
     // Set the correct duration and new position through to actualPen
     cncserver.actualPen.forceState({
@@ -354,16 +353,15 @@ module.exports = (cncserver) => {
     }
 
     // Execute the command immediately via serial.direct.command.
-    cncserver.ipc.sendMessage('serial.direct.command', {
-      commands: cncserver.buffer.render({
+    cncserver.ipc.sendMessage('serial.direct.command',
+      cncserver.buffer.render({
         command: {
           type: 'absheight',
           z: height,
           source: cncserver.actualPen.state.height,
         },
-        duration: cncserver.control.commandDuration,
-      }),
-    });
+      })
+    );
 
     cncserver.actualPen.forceState({
       height,

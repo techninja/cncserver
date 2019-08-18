@@ -156,11 +156,6 @@ module.exports = (cncserver) => {
     });
   };
 
-  // Cheap wrapper!
-  serial.command = (cmd) => {
-    cncserver.ipc.sendMessage('serial.direct.write', cmd);
-  };
-
   // Util function to just get the full port output from exports.
   serial.getPorts = (cb) => {
     SerialPort.list((err, ports) => {
