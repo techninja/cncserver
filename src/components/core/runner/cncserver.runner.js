@@ -91,7 +91,7 @@ function initInstructionStreams() {
   instructionStream.pipe(instructionRenderer);
 
   // Cork the output if state says we shouldn't be running after clear.
-  if (bufferPaused) {
+  if (state.paused) {
     instructionRenderer.cork();
   }
 
