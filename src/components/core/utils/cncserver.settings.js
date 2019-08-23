@@ -172,6 +172,9 @@ module.exports = (cncserver) => {
             settings.gConf.set('swapMotors', swapMotors);
           }
 
+          // Trigger any bot/board specific setup.
+          cncserver.binder.trigger('controller.setup', settings.botConf.get('controller'));
+
           console.log(
             `Successfully loaded config for ${settings.botConf.get(
               'name'

@@ -19,37 +19,17 @@ let bindings = {
   },
 };
 
-// Exported connection function.
-const connect = (options) => {
-  if (global.debug) console.log(`Connect to: ${JSON.stringify(options)}`);
-
-  // Note: runner doesn't do autodetection.
-  try {
-    port = new SerialPort(options.port, options, (err) => {
-      if (!err) {
-        simulation = false;
-        const { Readline } = SerialPort.parsers;
-        const parser = port.pipe(new Readline({ delimiter: '\r' }));
-
-        // Trigger connect binding.
-        bindings.triggerBind('connect', options);
-
-        // Bind read and disconnect.
-        parser.on('data', bindings.read);
-        port.on('disconnect', bindings.disconnect);
-        port.on('close', bindings.disconnect);
-        module.exports.flush = port.flush;
-      } else {
-        simulation = true;
-        bindings.triggerBind('error', 'connect', err);
-        if (global.debug) console.log(`SerialPort says: ${err.toString()}`);
-      }
-    });
-  } catch (err) {
-    simulation = true;
-    bindings.triggerBind('error', 'connect', err);
-    console.log(`SerialPort says: ${err.toString()}`);
-  }
+/**
+ * Setter for simulation state change.
+ *
+ * @param  {string} command
+ *   Command to write to the connected serial port, sans delimiter.
+ * @param  {function} callback
+ *   Callback when it should be sent/drained.
+ */
+const setSimulation = (status) => {
+  simulation = !!status;
+  bindings.triggerBind('simulation', simulation);
 };
 
 /**
@@ -62,7 +42,6 @@ const connect = (options) => {
  */
 const write = (command, callback) => {
   if (simulation) {
-    // TODO: change out config to use global, it's async!.
     if (global.config.showSerial) console.info(`Simulating serial write: ${command}`);
     setTimeout(() => {
       bindings.triggerBind('read', global.config.ack);
@@ -87,7 +66,6 @@ const write = (command, callback) => {
         });
       });
     } catch (err) {
-      simulation = true;
       console.error('Failed to write to the serial port!:', err);
       bindings.triggerBind('error', 'data', err);
       if (callback) callback(err);
@@ -135,6 +113,67 @@ const writeMultiple = (commands, callback, index = 0) => {
   });
 
   return true;
+};
+
+let retries = 0;
+const handleConnectionError = (err, options) => {
+  console.log('CONNECTION ERROR ====================');
+  if (global.debug) console.log(`SerialPort says: ${err.toString()}`);
+
+  if (options.autoReconnect && retries <= options.autoReconnectTries) {
+    retries++;
+    console.log(`Serial connection to "${options.port}" failed, retrying ${retries}/${options.autoReconnectTries}`);
+    setTimeout(() => {
+      module.exports.connect(options);
+    }, options.autoReconnectRate);
+  } else {
+    setSimulation(true);
+    bindings.triggerBind('error', 'connect', err);
+    bindings.triggerBind('close', err);
+  }
+};
+
+// Exported connection function.
+const connect = (options) => {
+  if (global.debug) console.log(`Connect to: ${JSON.stringify(options)}`);
+  global.connectOptions = options;
+
+  // Note: runner doesn't do autodetection.
+  try {
+    port = new SerialPort(options.port, options, (err) => {
+      if (!err) {
+        retries = 0;
+        setSimulation(false);
+        const { Readline } = SerialPort.parsers;
+        const parser = port.pipe(new Readline({ delimiter: '\r' }));
+
+        // Send setup commands
+        if (options.setupCommands.length) {
+          console.log('Sending bot specific board setup...');
+          writeMultiple(options.setupCommands, (error) => {
+            if (global.debug && error) {
+              console.log(`SerialPort says: ${error.toString()}`);
+            }
+          });
+        }
+
+        // Trigger connect binding.
+        bindings.triggerBind('connect', options);
+
+        // Bind read, reconnect logic and close/disconnect.
+        parser.on('data', bindings.read);
+        port.on('close', (error) => {
+          if (error.disconnect) bindings.triggerBind('disconnect');
+          // If we got disconnected, throw to the try/catch for reconnect.
+          handleConnectionError(error, options);
+        });
+      } else {
+        handleConnectionError(err, options);
+      }
+    });
+  } catch (err) {
+    handleConnectionError(err, options);
+  }
 };
 
 // Build direct export object.

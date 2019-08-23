@@ -26,7 +26,7 @@ const state = {
   instructionIsExecuting: false,
   instructionHashExecuting: null,
   paused: false,
-  simulation: true, // Assume simulation mode by default.
+  simulation: true, // Assume simulation mode by default, bound to serial state.
 };
 
 // Runner config defaults, overridden on ready.
@@ -127,37 +127,67 @@ const directRenderer = new Writable({
   },
 });
 
+/**
+ * Pause/unpause setter
+ */
+state.setPaused = (paused, init = false) => {
+  state.paused = !!paused;
+
+  if (!instructionStream || init) {
+    // Init direct and instruction streams.
+    directStream.pipe(directRenderer);
+    initInstructionStreams();
+  }
+
+  if (paused) {
+    instructionRenderer.cork();
+  } else {
+    instructionRenderer.uncork();
+  }
+};
+
+/**
+ * Simulation state setter
+ */
+state.setSimulation = (isSimulating) => {
+  state.simulation = isSimulating;
+  ipc.sendMessage('serial.simulation', isSimulating);
+};
+
+
 // Setup serial port event bindings/callbacks.
 serial.bindAll({
   // Called only on a successfull connection.
   connect: (options) => {
-    state.simulation = false;
     ipc.sendMessage('serial.connected');
-
-    // Init direct and instruction streams.
-    directStream // Input readable ->
-      .pipe(directRenderer); // Destination Writable <-
-    initInstructionStreams();
-
+    state.setPaused(false);
     console.log('CONNECTED TO ', options.port);
   },
+
+  // Called whenever the simulation state changes, managed by serial module.
+  simulation: state.setSimulation,
 
   // Called for every line read from the serial port.
   read: data => ipc.sendMessage('serial.data', data.toString()),
 
   // Called for any fatal initialization or transmission error.
   error: (type, err) => {
-    state.simulation = true;
-
     ipc.sendMessage('serial.error', {
       type,
       message: err.toString(),
     });
   },
 
-  // Called on serial disconnect.
-  disconnect: (err) => {
-    console.log('Serial Disconnected!'.error + err.toString());
+  // Called on serial diconnect at start of reconnection (if valid).
+  disconnect: () => {
+    // Pause during disconnection to prevent draining to nothing.
+    state.setPaused(true);
+  },
+
+  // Called on serial close if reconnect fails.
+  close: (err) => {
+    console.log(err);
+    console.log(`Serial Disconnected: ${err.toString()}`);
     ipc.sendMessage('serial.disconnected', {
       type: 'disconnect',
       message: err.toString(),
@@ -177,7 +207,7 @@ function gotMessage(packet) {
   switch (packet.command) {
     case 'runner.config':
       global.config = data;
-      if (global.global.debug) {
+      if (data.debug) {
         console.log('Config data:', JSON.stringify(data));
         global.debug = true;
       }
@@ -204,29 +234,20 @@ function gotMessage(packet) {
       break;
 
     case 'buffer.pause': // Pause the running of the buffer.
-      instructionRenderer.cork();
-      state.paused = true;
-
+      state.setPaused(true);
       console.log('BUFFER PAUSED');
       break;
 
     case 'buffer.resume': // Resume running of the buffer.
-      instructionRenderer.uncork();
-      state.paused = false;
-
+      state.setPaused(false);
       console.log('BUFFER RESUMED');
       break;
+
     case 'buffer.clear': // Clear the entire buffer.
       initInstructionStreams();
-
-      if (state.simulation) {
-        console.log('BUFFER CLEARED');
-      } else {
-        serial.flush(() => {
-          console.log('BUFFER CLEARED');
-        });
-      }
+      console.log('BUFFER CLEARED');
       break;
+
     default:
   }
 }

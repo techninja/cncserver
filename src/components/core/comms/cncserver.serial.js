@@ -12,6 +12,12 @@ module.exports = (cncserver) => {
   serial.callbacks = {}; // Hold global serial connection/error callbacks.
   serial.connectPath = '{auto}';
 
+  // Board support provided setup commands to be run on serial connect.
+  serial.setupCommands = [];
+  serial.setSetupCommands = (commands) => {
+    serial.setupCommands = commands;
+  };
+
   /**
    * Helper function to manage initial serial connection and reconnection.
    *
@@ -61,9 +67,9 @@ module.exports = (cncserver) => {
 
       // Try to connect to serial, or exit with error code.
       if (connectPath === '' || connectPath === '{auto}') {
-        console.log(
-          `${botController.name} not found. \
-          Are you sure it's connected? Error #22`
+        console.error(
+          `Error #22: ${botController.name} not found. \
+          Are you sure it's connected?`
         );
 
         if (options.error) {
@@ -78,6 +84,10 @@ module.exports = (cncserver) => {
         const connectData = {
           port: connectPath,
           baudRate: Number(botController.baudRate),
+          autoReconnect: true,
+          autoReconnectTries: 20,
+          autoReconnectRate: 5000,
+          setupCommands: serial.setupCommands,
         };
 
         cncserver.ipc.sendMessage('serial.connect', connectData);
@@ -201,29 +211,6 @@ module.exports = (cncserver) => {
         break;
 
       case 'botInit':
-        // EBB Specific Config =================================
-        if (cncserver.settings.botConf.get('controller').name === 'EiBotBoard') {
-          console.log('Sending EBB config...');
-          cncserver.run(
-            'custom',
-            cncserver.buffer.cmdstr(
-              'enablemotors',
-              { p: cncserver.settings.botConf.get('speed:precision') }
-            )
-          );
-
-          // Send twice for good measure
-          const rate = cncserver.settings.botConf.get('servo:rate');
-          cncserver.run(
-            'custom',
-            cncserver.buffer.cmdstr('configureservo', { r: rate })
-          );
-          cncserver.run(
-            'custom',
-            cncserver.buffer.cmdstr('configureservo', { r: rate })
-          );
-        }
-
         console.info(
           `---=== ${cncserver.settings.botConf.get(
             'name'
@@ -234,22 +221,9 @@ module.exports = (cncserver) => {
     }
   };
 
-  /**
-   * Run to the buffer direct low level setup commands (for EiBotBoard only).
-   *
-   * @param {integer} id
-   *   Numeric ID of EBB setting to change the value of
-   * @param {integer} value
-   *   Value to set to
-   */
-  serial.sendEBBSetup = (id, value) => {
-    cncserver.run('custom', `SC,${id},${value}`);
-  };
-
   // Exports...
   serial.exports = {
     getPorts: serial.getPorts,
-    sendEBBSetup: serial.sendEBBSetup,
   };
 
   return serial;

@@ -96,11 +96,15 @@ module.exports = (cncserver) => {
         if (runnerInitCallback) runnerInitCallback();
         break;
 
+      // Sync simulation state from runner.
+      case 'serial.simulation':
+        cncserver.pen.forceState({ simulation: packet ? 1 : 0 });
+        break;
+
       case 'serial.connected':
         console.log(
           `Serial connection open at ${baudRate}bps`
         );
-        cncserver.pen.forceState({ simulation: 0 });
 
         if (serialCallbacks.connect) serialCallbacks.connect(data);
         if (serialCallbacks.success) serialCallbacks.success(data);
