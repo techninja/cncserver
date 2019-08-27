@@ -40,6 +40,10 @@ global.config = {
 let instructionStream = null;
 let instructionRenderer = null;
 
+// Time in ms to remove from every expected request
+const durationOffset = 1;
+let durationTimer = 0;
+
 // Callback for every instruction stream item to write to destination.
 function instructionStreamWrite(item, _, callback) {
   console.log('Instruction Stream writing!', item.hash, item.commands);
@@ -52,13 +56,14 @@ function instructionStreamWrite(item, _, callback) {
 
   // Some items don't have any rendered commands, only run those that do!
   if (item.commands.length) {
+    durationTimer = new Date();
     serial.writeMultiple(item.commands, (err) => {
       setTimeout(() => {
         ipc.sendMessage('buffer.item.done', item.hash);
         state.instructionIsExecuting = false;
         if (global.debug) console.log(`ITEM DONE: ${item.hash}`);
         callback(err);
-      }, item.duration);
+      }, item.duration - durationOffset - (new Date() - durationTimer));
     });
   } else {
     state.instructionIsExecuting = false;
@@ -149,6 +154,7 @@ state.setPaused = (paused, init = false) => {
 /**
  * Simulation state setter
  */
+
 state.setSimulation = (isSimulating) => {
   state.simulation = isSimulating;
   ipc.sendMessage('serial.simulation', isSimulating);
