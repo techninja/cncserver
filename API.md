@@ -844,3 +844,129 @@ Triggered whenever a "callbackname" item in the buffer is reached, added via the
  * Yet another custom text message, but with the sole intent to be used as a
 switch case in the event function to trigger events as "callbacks" at certain
 points in execution.
+
+## 8. Jobs
+The "Jobs" resource is the highest level API, allowing for internal handling of
+tracing or even "filling" paths, or even complete SVG files.
+
+### GET /v1/jobs
+Lists all projects/jobs.
+
+#### Request
+```javascript
+GET /v1/jobs
+```
+
+### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "jobs": [
+        {
+            "hash": "06fc3d058d3001e8",
+            "parent": null,
+            "type": "project",
+            "operation": "full",
+            "name": "testfile.svg",
+            "body": "<SVG version='1.1' ...",
+            "status": {
+                "name": "drawing",
+                "item": "path-42",
+                "progress": 0.1,
+            }
+            "settings": { ... }
+            "jobs": [
+                "path-42",
+                ...
+            ]
+        },
+        {
+            "hash": "3c4901133d9d16d4",
+            "parent": "06fc3d058d3001e8",
+            "type": "job",
+            "operation": "trace",
+            "name": "path-42",
+            "body": "M201.6,195.7c0.4,0.2,...",
+            "status": {
+                "name": "drawing",
+                "item": "path",
+                "progress": 0.58,
+            }
+            "settings": { ... }
+        }
+    ]
+}
+```
+
+* * *
+
+### POST /v1/jobs
+Endpoint for creating a job. CNCServer jobs are either:
+
+#### Project
+  * First level, this is a group of simpler jobs to be done in order.
+  * Commonly, this is just going to be an entire SVG to be drawn.
+
+#### Job
+  * Second level, a job will contain a single unit of work to complete a project
+  * This often will be outlining or filling a given path
+
+#### The full internal storage/use heirachy is as follows:
+  * **Project**: _All jobs for a drawing_
+  * **Job**: _All Tasks to complete a job_
+  * **Task**: _All instructions to complete a task_
+  * **Instruction**: _Singular serial command instruction_
+
+#### Request - Create project
+```javascript
+POST /v1/jobs
+Content-Type: application/json; charset=UTF-8
+
+{
+    "type": "project",
+    "operation": "full",
+    "name": "testfile.svg",
+    "body": "<SVG version='1.1' ...",
+}
+```
+#### Request - Create job
+```javascript
+POST /v1/jobs
+Content-Type: application/json; charset=UTF-8
+
+{
+    "type": "project",
+    "parent": null,
+    "operation": "trace",
+    "name": "path-42",
+    "body": "M201.6,195.7c0.4,0.2,...",
+    "bounds": {
+        "from": [50, 50],
+        "to": [150, 150]
+    }
+}
+```
+
+### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    ... complete job details
+}
+```
+
+##### Usage Notes
+ * Because jobs are high level, all coordinates are in absolute millimeter
+ measurements.
+ * `type`: should be `job` or `project`.
+ * `bounds`: represents coordinates or top left and bottom right of a rectangle
+ that the incoming path (or SVG) will be forced to fit into the destination
+ coordinate plane. If omitted, coordinates in the path will be used as is _which
+ may result in some very bad scaling issues_. Preprocess your paths, or submit
+ an SVG which will be bound together with all paths.
+ * `type: job`: takes a single SVG path "`d`" format in the `body` key data
+ * `type: project`: takes an XML SVG string in the `body` key data

@@ -49,10 +49,13 @@ module.exports = (cncserver) => {
    *   Optional minimum value for output duration, defaults to 1.
    * @param {object} inPen
    *   Incoming pen object to check (buffer tip or bot current).
+   * @param {number} speedOverride
+   *   Optional speed override, overrides calculated speed percent.
+   *
    * @returns {number}
    *   Millisecond duration of how long the move should take
    */
-  utils.getDurationFromDistance = (distance, min = 1, inPen) => {
+  utils.getDurationFromDistance = (distance, min = 1, inPen, speedOverride = null) => {
     const minSpeed = parseFloat(cncserver.settings.botConf.get('speed:min'));
     const maxSpeed = parseFloat(cncserver.settings.botConf.get('speed:max'));
     const drawingSpeed = cncserver.settings.botConf.get('speed:drawing');
@@ -60,6 +63,11 @@ module.exports = (cncserver) => {
 
     // Use given speed over distance to calculate duration
     let speed = (utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
+    if (speedOverride != null) {
+      console.log('Speed from->to', speed, speedOverride);
+      speed = speedOverride;
+    }
+
     speed = parseFloat(speed) / 100;
 
     // Convert to steps from percentage
@@ -80,12 +88,14 @@ module.exports = (cncserver) => {
    *   Source position coordinate (in steps).
    * @param {{x: number, y: number}} dest
    *   Destination position coordinate (in steps).
+   * @param {number} speed
+   *   Speed override for this movement in percent.
    *
    * @returns {{d: number, x: number, y: number}}
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  utils.getPosChangeData = (src, dest) => {
+  utils.getPosChangeData = (src, dest, speed = null) => {
     let change = {
       x: Math.round(dest.x - src.x),
       y: Math.round(dest.y - src.y),
@@ -95,7 +105,8 @@ module.exports = (cncserver) => {
     const duration = utils.getDurationFromDistance(
       utils.getVectorLength(change),
       1,
-      src
+      src,
+      speed
     );
 
     // Adjust change direction/inversion
@@ -197,7 +208,7 @@ module.exports = (cncserver) => {
    *   Converted coordinate in absolute steps.
    */
   utils.absToSteps = (point, scale, inMaxArea) => {
-    const { bot } = cncserver;
+    const { settings: { bot } } = cncserver;
 
     // TODO: Don't operate by reference (intionally or otherwise), refactor.
     // ALSO move '25.4' value to config.

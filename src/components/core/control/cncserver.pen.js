@@ -31,10 +31,12 @@ module.exports = (cncserver) => {
    * @param {object} inPenState
    *   Raw object containing data from /v1/pen PUT requests. See API spec for
    *   pen to get an idea of what can live in this object.
-   * @param callback
+   * @param {function} callback
    *   Callback triggered when intended action should be complete.
+   * @param {number} speedOverride
+   *   Percent of speed to set for this movement only.
    */
-  pen.setPen = (inPenState, callback) => {
+  pen.setPen = (inPenState, callback, speedOverride = null) => {
     // Force the distanceCounter to be a number (was coming up as null)
     pen.state.distanceCounter = parseFloat(pen.state.distanceCounter);
 
@@ -147,7 +149,8 @@ module.exports = (cncserver) => {
         absInput,
         callback,
         inPenState.waitForCompletion,
-        inPenState.skipBuffer
+        inPenState.skipBuffer,
+        speedOverride
       );
 
       return;

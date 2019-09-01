@@ -79,11 +79,13 @@ module.exports = (cncserver) => {
    * @param {boolean} skip
    *    Set to true to skip adding to the buffer, simplifying this function
    *    down to just a sanity checker.
+   * @param {number} speedOverride
+   *   Percent of speed to set for this movement only.
    *
    * @returns {number}
    *   Distance moved from previous position, in steps.
    */
-  control.movePenAbs = (inPoint, callback, immediate = true, skip) => {
+  control.movePenAbs = (inPoint, callback, immediate = true, skip, speedOverride = null) => {
     // Something really bad happened here...
     if (Number.isNaN(inPoint.x) || Number.isNaN(inPoint.y)) {
       console.error('INVALID Move pen input, given:', inPoint);
@@ -146,7 +148,7 @@ module.exports = (cncserver) => {
     // Pen stays put as last point set in buffer
     if (skip) {
       console.log('Skipping buffer for:', point);
-      cncserver.control.actuallyMove(point, callback);
+      cncserver.control.actuallyMove(point, callback, speedOverride);
       return 0; // Don't return any distance for buffer skipped movements
     }
 
@@ -172,7 +174,7 @@ module.exports = (cncserver) => {
      @see executeNext - for more details on how this is handled.
     */
     const distance = cncserver.utils.getVectorLength(change);
-    const duration = cncserver.utils.getDurationFromDistance(distance);
+    const duration = cncserver.utils.getDurationFromDistance(distance, 1, null, speedOverride);
 
     // Only if we actually moved anywhere should we queue a movement
     if (distance !== 0) {
@@ -281,13 +283,16 @@ module.exports = (cncserver) => {
    *   Absolute destination coordinate position (in steps).
    * @param {function} callback
    *   Optional, callback for when operation should have completed.
+   * @param {number} speedOverride
+   *   Percent of speed to set for this movement only.
    */
-  control.actuallyMove = (destination, callback) => {
+  control.actuallyMove = (destination, callback, speedOverride = null) => {
     // Get the amount of change/duration from difference between actualPen and
     // absolute position in given destination
     const change = cncserver.utils.getPosChangeData(
       cncserver.actualPen.state,
-      destination
+      destination,
+      speedOverride
     );
 
     control.commandDuration = Math.max(change.d, 0);
@@ -301,8 +306,7 @@ module.exports = (cncserver) => {
           y: destination.y,
           source: cncserver.actualPen.state,
         },
-      })
-    );
+      }));
 
     // Set the correct duration and new position through to actualPen
     cncserver.actualPen.forceState({
@@ -360,8 +364,7 @@ module.exports = (cncserver) => {
           z: height,
           source: cncserver.actualPen.state.height,
         },
-      })
-    );
+      }));
 
     cncserver.actualPen.forceState({
       height,

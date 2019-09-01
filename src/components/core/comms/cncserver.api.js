@@ -402,7 +402,31 @@ module.exports = (cncserver) => {
     return false;
   };
 
+  // HIGH Level drawing APIs ===================================================
+  api.handlers['/v1/jobs'] = function jobs(req) {
+    // Enumerate Jobs.
+    if (req.route.method === 'get') {
+      return {
+        code: 200,
+        body: cncserver.jobs.getAll(),
+      };
+    }
+
+    // Add a job.
+    if (req.route.method === 'post') {
+      return {
+        code: 200,
+        body: cncserver.jobs.addItem(req.body),
+      };
+    }
+
+    // Error to client for unsupported request types.
+    return false;
+  };
+
+  // ===========================================================================
   // Bind all the api.handlers into endpoints ==================================
+  // ===========================================================================
   _.each(api.handlers, (callback, path) => {
     cncserver.rest.createServerEndpoint(path, callback);
   });
@@ -441,7 +465,6 @@ module.exports = (cncserver) => {
 
     return out;
   }
-
 
   /**
    * Process a flat array of semi-abstracted commands into the queue.

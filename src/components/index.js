@@ -19,4 +19,6 @@ module.exports = {
   run: './components/core/utils/cncserver.run',
   scratch: './components/third_party/scratch/cncserver.scratch',
   bots: './components/machine_support/',
+  drawing: './components/core/drawing',
+  jobs: './components/core/jobs/cncserver.jobs',
 };

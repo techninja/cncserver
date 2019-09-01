@@ -209,6 +209,7 @@ module.exports = (cncserver) => {
             item.command
           );
 
+          posChangeData.d = item.duration;
           duration = posChangeData.d;
           commands = [buffer.cmdstr('movexy', posChangeData)];
           break;
