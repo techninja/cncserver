@@ -7,7 +7,7 @@ const fs = require('fs');
 // Path planning Settings
 const s = {
   accelRate: 8, // Percentage increase over distance.
-  speedMultiplyer: 0.8, // Conversion of moment length to speed.
+  speedMultiplyer: 0.5, // Conversion of moment length to speed.
   minSpeed: 5,
   resolution: 1, // Steps to check along path by
   maxDeflection: 10,
@@ -40,7 +40,9 @@ function getCurvatureBetween(path, from, to, curvatureThreshold) {
   // Split the path at the from and to locations.
   p = p.splitAt(from); // Returns the part after from.
   const garbage = p.splitAt(to - from); // We can throw away the result after to.
-  garbage.remove();
+  if (garbage) {
+    garbage.remove();
+  }
 
   // Flatten the path section into segments
   p.flatten(res);
