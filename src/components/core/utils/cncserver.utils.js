@@ -64,7 +64,6 @@ module.exports = (cncserver) => {
     // Use given speed over distance to calculate duration
     let speed = (utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
     if (speedOverride != null) {
-      console.log('Speed from->to', speed, speedOverride);
       speed = speedOverride;
     }
 
