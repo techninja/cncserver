@@ -34,9 +34,13 @@ module.exports = (cncserver) => {
     if (type === 'job') {
       if (operation === 'trace') {
         cncserver.drawing.trace(body, parent, bounds);
+      } else if (operation === 'text') {
+        cncserver.drawing.text(hash, payload);
       }
     } else if (type === 'project') {
-      cncserver.drawing.project(body, hash, bounds);
+      if (['trace', 'fill', 'full'].includes(operation)) {
+        cncserver.drawing.project(body, parent, bounds);
+      }
     } else {
       return {
         status: 'error',

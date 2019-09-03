@@ -4,19 +4,6 @@
 const { Path, Rectangle } = require('paper');
 
 module.exports = (cncserver, drawing) => {
-  function getPaths(parent, items = []) {
-    if (parent.children && parent.children.length) {
-      let moreItems = [];
-      parent.children.forEach((child) => {
-        moreItems = getPaths(child, moreItems);
-      });
-      return [...items, ...moreItems];
-    }
-
-    return [...items, parent];
-  }
-
-
   const project = (svgData, hash, bounds = null) => {
     const { base: { project: pp } } = drawing;
     // TODO: fail project on API when it doesn't import correctly.
@@ -25,18 +12,9 @@ module.exports = (cncserver, drawing) => {
       applyMatrix: true,
     });
 
-    // TODO: figure out good way to default fit bounds.
-    if (!bounds) {
-      const margin = 20; // 2cm margin
-      item.fitBounds({
-        from: [margin, margin],
-        to: [drawing.base.size.width - margin, drawing.base.size.height - margin],
-      });
-    } else {
-      item.fitBounds(bounds);
-    }
+    drawing.base.fitBounds(item, bounds);
 
-    const allPaths = getPaths(item);
+    const allPaths = drawing.base.getPaths(item);
     // console.log('How many?', allPaths.length); return;
 
     // Move through all paths and add each one as a job.

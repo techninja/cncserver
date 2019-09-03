@@ -9,6 +9,7 @@ module.exports = (cncserver) => {
   drawing.occlusion = require('./cncserver.drawing.occlusion.js')(cncserver, drawing);
   drawing.trace = require('./cncserver.drawing.trace.js')(cncserver, drawing);
   drawing.fill = require('./cncserver.drawing.fill.js')(cncserver, drawing);
+  drawing.text = require('./cncserver.drawing.text.js')(cncserver, drawing);
   drawing.accell = require('./cncserver.drawing.accell.js')(cncserver, drawing);
   drawing.project = require('./cncserver.drawing.project.js')(cncserver, drawing);
   return drawing;
