@@ -46,7 +46,6 @@ let durationTimer = 0;
 
 // Callback for every instruction stream item to write to destination.
 function instructionStreamWrite(item, _, callback) {
-  console.log('Instruction Stream writing!', item.hash, item.commands);
   if (global.debug) console.log(`STREAM RUNNING ITEM: ${item.hash}`);
 
   state.instructionStreamRunning = true;
