@@ -127,31 +127,24 @@ module.exports = (cncserver) => {
 
     if (req.route.method === 'delete') {
       // Reset pen to defaults (park)
-      cncserver.pen.setHeight('up', () => {
-        cncserver.pen.setPen({
-          x: cncserver.settings.bot.park.x,
-          y: cncserver.settings.bot.park.y,
-          park: true,
-          skipBuffer: req.body.skipBuffer,
-        }, (stat) => {
-          let code = 200;
-          let body = {};
+      cncserver.pen.park(req.body.skipBuffer, (stat) => {
+        let code = 200;
+        let body = {};
 
-          if (!stat) {
-            code = 500;
-            body.status = 'Error parking pen!';
-          } else {
-            body = cncserver.pen.state;
-          }
+        if (!stat) {
+          code = 500;
+          body.status = 'Error parking pen!';
+        } else {
+          body = cncserver.pen.state;
+        }
 
-          body = JSON.stringify(body);
-          res.status(code).send(body);
+        body = JSON.stringify(body);
+        res.status(code).send(body);
 
-          if (cncserver.settings.gConf.get('debug')) {
-            console.log('>RESP', req.route.path, code, body);
-          }
-        });
-      }, req.body.skipBuffer);
+        if (cncserver.settings.gConf.get('debug')) {
+          console.log('>RESP', req.route.path, code, body);
+        }
+      });
 
       return true; // Tell endpoint wrapper we'll handle the response
     }

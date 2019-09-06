@@ -220,6 +220,25 @@ module.exports = (cncserver) => {
     pen.state = cncserver.utils.extend({}, cncserver.actualPen.state);
   };
 
+  /**
+   * Park the pen.
+   *
+   * @param {boolean} direct
+   *   True to send direct and skip the buffer.
+   * @param {function} callback
+   *   Ya know.
+   */
+  pen.park = (direct = false, callback = () => {}) => {
+    pen.setHeight('up', () => {
+      pen.setPen({
+        x: cncserver.settings.bot.park.x,
+        y: cncserver.settings.bot.park.y,
+        park: true,
+        skipBuffer: direct,
+      }, callback);
+    }, direct);
+  };
+
 
   /**
    * Force the values of a given set of keys within the pen state.
