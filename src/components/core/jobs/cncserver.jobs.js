@@ -20,7 +20,7 @@ module.exports = (cncserver) => {
   jobs.addItem = (payload) => {
     const hash = cncserver.utils.getHash(payload);
     const {
-      type, parent, body, operation, bounds,
+      type, parent, body, operation, bounds, parkAfter,
     } = payload;
 
     const item = {
@@ -46,6 +46,11 @@ module.exports = (cncserver) => {
         status: 'error',
         message: 'invalid job type',
       };
+    }
+
+    // TODO: is this the right place for this?
+    if (parkAfter) {
+      cncserver.pen.park();
     }
 
     jobs.hashToIndex[hash] = jobs.items.length;
