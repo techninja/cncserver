@@ -4,7 +4,7 @@
 const binder = {}; // Exposed export.
 
 
-module.exports = () => {
+module.exports = (cncserver) => {
   const hooks = {};
 
   /**
@@ -37,7 +37,9 @@ module.exports = () => {
     if (typeof hooks[event] === 'object') {
       for (const [caller, callback] of Object.entries(hooks[event])) {
         if (typeof callback === 'function') {
-          console.log(`Event "${event}" triggered for "${caller}" with`, payload);
+          if (cncserver.settings.gConf.get('debug')) {
+            console.log(`Event "${event}" triggered for "${caller}" with`, payload);
+          }
           callback(payload);
         }
       }
