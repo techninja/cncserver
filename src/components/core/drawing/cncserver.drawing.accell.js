@@ -6,11 +6,11 @@ const fs = require('fs');
 
 // Path planning Settings
 const s = {
-  accelRate: 8, // Percentage increase over distance.
-  speedMultiplyer: 0.5, // Conversion of moment length to speed.
+  accelRate: 13, // Percentage increase over distance.
+  speedMultiplyer: 0.35, // Conversion of moment length to velocity.
   minSpeed: 5,
   resolution: 1, // Steps to check along path by
-  maxDeflection: 10,
+  maxDeflection: 5,
 };
 
 // Path planning:
