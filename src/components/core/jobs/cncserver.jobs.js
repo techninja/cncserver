@@ -20,7 +20,7 @@ module.exports = (cncserver) => {
   jobs.addItem = (payload) => {
     const hash = cncserver.utils.getHash(payload);
     const {
-      type, parent, body, operation, bounds, parkAfter,
+      type, parent, body, operation, bounds, parkAfter, settings,
     } = payload;
 
     const item = {
@@ -32,10 +32,21 @@ module.exports = (cncserver) => {
     };
 
     if (type === 'job') {
-      if (operation === 'trace') {
-        cncserver.drawing.trace(body, parent, bounds);
-      } else if (operation === 'text') {
-        cncserver.drawing.text(hash, payload);
+      switch (operation) {
+        case 'trace':
+          cncserver.drawing.trace(body, parent, bounds);
+          break;
+
+        case 'fill':
+          cncserver.drawing.fill(body, null, bounds, 'hatch', settings);
+          break;
+
+        case 'text':
+          cncserver.drawing.text(hash, payload);
+          break;
+
+        default:
+          break;
       }
     } else if (type === 'project') {
       if (['trace', 'fill', 'full'].includes(operation)) {
