@@ -2,12 +2,11 @@
  * @file Code for determining path drawing accelleration planning.
  */
 const zodiac = require('zodiac-ts');
-const fs = require('fs');
 
 // Path planning Settings
 const s = {
-  accelRate: 13, // Percentage increase over distance.
-  speedMultiplyer: 0.35, // Conversion of moment length to velocity.
+  accelRate: 10, // Percentage increase over distance.
+  speedMultiplyer: 0.55, // Conversion of moment length to velocity.
   minSpeed: 5,
   resolution: 1, // Steps to check along path by
   maxDeflection: 5,
@@ -150,10 +149,30 @@ module.exports = (cncserver, drawing) => {
       forecast[0] = 0;
       forecast[forecast.length - 1] = 0;
 
+      // DEBUG =================================================================
+      let min = 100;
+      let max = 0;
+      let avg = 0;
+      const getAverage = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
+      avg = getAverage(forecast);
+      // DEBUG =================================================================
+
       // Reinsert smoothed values back to results.
       forecast.forEach((smoothedSpeed, index) => {
         results[index].speed = Math.round(smoothedSpeed * 10) / 10;
+
+        // DEBUG =================================================================
+        if (results[index].speed < min) {
+          min = results[index].speed;
+        }
+        if (results[index].speed > max) {
+          max = results[index].speed;
+        }
+        // DEBUG =================================================================
       });
+
+      // DEBUG =================================================================
+      // console.table({ min, max, avg });
 
       // fs.writeFileSync('results.txt', vals.join('\n'));
       // fs.writeFileSync('smoothed.txt', forecast.join('\n'));
