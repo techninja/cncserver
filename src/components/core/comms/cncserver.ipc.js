@@ -55,6 +55,7 @@ module.exports = (cncserver) => {
 
     // Initialize and start the IPC Server...
     nodeIPC.serve(() => {
+      cncserver.binder.trigger('ipc.serve');
       nodeIPC.server.on('app.message', ipc.ipcGotMessage);
     });
 
