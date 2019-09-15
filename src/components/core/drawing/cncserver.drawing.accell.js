@@ -8,7 +8,7 @@ const s = {
   accelRate: 10, // Percentage increase over distance.
   speedMultiplyer: 0.55, // Conversion of moment length to velocity.
   minSpeed: 5,
-  resolution: 1, // Steps to check along path by
+  resolution: 0.5, // Steps to check along path by
   maxDeflection: 5,
 };
 

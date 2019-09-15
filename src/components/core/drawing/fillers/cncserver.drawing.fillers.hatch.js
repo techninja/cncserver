@@ -374,7 +374,6 @@ function dynamicLineFillNext() {
 
 // Actually connect to the main process, start the fill operation.
 fillUtil.connect((path, settingsOverride) => {
-  console.log('Path imported!', path.length);
   settings = { ...settings, ...settingsOverride };
   fillPath = path;
   viewBounds = fillUtil.project.view.bounds;

@@ -6,21 +6,21 @@ const ipc = require('node-ipc'); // Inter Process Comms (shared with ).
 const fsPath = require('path'); // File System path management.
 const { Path } = require('paper');
 
-let workingPath = null; // Module global working path, one at a time.
+const workingPaths = []; // Module global working path.
 let workingSettings = {}; // Passed settings.
 
 // const methods = require('./fillers');
 module.exports = (cncserver, drawing) => {
   // TODO: get this somewhere real.
   const settingDefaults = {
-    flattenResolution: 1, // Path overlay fill type trace resolution.
-    type: 'zigzag', // zigzag, zigstraight, zigsmooth, overlay
+    flattenResolution: 0.25, // Path overlay fill type trace resolution.
+    type: 'zigstraight', // zigzag, zigstraight, zigsmooth, overlay
     // Pass a path object to be used for overlay fills:
     angle: 28, // Dynamic line fill type line angle
     insetAmount: 0, // Amount to negatively offset the fill path.
-    randomizeAngle: false, // Randomize the angle above for dynamic line fill.
+    randomizeAngle: true, // Randomize the angle above for dynamic line fill.
     hatch: false, // If true, runs twice at opposing angles
-    spacing: 2, // Dynamic line fill spacing nominally between each line.
+    spacing: 3, // Dynamic line fill spacing nominally between each line.
     checkFillOcclusion: true, // Check for occlusion on fills?
     threshold: 10, // Dynamic line grouping threshold
   };
@@ -31,13 +31,13 @@ module.exports = (cncserver, drawing) => {
     switch (command) {
       // Our filler module is ready! Send it the data.
       case 'ready':
-        if (workingPath) {
+        if (workingPaths.length) {
           ipc.server.emit(socket, 'filler.init', {
             size: {
               width: drawing.base.size.width,
               height: drawing.base.size.height,
             },
-            path: workingPath.exportJSON(),
+            path: workingPaths.pop().exportJSON(),
             settings: { ...settingDefaults, ...workingSettings },
           });
         }
@@ -95,8 +95,11 @@ module.exports = (cncserver, drawing) => {
     // 6. When complete, the fillProcess should be ended.
 
     // TODO: Unify path creation from request body back in the JOB handler!
-    workingPath = rawPath instanceof Path ? rawPath : new Path(rawPath);
-    drawing.base.fitBounds(workingPath, bounds);
+    workingPaths.push(drawing.base.normalizeCompoundPath(rawPath));
+
+    if (bounds) {
+      drawing.base.fitBounds(workingPaths[workingPaths.length - 1], bounds);
+    }
 
     workingSettings = requestSettings;
 

@@ -97,7 +97,6 @@ function getOffsetPaths(data, delta, clipper) {
 // Connect to the main process, start the fill operation.
 fillUtil.connect((path, settingsOverride) => {
   getClipperAsync().then((clipper) => {
-    console.log('Path imported!', path.length);
     settings = { ...settings, ...settingsOverride };
     exportGroup = new Group();
 

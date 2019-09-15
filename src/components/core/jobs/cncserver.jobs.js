@@ -50,7 +50,7 @@ module.exports = (cncserver) => {
       }
     } else if (type === 'project') {
       if (['trace', 'fill', 'full'].includes(operation)) {
-        cncserver.drawing.project(body, parent, bounds);
+        cncserver.drawing.project(body, parent, operation, bounds);
       }
     } else {
       return {

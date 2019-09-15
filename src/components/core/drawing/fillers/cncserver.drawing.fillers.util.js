@@ -31,6 +31,7 @@ const exp = {
       ipc.of[hostname].on('filler.init', ({ size, path, settings }) => {
         exp.project = new Project(new Size(size));
         const item = exp.project.activeLayer.importJSON(path);
+        console.log('Path imported:', item.name, `${item.length}mm long`);
         initCallback(item, settings);
       });
     });
