@@ -1,43 +1,54 @@
 /**
  * @file Trace code for drawing base.
  */
-const { Path, Rectangle } = require('paper');
+const { Rectangle } = require('paper');
 
 module.exports = (cncserver, drawing) => {
   const trace = (path, parent = null, bounds = null) => {
-    // Create path (or use existing) on default layer.
-    const t = path instanceof Path ? path : new Path(path);
+    // Create compound path (or use existing) on default layer.
+    const importPath = drawing.base.normalizeCompoundPath(path);
 
     // If bounds set, resize the path.
     if (bounds) {
-      t.fitBounds(new Rectangle(bounds));
+      importPath.fitBounds(new Rectangle(bounds));
     }
-    const accellPoints = drawing.accell(t);
-    // console.log('Done!'); return;
 
-    // Pen up
-    cncserver.pen.setPen({ state: 'up' });
+    // Move through all sub-paths within the compound path. For non-compound
+    // paths, this will only iterate once.
+    importPath.children.forEach((subPath) => {
+      const accellPoints = drawing.accell(subPath);
 
-    // Move to start of path, pen down.
-    cncserver.pen.setPen({ ...t.getPointAt(0), abs: 'mm' });
-    cncserver.pen.setPen({ state: 'draw' });
+      // Pen up
+      cncserver.pen.setPen({ state: 'up' });
 
-    accellPoints.forEach((pos) => {
-      cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+      // Move to start of path, then pen down.
+      cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+      cncserver.pen.setPen({ state: 'draw' });
+
+      accellPoints.forEach((pos) => {
+        cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+      });
+
+      // for (let pos = 0; pos < t.length; pos += 2) {
+      // console.log(t.getPointAt(pos));
+      // cncserver.pen.setPen({ ...t.getPointAt(pos), abs: 'mm' });
+      // }
+
+      // Move to end of path, pen up.
+      cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
+
+      // If it's a closed path, overshoot back home.
+      if (subPath.closed) {
+        cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+      }
+
+      // End with pen up.
+      cncserver.pen.setPen({ state: 'up' });
     });
-
-    // for (let pos = 0; pos < t.length; pos += 2) {
-    // console.log(t.getPointAt(pos));
-    // cncserver.pen.setPen({ ...t.getPointAt(pos), abs: 'mm' });
-    // }
-
-    // Move to end of path, pen up.
-    cncserver.pen.setPen({ ...t.getPointAt(t.length), abs: 'mm' });
-    cncserver.pen.setPen({ state: 'up' });
 
     // If there's no parent, clear the project after this.
     if (!parent) {
-      drawing.base.project.clear();
+      // drawing.base.project.clear();
     }
   };
 
