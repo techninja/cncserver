@@ -71,6 +71,10 @@ module.exports = (cncserver, drawing) => {
         // Use CompoundPath as a simple parser to get the subpaths, then add
         // them to our group and set the details in the subpath.
         const tmpCompound = new CompoundPath(char.d);
+
+        if (options.smooth) {
+          tmpCompound.smooth(options.smooth);
+        }
         tmpCompound.children.forEach((subpath) => {
           c.addChild(new Path({
             data,
@@ -115,9 +119,6 @@ module.exports = (cncserver, drawing) => {
       }
       chars.scale(options.scale, anchorPos);
     }
-
-
-    //
 
     // Align the lines
     if (options.textAlign === 'center') {
