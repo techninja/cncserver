@@ -12,7 +12,7 @@
     "bulma": "^0.7.5",
     "connect-slashes": "techninja/connect-slashes#ignore-files",
     "express": "~3.0.0",
-    "hersheytext": "^0.5.1",
+    "hersheytext": "1",
     "ini": "1.3.4",
     "jquery": "^3.4.1",
     "js-angusj-clipper": "^1.0.3",

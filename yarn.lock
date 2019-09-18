@@ -1318,10 +1318,10 @@ he@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
 
-hersheytext@^0.5.1:
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/hersheytext/-/hersheytext-0.5.1.tgz#79215df79a55ad1461848d5885a67ef2d2ba433d"
-  integrity sha1-eSFd95pVrRRhhI1YhaZ+8tK6Qz0=
+hersheytext@1:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/hersheytext/-/hersheytext-1.0.0.tgz#97cffe7f6a4dc8155af3ee334d70a243d29d67cf"
+  integrity sha512-jT4unuAz0EhCGuIFbBbArNJbuhipVpmw3g1696Ezs9agN5z/HjqgYwXt48fAry15WT0RA7kdTTT8eFShs3n8oQ==
   dependencies:
     cheerio "~0.19.0"
 
@@ -1515,6 +1515,7 @@ is-typedarray@~1.0.0:
 isarray@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/isarray/-/isarray-0.0.1.tgz#8a18acfca9a8f4177e09abfc6038939b05d1eedf"
+  integrity sha1-ihis/Kmo9Bd+Cav8YDiTmwXR7t8=
 
 isarray@^1.0.0, isarray@~1.0.0:
   version "1.0.0"
@@ -1532,6 +1533,11 @@ jquery@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.4.1.tgz#714f1f8d9dde4bdfa55764ba37ef214630d80ef2"
   integrity sha512-36+AdBzCL+y6qjw5Tx7HgzeGCzC81MDDgaUP8ld2zhx58HdqXGoBd+tHdrBMiyjGQs0Hxs/MLZTu/eHNJJuWPw==
+
+js-angusj-clipper@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/js-angusj-clipper/-/js-angusj-clipper-1.0.3.tgz#412549d37768afc178a9da13ce881f14ed2bd60d"
+  integrity sha512-wusF4p6PbwGaFmnCcA5zX0QNUrzwPxQ4dTVjmzI9KsXSlqMCViruIcJtMtyaNDDkyuEwaDLw4MPJrdIGtqaTaQ==
 
 js-message@>=1.0.5:
   version "1.0.5"
