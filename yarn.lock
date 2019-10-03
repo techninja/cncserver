@@ -1319,9 +1319,9 @@ he@1.2.0:
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
 
 hersheytext@1:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/hersheytext/-/hersheytext-1.0.0.tgz#97cffe7f6a4dc8155af3ee334d70a243d29d67cf"
-  integrity sha512-jT4unuAz0EhCGuIFbBbArNJbuhipVpmw3g1696Ezs9agN5z/HjqgYwXt48fAry15WT0RA7kdTTT8eFShs3n8oQ==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/hersheytext/-/hersheytext-1.1.0.tgz#68e4125b046fbabd7c3c83f72c2999fc1238184a"
+  integrity sha512-dZ7ez5LUKnF6ptK/mr09Sko84dQI0JfpkQJTbptHsYJlzf1ehqUyWMk/ygT5SJyeUAu+4w7lDgkUxrcEoZUN2A==
   dependencies:
     cheerio "~0.19.0"
 
