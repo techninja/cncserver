@@ -243,14 +243,23 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "tools" :
-      [
+    "tools": [
         "water0",
         "water1",
         "water2",
         "color1"
-      ]
-}
+    ],
+    "toolData": {
+        "water0": {
+            "x": 0,
+            "y": 0,
+            "wiggleAxis": "y",
+            "wiggleTravel": 300,
+            "wiggleIterations": 4,
+            "group": "Water"
+        },
+        ....
+    }
 ```
 
 * * *
