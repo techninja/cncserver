@@ -2,7 +2,7 @@
  * @file Drawing base code used by other drawing utils.
  */
 const {
-  Point, Size, Project, Group, Path, CompoundPath,
+  Point, Size, Project, Group, Path, CompoundPath, Layer,
 } = require('paper');
 
 // Central drawing base export
@@ -20,6 +20,13 @@ module.exports = (cncserver) => {
     );
 
     base.project = new Project(base.size);
+
+    // Setup layers: temp, working
+    // Whatever the last layer added was, will be default.
+    base.layers = {
+      temp: new Layer(),
+      preview: new Layer(),
+    };
   });
 
   // Get a list of all simple paths from all children as an array.

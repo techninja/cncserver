@@ -13,6 +13,9 @@ module.exports = (cncserver, drawing) => {
       importPath.fitBounds(new Rectangle(bounds));
     }
 
+    // Update client preview.
+    cncserver.sockets.sendPaperPreviewUpdate();
+
     // Move through all sub-paths within the compound path. For non-compound
     // paths, this will only iterate once.
     importPath.children.forEach((subPath) => {

@@ -29,7 +29,7 @@
     </div>
   </section>
   <div class="section columns is-multiline">
-    <section class="column is-half">
+    <section class="column is-half section">
       <div class="tabs is-boxed">
         <ul>
           <li class="is-active" data-tab="1"><a>
@@ -53,60 +53,39 @@
       <div class="tabs-content">
         <div class="tab-content is-active" data-content="1"><!-- Basic -->
 
-          <div class="tile is-ancestor">
-
-            <div class="tile box">
-              <label class="label">
-                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
-                <span>Tools:</span>
-              </label>
-              <div class="field is-grouped" id="tools">
-                <h4>Loading tool set...</h4>
-              </div>
+          <div class="box">
+            <label class="label">
+              <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
+              <span>Tools:</span>
+            </label>
+            <div class="field" id="tools">
+              <h4>Loading tool set...</h4>
             </div>
-
-            <div class="tile box">
-              <label class="label">
-                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
-                <span>General:</span>
-              </label>
-              <a class="button is-primary" id="unlock">
-                <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
-                <span>Unlock Motors</span>
-              </a>
-              <a class="button is-primary" id="zero">
-                <span class="icon"><i class="fab fa-creative-commons-zero" aria-hidden="true"></i></span>
-                <span>Zero</span>
-              </a>
-            </div>
-
-            <div class="tile box">
-              <label class="label">
-                <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
-                <span>Scratch Turtle:</span>
-              </label>
-              <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
-              <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
-              <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
-              <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
-              <turtle title="Turtle angle">&#10140;</turtle>
-            </div>
-
-            <div class="tile box">
-
-            </div>
-
           </div>
 
 
-
-          <fieldset id="heightbuttons">
-            <legend>Z/Servo Control</legend>
+          <div class="box" id="heightbuttons">
+            <label class="label">
+              <span class="icon"><i class="fas fa-ruler-vertical" aria-hidden="true"></i></span>
+              <span>Height Settings/Presets</span>
+            </label>
             <div>
-              <label for="skipbufferz">Bypass buffer</label>
-              <input id="skipbufferz" type="checkbox">
+              <label for="skipbuffer">Bypass buffer</label>
+              <input id="skipbuffer" type="checkbox">
             </div>
-          </fieldset>
+          </div>
+
+          <div class="box">
+            <label class="label">
+              <span class="icon"><i class="fas fa-location-arrow" aria-hidden="true"></i></span>
+              <span>Scratch Turtle:</span>
+            </label>
+            <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
+            <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
+            <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
+            <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
+            <turtle title="Turtle angle">&#10140;</turtle>
+          </div>
 
         </div>
         <div class="tab-content" data-content="2"><!-- Advanced -->
@@ -118,7 +97,7 @@
             </div>
             <div class="control">
               <button id="plotstart" class="button is-primary" disabled="disabled">
-                <span>Plot Selected File</span>
+                <span>Load Selected File</span>
                 <span class="icon is-small">
                   <i class="fa fa-print"></i>
                 </span>
@@ -146,41 +125,52 @@
         </div>
       </div>
 
-
     </section>
 
 
-    <section class="column is-half">
-      <canvas class="simcanvas" id="paper"></canvas>
-    </section>
-
-    <section class="column">
+    <section class="column is-half"> <!-- Tools / Preview / Status -->
       <div class="box">
-        <label class="subtitle is-4 is-bold">Current Status</label>
+        <a class="button is-warning" id="park">
+          <span class="icon"><i class="fas fa-home" aria-hidden="true"></i></span>
+          <span>Park</span>
+        </a>
+        <a class="button is-secondary" id="unlock">
+          <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
+          <span>Unlock & ⇱∅</span>
+        </a>
+        <a class="button is-success" id="toggle-pen">
+          <span class="icon"><i class="fas fa-pen" aria-hidden="true"></i></span>
+          <span>
+            <option data-op="up">Down ⭳</option>
+            <option data-op="draw" style="display: none;">Up ↥</option>
+          </span>
+        </a>
+        <label class="checkbox box is-pulled-right" style="padding: 0.1em 0.5em;">
+          Direct
+          <input type="checkbox" class="switch" id="skipbuffer">
+        </label>
+      </div>
+      <canvas class="simcanvas" id="paper"></canvas>
+      <div class="box">
+        <div class="is-pulled-right">
+          <a class="button is-warning" id="toggle-buffer">
+            <span class="icon"><i class="fas fa-pause" aria-hidden="true"></i></span>
+            <span>
+              <option data-op="resume">Pause</option>
+              <option data-op="pause" style="display: none;">Resume</option>
+            </span>
+          </a>
+          <a class="button is-danger" id="cancel">
+            <span class="icon"><i class="fas fa-trash-alt" aria-hidden="true"></i></span>
+            <span>Cancel</span>
+          </a>
+        </div>
+        <label class="subtitle is-5 is-bold">Current Status</label>
         <progress class="progress is-primary is-large" value="0" max="100"></progress>
-        <div class="subtitle has-text-centered has-text-dark" id="status"></div>
+        <div class="subtitle has-text-centered has-text-dark" id="status">Idle...</div
       </div>
     </section>
   </div>
-
-
-  <fieldset id="bot"><legend>Live Status</legend>
-    <div id="simwrap">
-      <canvas class="simcanvas" id="drawarea"></canvas>
-      <canvas class="simcanvas" id="bufferarea"></canvas>
-    </div>
-    <textarea id="pendata"></textarea>
-    <fieldset><legend>Buffer</legend>
-      <select size="10" id="buffer"></select>
-      <div><label for="bufrun">Running: </label><b id="bufrun">false</b></div>
-      <div><label for="bufpause">Paused: </label><b id="bufpause">false</b></div>
-      <div><label for="bufcount">Items: </label><b id="bufcount">0</b></div>
-      <button id="buf_pause">Pause Buffer</button>
-      <button id="buf_resume">Resume Buffer</button>
-      <button id="buf_clear">Clear Buffer</button>
-    </fieldset>
-  </fieldset>
-
 
 <script>
   var socket = io();
@@ -188,7 +178,6 @@
   var $draw = $('#drawarea');
   var pen = {};
   var lastPen = {};
-  var resumePen = null;
   var buffer = {};
   var drawPoints = []; // Array of points from buffer to draw
 
@@ -200,8 +189,7 @@
   var crosshairTip;
   var workarea;
   var layers = {};
-
-
+  var tempPreview = "";
 
   // Initialize CNC Server connection details
   // (thanks to CORS support, this should be fully portable)
@@ -226,15 +214,18 @@
   });
 
 
-
-  // Socket.io stream data events =========================
-  socket.on('pen update', function(data){
+  // ===========================================================================
+  // Socket.io stream data events ==============================================
+  // ===========================================================================
+  socket.on('pen update', function(data) {
     var animPen = {};
     pen = $.extend({}, data);
     var d = "Status =-=-=-=" + "\n";
     d+= 'draw pos: ' + pen.state + '/' + pen.height + "\n";
     d+= 'tool: ' + pen.tool + "\n";
     $('#pendata').text(d);
+
+    let tween = {};
 
     if (pen.lastDuration > 250) {
       animPen = $.extend({}, lastPen);
@@ -244,20 +235,51 @@
           easing: 'linear',
           step: function(val, fx) {
             animPen[fx.prop] = val;
-            drawUpdate(animPen, pen);
-          }
+            crosshair.position = stepsToPaper(animPen);
+          },
+          complete: () => {
+            //lastPen = $.extend({}, pen);
+            //removeSegment(data.bufferHash);
+          },
         });
       }
+
+      /*if (typeof lastPen.x !== 'undefined') {
+        tween = crosshair.tweenTo({ position: stepsToPaper(pen) }, pen.lastDuration);
+        tween.then(() => {
+          lastPen = $.extend({}, pen);
+        });
+      }*/
     } else {
       $(lastPen).stop();
-      drawUpdate(pen);
+      //tween.stop();
+      if (crosshair) {
+        crosshair.position = stepsToPaper(pen);
+      }
       lastPen = $.extend({}, pen);
+      //removeSegment(data.bufferHash);
     }
   });
 
+  // Preview from CNCserver (Paper to paper connection!)
+  socket.on('paper preview', function ({ paperJSON }) {
+    if (layers.preview) {
+      const { preview } = layers;
+      preview.removeChildren();
+      preview.importJSON(paperJSON);
+      preview.strokeColor = 'green';
+
+      // TODO: This scale is probably not always right 😕
+      preview.scale(2, [0, 0]);
+    } else {
+      tempPreview = paperJSON;
+    }
+  });
 
   // CNCServer Buffer Change events (for pause, update, or resume)
-  socket.on('buffer update', function(b){
+  socket.on('buffer update', function(b) {
+    return;
+
     // What KIND of buffer update is this?
     switch (b.type) {
       case 'complete':
@@ -265,18 +287,37 @@
           data: b.bufferData,
           list: b.bufferList
         };
+
+        console.dir(b);
+
+        // Process all items to catch us up.
+        processBufferBatch(b.bufferList, b.bufferData);
       case 'vars':
         $('#bufrun').text(b.bufferRunning);
         $('#bufpause').text(b.bufferPaused);
-        resumePen = b.bufferPausePen;
+        if (b.bufferPausePen) {
+          crosshair.position = stepsToPaper(b.bufferPausePen);
+        }
         break;
+
       case 'add':
         buffer.list.unshift(b.hash);
         buffer.data[b.hash] = b.item;
+
+        // If this is a move, display it.
+        console.log('Add:', b.hash);
+        if (getBufferItemType(b.item) === 'absmove') {
+          addSegment(b.item.command.source, b.item.command, b.item.pen.state, b.hash);
+          crosshairTip.position = stepsToPaper(b.item.pen);
+        }
         break;
+
       case 'remove':
         var hash = buffer.list.pop();
         delete buffer.data[hash];
+        removeSegment(hash);
+
+        console.log('Remove:', hash);
         break;
     }
 
@@ -285,7 +326,6 @@
     // Populate buffer list of items
     var $b = $('#buffer');
     $b.find('option').remove();
-    drawPoints = [];
 
     for (var i in buffer.list) {
       var cmd = buffer.data[buffer.list[i]].command;
@@ -299,7 +339,6 @@
         if (typeof cmd.type == "string") {
           switch (cmd.type) {
             case 'absmove':
-              drawPoints.push({x: cmd.x * viewScale, y: cmd.y * viewScale});
               cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
               break;
             case 'absheight':
@@ -319,43 +358,14 @@
 
       $b.prepend( $('<option>').text(cmd) );
     }
-
-    var ctx = $('#bufferarea')[0].getContext('2d');
-
-    // Clear it out
-    ctx.clearRect(0, 0, $('#bufferarea')[0].width, $('#bufferarea')[0].height);
-
-    // Do we have a resume point? draw that
-    if (resumePen) {
-      drawCrosshair(ctx, 20, 'green', resumePen);
-    }
-
-    // Move points in the buffer? Connect the dots.
-    if (drawPoints.length) {
-      ctx.beginPath();
-      ctx.lineWidth = '4';
-      ctx.strokeStyle = "orange";
-
-      // Move to start of buffer (either resume pos, or current)
-      if (resumePen) {
-        ctx.moveTo(resumePen.x * viewScale, resumePen.y * viewScale);
-      } else {
-        ctx.moveTo(pen.x * viewScale, pen.y * viewScale);
-      }
-
-      for (var i = drawPoints.length - 1; i >= 0; i--) {
-        ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
-      }
-
-      ctx.stroke();
-      ctx.closePath;
-    }
   });
 
 
   // Setup live display box, pull in the bot specific settings
   cncserver.api.settings.bot().then((response) => {
     const { data: bot } = response;
+
+    //console.log(bot);
 
     $('#bot legend:first').text('Live Status: ' + bot.name);
 
@@ -366,27 +376,33 @@
       );
     });
 
-    console.dir(bot);
-
-    // Find the view scale
-    if (bot.maxArea.width > bot.maxArea.height) {
+    // Find the view scale based on aspect ratio.
+    if (Number(bot.maxArea.width) > Number(bot.maxArea.height)) {
+      // Landscape canvas.
       viewScale = viewMax.x / bot.maxArea.width;
-    }else {
+    } else {
+      // Portrait canvas.
       viewScale = viewMax.y / bot.maxArea.height;
     }
 
     // Set the scale and setup paper.
     paper.setup($('#paper')[0]);
     paper.project.view.viewSize = [bot.maxArea.width * viewScale, bot.maxArea.height * viewScale];
-    paper.project.view.scale(viewScale, [0, 0]);
 
-    // Setup 3 layers: Drawing, moving, and overlay.
+    // Setup 4 layers: Drawing, moving, preview, and overlay.
     layers.drawing = new paper.Layer([]);
+      layers.drawGroup = new paper.Group();
+
     layers.moving = new paper.Layer([]);
+      layers.moveGroup = new paper.Group();
+
+    layers.preview = new paper.Layer([]);
+    if (tempPreview) layers.preview.importJSON(tempPreview);
+
     layers.overlay = new paper.Layer([]);
 
     // Make crosshair (on active overlay layer).
-    var size = 250;
+    var size = 10;
     crosshair = new paper.Group([
       new paper.Shape.Circle([0, 0], size),
       new paper.Path.Line([-size * 1.5, 0], [-size / 5, 0]),
@@ -395,19 +411,24 @@
       new paper.Path.Line([0, size * 1.5], [0, size / 5]),
     ]);
     crosshair.strokeColor = 'black';
-    crosshair.strokeWidth = 40;
+    crosshair.strokeWidth = 2;
 
     crosshairTip = crosshair.clone();
     crosshairTip.strokeColor = 'green';
-    crosshairTip.strokeWidth = 80;
+    crosshairTip.strokeWidth = 4;
     crosshairTip.sendToBack();
+
+    // Setup the canvas click.
+    paper.project.view.onMouseDown = (event) => {
+      cncserver.api.pen.move(paperToMove([event.point.x, event.point.y]));
+    };
 
     // Show workarea
     workarea = new paper.Path.Rectangle(
-      [bot.workArea.left, bot.workArea.top],
-      [bot.maxArea.width, bot.maxArea.height],
+      [bot.workArea.left * viewScale, bot.workArea.top * viewScale],
+      [bot.maxArea.width * viewScale, bot.maxArea.height * viewScale],
     );
-    workarea.strokeWidth = 20;
+    workarea.strokeWidth = 2;
     workarea.strokeColor = 'red';
 
     // Setup the height option buttons for the bot
@@ -425,30 +446,18 @@
     cncserver.api.pen.stat().then((response) => {
       pen = response.data;
       lastPen = $.extend({}, response.data);
-      drawUpdate(response.data);
+      // This is always the correct tip of the buffer.
+      crosshairTip.position = stepsToPaper(pen);
+
+      // Assume this is also where the bot is (idle, no buffer).
+      crosshair.position = stepsToPaper(pen);
     });
   });
 
-
-  function drawUpdate(current, dest) {
-    console.log('UPDATE', current, dest);
-
-    // Draw directional path to DEST
-    if (dest) {
-      crosshairTip.position = [dest.x, dest.y];
-    }
-
-    crosshair.position = [current.x, current.y];
-  };
-
   var run = cncserver.cmd.run; // Shortcut!
 
-  function drawUpdate(current, dest) {
-
-  }
-
   // Bind button action click
-  $('button').click(function(){
+  $('button, a.button').click(function(){
     var $this = $(this);
 
     // Bind special for scratch buttons, as they're not regular API things.
@@ -462,6 +471,9 @@
       );
       return;
     }
+
+    // Toggle operation from internal options (if any).
+    const $op = $this.find('option:hidden');
 
     // Bind for normal API functionality buttons.
     var id = this.id;
@@ -478,20 +490,41 @@
         }
 
         break;
-      case 'buf_pause':
-        cncserver.api.buffer.pause();
-        break;
-      case 'buf_resume':
-        cncserver.api.buffer.resume();
-        break;
-      case 'buf_clear':
+
+      case 'cancel':
         cncserver.api.buffer.clear();
         break;
-      case 'unlock':
-        cncserver.api.motors.unlock();
+
+      case 'toggle-buffer':
+        $this.find('option').hide();
+        $op.show();
+        $this.removeClass('is-warning is-success');
+        $this.addClass($op.attr('data-op') === 'pause' ? 'is-success' : 'is-warning');
+
+        const $icon = $this.find('span.icon i');
+        $icon.removeClass('fa-pause fa-play');
+        $icon.addClass($op.attr('data-op') === 'pause' ? 'fa-play' : 'fa-pause');
+
+        if ($op.attr('data-op') === 'resume') {
+          cncserver.api.buffer.resume();
+        } else {
+          cncserver.api.buffer.pause();
+        }
+
         break;
-      case 'zero':
-        cncserver.api.pen.zero();
+
+      case 'toggle-pen':
+        $this.find('option').hide();
+        $op.show();
+        $this.removeClass('is-success is-link');
+        $this.addClass($op.attr('data-op') === 'up' ? 'is-success' : 'is-link');
+
+        cncserver.api.pen.height($op.attr('data-op'), null, {
+          skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
+        });
+        break;
+      case 'unlock':
+        cncserver.api.motors.unlock().then(cncserver.api.pen.zero());
         break;
       case 'park':
         cncserver.api.pen.park(null, {
@@ -500,31 +533,55 @@
         break;
     }
 
-    // One of the move button array
-    if ($(this).is('.move')) {
-      var pos = $(this).text().split(',');
-      cncserver.api.pen.move({
-        x: pos[0],
-        y: pos[1],
-        skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
-      });
-    }
   });
 
   // Populate tool buttons
   cncserver.api.tools.list().then((response) => {
     if (response.data) {
       $('#tools h4').remove();
-      for (var i in response.data.tools) {
-        $('<p>')
-          .addClass('control')
-          .append(
-            $('<button>')
-              .text(response.data.tools[i])
-              .addClass('button is-info is-small')
-          )
-          .appendTo('#tools');
-      }
+      const toolGroups = {};
+      response.data.tools.forEach((tool) => {
+        const td = response.data.toolData[tool];
+        const group = td.group || 'none';
+
+        if (!toolGroups[group]) {
+          toolGroups[group] = [];
+        }
+
+        toolGroups[group].push(tool);
+
+      });
+
+      Object.keys(toolGroups).forEach((group) => {
+        let $buttons = $('<div>').addClass('buttons');
+
+        toolGroups[group].forEach((tool) => {
+          $('<p>')
+            .addClass('control')
+            .append(
+              $('<button>')
+                .text(tool)
+                .addClass('button is-info is-small')
+            )
+            .appendTo($buttons);
+        })
+
+        if (group === 'none') {
+          $('#tools').append($buttons);
+        } else {
+          $('#tools').append(
+            $('<details>')
+              .addClass('box')
+              .append(
+                $('<summary>')
+                  .addClass('label')
+                  .text(group),
+                $buttons
+              ),
+          );
+        }
+      });
+
       $('#tools button').click(function(){
         cncserver.api.tools.change($(this).text());
       });
@@ -545,6 +602,82 @@
     run('park');
     run('custom', runTest);
   }
+
+  function getBufferItemType(item) {
+    var cmd = item.command;
+
+    // Skip the command if it's null
+    if (cmd === null) cmd = "";
+
+    if (typeof cmd == "function") cmd = 'callback';
+
+    if (typeof cmd == 'object') {
+      if (typeof cmd.type == "string") {
+        cmd = cmd.type;
+      }
+    }
+
+    return cmd;
+  }
+
+  const drawnSegments = {};
+  function processBufferBatch(list, data) {
+    list.forEach(hash => {
+      const item = data[hash];
+      if (getBufferItemType(item) === 'absmove') {
+        addSegment(item.command.source, item.command, item.pen.state, hash);
+      }
+    });
+  }
+
+  function paperToMove(position) {
+    return {
+      x: Math.round((position[0] / paper.project.view.bounds.width) * 10000) / 100,
+      y: Math.round((position[1] / paper.project.view.bounds.height) * 10000) / 100,
+    };
+  }
+
+  function stepsToPaper(point) {
+    return [point.x * viewScale, point.y * viewScale];
+  }
+
+  function addSegment(source, dest, height, hash) {
+    const group = height === 'up' ? layers.moveGroup : layers.drawGroup;
+    drawnSegments[hash] = new paper.Path.Line(stepsToPaper(source), stepsToPaper(dest));
+    group.addChild(drawnSegments[hash]);
+    setGroupStyles();
+  }
+
+
+  function removeSegment(hash) {
+    if (drawnSegments[hash]) {
+      // TODO: Any way to clean this out better?
+      drawnSegments[hash].remove();
+      delete drawnSegments[hash];
+    }
+  }
+
+  function removeOldestSegment() {
+    if (Object.keys(drawnSegments).length) {
+      removeSegment(Object.keys(drawnSegments)[0]);
+    }
+  }
+
+
+  function setGroupStyles() {
+    layers.drawGroup.style = {
+      strokeWidth: 1,
+      strokeColor: 'blue',
+    };
+
+    layers.moveGroup.style = {
+      dashArray: [4, 10],
+      strokeWidth: 4,
+      strokeCap: 'round',
+      strokeColor: 'grey',
+    };
+  }
+
 
   function drawRuler(){
     var pos = {x: 0, y: 70};

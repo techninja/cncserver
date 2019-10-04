@@ -109,6 +109,9 @@ module.exports = (cncserver) => {
       cncserver.exports.bufferUpdateTrigger(data);
     }
     io.emit('buffer update', data);
+
+    // Send this second.
+    sockets.sendPaperPreviewUpdate();
   };
 
   /**
@@ -123,6 +126,7 @@ module.exports = (cncserver) => {
       timestamp: new Date().toString(),
     });
   };
+
 
   /**
    * Send an update to all stream clients of a machine name callback event.
@@ -145,6 +149,16 @@ module.exports = (cncserver) => {
    */
   sockets.manualSwapTrigger = (vIndex) => {
     io.emit('manualswap trigger', { index: vIndex });
+  };
+
+  /**
+   * Send an update to all stream clients for a Paper layer update.
+   */
+  sockets.sendPaperPreviewUpdate = () => {
+    io.emit('paper preview', {
+      paperJSON: cncserver.drawing.base.layers.preview.exportJSON(),
+      timestamp: new Date().toString(),
+    });
   };
 
   // Shortcut functions for move/height streaming.

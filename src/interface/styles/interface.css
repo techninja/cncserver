@@ -14,9 +14,6 @@ body {
 
 canvas.simcanvas {
   border: 1px solid black;
-  width: 100%;
-  max-width: 600px;
-  max-height: 400px;
   display: block;
 }
 
@@ -55,4 +52,39 @@ canvas.simcanvas {
 
 .tabs-content .tab-content.is-active {
   display: block;
+}
+
+input.switch {
+  transition: all 0.25s;
+  position: relative;
+  -webkit-appearance: none;
+  outline: none;
+  width: 50px;
+  height: 30px;
+  background-color: #fff;
+  border: 1px solid #D9DADC;
+  border-radius: 50px;
+  box-shadow: inset -20px 0 0 0 #fff;
+}
+
+input.switch:after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  background: transparent;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+}
+
+input.switch:checked {
+  box-shadow: inset 20px 0 0 0 #ff0000;
+  border-color: #ff0000;
+}
+
+input.switch:checked:after {
+  left: 20px;
+  box-shadow: -2px 4px 3px rgba(0,0,0,0.05);
 }

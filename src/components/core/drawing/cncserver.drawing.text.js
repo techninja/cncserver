@@ -135,6 +135,9 @@ module.exports = (cncserver, drawing) => {
     // Rotation!
     chars.rotate(options.rotation);
 
+    // Update client preview.
+    cncserver.sockets.sendPaperPreviewUpdate();
+
     // Trace all the paths!
     const allPaths = drawing.base.getPaths(chars);
 

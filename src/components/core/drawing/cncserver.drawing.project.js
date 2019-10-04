@@ -18,6 +18,9 @@ module.exports = (cncserver, drawing) => {
     // TODO: check settings.
     drawing.occlusion('fill', item);
 
+    // Update client preview.
+    cncserver.sockets.sendPaperPreviewUpdate();
+
     const allPaths = drawing.base.getPaths(item);
     console.log('How many?', allPaths.length);
 
@@ -27,23 +30,23 @@ module.exports = (cncserver, drawing) => {
       if (path.length) {
         if (operation === 'full' || operation === 'trace') {
           console.log('Tracing:', path.name, `Length: ${path.length}mm`);
-          /* cncserver.jobs.addItem({
+          cncserver.jobs.addItem({
             operation: 'trace',
             type: 'job',
             parent: hash,
             body: path,
-          }); */
+          });
         }
 
         // TODO: Do we fill non-closed paths?
         if ((operation === 'fill' || operation === 'full') && path.closed) {
           console.log('Filling:', path.name, `Length: ${path.length}mm`);
-          /* cncserver.jobs.addItem({
+          cncserver.jobs.addItem({
             operation: 'fill',
             type: 'job',
             parent: hash,
             body: path,
-          }); */
+          });
         }
       }
     });
