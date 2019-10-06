@@ -122,7 +122,7 @@ const directRenderer = new Writable({
   objectMode: true,
   highWaterMark: 1,
   write: (item, _, callback) => {
-    console.log('DIRECT Stream writing!', item.commands);
+    if (global.config.showSerial) console.log('DIRECT Stream writing!', item.commands);
     serial.writeMultiple(item.commands, (err) => {
       setTimeout(() => {
         callback(err);
@@ -166,7 +166,6 @@ serial.bindAll({
   connect: (options) => {
     ipc.sendMessage('serial.connected');
     state.setPaused(false);
-    console.log('CONNECTED TO ', options.port);
   },
 
   // Called whenever the simulation state changes, managed by serial module.
@@ -269,7 +268,6 @@ process.on('uncaughtException', (err) => {
 // Fully initialize the IPC comms/server with bindings.
 ipc.connect({
   connect: () => {
-    console.log('Connected to CNCServer!');
     ipc.sendMessage('runner.ready');
   },
   disconnect: () => {

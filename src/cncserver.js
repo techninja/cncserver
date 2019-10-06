@@ -108,7 +108,6 @@ cncserver.settings.loadGlobalConfig(() => {
             cncserver.serial.localTrigger('serialReady');
           },
           connect: () => {
-            console.log('CONNECTSERIAL CONNECT!');
             cncserver.serial.localTrigger('serialReady');
           },
           disconnect: () => {

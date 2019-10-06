@@ -254,7 +254,6 @@ module.exports = (cncserver) => {
   }
 
   scratch.initAPI = () => {
-    console.info('Scratch v2 Programming support ENABLED');
     const pollData = {}; // "Array" of "sensor" data to be spat out to poll page
     turtle = { // Helper turtle for relative movement
       x: cncserver.settings.bot.workArea.absCenter.x,
@@ -288,9 +287,9 @@ module.exports = (cncserver) => {
 
       // Loop through all existing/static pollData
       // TODO: Fix this from original source, this is just wrong :/
-      /*out += Object.keys(pollData).reduce(
+      /* out += Object.keys(pollData).reduce(
         (line, key) => `${line}${key} ${pollData[key].join(' ')}\n`
-      );*/
+      ); */
 
       // Throw in full pen data as well
       for (const [key, value] of Object.entries(cncserver.pen.state)) {
