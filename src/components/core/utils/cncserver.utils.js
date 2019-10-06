@@ -224,6 +224,34 @@ module.exports = (cncserver) => {
   };
 
   /**
+   * Convert an absolute step coordinate to absolute point object.
+   *
+   * @param {{x: number, y: number}} point
+   *   Coordinate measured in steps to be converted to absolute in scale.
+   * @param {string} scale
+   *   Either 'in' for inches, or 'mm' for millimeters.
+   *
+   * @returns {{x: number, y: number}}
+   *   Converted coordinate in absolute steps.
+   */
+  utils.stepsToAbs = (point, scale) => {
+    const { settings: { bot } } = cncserver;
+
+    // Setup output, less workarea boundaries, divided by mm per step.
+    let out = {
+      x: (point.x - bot.workArea.left) / bot.stepsPerMM.x,
+      y: (point.y - bot.workArea.top) / bot.stepsPerMM.y,
+    };
+
+    if (scale === 'in') {
+      out = { x: point.x / 25.4, y: point.y / 25.4 };
+    }
+
+    // Return absolute calculation.
+    return out;
+  };
+
+  /**
    * Convert percent of total area coordinates into absolute step coordinates.
    *
    * @param {{x: number, y: number}} point
