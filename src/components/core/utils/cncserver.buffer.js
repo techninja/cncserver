@@ -143,7 +143,8 @@ module.exports = (cncserver) => {
 
       delete buffer.dataSet[hash];
       cncserver.sockets.sendBufferRemove();
-    } else {
+    } else if (buffer.data.length) {
+      // This is really only an issue if we didn't just clear the buffer.
       console.error(
         'End IPC/Buffer Item & Hash Mismatch. This should never happen!',
         hash,
