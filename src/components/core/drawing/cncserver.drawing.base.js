@@ -42,16 +42,20 @@ module.exports = (cncserver) => {
   };
 
   // Fit the given item within either the drawing bounds, or custom one.
-  base.fitBounds = (item, bounds, margin = 20) => {
+  base.fitBounds = (item, rawBounds, margin = 20) => {
+    let bounds = rawBounds;
+
     // TODO: figure out good way to default fit bounds.
     if (!bounds) {
-      item.fitBounds({
+      bounds = {
         from: [margin, margin],
         to: [base.size.width - margin, base.size.height - margin],
-      });
-    } else {
-      item.fitBounds(bounds);
+      };
+
+      console.log('Fitting to:', bounds);
     }
+
+    item.fitBounds(bounds);
   };
 
   // Get the position of item via anchor from relative offset EG {x:0, y:-1}
