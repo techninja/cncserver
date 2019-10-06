@@ -70,6 +70,30 @@ module.exports = (cncserver) => {
     }
   };
 
+
+  /**
+   * Helper for getting an async value from the serial port, always direct.
+   *
+   * @param  {string} command
+   *   A named machine configuration command.
+   * @param  {object} options
+   *   Keyed value replacement options for the command.
+   *
+   * @return {Promise}
+   *   Promise that will always succeed with next message from serial.
+   */
+  ipc.getSerialValueCallback = null;
+  ipc.getSerialValue = (command, options = {}) => new Promise((resolver) => {
+    process.nextTick(() => {
+      ipc.sendMessage('serial.direct.command', {
+        commands: [cncserver.buffer.cmdstr(command, options)],
+        duration: 0,
+      });
+
+      ipc.getSerialValueCallback = resolver;
+    });
+  });
+
   /**
    * IPC Message callback event parser/handler.
    *
@@ -83,6 +107,7 @@ module.exports = (cncserver) => {
   ipc.ipcGotMessage = (packet, socket) => {
     const { callbacks: serialCallbacks } = cncserver.serial;
     const { data } = packet;
+    const messages = typeof data === 'string' ? data.trim().split('\n') : [];
     const { baudRate } = cncserver.settings.botConf.get('controller');
 
     switch (packet.command) {
@@ -106,6 +131,8 @@ module.exports = (cncserver) => {
         console.log(
           `Serial connection open at ${baudRate}bps`
         );
+
+        cncserver.binder.trigger('serial.connected');
 
         if (serialCallbacks.connect) serialCallbacks.connect(data);
         if (serialCallbacks.success) serialCallbacks.success(data);
@@ -132,12 +159,15 @@ module.exports = (cncserver) => {
         break;
 
       case 'serial.data':
-        if (data.trim() !== cncserver.settings.botConf.get('controller').ack) {
-          console.error('Message From Controller: ', data);
-
-          // Assume error was on startup, and resend setup.
-          cncserver.serial.localTrigger('botInit');
-        }
+        // Either get the value for a caller, or trigger generic bind.
+        messages.forEach((message) => {
+          if (ipc.getSerialValueCallback && message !== cncserver.settings.botConf.get('controller').ack) {
+            ipc.getSerialValueCallback(message);
+            ipc.getSerialValueCallback = null;
+          } else {
+            cncserver.binder.trigger('serial.message', message);
+          }
+        });
         break;
 
       case 'buffer.item.start':
