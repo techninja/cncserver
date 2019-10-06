@@ -4,69 +4,14 @@
  */
 
 const { Path, Group } = require('paper');
-const clipperLib = require('js-angusj-clipper');
 const fillUtil = require('./cncserver.drawing.fillers.util');
 
 let settings = {};
 let exportGroup = {};
-const clipperScalePrecision = 10000;
-
-async function getClipperAsync() {
-  // create an instance of the library (usually only do this once in your app)
-  const clipper = await clipperLib.loadNativeClipperLibInstanceAsync(
-    // let it autodetect which one to use, but also available WasmOnly and AsmJsOnly
-    clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
-  );
-  return clipper;
-}
-
-function getClipperGeo(item) {
-  // Work on a copy.
-  const p = item.clone();
-  const geometries = [];
-
-  // Is this a compound path?
-  if (p.children) {
-    p.children.forEach((c, pathIndex) => {
-      if (c.length) {
-        if (c.segments.length <= 1 && c.closed) {
-          c.closed = false;
-        }
-
-        c.flatten(settings.flattenResolution);
-        geometries[pathIndex] = [];
-        c.segments.forEach((s) => {
-          geometries[pathIndex].push({
-            x: Math.round(s.point.x * clipperScalePrecision),
-            y: Math.round(s.point.y * clipperScalePrecision),
-          });
-        });
-      }
-    });
-  } else { // Single path.
-    // With no path length, we're done.
-    if (!p.length) {
-      p.remove();
-      // inPath.remove();
-      return false;
-    }
-
-    geometries[0] = [];
-    p.flatten(settings.flattenResolution);
-    p.segments.forEach((s) => {
-      geometries[0].push({
-        x: Math.round(s.point.x * clipperScalePrecision),
-        y: Math.round(s.point.y * clipperScalePrecision),
-      });
-    });
-  }
-
-  return geometries;
-}
 
 function getOffsetPaths(data, delta, clipper) {
   const result = clipper.offsetToPaths({
-    delta: delta * -clipperScalePrecision,
+    delta: delta * -fillUtil.clipper.scalePrecision,
     offsetInputs: [{
       data,
       joinType: 'miter',
@@ -81,8 +26,8 @@ function getOffsetPaths(data, delta, clipper) {
       const subPath = new Path();
       subPathPoints.forEach((point) => {
         subPath.add({
-          x: point.x / clipperScalePrecision,
-          y: point.y / clipperScalePrecision,
+          x: point.x / fillUtil.clipper.scalePrecision,
+          y: point.y / fillUtil.clipper.scalePrecision,
         });
       });
       subPath.closed = true;
@@ -96,13 +41,13 @@ function getOffsetPaths(data, delta, clipper) {
 
 // Connect to the main process, start the fill operation.
 fillUtil.connect((path, settingsOverride) => {
-  getClipperAsync().then((clipper) => {
+  fillUtil.clipper.getInstance().then((clipper) => {
     settings = { ...settings, ...settingsOverride };
     exportGroup = new Group();
 
     let items = [];
     let increment = 0;
-    const geo = getClipperGeo(path);
+    const geo = fillUtil.clipper.getPathGeo(path, settings.flattenResolution);
     while (items) {
       items = getOffsetPaths(geo, settings.spacing + increment, clipper);
       if (items) {

@@ -5,6 +5,7 @@
  * so the fill algorithm can do whatever it needs.
  */
 const { Project, Size } = require('paper');
+const clipperLib = require('js-angusj-clipper');
 const ipc = require('node-ipc');
 
 const hostname = 'cncserver';
@@ -16,6 +17,57 @@ ipc.config.silent = true;
 const send = (command, data = {}) => {
   const packet = { command, data };
   ipc.of[hostname].emit('filler.message', packet);
+};
+
+// Clipper helper utilities.
+const clipper = {
+  scalePrecision: 10000,
+  getInstance: async () => clipperLib.loadNativeClipperLibInstanceAsync(
+    clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
+  ),
+  getPathGeo: (item, resolution) => {
+    // Work on a copy.
+    const p = item.clone();
+    const geometries = [];
+
+    // Is this a compound path?
+    if (p.children) {
+      p.children.forEach((c, pathIndex) => {
+        if (c.length) {
+          if (c.segments.length <= 1 && c.closed) {
+            c.closed = false;
+          }
+
+          c.flatten(resolution);
+          geometries[pathIndex] = [];
+          c.segments.forEach((s) => {
+            geometries[pathIndex].push({
+              x: Math.round(s.point.x * clipper.scalePrecision),
+              y: Math.round(s.point.y * clipper.scalePrecision),
+            });
+          });
+        }
+      });
+    } else { // Single path.
+      // With no path length, we're done.
+      if (!p.length) {
+        p.remove();
+        // inPath.remove();
+        return false;
+      }
+
+      geometries[0] = [];
+      p.flatten(resolution);
+      p.segments.forEach((s) => {
+        geometries[0].push({
+          x: Math.round(s.point.x * clipper.scalePrecision),
+          y: Math.round(s.point.y * clipper.scalePrecision),
+        });
+      });
+    }
+
+    return geometries;
+  },
 };
 
 const exp = {
@@ -87,6 +139,9 @@ const exp = {
     // Otherwise, not.
     return false;
   },
+
+  // Add in the Clipper utilities.
+  clipper,
 };
 
 module.exports = exp;
