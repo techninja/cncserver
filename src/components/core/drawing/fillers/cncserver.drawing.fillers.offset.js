@@ -3,7 +3,7 @@
  * "cam" style offset fill utilizing the "clipper" and cam.js libraries.
  */
 
-const { Path, Group } = require('paper');
+const { Group } = require('paper');
 const fillUtil = require('./cncserver.drawing.fillers.util');
 
 let settings = {};
@@ -19,24 +19,7 @@ function getOffsetPaths(data, delta, clipper) {
     }],
   });
 
-  const out = [];
-
-  if (result && result.length) {
-    result.forEach((subPathPoints) => {
-      const subPath = new Path();
-      subPathPoints.forEach((point) => {
-        subPath.add({
-          x: point.x / fillUtil.clipper.scalePrecision,
-          y: point.y / fillUtil.clipper.scalePrecision,
-        });
-      });
-      subPath.closed = true;
-      out.push(subPath);
-    });
-    return out;
-  }
-
-  return null;
+  return fillUtil.clipper.resultToPaths(result);
 }
 
 // Connect to the main process, start the fill operation.

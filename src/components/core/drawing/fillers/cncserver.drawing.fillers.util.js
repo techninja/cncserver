@@ -4,7 +4,7 @@
  * Holds all standardized processes for managing IPC, paper setup, and export
  * so the fill algorithm can do whatever it needs.
  */
-const { Project, Size } = require('paper');
+const { Project, Size, Path } = require('paper');
 const clipperLib = require('js-angusj-clipper');
 const ipc = require('node-ipc');
 
@@ -67,6 +67,29 @@ const clipper = {
     }
 
     return geometries;
+  },
+
+  // Convert an array of result geometries into an array of Paper paths.
+  resultToPaths: (result, closed = true) => {
+    const out = [];
+
+    if (result && result.length) {
+      result.forEach((subPathPoints) => {
+        const subPath = new Path();
+        subPathPoints.forEach((point) => {
+          subPath.add({
+            x: point.x / clipper.scalePrecision,
+            y: point.y / clipper.scalePrecision,
+          });
+        });
+        subPath.closed = closed;
+        out.push(subPath);
+      });
+      return out;
+    }
+
+    // Return null if no result.
+    return null;
   },
 };
 
