@@ -25,6 +25,10 @@ const clipper = {
   getInstance: async () => clipperLib.loadNativeClipperLibInstanceAsync(
     clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
   ),
+  translatePoint: point => ({
+    x: Math.round(point.x * clipper.scalePrecision),
+    y: Math.round(point.y * clipper.scalePrecision),
+  }),
   getPathGeo: (item, resolution) => {
     // Work on a copy.
     const p = item.clone();
@@ -33,7 +37,7 @@ const clipper = {
     // Is this a compound path?
     if (p.children) {
       p.children.forEach((c, pathIndex) => {
-        if (c.length) {
+        if (c && c.length) {
           if (c.segments.length <= 1 && c.closed) {
             c.closed = false;
           }
@@ -41,11 +45,13 @@ const clipper = {
           c.flatten(resolution);
           geometries[pathIndex] = [];
           c.segments.forEach((s) => {
-            geometries[pathIndex].push({
-              x: Math.round(s.point.x * clipper.scalePrecision),
-              y: Math.round(s.point.y * clipper.scalePrecision),
-            });
+            geometries[pathIndex].push(clipper.translatePoint(s.point));
           });
+
+          // If closed, add one last segment for the original connection.
+          if (c.closed) {
+            geometries[pathIndex].push(clipper.translatePoint(c.segments[0].point));
+          }
         }
       });
     } else { // Single path.
@@ -59,10 +65,7 @@ const clipper = {
       geometries[0] = [];
       p.flatten(resolution);
       p.segments.forEach((s) => {
-        geometries[0].push({
-          x: Math.round(s.point.x * clipper.scalePrecision),
-          y: Math.round(s.point.y * clipper.scalePrecision),
-        });
+        geometries[0].push(clipper.translatePoint(s.point));
       });
     }
 
