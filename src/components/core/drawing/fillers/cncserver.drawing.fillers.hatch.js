@@ -389,7 +389,7 @@ fillUtil.connect((path, settingsOverride) => {
   // Init canvas boundary line to intersect if beyond the printable area.
   canvasBounds = new Path.Rectangle({
     from: [0, 0],
-    to: [fillUtil.project.view.bounds.width, fillUtil.project.view.bounds.height],
+    to: [viewBounds.width, viewBounds.height],
   });
 
   while (dynamicLineFillNext()) {
