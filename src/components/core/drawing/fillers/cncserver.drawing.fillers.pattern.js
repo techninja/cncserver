@@ -3,11 +3,17 @@
  * path fill (overlaying a given large space filling path over the fill object).
  */
 const { Path, Group } = require('paper');
+const fs = require('fs');
+const path = require('path');
 const fillUtil = require('./cncserver.drawing.fillers.util');
 
 let viewBounds = {};
 let settings = {
   overlayFillAlignPath: true,
+  pattern: 'spiral',
+  spacing: 5,
+  scale: 1,
+  rotation: 0,
 };
 
 function spiralOutsideBounds(spiral, bounds) {
@@ -70,28 +76,94 @@ function generateSpiralPath() {
   return spiral;
 }
 
+function generateFromLib(name, fillPath) {
+  const libPath = path.resolve(__dirname, 'patterns', `${name}.svg`);
+  const svg = fs.readFileSync(libPath, 'utf8');
+  const p = fillUtil.project.importSVG(svg, {
+    expandShapes: true,
+  });
+
+  let root = p.children[1];
+  root.scale(settings.scale);
+
+  let pattern = root.clone();
+
+  // With our pattern, we have to tile it along X and y until it fits the bounds of our path.
+  const { bounds } = fillPath;
+
+  // Tile till we reach the width.
+  while (pattern.bounds.width < bounds.width * 1.42) {
+    root.position = [
+      pattern.bounds.right + root.bounds.width / 2,
+      pattern.position.y,
+    ];
+
+    const extendedPattern = pattern.unite(root);
+    pattern.remove();
+    pattern = extendedPattern;
+  }
+
+  // Make the full width pattern the new root.
+  root.remove();
+  root = pattern.clone();
+
+  // Tile till we reach the height.
+  while (pattern.bounds.height < bounds.height * 1.42) {
+    root.position = [
+      pattern.position.x,
+      pattern.bounds.bottom + root.bounds.height / 2,
+    ];
+
+    const extendedPattern = pattern.unite(root);
+    pattern.remove();
+    pattern = extendedPattern;
+  }
+
+  // Remove our working path, apply settings rotation, and return!
+  root.remove();
+  pattern.rotate(settings.rotation);
+  pattern.position = fillPath.position;
+  return pattern;
+}
+
+// Generate a compound path pattern
+function generatePattern(name, fillPath) {
+  let pattern = null;
+
+  switch (name) {
+    case 'spiral':
+      pattern = generateSpiralPath();
+      pattern.scale(settings.scale);
+      pattern.rotate(settings.rotation);
+
+      if (!settings.overlayFillAlignPath) {
+        // Align spiral to center by default.
+        pattern.position = fillUtil.project.view.center;
+      } else {
+        // Otherwise align to center of fill path.
+        pattern.position = fillPath.position;
+      }
+      break;
+
+    default:
+      pattern = generateFromLib(name, fillPath);
+  }
+
+  return pattern;
+}
+
 // Actually connect to the main process, start the fill operation.
-fillUtil.connect((path, settingsOverride) => {
+fillUtil.connect((fillPath, settingsOverride) => {
   fillUtil.clipper.getInstance().then((clipper) => {
     settings = { ...settings, ...settingsOverride };
     viewBounds = fillUtil.project.view.bounds;
-    const exportGroup = new Group();
-
-    const pattern = generateSpiralPath();
-
-    // Align spiral to center by default.
-    pattern.position = fillUtil.project.view.center;
-
-    // Otherwise align to center of fill path.
-    if (settings.overlayFillAlignPath) {
-      pattern.position = path.position;
-    }
+    const pattern = generatePattern(settings.pattern, fillPath);
 
     // Convert the paths to clipper geometry.
     const spiralGeo = fillUtil.clipper.getPathGeo(
       pattern, settings.flattenResolution / 4
     );
-    const pathGeo = fillUtil.clipper.getPathGeo(path, settings.flattenResolution / 4);
+    const pathGeo = fillUtil.clipper.getPathGeo(fillPath, settings.flattenResolution / 4);
 
     // Clip the fill pattern into the positive fill path geometry.
     const result = clipper.clipToPolyTree({
@@ -104,7 +176,7 @@ fillUtil.connect((path, settingsOverride) => {
     // Convert the Polytrees to paths, then to paper paths.
     const paths = clipper.polyTreeToPaths(result);
     const items = fillUtil.clipper.resultToPaths(paths, false);
-    exportGroup.addChildren(items);
+    const exportGroup = new Group(items);
     fillUtil.finish(exportGroup);
   });
 });
