@@ -1,6 +1,8 @@
 /**
  * @file Abstraction module for pen state and setter/helper methods.
  */
+const { Path } = require('paper');
+
 const pen = {}; // Exposed export.
 
 module.exports = (cncserver) => {
@@ -37,6 +39,18 @@ module.exports = (cncserver) => {
    *   Percent of speed to set for this movement only.
    */
   pen.setPen = (inPenState, callback, speedOverride = null) => {
+    // What can happen here?
+    // We're changing state, and what we need is the ability to find all the
+    // passed, changed state from either the actual pen state, OR the tip of
+    // our last "buffered" movement.
+    //
+    // We can set:
+    // - Power
+    // - X/Y (with speed)
+    // - Height/pen "state"/Z
+    // - X/Y/Z (must complete together)
+    // - Simulation on/off
+
     // Force the distanceCounter to be a number (was coming up as null)
     pen.state.distanceCounter = parseFloat(pen.state.distanceCounter);
 
@@ -102,6 +116,32 @@ module.exports = (cncserver) => {
           console.log('setPen: Either X/Y not valid numbers.');
         }
         callback(false);
+        return;
+      }
+
+
+      // Override this to move with accelleration if override isn't set.
+      // TODO: Allow switching between accell and flat speed movements.
+      if (speedOverride === null) {
+        // Convert the percentage or absolute in/mm XY values into absolute steps.
+        const startPoint = cncserver.utils.stepsToAbs(pen.state, 'mm');
+        const endPoint = cncserver.utils.stepsToAbs(cncserver.utils.inPenToSteps(point), 'mm');
+
+        const movePath = new Path([
+          startPoint,
+          endPoint,
+        ]);
+        cncserver.sockets.sendPaperPreviewUpdate();
+        const accellPoints = cncserver.drawing.accell(movePath);
+
+        // movePath.remove(); // TODO: Move this to when it's done?
+
+        accellPoints.forEach((pos) => {
+          pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+        });
+
+        pen.setPen({ ...endPoint, abs: 'mm' }, null, 0);
+
         return;
       }
 
