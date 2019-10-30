@@ -49,21 +49,7 @@ module.exports = (cncserver) => {
 
     // Setting the value of the power to the pen
     if (typeof inPenState.power !== 'undefined') {
-      let powers = cncserver.settings.botConf.get('penpower');
-      if (typeof powers === 'undefined') { // We have no super powers
-        powers = { min: 0, max: 0 }; // Set the powers to zero
-      }
-
-      cncserver.run(
-        'custom',
-        cncserver.control.cmdstr(
-          'penpower',
-          { p: Math.round(inPenState.power * powers.max) + Number(powers.min) }
-        )
-      );
-
-      pen.state.power = inPenState.power;
-      if (callback) callback(true);
+      pen.setPower(inPenState.power, callback);
       return;
     }
 
@@ -160,6 +146,32 @@ module.exports = (cncserver) => {
   };
 
   /**
+   * Set the "power" option
+   *
+   * @param {number} power
+   *   Value from 0 to 100 to send to the bot.
+   * @param callback
+   *   Callback triggered when operation should be complete.
+   * @param skipBuffer
+   *   Set to true to skip adding the command to the buffer and run it
+   *   immediately.
+   */
+  pen.setPower = (power, callback, skipBuffer) => {
+    const powers = cncserver.settings.botConf.get('penpower') || { min: 0, max: 0 };
+
+    cncserver.run(
+      'custom',
+      cncserver.control.cmdstr(
+        'penpower',
+        { p: Math.round(power * powers.max) + Number(powers.min) }
+      )
+    );
+
+    pen.state.power = power;
+    if (callback) callback(true);
+  };
+
+  /**
    * Run a servo position from a given percentage or named height value into
    * the buffer, or directly via skipBuffer.
    *
@@ -172,7 +184,7 @@ module.exports = (cncserver) => {
    *   immediately.
    */
   pen.setHeight = (state, callback, skipBuffer) => {
-    let servoDuration = cncserver.settings.botConf.get('servo:duration');
+    let servoDuration = cncserver.settings.botConf.get('servo:minduration');
 
     // Convert the incoming state
     const conv = cncserver.utils.stateToHeight(state);
