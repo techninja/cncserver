@@ -6,12 +6,12 @@ const {
 } = require('paper');
 
 // Central drawing base export
-const base = {};
+const base = { id: 'drawing.base' };
 
 module.exports = (cncserver) => {
   base.project = {};
 
-  cncserver.binder.bindTo('controller.setup', 'drawing.base', () => {
+  cncserver.binder.bindTo('controller.setup', base.id, () => {
     const { settings: { bot } } = cncserver;
     // Setup the project with the base cavas size in mm.
     base.size = new Size(
@@ -29,8 +29,14 @@ module.exports = (cncserver) => {
     };
   });
 
+  // Clear preview canvas on cancel/clear.
+  cncserver.binder.bindTo('buffer.clear', base.id, () => {
+    base.layers.preview.removeChildren();
+    cncserver.sockets.sendPaperPreviewUpdate();
+  });
+
   // Get a list of all simple paths from all children as an array.
-  base.getPaths = (parent, items = []) => {
+  base.getPaths = (parent = base.layers.preview, items = []) => {
     if (parent.children && parent.children.length) {
       let moreItems = [];
       parent.children.forEach((child) => {
@@ -41,18 +47,18 @@ module.exports = (cncserver) => {
     return [...items, parent];
   };
 
+  // Get a default bound for high level drawings.
+  base.defaultBounds = (margin = 10) => ({
+    point: [margin, margin],
+    size: [base.size.width - margin * 2, base.size.height - margin * 2],
+  });
+
   // Fit the given item within either the drawing bounds, or custom one.
-  base.fitBounds = (item, rawBounds, margin = 20) => {
+  base.fitBounds = (item, rawBounds) => {
     let bounds = rawBounds;
 
-    // TODO: figure out good way to default fit bounds.
     if (!bounds) {
-      bounds = {
-        from: [margin, margin],
-        to: [base.size.width - margin, base.size.height - margin],
-      };
-
-      console.log('Fitting to:', bounds);
+      bounds = base.defaultBounds();
     }
 
     item.fitBounds(bounds);

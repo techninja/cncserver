@@ -173,6 +173,7 @@
   </div>
 
 <script>
+  var shape = 'M421.3,221.7c-21.2,0-39.6,12.2-48.5,29.9c-8.9-17.8-27.3-29.9-48.5-29.9c-30,0-54.3,24.3-54.3,54.3c0,30,24.3,54.3,54.3,54.3c21.2,0,39.6-12.2,48.5-29.9c8.9,17.8,27.3,29.9,48.5,29.9c30,0,54.3-24.3,54.3-54.3C475.5,246,451.2,221.7,421.3,221.7z M324.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S338.2,301.2,324.3,301.2z M421.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S435.2,301.2,421.3,301.2z';
   var socket = io();
   var runningTest = false;
   var $draw = $('#drawarea');
@@ -752,6 +753,38 @@
     run('park');
   }
 
+  function fontPreview() {
+    const {api: {actions: { text, stat }}} = cncserver;
+    const opt = {
+      textHeight: 25,
+      boxWidth: 50,
+      labelHeight: 5,
+      rightMargin: 18,
+      bottomMargin: 5,
+      testText: 'ABC ~ 123',
+    }
+
+    stat().then(({ data: { options: { operations, bounds } }}) => {
+      let pos = [bounds.point[0], bounds.point[1]];
+      const max = [bounds.point[0] + bounds.size[0], bounds.point[1] + bounds.size[1]];
+      Object.entries(operations.text.fonts).forEach(([font, info]) => {
+        const textBounds = {point: [pos[0], pos[1]], size: [opt.boxWidth, opt.textHeight]};
+        const labelBounds = {point: [pos[0], pos[1] + opt.textHeight], size: [opt.boxWidth, opt.labelHeight]};
+
+        text(opt.testText, textBounds, { font });
+        text(info.name, labelBounds);
+
+        // Move next pos right >>
+        pos[0] = pos[0] + opt.boxWidth + opt.rightMargin;
+
+        // If over the right, reset X, move down.
+        if (pos[0] + opt.boxWidth > max[0]) {
+          pos = [bounds.point[0], pos[1] + opt.textHeight + opt.labelHeight + opt.bottomMargin];
+        }
+
+      });
+    });
+  }
 </script>
 
 

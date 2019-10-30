@@ -234,6 +234,9 @@ function gotMessage(packet) {
       //   hash {string}      : The tracking hash for this buffer item.
       //   duration {number}  : The duration of all the commands, in ms.
       //   commands {array}   : Array of rendered serial command strings.
+      if (!instructionStream) {
+        initInstructionStreams();
+      }
       instructionStream.push(data);
       break;
 

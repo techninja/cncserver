@@ -24,13 +24,14 @@ module.exports = (cncserver, drawing) => {
     const allPaths = drawing.base.getPaths(item);
     console.log('How many?', allPaths.length);
 
+    /*
     // Move through all paths and add each one as a job.
     allPaths.forEach((path) => {
       // Only add non-zero length path tracing jobs.
       if (path.length) {
         if (operation === 'full' || operation === 'trace') {
           console.log('Tracing:', path.name, `Length: ${path.length}mm`);
-          cncserver.jobs.addItem({
+          cncserver.actions.addItem({
             operation: 'trace',
             type: 'job',
             parent: hash,
@@ -41,7 +42,7 @@ module.exports = (cncserver, drawing) => {
         // TODO: Do we fill non-closed paths?
         if ((operation === 'fill' || operation === 'full') && path.closed) {
           console.log('Filling:', path.name, `Length: ${path.length}mm`);
-          cncserver.jobs.addItem({
+          cncserver.actions.addItem({
             operation: 'fill',
             type: 'job',
             parent: hash,
@@ -49,7 +50,7 @@ module.exports = (cncserver, drawing) => {
           });
         }
       }
-    });
+    }); */
   };
 
   return project;

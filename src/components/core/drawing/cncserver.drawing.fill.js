@@ -7,21 +7,20 @@ const fsPath = require('path'); // File System path management.
 const { Path } = require('paper');
 
 const workingPaths = []; // Module global working path.
-let workingSettings = {}; // Passed settings.
+const workingSettings = []; // Passed settings.
 
 // const methods = require('./fillers');
 module.exports = (cncserver, drawing) => {
   // TODO: get this somewhere real.
   const settingDefaults = {
+    method: 'offset', // Fill method application machine name.
     flattenResolution: 0.25, // Path overlay fill type trace resolution.
-    type: 'zigstraight', // zigzag, zigstraight, zigsmooth, overlay
     // Pass a path object to be used for overlay fills:
     angle: 28, // Dynamic line fill type line angle
     insetAmount: 0, // Amount to negatively offset the fill path.
     randomizeAngle: true, // Randomize the angle above for dynamic line fill.
     hatch: false, // If true, runs twice at opposing angles
     spacing: 3, // Dynamic line fill spacing nominally between each line.
-    checkFillOcclusion: true, // Check for occlusion on fills?
     threshold: 10, // Dynamic line grouping threshold
   };
 
@@ -38,25 +37,26 @@ module.exports = (cncserver, drawing) => {
               height: drawing.base.size.height,
             },
             path: workingPaths.pop().exportJSON(),
-            settings: { ...settingDefaults, ...workingSettings },
+            settings: workingSettings.pop(),
           });
         }
         break;
 
       case 'complete':
-
-        // console.log(data); /*
-        const item = drawing.base.project.importJSON(data);
+        const item = drawing.base.layers.preview.importJSON(data);
         console.log('Got the fill! Children?', item.children.length);
+        cncserver.sockets.sendPaperPreviewUpdate();
 
         const allPaths = drawing.base.getPaths(item);
         // console.log('How many?', allPaths.length); return;
 
+        /*
         // Move through all paths and add each one as a job.
         allPaths.forEach((path) => {
+          console.log('Trace Fill Path Length', path.length);
           // Only add non-zero length path tracing jobs.
           if (path.length) {
-            cncserver.jobs.addItem({
+            cncserver.actions.addItem({
               operation: 'trace',
               type: 'job',
               parent: '123',
@@ -78,7 +78,7 @@ module.exports = (cncserver, drawing) => {
     ipc.server.on('filler.message', gotMessage);
   });
 
-  const fill = (rawPath, parent = null, bounds = null, method = 'hatch', requestSettings = {}) => {
+  const fill = (rawPath, parent = null, bounds = null, requestSettings = {}) => {
     // Filling method module specification:
     // 1. Each method is its own application! This file indexes the files
     //    directly for running via child fillProcess. Communication is done via
@@ -101,8 +101,10 @@ module.exports = (cncserver, drawing) => {
       drawing.base.fitBounds(workingPaths[workingPaths.length - 1], bounds);
     }
 
-    workingSettings = requestSettings;
+    const mergedSettings = { ...settingDefaults, ...requestSettings };
+    workingSettings.push(mergedSettings);
 
+    const { method } = mergedSettings;
     const file = `cncserver.drawing.fillers.${method}`;
     const fillerAppPath = fsPath.join(
       global.__basedir, 'components', 'core', 'drawing', 'fillers', file

@@ -184,6 +184,9 @@ module.exports = (cncserver) => {
 
     // Send full update as it's been cleared.
     cncserver.sockets.sendBufferComplete();
+
+    // Trigger the event.
+    cncserver.binder.trigger('buffer.clear');
   };
 
   /**
@@ -216,26 +219,19 @@ module.exports = (cncserver) => {
           break;
 
         case 'absheight':
-          commands = [buffer.cmdstr('movez', { z: item.command.z })];
+          // To set Height, we can set a rate for how slow it moves,
+          //  - servo.minduration is minimum time.
+          //  - Don't set duration if moving at same time
+          //
+          commands = [buffer.cmdstr('movez', {
+            r: 2200,
+            z: item.command.z,
+            d: cncserver.utils.getHeightChangeData(
+              item.command.source,
+              item.command.z
+            ).d,
+          })];
 
-          // If there's a togglez, run it after setting Z
-          if (cncserver.settings.bot.commands.togglez) {
-            commands.push(
-              buffer.cmdstr(
-                'togglez',
-                { t: cncserver.settings.gConf.get('flipZToggleBit') ? 1 : 0 }
-              )
-            );
-          }
-
-          duration = cncserver.utils.getHeightChangeData(
-            item.command.source,
-            item.command.z
-          ).d;
-
-          commands.push(
-            buffer.cmdstr('wait', { d: duration })
-          );
           break;
         default:
       }

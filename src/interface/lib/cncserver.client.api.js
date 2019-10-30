@@ -80,7 +80,7 @@ function _request(method, path, options = {}) {
     url,
     method,
     data: options.data,
-    timeout: options.timeout || 1000,
+    timeout: options.timeout || 5000,
   });
 }
 
@@ -102,11 +102,55 @@ function _delete(path, options) {
  * Restful API wrappers
  */
 cncserver.api = {
+  actions: {
+    /**
+     * TODO: Basic docs for these wrappers.
+     */
+    stat: () => _get('actions'),
+    text: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'text',
+        name: 'text-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    strokePath: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'trace',
+        name: 'trace-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    fillPath: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'fill',
+        name: 'fill-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    drawSVG: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'project',
+        operation: 'full',
+        name: 'svg-project',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+  },
   pen: {
     /**
      * Get pen stat without doing anything else. Directly sets state.
-     * @param {function} callback
-     *   Function to callback when done, including data from response body
      */
     stat: () => _get('pen'),
 
@@ -249,7 +293,7 @@ cncserver.api = {
             out[key] = val;
           });
           return out;
-        }
+        },
       }),
     ]),
   },
@@ -394,6 +438,6 @@ cncserver.api = {
       cncserver.api.batch.data = [];
       cncserver.api.batch.saveFile = '';
       cncserver.api.batch.skipSend = false;
-    }
+    },
   },
 };

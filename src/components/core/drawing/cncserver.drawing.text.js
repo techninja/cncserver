@@ -6,23 +6,30 @@ const {
   Path, CompoundPath, Point, Group,
 } = require('paper');
 
-module.exports = (cncserver, drawing) => {
-  const text = (hash, payload) => {
-    const defaults = {
-      spaceWidth: 15,
-      charSpacing: 3,
-      lineHeight: 15,
-      anchor: { x: 0, y: 0 },
-      scale: 1,
-      hCenter: 0,
-      vCenter: 0,
-      textAlign: 'left',
-      rotation: 0,
-    };
+const text = {};
 
+module.exports = (cncserver, drawing) => {
+  text.fonts = hershey.svgFonts;
+
+  // Provide default settings.
+  text.defaultSettings = () => ({
+    spaceWidth: 20,
+    font: 'hershey_sans_1',
+    charSpacing: 18,
+    lineHeight: 15,
+    anchor: { x: 0, y: 0 },
+    scale: 1,
+    hCenter: 0,
+    vCenter: 0,
+    textAlign: 'left',
+    rotation: 0,
+  });
+
+  // Actually build the paths for drawing.
+  text.draw = (hash, payload) => {
     // Mesh in option defaults
     const options = {
-      ...defaults,
+      ...text.defaultSettings(),
       ...payload.settings,
     };
 
@@ -138,6 +145,7 @@ module.exports = (cncserver, drawing) => {
     // Update client preview.
     cncserver.sockets.sendPaperPreviewUpdate();
 
+    /*
     // Trace all the paths!
     const allPaths = drawing.base.getPaths(chars);
 
@@ -145,16 +153,15 @@ module.exports = (cncserver, drawing) => {
     allPaths.forEach((path) => {
       // Only add non-zero length path tracing jobs.
       if (path.length) {
-        cncserver.jobs.addItem({
+        cncserver.actions.addItem({
           operation: 'trace',
           type: 'job',
           parent: hash,
           body: path,
         });
       }
-    });
+    }); */
   };
-
 
   return text;
 };
