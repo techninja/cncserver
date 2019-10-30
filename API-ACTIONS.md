@@ -177,58 +177,9 @@ managed within the client. See the web based interface for how that's managed.
 Actions API Examples: `GET`
 ===========================
 
+TODO: Examples of parsing lists, getting action details 
 
-### GET /v1/actions
-Lists all created action stubs by ID hash and type, and more importantly, all
-valid settings and options for each request type.
-
-#### Request
-```javascript
-GET /v1/actions
-```
-
-### Response
-```javascript
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-
-{
-    "jobs": [
-        {
-            "hash": "06fc3d058d3001e8",
-            "parent": null,
-            "type": "project",
-            "operation": "full",
-            "name": "testfile.svg",
-            "body": "<SVG version='1.1' ...",
-            "status": {
-                "name": "drawing",
-                "item": "path-42",
-                "progress": 0.1,
-            }
-            "settings": { ... }
-            "jobs": [
-                "path-42",
-                ...
-            ]
-        },
-        {
-            "hash": "3c4901133d9d16d4",
-            "parent": "06fc3d058d3001e8",
-            "type": "job",
-            "operation": "trace",
-            "name": "path-42",
-            "body": "M201.6,195.7c0.4,0.2,...",
-            "status": {
-                "name": "drawing",
-                "item": "path",
-                "progress": 0.58,
-            }
-            "settings": { ... }
-        }
-    ]
-}
-```
+## The following docs are incomplete and represent unfinished functionality, tread with caution 
 
 * * *
 
