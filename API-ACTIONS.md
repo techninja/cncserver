@@ -101,6 +101,11 @@ Simply pass the machine name of the action type you wish to create. This changes
 the entire nature of the operation so be sure you're creating the right kind to
 match what you're trying to do.
 
+**TODO:** I've painted myself in a corner and by not actually doing any real
+drawing by adding actions, I needed some way to actually trigger drawing, so
+there's actually a third type here, `drawpreview`, given with zero other
+arguments, and this will process whatever is on the preview canvas and draw it. 
+
 ## ▶ `"operation": "[TYPE]"` (required)
 The operation key defines a machine name string of _what you intend to do_ for
 either a job or a project, and it changes what input content is expected in the
