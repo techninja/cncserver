@@ -254,7 +254,7 @@
 			"preRequestScript": "",
 			"tests": "",
 			"folder": "cf6829a8-2d31-c13c-1d17-3e42ac623722",
-			"rawModeData": "{\n  \"servo:duration\": 400\n}"
+			"rawModeData": "{\n  \"servo:minduration\": 400\n}"
 		},
 		{
 			"collectionId": "12ad3ed7-7124-c4a7-b839-6b8da3f022b5",

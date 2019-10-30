@@ -8,7 +8,7 @@
  * This script can be run standalone via 'node cncserver.js' with command line
  * options as described in the readme, or as a module: example shown:
  *
- * var cncserver = require('cncserver');
+ * const cncserver = require('cncserver');
  *
  * cncserver.conf.global.overrides({
  *   httpPort: 1234,

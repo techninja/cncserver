@@ -142,7 +142,7 @@ module.exports = (cncserver) => {
    *   duration in milliseconds.
    */
   utils.getHeightChangeData = (src, dest) => {
-    const sd = cncserver.settings.botConf.get('servo:duration');
+    const sd = cncserver.settings.botConf.get('servo:minduration');
 
     // Get the amount of change from difference between actualPen and absolute
     // height position, pro-rating the duration depending on amount of change
