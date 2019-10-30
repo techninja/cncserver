@@ -26,7 +26,7 @@ module.exports = (cncserver) => {
     // These are passed by clients to assist users for manual tool swaps, but
     // doesn't actually do anything differently.
     const toolNameData = toolName.split('|');
-    const [currentToolName, index] = toolNameData[1];
+    const [currentToolName, index] = toolNameData;
 
     // Get the matching tool object from the bot configuration.
     const tool = cncserver.settings.botConf.get(`tools:${currentToolName}`);

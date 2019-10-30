@@ -26,8 +26,9 @@ module.exports = (cncserver) => {
    * Force the values of a given set of keys within the actualPen state.
    *
    * @param {object} inState
-   *   Flat object of key/value pairs to FORCE into the actualPen state. Only used to
-   *   correct head state or to update position along the buffer.
+   *   Flat object of key/value pairs to FORCE into the actualPen state. Only
+   *   used to fix state when it needs correcting from inherited buffer.
+   *   EG: After a cancel/estop.
    */
   actualPen.forceState = (inState) => {
     for (const [key, value] of Object.entries(inState)) {
@@ -36,6 +37,7 @@ module.exports = (cncserver) => {
         actualPen.state[key] = value;
       }
     }
+    cncserver.sockets.sendPenUpdate();
   };
 
   return actualPen;

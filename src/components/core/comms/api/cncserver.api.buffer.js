@@ -134,6 +134,7 @@ module.exports = (cncserver) => {
     }
 
     if (req.route.method === 'delete') {
+      cncserver.binder.trigger('buffer.clear');
       buffer.clear();
       return [200, 'Buffer Cleared'];
     }

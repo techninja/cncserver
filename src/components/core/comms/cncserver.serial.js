@@ -188,6 +188,7 @@ module.exports = (cncserver) => {
       case 'serialReady':
         console.log(`CNC server API listening on ${restriction}:${port}`);
 
+        cncserver.pen.forceState({ simulation: 0 });
         cncserver.serial.localTrigger('botInit');
         cncserver.server.start();
 
