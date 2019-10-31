@@ -8,7 +8,10 @@ const { Project, Size, Path } = require('paper');
 const clipperLib = require('js-angusj-clipper');
 const ipc = require('node-ipc');
 
+const workingHash = process.argv[2];
 const hostname = 'cncserver';
+
+console.log('Hash should be', workingHash);
 
 // Config IPC.
 ipc.config.silent = true;
@@ -102,7 +105,7 @@ const exp = {
       // Setup bindings now that the socket is ready.
       ipc.of[hostname].on('connect', () => {
         // Connected! Tell the server we're ready for data.
-        send('ready');
+        send('ready', workingHash);
       });
 
       // Bind central init, this gives us everything we need to do the work!
@@ -122,8 +125,10 @@ const exp = {
 
   // Final fill paths! Send and shutdown when done.
   finish: (paths = {}) => {
-    send('complete', paths.exportJSON());
-    // send('complete', exp.project.activeLayer.exportJSON());
+    send('complete', {
+      hash: workingHash,
+      paths: paths.exportJSON(), // exp.project.activeLayer.exportJSON()
+    });
 
     ipc.disconnect(hostname);
     process.exit();

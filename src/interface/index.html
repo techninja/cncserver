@@ -173,7 +173,8 @@
   </div>
 
 <script>
-  var shape = 'M421.3,221.7c-21.2,0-39.6,12.2-48.5,29.9c-8.9-17.8-27.3-29.9-48.5-29.9c-30,0-54.3,24.3-54.3,54.3c0,30,24.3,54.3,54.3,54.3c21.2,0,39.6-12.2,48.5-29.9c8.9,17.8,27.3,29.9,48.5,29.9c30,0,54.3-24.3,54.3-54.3C475.5,246,451.2,221.7,421.3,221.7z M324.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S338.2,301.2,324.3,301.2z M421.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S435.2,301.2,421.3,301.2z';
+  var figure8 = 'M421.3,221.7c-21.2,0-39.6,12.2-48.5,29.9c-8.9-17.8-27.3-29.9-48.5-29.9c-30,0-54.3,24.3-54.3,54.3c0,30,24.3,54.3,54.3,54.3c21.2,0,39.6-12.2,48.5-29.9c8.9,17.8,27.3,29.9,48.5,29.9c30,0,54.3-24.3,54.3-54.3C475.5,246,451.2,221.7,421.3,221.7z M324.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S338.2,301.2,324.3,301.2z M421.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S435.2,301.2,421.3,301.2z';
+  var shape = 'M291.8,190.6c-35.9-42.5,24.9-151.9-35-151.9C148.6,38.7,61,126.4,61,234.5s87.7,195.8,195.8,195.8s195.8-87.7,195.8-195.8C452.5,186.4,320.6,224.7,291.8,190.6z M421.4,177c15.7-15.7,3.8-53.1-26.5-83.4S327.2,51.3,311.5,67c-15.7,15.7-3.8,53.1,26.5,83.4C368.4,180.8,405.7,192.7,421.4,177z';
   var socket = io();
   var runningTest = false;
   var $draw = $('#drawarea');
@@ -785,6 +786,121 @@
       });
     });
   }
+
+  function fillPreview() {
+    const {api: {actions: {stat, text, strokePath, fillPath}}} = cncserver;
+    const exampleRows = [];
+    const opt = {
+      titleHeight: 8,
+      labelHeight: 5,
+      boxHeight: 50,
+      rightMargin: 8,
+      bottomMargin: 8,
+    };
+
+    // Offset fill examples
+    exampleRows.push({
+      title: 'Offset',
+      examples: [
+        {
+          label: 'Default: 3mm space, 1/4mm res',
+          settings: {},
+        },
+        {
+          label: '1mm space, 1/4mm res',
+          settings: { spacing: 1 },
+        },
+        {
+          label: '3mm space, 1mm res',
+          settings: { flattenResolution: 1 },
+        },
+        {
+          label: '4mm space, 1/4mm res',
+          settings: { spacing: 4 },
+        },
+      ]
+    });
+
+    // Pattern fill examples
+    exampleRows.push({
+      title: 'Pattern / Spiral',
+      examples: [
+        {
+          label: 'Default: Spiral 3mm',
+          settings: { method: 'pattern' },
+        },
+        {
+          label: 'Spiral 1mm',
+          settings: { method: 'pattern', spacing: 1 },
+        },
+        {
+          label: 'Circuit Board, 0.25x',
+          settings: { method: 'pattern', pattern: 'circuit-board', scale: 0.25},
+        },
+        {
+          label: 'Kiwi 45°, 0.5x',
+          settings: { method: 'pattern', pattern: 'kiwi', rotation: 45, scale: 0.5},
+        },
+        {
+          label: 'Anchors Away 0.4x',
+          settings: {method: 'pattern', pattern: 'anchors-away', scale: 0.4},
+        },
+        {
+          label: 'Topography 0.1x',
+          settings: {method: 'pattern', pattern: 'topography', scale: 0.1},
+        },
+      ]
+    });
+
+    // Hatch fill examples
+    exampleRows.push({
+      title: 'Hatch / lines',
+      examples: [
+        {
+          label: 'Default: 3mm space, 28°',
+          settings: {method: 'hatch', pattern: 'zigsmooth'},
+        },
+        {
+          label: '2mm space, 45°',
+          settings: {method: 'hatch', spacing: 2, angle: 45, pattern: 'zigstraight'},
+        },
+        {
+          label: '5mm, hatch, random',
+          settings: {method: 'hatch', spacing: 5, randomizeAngle: true, hatch: true, pattern: 'zigstraight'},
+        },
+        {
+          label: '??',
+          settings: {method: 'hatch', pattern: 'zigstraight'},
+        },
+      ]
+    });
+
+    stat().then(({data: {options: { bounds }}}) => {
+      let pos = [bounds.point[0], bounds.point[1]];
+
+      exampleRows.forEach((row) => {
+        text(row.title, {point: [pos[0], pos[1]], size: [bounds.size[0], opt.titleHeight]});
+        // Move base Y pos to bottom of row title
+        pos[1] = pos[1] + opt.titleHeight;
+
+        const boxWidth = Math.round(bounds.size[1] / (row.examples.length-1));
+        row.examples.forEach((example) => {
+          const boxBounds = {point: [pos[0], pos[1]], size: [boxWidth, opt.boxHeight]};
+          fillPath(shape, boxBounds, example.settings);
+
+          // Draw label.
+          text(example.label, {point: [pos[0], pos[1] + opt.boxHeight], size: [boxWidth, opt.labelHeight]});
+
+          // Next position right >>
+          pos[0] = pos[0] + boxWidth + opt.rightMargin;
+        });
+
+        // Next position down.
+        pos = [bounds.point[0],  pos[1] + opt.labelHeight + opt.boxHeight + opt.bottomMargin];
+      });
+    });
+  }
+
 </script>
 
 

@@ -4,10 +4,10 @@
 const { spawn } = require('child_process'); // Process spawner.
 const ipc = require('node-ipc'); // Inter Process Comms (shared with ).
 const fsPath = require('path'); // File System path management.
-const { Path } = require('paper');
 
-const workingPaths = []; // Module global working path.
-const workingSettings = []; // Passed settings.
+// Hold onto paths and settings to be injected into filler apps, keyed on
+// job hashes.
+const workingQueue = {};
 
 // const methods = require('./fillers');
 module.exports = (cncserver, drawing) => {
@@ -18,7 +18,7 @@ module.exports = (cncserver, drawing) => {
     // Pass a path object to be used for overlay fills:
     angle: 28, // Dynamic line fill type line angle
     insetAmount: 0, // Amount to negatively offset the fill path.
-    randomizeAngle: true, // Randomize the angle above for dynamic line fill.
+    randomizeAngle: false, // Randomize the angle above for dynamic line fill.
     hatch: false, // If true, runs twice at opposing angles
     spacing: 3, // Dynamic line fill spacing nominally between each line.
     threshold: 10, // Dynamic line grouping threshold
@@ -30,24 +30,26 @@ module.exports = (cncserver, drawing) => {
     switch (command) {
       // Our filler module is ready! Send it the data.
       case 'ready':
-        if (workingPaths.length) {
+        if (workingQueue[data]) {
           ipc.server.emit(socket, 'filler.init', {
             size: {
               width: drawing.base.size.width,
               height: drawing.base.size.height,
             },
-            path: workingPaths.pop().exportJSON(),
-            settings: workingSettings.pop(),
+            path: workingQueue[data].path,
+            settings: workingQueue[data].settings,
           });
         }
         break;
 
       case 'complete':
-        const item = drawing.base.layers.preview.importJSON(data);
+        // TODO: Properly resolve promise via data.hash
+        delete workingQueue[data.hash];
+        const item = drawing.base.layers.preview.importJSON(data.paths);
         console.log('Got the fill! Children?', item.children.length);
         cncserver.sockets.sendPaperPreviewUpdate();
 
-        const allPaths = drawing.base.getPaths(item);
+        // const allPaths = drawing.base.getPaths(item);
         // console.log('How many?', allPaths.length); return;
 
         /*
@@ -78,7 +80,7 @@ module.exports = (cncserver, drawing) => {
     ipc.server.on('filler.message', gotMessage);
   });
 
-  const fill = (rawPath, parent = null, bounds = null, requestSettings = {}) => {
+  const fill = (rawPath, hash, parent = null, bounds = null, requestSettings = {}) => {
     // Filling method module specification:
     // 1. Each method is its own application! This file indexes the files
     //    directly for running via child fillProcess. Communication is done via
@@ -95,14 +97,15 @@ module.exports = (cncserver, drawing) => {
     // 6. When complete, the fillProcess should be ended.
 
     // TODO: Unify path creation from request body back in the JOB handler!
-    workingPaths.push(drawing.base.normalizeCompoundPath(rawPath));
+    const mergedSettings = { ...settingDefaults, ...requestSettings };
+    workingQueue[hash] = {
+      settings: mergedSettings,
+      path: drawing.base.normalizeCompoundPath(rawPath),
+    };
 
     if (bounds) {
-      drawing.base.fitBounds(workingPaths[workingPaths.length - 1], bounds);
+      drawing.base.fitBounds(workingQueue[hash].path, bounds);
     }
-
-    const mergedSettings = { ...settingDefaults, ...requestSettings };
-    workingSettings.push(mergedSettings);
 
     const { method } = mergedSettings;
     const file = `cncserver.drawing.fillers.${method}`;
@@ -111,7 +114,7 @@ module.exports = (cncserver, drawing) => {
     );
 
     // Spawn fillProcess and bind basic i/o.
-    const fillProcess = spawn('node', [fillerAppPath]);
+    const fillProcess = spawn('node', [fillerAppPath, hash]);
     fillProcess.stdout.on('data', (rawData) => {
       const data = rawData.toString().split('\n');
       for (const i in data) {

@@ -106,7 +106,7 @@ module.exports = (cncserver) => {
         case 'fill':
           // CLEAR the preview canvas for every job/project.
           // cncserver.drawing.base.layers.preview.removeChildren();
-          cncserver.drawing.fill(body, null, bounds, settings);
+          cncserver.drawing.fill(body, hash, null, bounds, settings);
           break;
 
         case 'text':

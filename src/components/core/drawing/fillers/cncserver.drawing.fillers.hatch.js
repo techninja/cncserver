@@ -128,7 +128,7 @@ function groupReGroupLines() {
     if (!lines[cFillIndex]) {
       // console.log(cFillIndex);
     }
-    if (settings.type === 'zigsmooth' && cGroup) {
+    if (settings.pattern === 'zigsmooth' && cGroup) {
       cGroup.simplify();
       cGroup.flatten(settings.flattenResolution);
     }
@@ -158,7 +158,7 @@ function groupReGroupLines() {
     // TODO: This only removes the bad outliers, may need improvement!
     const hitCount = v.getIntersections(fillPath).length;
     if (!fillPath.contains(v.getPointAt(v.length / 2)) || hitCount > 3) {
-      if (settings.type === 'zigsmooth') {
+      if (settings.pattern === 'zigsmooth') {
         cGroup.simplify();
         if (cGroup.segments.length <= 1 && cGroup.closed) {
           cGroup.closed = false;
@@ -173,7 +173,7 @@ function groupReGroupLines() {
     } else {
       // For straight/smooth zigzag, flip the lines around before joining
       // to ensure the line tries to join to the closest side.
-      if (settings.type === 'zigstraight' || settings.type === 'zigsmooth') {
+      if (settings.pattern === 'zigstraight' || settings.pattern === 'zigsmooth') {
         const cLine = lines[cFillIndex][cSubIndex];
         const groupPoint = cGroup.lastSegment.point;
         const lastToFirst = groupPoint.getDistance(cLine.firstSegment.point);
@@ -184,7 +184,7 @@ function groupReGroupLines() {
 
         // Add an extra point between the two ends being connected to keep
         // smoothing from going too crazy.
-        if (settings.type === 'zigsmooth') {
+        if (settings.pattern === 'zigsmooth') {
           const midPoint = groupPoint.subtract(
             groupPoint.subtract(cLine.firstSegment.point).divide(2)
           );
