@@ -40,7 +40,7 @@ const clipper = {
     // Is this a compound path?
     if (p.children) {
       p.children.forEach((c, pathIndex) => {
-        if (c && c.length) {
+        if (c && c.length && c.segments) {
           if (c.segments.length <= 1 && c.closed) {
             c.closed = false;
           }
