@@ -2,6 +2,9 @@
  * @file Code for text rendering.
  */
 const hershey = require('hersheytext');
+const vectorizeText = require('vectorize-text');
+const { createCanvas } = require('canvas');
+
 const {
   Path, CompoundPath, Point, Group,
 } = require('paper');
@@ -25,14 +28,10 @@ module.exports = (cncserver, drawing) => {
     rotation: 0,
   });
 
-  // Actually build the paths for drawing.
-  text.draw = (hash, payload) => {
-    // Mesh in option defaults
-    const options = {
-      ...text.defaultSettings(),
-      ...payload.settings,
-    };
-
+  /**
+   * Returns a group of lines and characters rendered in single line hersheyfont
+   */
+  text.renderHersheyPaths = (payload, options) => {
     // Render the text array.
     const t = hershey.renderTextArray(payload.body, {
       ...options,
@@ -119,8 +118,7 @@ module.exports = (cncserver, drawing) => {
       const anchorPos = drawing.base.getAnchorPos(chars, options.anchor);
 
       if (options.position) {
-        options.position = new Point(options.position);
-        chars.position = options.position.subtract(anchorPos);
+        chars.position = new Point(options.position).subtract(anchorPos);
       } else {
         chars.position = view.center.add(new Point(options.hCenter, options.vCenter));
       }
@@ -139,28 +137,98 @@ module.exports = (cncserver, drawing) => {
       });
     }
 
-    // Rotation!
-    chars.rotate(options.rotation);
+    return chars;
+  };
 
-    // Update client preview.
-    cncserver.sockets.sendPaperPreviewUpdate();
+  /**
+   * Return a group characters rendered in filled compound path system font.
+   */
+  text.renderFilledText = (payload, options) => {
+    const canvas = createCanvas(8192, 1024);
+    const {
+      fontStyle, fontVariant, fontWeight, textBaseline = 'hanging', textAlign,
+    } = options;
+    const polygons = vectorizeText(payload.body, {
+      polygons: true,
+      width: 200,
+      font: options.systemFont,
+      context: canvas.getContext('2d'),
+      fontStyle,
+      fontVariant,
+      fontWeight,
+      textBaseline,
+      textAlign,
+      canvas,
+    });
 
-    /*
-    // Trace all the paths!
-    const allPaths = drawing.base.getPaths(chars);
-
-    // Move through all paths and add each one as a job.
-    allPaths.forEach((path) => {
-      // Only add non-zero length path tracing jobs.
-      if (path.length) {
-        cncserver.actions.addItem({
-          operation: 'trace',
-          type: 'job',
-          parent: hash,
-          body: path,
+    const chars = new Group();
+    polygons.forEach((loops) => {
+      let d = '';
+      loops.forEach((loop) => {
+        loop.forEach(([x, y], index) => {
+          const op = index === 0 ? 'M' : 'L';
+          d = `${d} ${op} ${x} ${y}`;
         });
+
+        // Add the first point back as end point.
+        d = `${d} L ${loop[0][0]} ${loop[0][1]}`;
+      });
+      chars.addChild(new CompoundPath(d));
+    });
+
+
+    // Text sizing and position!
+    if (payload.bounds) {
+      // Scale and fit within the given bounds rectangle.
+      drawing.base.fitBounds(chars, payload.bounds);
+    } else {
+      // Position off from center, or at exact position.
+      const anchorPos = drawing.base.getAnchorPos(chars, options.anchor);
+      const { view } = drawing.base.project;
+
+      if (options.position) {
+        chars.position = new Point(options.position).subtract(anchorPos);
+      } else {
+        chars.position = view.center.add(new Point(options.hCenter, options.vCenter));
       }
-    }); */
+      chars.scale(options.scale, anchorPos);
+    }
+
+    // Fill each character if settings are given.
+    if (typeof options.fillSettings === 'object') {
+      chars.children.forEach((char) => {
+        cncserver.actions.addItem({
+          operation: 'fill',
+          type: 'job',
+          parent: '123',
+          body: char,
+          settings: options.fillSettings,
+        });
+      });
+    }
+
+    return chars;
+  };
+
+  // Actually build the paths for drawing.
+  text.draw = (hash, payload) => {
+    // Mesh in option defaults
+    const options = {
+      ...text.defaultSettings(),
+      ...payload.settings,
+    };
+
+    const chars = options.systemFont
+      ? text.renderFilledText(payload, options)
+      : text.renderHersheyPaths(payload, options);
+
+    if (chars) {
+      // Rotation!
+      chars.rotate(options.rotation);
+
+      // Update client preview.
+      cncserver.sockets.sendPaperPreviewUpdate();
+    }
   };
 
   return text;
