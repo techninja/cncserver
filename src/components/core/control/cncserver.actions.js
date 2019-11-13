@@ -78,22 +78,9 @@ module.exports = (cncserver) => {
       body,
     };
 
+    // Actually render paths into drawing movements.
     if (type === 'drawpreview') {
-      const allPaths = cncserver.drawing.base.getPaths();
-
-      // Move through all paths and add each one as a job.
-      allPaths.forEach((path) => {
-        // Only add non-zero length path tracing jobs.
-        if (path.length) {
-          cncserver.actions.addItem({
-            operation: 'trace',
-            type: 'job',
-            parent: '123',
-            body: path,
-          });
-        }
-      });
-
+      cncserver.control.renderPathsToMoves();
       return { status: 'processing' };
     }
 
