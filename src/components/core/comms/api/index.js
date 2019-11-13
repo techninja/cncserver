@@ -3,7 +3,9 @@
  */
 /* eslint-disable global-require, import/no-dynamic-require */
 module.exports = (cncserver) => {
-  const modules = [{}, 'settings', 'pen', 'motors', 'buffer', 'tools', 'actions'];
+  const modules = [
+    {}, 'settings', 'pen', 'motors', 'buffer', 'tools', 'colors', 'actions',
+  ];
 
   return modules.reduce((acc, name) => ({
     ...acc,

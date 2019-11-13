@@ -117,6 +117,7 @@ module.exports = (cncserver) => {
               x: Number(settings.botConf.get('park:x')),
               y: Number(settings.botConf.get('park:y')),
             },
+            controller: settings.botConf.get('controller'),
             commands: settings.botConf.get('controller').commands,
           };
 
@@ -152,6 +153,13 @@ module.exports = (cncserver) => {
             bot.stepsPerMM = {
               x: bot.maxArea.width / bot.maxAreaMM.width,
               y: bot.maxArea.height / bot.maxAreaMM.height,
+            };
+
+            bot.workAreaMM = {
+              left: bot.workArea.left / bot.stepsPerMM.x,
+              top: bot.workArea.top / bot.stepsPerMM.y,
+              right: bot.workArea.right / bot.stepsPerMM.x,
+              bottom: bot.workArea.bottom / bot.stepsPerMM.y,
             };
             //  bot.stepsPerMM
           } else {

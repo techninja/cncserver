@@ -19,12 +19,16 @@ module.exports = (cncserver) => {
     // Base static path for remote interface.
     server.app.use('/', express.static(`${global.__basedir}/interface/`));
 
+    // Configure module JS file mime type.
+    express.static.mime.define({ 'text/javascript': ['mjs'] });
+
     // Add static libraries from node_modules.
     const nm = `${global.__basedir}/../node_modules`;
     server.app.use('/paper', express.static(`${nm}/paper/dist/`));
     server.app.use('/axios', express.static(`${nm}/axios/dist/`));
     server.app.use('/jquery', express.static(`${nm}/jquery/dist/`));
     server.app.use('/bulma', express.static(`${nm}/bulma/css/`));
+    server.app.use('/select2', express.static(`${nm}/select2/dist/`));
     server.app.use('/font-awesome', express.static(`${nm}/@fortawesome/fontawesome-free/css/`));
     server.app.use('/webfonts', express.static(`${nm}/@fortawesome/fontawesome-free/webfonts/`));
 

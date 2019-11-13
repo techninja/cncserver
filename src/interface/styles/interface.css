@@ -12,7 +12,12 @@ body {
   position: relative;
 }
 
+#canvas-wrapper {
+
+}
+
 canvas.simcanvas {
+  transform-origin: top left;
   border: 1px solid black;
   display: block;
 }
@@ -87,4 +92,101 @@ input.switch:checked {
 input.switch:checked:after {
   left: 20px;
   box-shadow: -2px 4px 3px rgba(0,0,0,0.05);
+}
+
+/* Color preset loader/dropdown */
+.select2-container span.preset i {
+  margin-right: 0.5em;
+}
+
+.select2-container span.colors {
+  display: inline-block;
+  vertical-align: text-top;
+  margin-top: -3px;
+}
+
+.select2-container span.colors b {
+  content: " ";
+  display: inline-block;
+  height: 1.2em;
+  width: 1.2em;
+  margin: 2px;
+  border: 1px dashed black;
+}
+
+.select2-container span.colors b:hover {
+  border-style: solid;
+  border-width: 2px;
+}
+
+/* Colorset editor */
+#color-editor .select2-selection--single {
+  height: 43px;
+}
+
+.select2-container span.preset-color {
+  display: flex;
+  align-items: center;
+}
+
+.select2-container span.preset-color b {
+  content: " ";
+  display: block;
+  height: 2em;
+  width: 2em;
+  border-radius: 0.6em;
+  margin: 5px;
+}
+
+/* Colorset viewer */
+#colorset .card b {
+  content: " ";
+  display: block;
+  width: 5.5em;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 65%, rgba(255,255,255,1) 100%);
+  margin-right: -0.3em;
+  padding-top: 0.7em;
+  padding-left: 0.4em;
+  font-family: monospace;
+  color: white;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+#colorset .card {
+  cursor: pointer;
+}
+
+#colorset .card:hover {
+  background-color: rgba(240,240,240,1);
+}
+
+#colorset .card a {
+  color: rgba(255,0,0,0.5);
+  transition: all 0.25s;
+}
+
+#colorset .card a:hover {
+  color: rgba(255,0,0,1);
+  transform: scale(1.4);
+}
+
+#colorset .card.active {
+  background-color: #3273dc;
+}
+
+#colorset .card:hover b {
+  background: linear-gradient(90deg, rgba(240,240,240,0) 65%, rgba(240,240,240,1) 100%);
+}
+
+#colorset .card.active b,
+#colorset .card.active:hover b {
+  background: linear-gradient(90deg, rgba(50,115,220,0) 65%, rgba(50,115,220,1) 100%);
+}
+
+#colorset .card.active .card-header-title {
+  color: white;
+}
+
+#colorset .card.active .card-header a {
+
 }

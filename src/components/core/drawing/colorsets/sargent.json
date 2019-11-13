@@ -1,0 +1,16 @@
+[{
+  "manufacturer": "sargent",
+  "media": "watercolor",
+  "machineName": "secondary",
+  "weight": 20,
+  "colors": {
+    "yelloworange":"#ffbe2c",
+    "vermilion":"#ff451f",
+    "redviolet":"#c02987",
+    "blueviolet":"#212aa9",
+    "green":"#a3d130",
+    "teal":"#00a6b8",
+    "teal2":"#00a6b8",
+    "white":"#eee"
+  }
+}]

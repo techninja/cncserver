@@ -6,12 +6,12 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/paper/paper-full.min.js"></script>
     <script src="/axios/axios.min.js"></script>
-    <script src="/lib/cncserver.client.api.js"></script>
-    <script src="/lib/cncserver.client.commander.js"></script>
+    <script src="/select2/js/select2.full.min.js"></script>
     <link rel="stylesheet" href="/font-awesome/fontawesome.min.css">
     <link rel="stylesheet" href="/font-awesome/solid.min.css">
     <link rel="stylesheet" href="/font-awesome/brands.min.css">
     <link rel="stylesheet" href="/bulma/bulma.min.css">
+    <link rel="stylesheet" href="/select2/css/select2.min.css">
     <link rel="stylesheet" href="/styles/interface.css">
   </head>
   <title>CNC Server client</title>
@@ -30,7 +30,7 @@
   </section>
   <div class="section columns is-multiline">
     <section class="column is-half section">
-      <div class="tabs is-boxed">
+      <div class="tabs is-boxed"> <!-- Tab buttons only -->
         <ul>
           <li class="is-active" data-tab="1"><a>
             <span class="icon is-small"><i class="fas fa-vial" aria-hidden="true"></i></span>
@@ -115,6 +115,81 @@
         </div>
         <div class="tab-content" data-content="3"><!-- Settings -->
           SETTINGS
+          <div id="colors" class="box field">
+            <label class="label">
+              <span class="icon"><i class="fas fa-palette" aria-hidden="true"></i></span>
+              <span>Colorset</span>
+            </label>
+            <div class="field columns is-multiline" id="colorset">
+              <section class="column is-half">
+                <div class="list is-hoverable">
+                  COLORSET GOES HERE
+                </div>
+              </section>
+              <section id="color-editor" class="column is-half">
+                <div class="box columns is-multiline">
+                  <section class="column is-half">
+                    <div class="field">
+                      <label class="label">Tool/ID</label>
+                      <div class="control">
+                        <input class="input id" type="text" placeholder="Tool or ID">
+                      </div>
+                      <p class="help">Unique identifier for the color, match to a tool to change to it</p>
+                    </div>
+
+                    <div class="field">
+                      <label class="label">Color</label>
+                      <div class="control">
+                        <input class="input color" type="color" value="#000000">
+                      </div>
+                      <p class="help">Path fill and stroke nearest this color will snap to the matching tool/id</p>
+                    </div>
+
+                    <a class="button is-danger is-fullwidth" id="color-cancel">
+                      <span class="icon"><i class="fas fa-window-close" aria-hidden="true"></i></span>
+                      <span>Cancel</span>
+                    </a>
+                  </section>
+                  <section class="column is-half">
+                    <div class="field">
+                      <label class="label">Display Name</label>
+                      <div class="control">
+                        <input class="input name" type="text" placeholder="Display Name">
+                      </div>
+                      <p class="help">Human readable label for the color and/or implement</p>
+                    </div>
+
+                    <div class="field">
+                      <label class="small label">
+                        <span>Preset Colors</span>
+                      </label>
+                      <select><option></option></select>
+                      <p class="help">Find/select a color from the presets to build a colorset</p>
+                    </div>
+                    <a class="button is-success is-fullwidth" id="color-add">
+                      <span class="icon"><i class="fas fa-plus-circle" aria-hidden="true"></i></span>
+                      <span>Add</span>
+                    </a>
+                    <a class="button is-warning is-hidden is-fullwidth" id="color-save">
+                      <span class="icon"><i class="fas fa-save" aria-hidden="true"></i></span>
+                      <span>Save</span>
+                    </a>
+                  </section>
+                </div>
+              </section>
+            </div>
+
+            <div class="field" id="color-presets">
+              <label class="label">
+                <span class="icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
+                <span>Presets</span>
+              </label>
+              <div class="field">
+                <select><option></option></select>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="tab-content" data-content="4"><!-- Diagnostics -->
 
@@ -150,7 +225,9 @@
           <input type="checkbox" class="switch" id="skipbuffer">
         </label>
       </div>
-      <canvas class="simcanvas" id="paper"></canvas>
+      <div id="canvas-wrapper">
+        <canvas class="simcanvas" id="paper"></canvas>
+      </div>
       <div class="box">
         <div class="is-pulled-right">
           <a class="button is-warning" id="toggle-buffer">
@@ -167,742 +244,61 @@
         </div>
         <label class="subtitle is-5 is-bold">Current Status</label>
         <progress class="progress is-primary is-large" value="0" max="100"></progress>
-        <div class="subtitle has-text-centered has-text-dark" id="status">Idle...</div
+        <div class="subtitle has-text-centered has-text-dark" id="status">Idle...</div>
       </div>
     </section>
   </div>
 
 <script>
-  var figure8 = 'M421.3,221.7c-21.2,0-39.6,12.2-48.5,29.9c-8.9-17.8-27.3-29.9-48.5-29.9c-30,0-54.3,24.3-54.3,54.3c0,30,24.3,54.3,54.3,54.3c21.2,0,39.6-12.2,48.5-29.9c8.9,17.8,27.3,29.9,48.5,29.9c30,0,54.3-24.3,54.3-54.3C475.5,246,451.2,221.7,421.3,221.7z M324.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S338.2,301.2,324.3,301.2z M421.3,301.2c-13.9,0-25.3-11.3-25.3-25.3s11.3-25.3,25.3-25.3s25.3,11.3,25.3,25.3S435.2,301.2,421.3,301.2z';
-  var shape = 'M291.8,190.6c-35.9-42.5,24.9-151.9-35-151.9C148.6,38.7,61,126.4,61,234.5s87.7,195.8,195.8,195.8s195.8-87.7,195.8-195.8C452.5,186.4,320.6,224.7,291.8,190.6z M421.4,177c15.7-15.7,3.8-53.1-26.5-83.4S327.2,51.3,311.5,67c-15.7,15.7-3.8,53.1,26.5,83.4C368.4,180.8,405.7,192.7,421.4,177z';
-  var socket = io();
-  var runningTest = false;
-  var $draw = $('#drawarea');
-  var pen = {};
-  var lastPen = {};
-  var buffer = {};
-  var drawPoints = []; // Array of points from buffer to draw
+  // Establish base global GUI base state variable
+  window.cstate = {
+    runningTest: false,
+    $draw: $('#drawarea'),
+    pen: {},
+    lastPen: {},
+    buffer: {},
+    drawPoints: [], // Array of points from buffer to draw
+    stepsPerMM: { x: 1, y: 1 },
+    viewMax: {x: 600, y: 400}, // The maximum view size to constrain to
 
-  var viewScale = 1; // The scale to adjust bot steps by for viewing
-  var viewMax = {x: 600, y: 400}; // The maximum view size to constrain to
+    // Paper and canvas vars.
+    crosshair: {},
+    crosshairTip: {},
+    workarea: {},
+    layers: {}, /// All the paper layers we care abotu working with.
+    tempPreview: "", // Hold onto the intial full pane preview content
+  };
+</script>
 
-  // Paper and canvas vars.
-  var crosshair;
-  var crosshairTip;
-  var workarea;
-  var layers = {};
-  var tempPreview = "";
+<script type="module">
+  import cncserver from '/lib/cncserver.client.api.js';
+  import main from '/modules/main.mjs';
+  import socket from '/modules/socket.mjs';
+  import buttons from '/modules/buttons.mjs';
+  import preview from '/modules/preview.mjs';
+  import utils from '/modules/utils.mjs';
+  import colors from '/modules/colors.mjs';
+
+  // Globalize various imports.
+  ['cncserver', 'preview', 'utils'].forEach((name) => {
+    window[name] = eval(name);
+  });
 
   // Initialize CNC Server connection details
-  // (thanks to CORS support, this should be fully portable)
-  cncserver.api.server = {
+  cncserver.init({
     domain: document.domain,
     port: location.port ? location.port : 80,
     protocol: 'http',
-    version: '1'
-  };
-
-  // Manage control tabs.
-  $('.tabs li').on('click', function () {
-    const $item = $(this);
-    const $content = $item.parents('.tabs').next();
-    const tab = $item.data('tab');
-
-    $item.siblings('li').removeClass('is-active');
-    $item.addClass('is-active');
-
-    $content.find('.tab-content').removeClass('is-active');
-    $(`.tab-content[data-content="${tab}"]`).addClass('is-active');
+    version: '1',
+    ax: axios
   });
 
-
-  // ===========================================================================
-  // Socket.io stream data events ==============================================
-  // ===========================================================================
-  socket.on('pen update', function(data) {
-    var animPen = {};
-    pen = $.extend({}, data);
-    var d = "Status =-=-=-=" + "\n";
-    d+= 'draw pos: ' + pen.state + '/' + pen.height + "\n";
-    d+= 'tool: ' + pen.tool + "\n";
-    $('#pendata').text(d);
-
-    let tween = {};
-
-    if (pen.lastDuration > 250) {
-      animPen = $.extend({}, lastPen);
-      if (typeof lastPen.x !== 'undefined') {
-        $(lastPen).animate({ x:pen.x, y: pen.y  }, {
-          duration: pen.lastDuration - 5,
-          easing: 'linear',
-          step: function(val, fx) {
-            animPen[fx.prop] = val;
-            crosshair.position = stepsToPaper(animPen);
-          },
-          complete: () => {
-            //lastPen = $.extend({}, pen);
-            //removeSegment(data.bufferHash);
-          },
-        });
-      }
-
-      /*if (typeof lastPen.x !== 'undefined') {
-        tween = crosshair.tweenTo({ position: stepsToPaper(pen) }, pen.lastDuration);
-        tween.then(() => {
-          lastPen = $.extend({}, pen);
-        });
-      }*/
-    } else {
-      $(lastPen).stop();
-      //tween.stop();
-      if (crosshair) {
-        crosshair.position = stepsToPaper(pen);
-      }
-      lastPen = $.extend({}, pen);
-      //removeSegment(data.bufferHash);
-    }
-  });
-
-  // Preview from CNCserver (Paper to paper connection!)
-  socket.on('paper preview', function ({ paperJSON }) {
-    if (layers.preview) {
-      const { preview } = layers;
-      preview.removeChildren();
-      preview.importJSON(paperJSON);
-      preview.strokeColor = 'green';
-
-      // TODO: This scale is probably not always right 😕
-      preview.scale(2, [0, 0]);
-    } else {
-      tempPreview = paperJSON;
-    }
-  });
-
-  // CNCServer Buffer Change events (for pause, update, or resume)
-  socket.on('buffer update', function(b) {
-    return;
-
-    // What KIND of buffer update is this?
-    switch (b.type) {
-      case 'complete':
-        buffer = {
-          data: b.bufferData,
-          list: b.bufferList
-        };
-
-        console.dir(b);
-
-        // Process all items to catch us up.
-        processBufferBatch(b.bufferList, b.bufferData);
-      case 'vars':
-        $('#bufrun').text(b.bufferRunning);
-        $('#bufpause').text(b.bufferPaused);
-        if (b.bufferPausePen) {
-          crosshair.position = stepsToPaper(b.bufferPausePen);
-        }
-        break;
-
-      case 'add':
-        buffer.list.unshift(b.hash);
-        buffer.data[b.hash] = b.item;
-
-        // If this is a move, display it.
-        console.log('Add:', b.hash);
-        if (getBufferItemType(b.item) === 'absmove') {
-          addSegment(b.item.command.source, b.item.command, b.item.pen.state, b.hash);
-          crosshairTip.position = stepsToPaper(b.item.pen);
-        }
-        break;
-
-      case 'remove':
-        var hash = buffer.list.pop();
-        delete buffer.data[hash];
-        removeSegment(hash);
-
-        console.log('Remove:', hash);
-        break;
-    }
-
-    $('#bufcount').text(buffer.list.length);
-
-    // Populate buffer list of items
-    var $b = $('#buffer');
-    $b.find('option').remove();
-
-    for (var i in buffer.list) {
-      var cmd = buffer.data[buffer.list[i]].command;
-
-      // Skip the command if it's null
-      if (cmd === null) continue;
-
-      if (typeof cmd == "function") cmd = 'callback';
-
-      if (typeof cmd == 'object') {
-        if (typeof cmd.type == "string") {
-          switch (cmd.type) {
-            case 'absmove':
-              cmd = 'move: X' + cmd.x + ' Y' + cmd.y;
-              break;
-            case 'absheight':
-              cmd = 'height: ' + cmd.z + ', state:' + cmd.state;
-              break;
-            case 'message':
-              cmd = 'message: ' + cmd.message;
-              break;
-            case 'callbackname':
-              cmd = 'callback: ' + cmd.name;
-              break;
-            default:
-              cmd = cmd.type;
-          }
-        }
-      }
-
-      $b.prepend( $('<option>').text(cmd) );
-    }
-  });
-
-
-  // Setup live display box, pull in the bot specific settings
-  cncserver.api.settings.bot().then((response) => {
-    const { data: bot } = response;
-
-    //console.log(bot);
-
-    $('#bot legend:first').text('Live Status: ' + bot.name);
-
-    // Set subtitle text.
-    cncserver.api.settings.global().then((global) => {
-      $('.hero-body p.subtitle').text(
-        `Controlling ${bot.name} through ${global.data.serialPath} on ${cncserver.api.server.domain}.`
-      );
-    });
-
-    // Find the view scale based on aspect ratio.
-    if (Number(bot.maxArea.width) > Number(bot.maxArea.height)) {
-      // Landscape canvas.
-      viewScale = viewMax.x / bot.maxArea.width;
-    } else {
-      // Portrait canvas.
-      viewScale = viewMax.y / bot.maxArea.height;
-    }
-
-    // Set the scale and setup paper.
-    paper.setup($('#paper')[0]);
-    paper.project.view.viewSize = [bot.maxArea.width * viewScale, bot.maxArea.height * viewScale];
-
-    // Setup 4 layers: Drawing, moving, preview, and overlay.
-    layers.drawing = new paper.Layer([]);
-      layers.drawGroup = new paper.Group();
-
-    layers.moving = new paper.Layer([]);
-      layers.moveGroup = new paper.Group();
-
-    layers.preview = new paper.Layer([]);
-    if (tempPreview) layers.preview.importJSON(tempPreview);
-
-    layers.overlay = new paper.Layer([]);
-
-    // Make crosshair (on active overlay layer).
-    var size = 10;
-    crosshair = new paper.Group([
-      new paper.Shape.Circle([0, 0], size),
-      new paper.Path.Line([-size * 1.5, 0], [-size / 5, 0]),
-      new paper.Path.Line([size * 1.5, 0], [size / 5, 0]),
-      new paper.Path.Line([0, -size * 1.5], [0, -size / 5]),
-      new paper.Path.Line([0, size * 1.5], [0, size / 5]),
-    ]);
-    crosshair.strokeColor = 'black';
-    crosshair.strokeWidth = 2;
-
-    crosshairTip = crosshair.clone();
-    crosshairTip.strokeColor = 'green';
-    crosshairTip.strokeWidth = 4;
-    crosshairTip.sendToBack();
-
-    // Setup the canvas click.
-    paper.project.view.onMouseDown = (event) => {
-      cncserver.api.pen.move(paperToMove([event.point.x, event.point.y]));
-    };
-
-    // Show workarea
-    workarea = new paper.Path.Rectangle(
-      [bot.workArea.left * viewScale, bot.workArea.top * viewScale],
-      [bot.maxArea.width * viewScale, bot.maxArea.height * viewScale],
-    );
-    workarea.strokeWidth = 2;
-    workarea.strokeColor = 'red';
-
-    // Setup the height option buttons for the bot
-    for (var name in bot.servo.presets) {
-      $('#heightbuttons').append(
-        $('<button>').text(name).click(function(){
-          cncserver.api.pen.height($(this).text(), null, {
-            skipBuffer: $('#skipbufferz').prop('checked') ? 1 : ''
-          });
-        })
-      );
-    }
-
-    // Initially set the pen from the bot
-    cncserver.api.pen.stat().then((response) => {
-      pen = response.data;
-      lastPen = $.extend({}, response.data);
-      // This is always the correct tip of the buffer.
-      crosshairTip.position = stepsToPaper(pen);
-
-      // Assume this is also where the bot is (idle, no buffer).
-      crosshair.position = stepsToPaper(pen);
-    });
-  });
-
-  var run = cncserver.cmd.run; // Shortcut!
-
-  // Bind button action click
-  $('button, a.button').click(function(){
-    var $this = $(this);
-
-    // Bind special for scratch buttons, as they're not regular API things.
-    if ($this.parent().is('#scratch')) {
-      cncserver.api.scratch.move(
-        $this.attr('direction'),
-        $this.attr('amount'),
-        function(d) {
-          $('#scratch turtle').css('transform', 'rotate(' + (parseInt(d.angle)-90) + 'deg)');
-        }
-      );
-      return;
-    }
-
-    // Toggle operation from internal options (if any).
-    const $op = $this.find('option:hidden');
-
-    // Bind for normal API functionality buttons.
-    var id = this.id;
-    switch(id) {
-      case 'diagtest':
-        runningTest = !runningTest;
-        if (!runningTest) {
-          $(this).text('Run Diag Test');
-          cncserver.cmd.clear();
-          run('park');
-        } else {
-          $(this).text('STOP Diag Test');
-          runTest();
-        }
-
-        break;
-
-      case 'cancel':
-        cncserver.api.buffer.clear();
-        break;
-
-      case 'toggle-buffer':
-        $this.find('option').hide();
-        $op.show();
-        $this.removeClass('is-warning is-success');
-        $this.addClass($op.attr('data-op') === 'pause' ? 'is-success' : 'is-warning');
-
-        const $icon = $this.find('span.icon i');
-        $icon.removeClass('fa-pause fa-play');
-        $icon.addClass($op.attr('data-op') === 'pause' ? 'fa-play' : 'fa-pause');
-
-        if ($op.attr('data-op') === 'resume') {
-          cncserver.api.buffer.resume();
-        } else {
-          cncserver.api.buffer.pause();
-        }
-
-        break;
-
-      case 'toggle-pen':
-        $this.find('option').hide();
-        $op.show();
-        $this.removeClass('is-success is-link');
-        $this.addClass($op.attr('data-op') === 'up' ? 'is-success' : 'is-link');
-
-        cncserver.api.pen.height($op.attr('data-op'), null, {
-          skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
-        });
-        break;
-      case 'unlock':
-        cncserver.api.motors.unlock().then(cncserver.api.pen.zero());
-        break;
-      case 'park':
-        cncserver.api.pen.park(null, {
-          skipBuffer: $('#skipbuffer').prop('checked') ? 1 : ''
-        }); // << Direct method
-        break;
-    }
-
-  });
-
-  // Populate tool buttons
-  cncserver.api.tools.list().then((response) => {
-    if (response.data) {
-      $('#tools h4').remove();
-      const toolGroups = {};
-      response.data.tools.forEach((tool) => {
-        const td = response.data.toolData[tool];
-        const group = td.group || 'none';
-
-        if (!toolGroups[group]) {
-          toolGroups[group] = [];
-        }
-
-        toolGroups[group].push(tool);
-
-      });
-
-      Object.keys(toolGroups).forEach((group) => {
-        let $buttons = $('<div>').addClass('buttons');
-
-        toolGroups[group].forEach((tool) => {
-          $('<p>')
-            .addClass('control')
-            .append(
-              $('<button>')
-                .text(tool)
-                .addClass('button is-info is-small')
-            )
-            .appendTo($buttons);
-        })
-
-        if (group === 'none') {
-          $('#tools').append($buttons);
-        } else {
-          $('#tools').append(
-            $('<details>')
-              .addClass('box')
-              .append(
-                $('<summary>')
-                  .addClass('label')
-                  .text(group),
-                $buttons
-              ),
-          );
-        }
-      });
-
-      $('#tools button').click(function(){
-        cncserver.api.tools.change($(this).text());
-      });
-    } else {
-      $('#tools h4').text('Failed to load tools :(');
-    }
-  });
-
-  // Test runner function
-  function runTest(){
-    run('move', {x:75,y:75});
-    run('move', {x:65,y:0});
-    run('move', {x:75,y:100});
-    run('move', {x:100,y:0});
-    run('move', {x:0,y:100});
-    run('move', {x:0,y:0});
-    run('move', {x:100,y:100});
-    run('park');
-    run('custom', runTest);
-  }
-
-  function getBufferItemType(item) {
-    var cmd = item.command;
-
-    // Skip the command if it's null
-    if (cmd === null) cmd = "";
-
-    if (typeof cmd == "function") cmd = 'callback';
-
-    if (typeof cmd == 'object') {
-      if (typeof cmd.type == "string") {
-        cmd = cmd.type;
-      }
-    }
-
-    return cmd;
-  }
-
-  const drawnSegments = {};
-  function processBufferBatch(list, data) {
-    list.forEach(hash => {
-      const item = data[hash];
-      if (getBufferItemType(item) === 'absmove') {
-        addSegment(item.command.source, item.command, item.pen.state, hash);
-      }
-    });
-  }
-
-  function paperToMove(position) {
-    return {
-      x: Math.round((position[0] / paper.project.view.bounds.width) * 10000) / 100,
-      y: Math.round((position[1] / paper.project.view.bounds.height) * 10000) / 100,
-    };
-  }
-
-  function stepsToPaper(point) {
-    return [point.x * viewScale, point.y * viewScale];
-  }
-
-  function addSegment(source, dest, height, hash) {
-    const group = height === 'up' ? layers.moveGroup : layers.drawGroup;
-    drawnSegments[hash] = new paper.Path.Line(stepsToPaper(source), stepsToPaper(dest));
-    group.addChild(drawnSegments[hash]);
-    setGroupStyles();
-  }
-
-
-  function removeSegment(hash) {
-    if (drawnSegments[hash]) {
-      // TODO: Any way to clean this out better?
-      drawnSegments[hash].remove();
-      delete drawnSegments[hash];
-    }
-  }
-
-  function removeOldestSegment() {
-    if (Object.keys(drawnSegments).length) {
-      removeSegment(Object.keys(drawnSegments)[0]);
-    }
-  }
-
-
-  function setGroupStyles() {
-    layers.drawGroup.style = {
-      strokeWidth: 1,
-      strokeColor: 'blue',
-    };
-
-    layers.moveGroup.style = {
-      dashArray: [4, 10],
-      strokeWidth: 4,
-      strokeCap: 'round',
-      strokeColor: 'grey',
-    };
-  }
-
-
-  function drawRuler(){
-    var pos = {x: 0, y: 70};
-    var border = 3; // 3mm border from edge.
-    var width = 20 * 10; // N cm ruler.
-    var height = 30; // 30mm high.
-    var tickSizes = [2.5, 5, 8.25]; // Ticks at 2.5, 5 and 8.25 mm height.
-
-    // Draw ruler border.
-    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
-    run('down'); // Draw.
-    run('move', {x:pos.x + width + border * 2, y: pos.y, abs: 'mm'}); // Top right
-    run('move', {x:pos.x + width + border * 2, y: pos.y + height, abs: 'mm'}); // Bottom right
-    run('move', {x:pos.x, y:pos.y + height, abs: 'mm'}); // Bottom left
-    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
-    run('up');
-
-    // Loop over X positions from left to right.
-    for (var x = 0; x <= width; x++) {
-      var drawX = pos.x + border + x;
-
-      var hIndex = 0; // Default to small tick.
-      if (x % 5 === 0) {
-        hIndex = x % 10 === 0 ? 2 : 1;
-      }
-
-      // Skip small ticks!
-      if (hIndex != 0) {
-        run('move', {x: drawX, y:pos.y, abs: 'mm'}); // Top of X pos
-        run('down');
-        run('move', {x: drawX, y: pos.y + tickSizes[hIndex], abs: 'mm'}); // Top of X pos
-        run('up');
-      }
-    }
-    run('park');
-  }
-
-
-  function drawRulerVert(){
-    var pos = {x: 180, y: 0};
-    var border = 3; // 3mm border from edge.
-    var width = 19 * 10; // N cm ruler.
-    var height = 30; // 30mm high.
-    var tickSizes = [2.5, 5, 8.25]; // Ticks at 2.5, 5 and 8.25 mm height.
-
-    // Draw ruler border.
-    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
-    run('down'); // Draw.
-    run('move', {x:pos.x + height, y: pos.y, abs: 'mm'}); // Top right
-    run('move', {x:pos.x + height, y: pos.y + width + border * 2, abs: 'mm'}); // Bottom right
-    run('move', {x:pos.x, y:pos.y + width + border * 2, abs: 'mm'}); // Bottom left
-    run('move', {x:pos.x, y:pos.y, abs: 'mm'}); // Top left
-    run('up');
-
-    // Loop over Y positions from top to bottom.
-    for (var y = 0; y <= width; y++) {
-      var drawY = pos.y + border + y;
-
-      var hIndex = 0; // Default to small tick.
-      if (y % 5 === 0) {
-        hIndex = y % 10 === 0 ? 2 : 1;
-      }
-
-      // Skip small ticks!
-      if (hIndex != 0) {
-        run('move', {x: pos.x, y: drawY, abs: 'mm'});
-        run('down');
-        run('move', {x: pos.x + tickSizes[hIndex], y: drawY, abs: 'mm'});
-        run('up');
-      }
-    }
-    run('park');
-  }
-
-  function fontPreview() {
-    const {api: {actions: { text, stat }}} = cncserver;
-    const opt = {
-      textHeight: 25,
-      boxWidth: 50,
-      labelHeight: 5,
-      rightMargin: 18,
-      bottomMargin: 5,
-      testText: 'ABC ~ 123',
-    }
-
-    stat().then(({ data: { options: { operations, bounds } }}) => {
-      let pos = [bounds.point[0], bounds.point[1]];
-      const max = [bounds.point[0] + bounds.size[0], bounds.point[1] + bounds.size[1]];
-      Object.entries(operations.text.fonts).forEach(([font, info]) => {
-        const textBounds = {point: [pos[0], pos[1]], size: [opt.boxWidth, opt.textHeight]};
-        const labelBounds = {point: [pos[0], pos[1] + opt.textHeight], size: [opt.boxWidth, opt.labelHeight]};
-
-        text(opt.testText, textBounds, { font });
-        text(info.name, labelBounds);
-
-        // Move next pos right >>
-        pos[0] = pos[0] + opt.boxWidth + opt.rightMargin;
-
-        // If over the right, reset X, move down.
-        if (pos[0] + opt.boxWidth > max[0]) {
-          pos = [bounds.point[0], pos[1] + opt.textHeight + opt.labelHeight + opt.bottomMargin];
-        }
-
-      });
-    });
-  }
-
-  function fillPreview() {
-    const {api: {actions: {stat, text, strokePath, fillPath}}} = cncserver;
-    const exampleRows = [];
-    const opt = {
-      titleHeight: 8,
-      labelHeight: 5,
-      boxHeight: 50,
-      rightMargin: 8,
-      bottomMargin: 8,
-    };
-
-    // Offset fill examples
-    exampleRows.push({
-      title: 'Offset',
-      examples: [
-        {
-          label: 'Default: 3mm space, 1/4mm res',
-          settings: {},
-        },
-        {
-          label: '1mm space, 1/4mm res',
-          settings: { spacing: 1 },
-        },
-        {
-          label: '3mm space, 1mm res',
-          settings: { flattenResolution: 1 },
-        },
-        {
-          label: '4mm space, 1/4mm res',
-          settings: { spacing: 4 },
-        },
-      ]
-    });
-
-    // Pattern fill examples
-    exampleRows.push({
-      title: 'Pattern / Spiral',
-      examples: [
-        {
-          label: 'Default: Spiral 3mm',
-          settings: { method: 'pattern' },
-        },
-        {
-          label: 'Spiral 1mm',
-          settings: { method: 'pattern', spacing: 1 },
-        },
-        {
-          label: 'Circuit Board, 0.25x',
-          settings: { method: 'pattern', pattern: 'circuit-board', scale: 0.25},
-        },
-        {
-          label: 'Kiwi 45°, 0.5x',
-          settings: { method: 'pattern', pattern: 'kiwi', rotation: 45, scale: 0.5},
-        },
-        {
-          label: 'Anchors Away 0.4x',
-          settings: {method: 'pattern', pattern: 'anchors-away', scale: 0.4},
-        },
-        {
-          label: 'Topography 0.1x',
-          settings: {method: 'pattern', pattern: 'topography', scale: 0.1},
-        },
-      ]
-    });
-
-    // Hatch fill examples
-    exampleRows.push({
-      title: 'Hatch / lines',
-      examples: [
-        {
-          label: 'Default: 3mm space, 28°',
-          settings: {method: 'hatch', pattern: 'zigsmooth'},
-        },
-        {
-          label: '2mm space, 45°',
-          settings: {method: 'hatch', spacing: 2, angle: 45, pattern: 'zigstraight'},
-        },
-        {
-          label: '5mm, hatch, random',
-          settings: {method: 'hatch', spacing: 5, randomizeAngle: true, hatch: true, pattern: 'zigstraight'},
-        },
-        {
-          label: '??',
-          settings: {method: 'hatch', pattern: 'zigstraight'},
-        },
-      ]
-    });
-
-    stat().then(({data: {options: { bounds }}}) => {
-      let pos = [bounds.point[0], bounds.point[1]];
-
-      exampleRows.forEach((row) => {
-        text(row.title, {point: [pos[0], pos[1]], size: [bounds.size[0], opt.titleHeight]});
-        // Move base Y pos to bottom of row title
-        pos[1] = pos[1] + opt.titleHeight;
-
-        const boxWidth = Math.round(bounds.size[1] / (row.examples.length-1));
-        row.examples.forEach((example) => {
-          const boxBounds = {point: [pos[0], pos[1]], size: [boxWidth, opt.boxHeight]};
-          fillPath(shape, boxBounds, example.settings);
-
-          // Draw label.
-          text(example.label, {point: [pos[0], pos[1] + opt.boxHeight], size: [boxWidth, opt.labelHeight]});
-
-          // Next position right >>
-          pos[0] = pos[0] + boxWidth + opt.rightMargin;
-        });
-
-        // Next position down.
-        pos = [bounds.point[0],  pos[1] + opt.labelHeight + opt.boxHeight + opt.bottomMargin];
-      });
-    });
-  }
-
+  main.initPaper();
+  main.initTools();
+  main.bindClick('button, a.button', buttons);
+
+  colors.initPresets('#color-presets select');
+  colors.initColorManager('#colorset');
 </script>
-
-
 </body>
 </html>

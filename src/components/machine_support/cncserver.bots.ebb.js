@@ -9,6 +9,11 @@ const minVersion = '>=2.2.7';
 let controller = {}; // Placeholder for machine config export.
 
 module.exports = (cncserver) => {
+  // Bot support in use parent callback.
+  ebb.checkInUse = (botConf) => {
+    ebb.inUse = botConf.controller.name === 'EiBotBoard';
+  };
+
   // Bind EBB support on controller setup -before- serial connection.
   cncserver.binder.bindTo('controller.setup', ebb.id, (controller) => {
     if (controller.name === 'EiBotBoard') {

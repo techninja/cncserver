@@ -3,40 +3,30 @@
  * abstracted for use in the client side application. Includable as DOM JS, or
  * as a Node module.
  *
- * In use, must set the "server" object like the following:
+ * In use, must init:
  *
- * cncserver.api.server = {
+ * cncserver.init({
  *   domain: 'localhost',
  *   port: 4242,
  *   protocol: 'http',
  *   version: '1'
- * }
+ * });
  */
 /* eslint-env browser, node */
-/* globals axios */
+
+let axios = {}; // Placeholder.
 
 // Initialize wrapper object is this library is being used elsewhere
-const cncserver = window.cncserver || {};
-
-// Detect NodeJS vs Browser:
-let isNode = false;
-try {
-  const op = Object.prototype;
-  isNode = op.toString.call(global.process) === '[object process]';
-} catch (e) { }
-
-// If being used as a node module, make adjustments and provide exports.
-if (isNode) {
-  // Use axios for requests (node or browser).
-  var axios = require('axios');
-
-  // As a node module, just pass your cncserver object, and the api.server obj.
-  module.exports = (cncmain, server) => {
-    cncmain.api = cncserver.api;
-    cncmain.api.server = server;
-    cncserver.global = cncmain;
-  };
-}
+const cncserver = {
+  init: ({
+    domain = 'localhost', port = 4242, protocol = 'http', version = 1, ax,
+  }) => {
+    axios = ax;
+    cncserver.api.server = {
+      domain, port, protocol, version,
+    };
+  },
+};
 
 // Define central request setup.
 function _request(method, path, options = {}) {
@@ -147,6 +137,13 @@ cncserver.api = {
         settings,
       },
     }),
+  },
+  colors: {
+    stat: () => _get('colors'),
+    preset: preset => _post('colors', { data: { preset } }),
+    add: data => _post('colors', { data }),
+    save: data => _put(`colors/${data.id}`, { data }),
+    delete: id => _delete(`colors/${id}`),
   },
   pen: {
     /**
@@ -441,3 +438,6 @@ cncserver.api = {
     },
   },
 };
+
+// Module export.
+export default cncserver;

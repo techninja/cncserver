@@ -26,7 +26,7 @@ function spiralOutsideBounds(spiral, bounds) {
 function calculateSpiral(distance, spacing = 1) {
   return {
     x: spacing * distance * Math.cos(distance),
-    y: spacing * distance * Math.sin(distance)
+    y: spacing * distance * Math.sin(distance),
   };
 }
 

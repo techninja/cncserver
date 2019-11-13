@@ -4,13 +4,14 @@ This file defines and documents _only_ the high level drawing "Actions" RESTful
 API resource for complex automation and job management. If you haven't read it
 yet, see the full [low level API documentation](API.md) first.
 
-> ### _QUICK NOTE:_
+> ## _QUICK NOTE:_
+>
 > *Any comments visible in responses/JSON payload in the documentation
 > below are just to help make it easier to understand what's being sent. Comments
 > are* ***not allowed*** *in JSON data and will not exist in returned data.*
 
-
 ## Preamble
+
 The Actions API is the jumping off point for all complex or combined/calculated
 work that will eventually be rendered into simpler functions. Instead of telling
 the drawing bot exactly where to move and when to draw, the actions API simply
@@ -104,7 +105,7 @@ match what you're trying to do.
 **TODO:** I've painted myself in a corner and by not actually doing any real
 drawing by adding actions, I needed some way to actually trigger drawing, so
 there's actually a third type here, `drawpreview`, given with zero other
-arguments, and this will process whatever is on the preview canvas and draw it. 
+arguments, and this will process whatever is on the preview canvas and draw it.
 
 ## ▶ `"operation": "[TYPE]"` (required)
 The operation key defines a machine name string of _what you intend to do_ for
@@ -113,19 +114,24 @@ either a job or a project, and it changes what input content is expected in the
 
 >#### Operations for `project`:
 >  * `"trace"`, `"fill"`, & `"full"`
->    * The `body` key should be either SVG XML content, or path to a server
->    accessible SVG file. If "trace", only the outlines of paths will be drawn,
->    if "fill", only the fill operation will be run on all paths. If "full", both
->    will be run.
+>    * If "trace", only the outlines of paths will be drawn.
+>    * If "fill", only the fill operation will be run on all paths.
+>    * If "full", both will be run.
+>    * The `body` key value should be either:
+>      * A string containing Paper.js JSON export data.
+>      * A string containing escaped SVG XML content.
+>      * A string containing the path to a server accessible SVG file.
 >  * `"vectorize"`
->    * The `body` key should be either raster image content in
->    [Base64 URI format](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
->    or a path to a server accessible raster image file that will be
->    reinterpreted as vector paths based on the given settings.
+>    * Reinterprets an image as vector paths based on the given settings.
+>    * The `body` key value should be either:
+>      * A raster image content in [Base64 URI format](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
+>      * A path to a server accessible raster image.
 >
 >#### Operations for `job`:
 >  * `"trace"`, `"fill"`, & `"full"`
->    * The `body` key expects a singular or compound path in the standard `d`
+>    * The `body` key value should be either:
+>      * A singular or compound path in the standard SVG `d` format.
+>      * A singular or compound path in a Paper.js JSON export string.
 >  * `"text"`
 >    SVG path attribute data format, and will trace, fill, or both.
 >    * `body` key expects the string you want to be rendered as text, including
@@ -182,9 +188,9 @@ managed within the client. See the web based interface for how that's managed.
 Actions API Examples: `GET`
 ===========================
 
-TODO: Examples of parsing lists, getting action details 
+TODO: Examples of parsing lists, getting action details
 
-## The following docs are incomplete and represent unfinished functionality, tread with caution 
+## The following docs are incomplete and represent unfinished functionality, tread with caution
 
 * * *
 
@@ -260,3 +266,151 @@ Content-Type: application/json; charset=UTF-8
  an SVG which will be bound together with all paths.
  * `type: job`: takes a single SVG path "`d`" format in the `body` key data
  * `type: project`: takes an XML SVG string in the `body` key data
+
+
+Colors: How to draw with different things
+=========================================
+In previous versions, all color and drawing management remained firmly in the
+realm of the implementing client. With version 3, we intend to implement the
+absolute basics of color based vector separation, splitting work for action
+based high level drawing using nearest color to matching active color set entry.
+
+**For Axidraw (and other single pen based drawing bots):**
+ * Only one color will be available by default, no color separation is expected.
+ * If more than one color is given in current color set, colors matching the
+ closest to the ones in the colorset will be grouped as separate work and
+ displayed with their configured color in the preview.
+ * When actually drawing, the pen will be parked, then the user be alerted via
+ the socket API. After confirmation that the new color/implement has been
+ switched, drawing can be resumed.
+
+**For WaterColorBot (and single pen drawing bots configured to use paint):**
+ * On startup an 8 item default color set will be set via bot support
+ * Color separation will happen automatically, and when drawing commences for a
+ color, it will change to the tool matching the matching color machine name id.
+ * Water wash, paint refill, etc will be handled by bot support.
+
+
+### GET /v1/colors
+
+
+#### Response - Current set default
+```javascript
+GET /v1/colors
+Content-Type: application/json; charset=UTF-8
+{
+    "set": [
+      {
+        "id": "color0",
+        "name": "Black",
+        "color": "#000000"
+      }
+    ],
+    "presets": [
+      {...}
+    ]
+}
+```
+
+#### Response - Current set customized
+```javascript
+GET /v1/colors
+Content-Type: application/json; charset=UTF-8
+{
+    "set": [
+      {
+        "id": "color0",
+        "name": "Black watercolor",
+        "color": "#000000"
+      },
+      {
+        "id": "pencolor1",
+        "name": "Red sharpie",
+        "color": "#FF0000"
+      },
+      {...}
+    ],
+    "presets": [
+      {...}
+    ]
+}
+```
+
+##### Usage Notes
+ * ???
+
+
+### POST /v1/colors
+
+#### Request: Add a color to the set
+```javascript
+POST /v1/colors
+Content-Type: application/json; charset=UTF-8
+
+{
+  "id": "color1",
+  "name": "Blue",
+  "color": "#0000FF"
+}
+```
+
+#### Request: Revert colorset to a preset
+```javascript
+POST /v1/colors
+Content-Type: application/json; charset=UTF-8
+
+{
+  "preset": "crayola-tertiary"
+}
+```
+
+### Response
+```javascript
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  // Duplicates response of GET /v1/colors with new colorset additions
+  ...
+}
+```
+
+##### Usage Notes
+ * Color machine name/ID is arbitrary, but be sure to match it with a tool name
+ for it to trigger the tool change, or expect a socket based wait/confirm tool
+ change. This allows for pencil/pen swaps on watercolor projects.
+ * Setting to a preset will completely replace the current colorset.
+ * Presets come with standard `color[n]` style names to match with WaterColorBot
+ tools.
+
+### GET /v1/colors/{colorid}
+
+#### Request: View details for a color
+```javascript
+GET /v1/colors/color1
+Content-Type: application/json; charset=UTF-8
+
+{
+  "id": "color1",
+  "name": "Blue",
+  "color": "#0000FF"
+}
+```
+
+### Delete /v1/colors/{colorid}
+
+#### Request: Remove color from the set
+```javascript
+GET /v1/colors/color1
+Content-Type: application/json; charset=UTF-8
+
+{
+  "status": "removed"
+}
+```
+
+##### Usage Notes
+ * Deleting removes the information about the color from the set.
+ * Removing the last item of the colorset will simply revert it to default black
+ as there's always one color assumed.
+

@@ -4,6 +4,11 @@
 const watercolorbot = { id: 'watercolorbot' }; // Exposed export.
 
 module.exports = (cncserver) => {
+  // Bot support in use parent callback.
+  watercolorbot.checkInUse = (botConf) => {
+    watercolorbot.inUse = botConf.name === 'WaterColorBot';
+  };
+
   /**
    * Util function to buffer the "wiggle" movement for WaterColorBot Tool
    * changes.
@@ -81,6 +86,10 @@ module.exports = (cncserver) => {
       cncserver.pen.setHeight('up');
     }
   });
+
+  // Bind to color setdefault to set watercolors
+  cncserver.binder.bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (watercolorbot.inUse ? cncserver.drawing.colors.setFromPreset('generic-watercolor-generic') : passthroughSet));
+
 
   return watercolorbot;
 };

@@ -34,16 +34,20 @@ module.exports = (cncserver) => {
    *   Optional data payload to hand to bound callbacks.
    */
   binder.trigger = (event, payload = {}) => {
+    let runningPayload = payload;
+
     if (typeof hooks[event] === 'object') {
       for (const [caller, callback] of Object.entries(hooks[event])) {
         if (typeof callback === 'function') {
           if (cncserver.settings.gConf.get('debug')) {
             console.log(`Event "${event}" triggered for "${caller}" with`, payload);
           }
-          callback(payload);
+          runningPayload = callback(runningPayload);
         }
       }
     }
+
+    return runningPayload;
   };
 
   return binder;
