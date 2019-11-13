@@ -80,7 +80,7 @@ module.exports = (cncserver, drawing) => {
     ipc.server.on('filler.message', gotMessage);
   });
 
-  const fill = (rawPath, hash, parent = null, bounds = null, requestSettings = {}) => {
+  const fill = (path, hash, parent = null, bounds = null, requestSettings = {}) => {
     // Filling method module specification:
     // 1. Each method is its own application! This file indexes the files
     //    directly for running via child fillProcess. Communication is done via
@@ -98,10 +98,7 @@ module.exports = (cncserver, drawing) => {
 
     // TODO: Unify path creation from request body back in the JOB handler!
     const mergedSettings = { ...settingDefaults, ...requestSettings };
-    workingQueue[hash] = {
-      settings: mergedSettings,
-      path: drawing.base.normalizeCompoundPath(rawPath),
-    };
+    workingQueue[hash] = { settings: mergedSettings, path };
 
     if (bounds) {
       drawing.base.fitBounds(workingQueue[hash].path, bounds);

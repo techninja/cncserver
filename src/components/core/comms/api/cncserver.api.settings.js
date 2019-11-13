@@ -19,6 +19,9 @@ module.exports = (cncserver) => {
   };
 
   handlers['/v1/settings/:type'] = function settingsMain(req) {
+    // TODO: Refactor most/all of this to be more consistent, and pull useful
+    // cleaned up config from cnccserver.settings.[x]
+
     // Sanity check type
     const setType = req.params.type;
     if (!['global', 'bot'].includes(setType)) {

@@ -1,6 +1,8 @@
 /**
  * @file Abstraction for high level action rendering, management, execution.
  */
+const { Raster } = require('paper');
+
 const actions = {}; // Exposed export.
 
 module.exports = (cncserver) => {
@@ -61,6 +63,72 @@ module.exports = (cncserver) => {
     }
   };
 
+
+  /**
+   * Normalize addItem payload between allowed types given intent.
+   *
+   * @param {string} type
+   *  Type of action, project or job.
+   * @param {string} operation
+   *  Type of operation, trace, fill, full, or vectorize.
+   * @param {string|object} body
+   *  Input to be normalized, usually a string, sometimes an object.
+   *
+   * @return {object|string|null}
+   *  Imported & normalized input, or null if incorrect input.
+   */
+  actions.normalizeInput = (type, operation, body) => {
+    let out = body;
+
+    switch (type) {
+      // If a project...
+      case 'project':
+        // ...for trace, fill & full, body should be Paper JSON, SVG, or file.
+        if (['trace', 'fill', 'full'].includes(operation)) {
+          // Try to import as JSON directly.
+          try {
+            out = cncserver.drawing.base.layers.temp.importJSON(body);
+          } catch (error) {
+            try {
+              // Nope, JSON failed, try SVG (file or string content);
+              out = cncserver.drawing.base.layers.temp.importSVG(body);
+            } catch (error) {
+              // Both failed!
+              // TODO: return error back to client request.
+              return null;
+            }
+          }
+        } else if (operation === 'vectorize') {
+          // ...for vectorize, body must be a URL of a raster, or a file URI.
+          try {
+            out = new Raster(body);
+          } catch (error) {
+            // Couldn't load image.
+            // TODO: return error back to client request.
+            return null;
+          }
+        }
+        break;
+
+      case 'job':
+        if (['trace', 'fill', 'full'].includes(operation)) {
+          try {
+            out = cncserver.drawing.base.normalizeCompoundPath(body);
+          } catch (error) {
+            // Likely couldn't parse JSON import.
+            // TODO: return error back to client request.
+            return null;
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return out;
+  };
+
   // Manage project or job creation into tasks & instructions.
   actions.addItem = (payload) => {
     const hash = cncserver.utils.getHash(payload);
@@ -84,16 +152,26 @@ module.exports = (cncserver) => {
       return { status: 'processing' };
     }
 
+    // Normalize input to match expected given type & operation.
+    const inputContent = actions.normalizeInput(type, operation, body);
+    if (!inputContent) {
+      return {
+        status: 'error',
+        message: 'Failed to import content, check documentation for expected body content on operation type',
+        todo: 'something more specific and useful here 😁',
+      };
+    }
+
     if (type === 'job') {
       switch (operation) {
         case 'trace':
-          cncserver.drawing.trace(body, parent, bounds);
+          cncserver.drawing.trace(inputContent, parent, bounds);
           break;
 
         case 'fill':
           // CLEAR the preview canvas for every job/project.
           // cncserver.drawing.base.layers.preview.removeChildren();
-          cncserver.drawing.fill(body, hash, null, bounds, settings);
+          cncserver.drawing.fill(inputContent, hash, null, bounds, settings);
           break;
 
         case 'text':
@@ -105,7 +183,12 @@ module.exports = (cncserver) => {
       }
     } else if (type === 'project') {
       if (['trace', 'fill', 'full'].includes(operation)) {
-        cncserver.drawing.project(body, parent, operation, bounds);
+        cncserver.drawing.project(inputContent, parent, operation, bounds);
+      } else {
+        return {
+          status: 'error',
+          message: 'invalid operation',
+        };
       }
     } else {
       return {

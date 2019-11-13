@@ -119,13 +119,23 @@ module.exports = (cncserver) => {
   // Simple helper to check if the path is one of the parsable types.
   base.isDrawable = item => item instanceof Path || item instanceof CompoundPath;
 
-  // Normalize a string or path input into a compound path.
+  // Normalize a 'd' string, JSON or path input into a compound path.
   base.normalizeCompoundPath = (importPath) => {
-    if (importPath instanceof CompoundPath) {
-      return base.setName(importPath);
+    let path = importPath;
+
+    // Attempt to detect JSON import.
+    if (typeof path === 'string' && path.includes('{')) {
+      // If this fails the paper error will bubble up to the implementor.
+      path = cncserver.drawing.base.layers.temp.importJSON(path);
     }
 
-    return base.setName(new CompoundPath(importPath));
+    // If the passed object already is compounnd, return it directly.
+    if (path instanceof CompoundPath) {
+      return base.setName(path);
+    }
+
+    // If a 'd' string, OR a non-compound path, create a compound path from it.
+    return base.setName(new CompoundPath(path));
   };
 
   // At this point, simply removing anything that isn't a path.
