@@ -11,8 +11,6 @@ main.initPaper = () => {
   cncserver.api.settings.bot().then((response) => {
     const { data: bot } = response;
 
-    // $('#bot legend:first').text(`Live Status: ${bot.name}`);
-
     // Set subtitle text.
     cncserver.api.settings.global().then((global) => {
       $('.hero-body p.subtitle').text(
@@ -36,8 +34,8 @@ main.initPaper = () => {
     ];
     // TODO: why are these offsts needed?
     paper.project.view.center = [
-      (bot.maxAreaMM.width / viewScale) + 50,
-      (bot.maxAreaMM.height / viewScale) + 36,
+      (bot.maxAreaMM.width / viewScale) + (bot.maxAreaMM.width / 6),
+      (bot.maxAreaMM.height / viewScale) + (bot.maxAreaMM.height / 6),
     ];
     paper.project.view.scaling = [viewScale, viewScale];
 
@@ -70,7 +68,7 @@ main.initPaper = () => {
 
 
     // Make crosshair (on active overlay layer).
-    const size = 10 / viewScale;
+    const size = 15 / viewScale;
     cstate.crosshair = new paper.Group([
       new paper.Shape.Circle([0, 0], size),
       new paper.Path.Line([-size * 1.5, 0], [-size / 5, 0]),
@@ -94,15 +92,15 @@ main.initPaper = () => {
     };
 
     // Setup the height option buttons for the bot
-    for (const name in bot.servo.presets) {
+    Object.keys(bot.servo.presets).forEach((presetName) => {
       $('#heightbuttons').append(
-        $('<button>').text(name).click(function () {
-          cncserver.api.pen.height($(this).text(), null, {
+        $('<button>').text(presetName).click(() => {
+          cncserver.api.pen.height(presetName, null, {
             skipBuffer: $('#skipbufferz').prop('checked') ? 1 : '',
           });
         })
       );
-    }
+    });
 
     // Initially set the pen from the bot
     cncserver.api.pen.stat().then((res) => {
