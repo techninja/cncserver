@@ -19,6 +19,7 @@
     "jquery": "^3.4.1",
     "js-angusj-clipper": "^1.0.3",
     "nconf": "0.8.4",
+    "nearest-color": "^0.4.4",
     "node-ipc": "8.9.2",
     "paper": "^0.12.3",
     "paper-jsdom": "^0.12.3",

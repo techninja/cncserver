@@ -44,8 +44,15 @@ module.exports = (cncserver, drawing) => {
 
       case 'complete':
         // TODO: Properly resolve promise via data.hash
-        delete workingQueue[data.hash];
+        // TODO: Support non Paper JSON return content.
         const item = drawing.base.layers.preview.importJSON(data.paths);
+
+        // Ensure content matches original fiill color as strokes.
+        item.fillColor = null;
+        item.strokeWidth = 1;
+        item.strokeColor = workingQueue[data.hash].color;
+
+        delete workingQueue[data.hash];
         console.log('Got the fill! Children?', item.children.length);
         cncserver.sockets.sendPaperPreviewUpdate();
 
@@ -98,7 +105,7 @@ module.exports = (cncserver, drawing) => {
 
     // TODO: Unify path creation from request body back in the JOB handler!
     const mergedSettings = { ...settingDefaults, ...requestSettings };
-    workingQueue[hash] = { settings: mergedSettings, path };
+    workingQueue[hash] = { settings: mergedSettings, path, color: path.fillColor || 'black' };
 
     if (bounds) {
       drawing.base.fitBounds(workingQueue[hash].path, bounds);

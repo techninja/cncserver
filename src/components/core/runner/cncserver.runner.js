@@ -64,10 +64,22 @@ function instructionStreamWrite(item, _, callback) {
         callback(err);
       }, item.duration - durationOffset - (new Date() - durationTimer));
     });
+  } else if (item.special) {
+    state.instructionIsExecuting = false;
+    ipc.sendMessage('buffer.item.done', item.hash);
+    if (global.debug) console.log('SPECIAL ITEM:', item.special);
+
+    // TODO: Support other special low level commands?
+    if (item.special === 'pause') {
+      state.setPaused(true);
+    }
+
+    callback();
   } else {
     state.instructionIsExecuting = false;
     ipc.sendMessage('buffer.item.done', item.hash);
     if (global.debug) console.log(`NO COMMANDS ITEM: ${item.hash}`);
+    callback();
   }
 }
 
@@ -144,8 +156,10 @@ state.setPaused = (paused, init = false) => {
   }
 
   if (paused) {
+    console.log('CORKED RENDERER');
     instructionRenderer.cork();
   } else {
+    console.log('UNCORKED RENDERER');
     instructionRenderer.uncork();
   }
 };
@@ -153,7 +167,6 @@ state.setPaused = (paused, init = false) => {
 /**
  * Simulation state setter
  */
-
 state.setSimulation = (isSimulating) => {
   state.simulation = isSimulating;
   ipc.sendMessage('serial.simulation', isSimulating);
@@ -248,6 +261,7 @@ function gotMessage(packet) {
     case 'buffer.resume': // Resume running of the buffer.
       state.setPaused(false);
       console.log('BUFFER RESUMED');
+      console.log(`BUFFER ITEMS: ${instructionStream.readableLength}`);
       break;
 
     case 'buffer.clear': // Clear the entire buffer.

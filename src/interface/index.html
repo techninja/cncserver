@@ -230,6 +230,10 @@
       </div>
       <div class="box">
         <div class="is-pulled-right">
+          <a class="button is-primary" id="draw">
+            <span class="icon"><i class="fas fa-star-half-alt" aria-hidden="true"></i></span>
+            <span>Draw Preview</span>
+          </a>
           <a class="button is-warning" id="toggle-buffer">
             <span class="icon"><i class="fas fa-pause" aria-hidden="true"></i></span>
             <span>
@@ -259,6 +263,8 @@
     buffer: {},
     drawPoints: [], // Array of points from buffer to draw
     stepsPerMM: { x: 1, y: 1 },
+    botName: '', // Placeholder for the name of the bot.
+    colorset: {}, // Placeholder for current colorset, keyed by ID.
 
     // Paper and canvas vars.
     crosshair: {},

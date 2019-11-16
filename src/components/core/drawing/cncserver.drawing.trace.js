@@ -8,6 +8,14 @@ module.exports = (cncserver, drawing) => {
     // Take normalized path and add it to the preview layer.
     drawing.base.layers.preview.addChild(path);
 
+    // Ensure colors fromt his object match requirements.
+    if (!path.hasStroke()) {
+      // Default to black fill if we're here with nothing.
+      path.strokeColor = path.fillColor || 'black';
+    }
+    path.fillColor = null;
+    path.strokeWidth = 1;
+
     // If bounds set, resize the path.
     if (bounds) {
       path.fitBounds(new Rectangle(bounds));

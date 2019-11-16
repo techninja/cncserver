@@ -9,8 +9,10 @@ module.exports = (cncserver) => {
    * Run the operation to set the current tool (and any aggregate operations
    * required) into the buffer
    *
-   * @param toolName
+   * @param name
    *   The machine name of the tool (as defined in the bot config file).
+   * @param index
+   *   Index for notifying user of what the manual tool change is for.
    * @param callback
    *   Triggered when the full tool change is to have been completed, or on
    *   failure.
@@ -21,22 +23,23 @@ module.exports = (cncserver) => {
    * @returns {boolean}
    *   True if success, false on failure.
    */
-  control.setTool = (toolName, callback, waitForCompletion = false) => {
-    // Parse out any virtual indexes (pipe delimited) from the tool name.
-    // These are passed by clients to assist users for manual tool swaps, but
-    // doesn't actually do anything differently.
-    const toolNameData = toolName.split('|');
-    const [currentToolName, index] = toolNameData;
-
+  control.setTool = (name, index = null, callback = () => {}, waitForCompletion = false) => {
     // Get the matching tool object from the bot configuration.
-    const tool = cncserver.settings.botConf.get(`tools:${currentToolName}`);
+    const tool = cncserver.settings.botConf.get(`tools:${name}`);
 
     // No tool found with that name? Augh! Run AWAY!
     if (!tool) {
-      if (callback) {
-        cncserver.run('callback', callback);
-      }
+      cncserver.run('callback', callback);
       return false;
+    }
+
+    // For wait=false/"resume" tools, we really just resume the buffer.
+    // It should be noted, this is obviously NOT a queable toolchange.
+    // This should ONLY be called to restart the queue after a swap.
+    if (tool.wait !== undefined && tool.wait === false) {
+      cncserver.buffer.resume();
+      callback(1);
+      return true;
     }
 
     // Pen Up
@@ -47,18 +50,16 @@ module.exports = (cncserver) => {
 
     // Trigger the binder event.
     cncserver.binder.trigger('tool.change', {
-      index,
-      name: currentToolName,
       ...tool,
+      index,
+      name,
     });
 
-    // If there's a callback to run...
-    if (callback) {
-      if (waitForCompletion) { // Run inside the buffer
-        cncserver.run('callback', callback);
-      } else { // Run as soon as items have been buffered
-        callback(1);
-      }
+    // Finish up.
+    if (waitForCompletion) { // Run inside the buffer
+      cncserver.run('callback', callback);
+    } else { // Run as soon as items have been buffered
+      callback(1);
     }
 
     return true;
@@ -390,50 +391,92 @@ module.exports = (cncserver) => {
    *   Source paper object containing the children, defaults to preview layer.
    */
   control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview) => {
-    const { drawing } = cncserver;
-    const allPaths = drawing.base.getPaths(source);
+    const { settings: { botConf } } = cncserver;
+    // const allPaths = drawing.base.getPaths(source);
 
     // console.log('DrawStuff', );
     // TODO:
     // * Join extant non-closed paths with endpoint distances < 0.5mm
+    // * Split work by colors
     // * Allow WCB bot support to inject tool changes for refill support
     // * Order paths by pickup/dropoff distance
 
-    // Move through all paths and add each one as a job.
-    allPaths.forEach((rawPath) => {
-      const path = drawing.base.normalizeCompoundPath(rawPath);
-      // Move through all sub-paths within the compound path. For non-compound
-      // paths, this will only iterate once.
-      path.children.forEach((subPath) => {
-        const accellPoints = drawing.accell(subPath);
+    // Store work for all paths grouped by color
+    // TODO: Provide automatic luminance based ordering (lightest to darkest).
+    const workGroups = {
+      color4: [],
+      color3: [],
+      color8: [],
+      color5: [],
+      color2: [],
+      color6: [],
+      color9: [],
+      color1: [],
+      color0: [],
+      color7: [],
+    };
+    const validColors = Object.keys(workGroups);
+    source.children.forEach((path) => {
+      // TODO: This will not process anything not recognised.
+      if (validColors.includes(path.data.colorID)) {
+        workGroups[path.data.colorID].push(path);
+      } else {
+        console.log(`No data! ${path.name}`);
+      }
+    });
 
-        // Pen up
-        cncserver.pen.setPen({ state: 'up' });
 
-        // Move to start of path, then pen down.
-        cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
-        cncserver.pen.setPen({ state: 'draw' });
+    Object.entries(workGroups).forEach(([colorID, paths]) => {
+      // TODO:
+      // * Build a message system linked to the 'wait' tools
+      // * Don't process empty work groups!
+      // * Notify with confirm (or something) which pen based on name/ID
+      // * Add tool changes after each group of paths
 
-        accellPoints.forEach((pos) => {
-          cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+      if (paths.length) {
+        // Do we have a tool for this colorID? If not, use manualswap.
+        const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
+        control.setTool(changeTool, colorID);
+        paths.forEach((path) => {
+          control.accelMoveOnPath(path);
         });
+      }
+    });
 
-        // for (let pos = 0; pos < t.length; pos += 2) {
-        // console.log(t.getPointAt(pos));
-        // cncserver.pen.setPen({ ...t.getPointAt(pos), abs: 'mm' });
-        // }
+    // Move through all paths and add each one as a job.
+    /* allPaths.forEach((rawPath) => {
+      const path = drawing.base.normalizeCompoundPath(rawPath);
+    }); */
+  };
 
-        // Move to end of path, pen up.
-        cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
+  control.accelMoveOnPath = (path) => {
+    // Move through all sub-paths within the compound path. For non-compound
+    // paths, this will only iterate once.
+    path.children.forEach((subPath) => {
+      const accellPoints = cncserver.drawing.accell(subPath);
 
-        // If it's a closed path, overshoot back home.
-        if (subPath.closed) {
-          cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
-        }
+      // Pen up
+      cncserver.pen.setPen({ state: 'up' });
 
-        // End with pen up.
-        cncserver.pen.setPen({ state: 'up' });
+      // Move to start of path, then pen down.
+      cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+      cncserver.pen.setPen({ state: 'draw' });
+
+      // Move through all accell points from start to nearest end point
+      accellPoints.forEach((pos) => {
+        cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
       });
+
+      // Move to end of path...
+      cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
+
+      // If it's a closed path, overshoot back home.
+      if (subPath.closed) {
+        cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+      }
+
+      // End with pen up.
+      cncserver.pen.setPen({ state: 'up' });
     });
   };
 

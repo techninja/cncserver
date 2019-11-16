@@ -346,5 +346,25 @@ module.exports = (cncserver) => {
     return { height, state: normalizedState };
   };
 
+
+  /**
+   * Map a value in a given range to a new range.
+   *
+   * @param {number} x
+   *   The input number to be mapped.
+   * @param {number} inMin
+   *   Expected minimum of the input number.
+   * @param {number} inMax
+   *   Expected maximum of the input number.
+   * @param {number} outMin
+   *   Expected minimum of the output map.
+   * @param {number} outMax
+   *   Expected maximum of the output map.
+   *
+   * @return {number}
+   *   The output number after mapping.
+   */
+  utils.map = (x, inMin, inMax, outMin, outMax) => (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+
   return utils;
 };

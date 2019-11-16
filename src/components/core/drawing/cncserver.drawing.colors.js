@@ -3,8 +3,11 @@
  */
 const glob = require('glob');
 const path = require('path');
+const nc = require('nearest-color');
+const { Color } = require('paper');
 
-const defaultColor = { id: 'color0', name: 'black', color: '#000000' };
+const defaultColor = { id: 'color0', name: 'Black', color: '#000000' };
+const ignoreWhite = { id: 'ignore', name: 'White', color: '#FFFFFF' };
 const defaultPreset = {
   manufacturer: 'default',
   media: 'pen',
@@ -67,11 +70,13 @@ module.exports = (cncserver, drawing) => {
     if (colors.set.length === 0) {
       colors.set.push(defaultColor);
     }
+    cncserver.sockets.sendPaperPreviewUpdate();
   };
 
   colors.add = ({ id, name, color }) => {
     if (colors.getIndex(id) === null) {
       colors.set.push({ id, name, color });
+      cncserver.sockets.sendPaperPreviewUpdate();
       return true;
     }
     return null;
@@ -80,6 +85,7 @@ module.exports = (cncserver, drawing) => {
   colors.update = (id, { name, color }) => {
     const index = colors.getIndex(id);
     colors.set[index] = { id, name, color };
+    cncserver.sockets.sendPaperPreviewUpdate();
     return colors.set[index];
   };
 
@@ -89,31 +95,52 @@ module.exports = (cncserver, drawing) => {
     return color;
   };
 
+  /**
+   * Mutate the set array to match a preset by machine name.
+   *
+   * @param {string} presetName
+   *
+   * @returns {boolean}
+   *   Null for failure, true if success.
+   */
   colors.applyPreset = (presetName) => {
     const preset = colors.setFromPreset(presetName);
     if (preset) {
       colors.set = preset;
+      cncserver.sockets.sendPaperPreviewUpdate();
       return true;
     }
     return null;
   };
 
-  // Get colorset array from a preset name.
+  /**
+   * Get colorset array from a preset name.
+   *
+   * @param {string} presetName
+   *
+   * @returns {array}
+   *   Colorset style array with default toolnames
+   */
   colors.setFromPreset = (presetName) => {
     if (colors.presets[presetName]) {
       const set = [];
       Object.entries(colors.presets[presetName].colors).forEach(([name, color]) => {
         set.push({ id: `color${set.length}`, name, color });
       });
+
+      // TODO: Allow this to be set somewhere?
+      set.push(ignoreWhite);
       return set;
     }
 
     return null;
   };
 
-  // Run at setup, allows machine specific colorset defaults.
+  /**
+   * Run at setup, allows machine specific colorset defaults.
+   */
   colors.setDefault = () => {
-    const defaultSet = cncserver.binder.trigger('colors.setDefault', [defaultColor]);
+    const defaultSet = cncserver.binder.trigger('colors.setDefault', [defaultColor, ignoreWhite]);
     colors.set = defaultSet;
   };
 
@@ -121,6 +148,35 @@ module.exports = (cncserver, drawing) => {
   cncserver.binder.bindTo('controller.setup', colors.id, () => {
     colors.setDefault();
   });
+
+  /**
+   * Snap all the paths in the given layer to a particular color.
+   *
+   * @param {*} layer
+   */
+  colors.snapPathColors = (layer) => {
+    // Build Nearest Color matcher
+    const c = {};
+    colors.set.forEach(({ id, color }) => {
+      c[id] = color;
+    });
+
+    const nearestColor = nc.from(c);
+    layer.children.forEach((path) => {
+      if (path.strokeColor) {
+        // If we've never touched this path before, save the original color.
+        if (!path.data.originalColor) {
+          path.data.originalColor = path.strokeColor;
+        }
+
+        // Find nearest color.
+        const nearest = nearestColor(path.data.originalColor.toCSS(true));
+
+        path.data.colorID = nearest.name;
+        path.strokeColor = nearest.value;
+      }
+    });
+  };
 
   return colors;
 };

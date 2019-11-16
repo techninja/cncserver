@@ -80,9 +80,12 @@ colors.initPresets = (selector) => {
 // Force a rebuild/update of the colorset display
 colors.refreshColorset = () => new Promise((ok) => {
   const $wrapper = $('#colorset div.list');
+  cstate.colorset = {};
   cncserver.api.colors.stat().then(({ data: { set } }) => {
     $wrapper.empty();
     set.forEach(({ id, name, color }) => {
+      cstate.colorset[id] = name;
+
       $wrapper.append(
         $('<div>').attr({ id: `color-${id}`, title: 'Edit this Color' }).addClass('card').append(
           $('<header>').addClass('card-header').append(

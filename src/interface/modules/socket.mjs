@@ -12,8 +12,6 @@ socket.on('paper preview', ({ paperJSON }) => {
     const { preview } = cstate.layers;
     preview.removeChildren();
     preview.importJSON(paperJSON);
-    preview.strokeColor = 'green';
-    preview.strokeWidth = 0.25;
   } else {
     cstate.tempPreview = paperJSON;
   }
@@ -62,6 +60,17 @@ socket.on('pen update', (data) => {
     }
     cstate.lastPen = $.extend({}, pen);
     // removeSegment(data.bufferHash);
+  }
+});
+
+
+// Catch when it's time to manually swap pen over.
+socket.on('manualswap trigger', ({ index }) => {
+  const message = `Your ${cstate.botName} is now ready to draw with ${cstate.colorset[index]}.
+  When it's in and ready, click ok.`;
+  // eslint-disable-next-line no-alert
+  if (window.confirm(message)) {
+    cncserver.api.tools.change('manualresume');
   }
 });
 

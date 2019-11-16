@@ -4,7 +4,6 @@
 const base = { id: 'base' }; // Exposed export.
 
 module.exports = (cncserver) => {
-
   // Bind base wait toolchange support to the toolchange event.
   cncserver.binder.bindTo('tool.change', base.id, (tool) => {
     // A "wait" tool requires user feedback before it can continue.
@@ -13,9 +12,6 @@ module.exports = (cncserver) => {
       if (tool.wait) {
         const { lastDuration: moveDuration } = cncserver.pen.state;
         cncserver.run('callback', () => {
-          cncserver.buffer.pause();
-          cncserver.buffer.setNewlyPaused(true);
-
           // Trigger the manualswap with virtual index for the client/user.
           cncserver.buffer.setPauseCallback(() => {
             setTimeout(() => {
@@ -23,6 +19,8 @@ module.exports = (cncserver) => {
             }, moveDuration);
           });
         });
+        // Queue a special low-level pause in the runner.
+        cncserver.run('special', 'pause');
       }
     }
   });

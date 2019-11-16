@@ -123,10 +123,15 @@ module.exports = (cncserver) => {
   base.normalizeCompoundPath = (importPath) => {
     let path = importPath;
 
-    // Attempt to detect JSON import.
-    if (typeof path === 'string' && path.includes('{')) {
-      // If this fails the paper error will bubble up to the implementor.
-      path = cncserver.drawing.base.layers.temp.importJSON(path);
+    // Attempt to detect 'd' string or JSON import.
+    if (typeof path === 'string') {
+      if (path.includes('{')) {
+        // If this fails the paper error will bubble up to the implementor.
+        path = cncserver.drawing.base.layers.temp.importJSON(path);
+      } else {
+        // D string, create the compound path directly
+        return base.setName(new CompoundPath(path));
+      }
     }
 
     // If the passed object already is compounnd, return it directly.
@@ -134,8 +139,12 @@ module.exports = (cncserver) => {
       return base.setName(path);
     }
 
-    // If a 'd' string, OR a non-compound path, create a compound path from it.
-    return base.setName(new CompoundPath(path));
+    // Standard path, create a compound path from it.
+    return base.setName(new CompoundPath({
+      children: [path],
+      fillColor: path.fillColor,
+      strokeColor: path.strokeColor,
+    }));
   };
 
   // At this point, simply removing anything that isn't a path.
@@ -144,6 +153,8 @@ module.exports = (cncserver) => {
     const kids = [...layer.children];
     kids.forEach((path) => {
       if (!base.isDrawable(path)) {
+        path.remove();
+      } else if (!path.length) {
         path.remove();
       } else {
         base.setName(path);

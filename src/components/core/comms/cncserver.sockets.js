@@ -155,6 +155,7 @@ module.exports = (cncserver) => {
    * Send an update to all stream clients for a Paper layer update.
    */
   sockets.sendPaperPreviewUpdate = () => {
+    cncserver.drawing.colors.snapPathColors(cncserver.drawing.base.layers.preview);
     io.emit('paper preview', {
       paperJSON: cncserver.drawing.base.layers.preview.exportJSON(),
       timestamp: new Date().toString(),

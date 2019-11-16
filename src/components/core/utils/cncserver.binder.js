@@ -43,6 +43,11 @@ module.exports = (cncserver) => {
             console.log(`Event "${event}" triggered for "${caller}" with`, payload);
           }
           runningPayload = callback(runningPayload);
+
+          // If a binder implementation doesn't return, reset the payload.
+          if (runningPayload === undefined) {
+            runningPayload = payload;
+          }
         }
       }
     }

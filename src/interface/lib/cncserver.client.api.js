@@ -127,16 +127,17 @@ cncserver.api = {
         settings,
       },
     }),
-    drawSVG: (body, bounds, settings) => _post('actions', {
+    project: (body, bounds, settings, operation = 'full') => _post('actions', {
       data: {
         type: 'project',
-        operation: 'full',
+        operation,
         name: 'svg-project',
         bounds,
         body,
         settings,
       },
     }),
+    drawPreview: () => _post('actions', { data: { type: 'drawpreview' } }),
   },
   colors: {
     stat: () => _get('colors'),

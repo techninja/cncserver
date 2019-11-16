@@ -11,6 +11,8 @@ main.initPaper = () => {
   cncserver.api.settings.bot().then((response) => {
     const { data: bot } = response;
 
+    cstate.botName = bot.name;
+
     // Set subtitle text.
     cncserver.api.settings.global().then((global) => {
       $('.hero-body p.subtitle').text(

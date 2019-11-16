@@ -78,6 +78,8 @@ module.exports = (cncserver) => {
    *  Imported & normalized input, or null if incorrect input.
    */
   actions.normalizeInput = (type, operation, body) => {
+    // Draw to temp layer for initial import.
+    cncserver.drawing.base.layers.temp.activate();
     let out = body;
 
     switch (type) {
@@ -87,11 +89,14 @@ module.exports = (cncserver) => {
         if (['trace', 'fill', 'full'].includes(operation)) {
           // Try to import as JSON directly.
           try {
-            out = cncserver.drawing.base.layers.temp.importJSON(body);
+            out = cncserver.drawing.base.project.importJSON(body);
           } catch (error) {
             try {
               // Nope, JSON failed, try SVG (file or string content);
-              out = cncserver.drawing.base.layers.temp.importSVG(body);
+              out = cncserver.drawing.base.project.importSVG(body.trim(), {
+                expandShapes: true,
+                applyMatrix: true,
+              });
             } catch (error) {
               // Both failed!
               // TODO: return error back to client request.
@@ -115,6 +120,7 @@ module.exports = (cncserver) => {
           try {
             out = cncserver.drawing.base.normalizeCompoundPath(body);
           } catch (error) {
+            console.error(error);
             // Likely couldn't parse JSON import.
             // TODO: return error back to client request.
             return null;
@@ -183,7 +189,7 @@ module.exports = (cncserver) => {
       }
     } else if (type === 'project') {
       if (['trace', 'fill', 'full'].includes(operation)) {
-        cncserver.drawing.project(inputContent, parent, operation, bounds);
+        cncserver.drawing.project.processSVG(inputContent, parent, operation, bounds, settings);
       } else {
         return {
           status: 'error',

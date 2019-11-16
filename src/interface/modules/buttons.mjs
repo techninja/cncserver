@@ -17,6 +17,10 @@ buttons.park = () => {
   }); // << Direct method
 };
 
+buttons.draw = () => {
+  cncserver.api.actions.drawPreview();
+};
+
 buttons['toggle-buffer'] = (e) => {
   const $this = $(e.currentTarget);
   const $op = $this.find('option:hidden');

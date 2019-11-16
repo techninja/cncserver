@@ -2,7 +2,7 @@
  * @file Holds util functions.
  */
 /* eslint-env browser */
-/* globals cncserver, $, paper, cstate */
+/* globals cstate */
 const utils = {};
 
 utils.paperToMove = ([x, y]) => ({

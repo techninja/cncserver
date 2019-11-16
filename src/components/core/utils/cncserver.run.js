@@ -77,6 +77,10 @@ module.exports = (cncserver) => {
         c = data;
         break;
 
+      case 'special': // Low level special command, executed only in the runner.
+        c = { type: 'special', data };
+        break;
+
       default:
         return false;
     }

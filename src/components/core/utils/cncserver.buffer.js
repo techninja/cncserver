@@ -93,6 +93,10 @@ module.exports = (cncserver) => {
   // Add an object to the buffer.
   buffer.addItem = (item) => {
     const hash = cncserver.utils.getHash(item);
+    if (cncserver.settings.gConf.get('debug')) {
+      console.log(`Buffer ADD [${hash}]:`, item);
+    }
+
     buffer.data.unshift(hash);
     buffer.dataSet[hash] = item;
 
@@ -108,6 +112,9 @@ module.exports = (cncserver) => {
 
   // Event for when a buffer has been started.
   buffer.startItem = (hash) => {
+    if (cncserver.settings.gConf.get('debug')) {
+      console.log(`Buffer RUN [${hash}]`);
+    }
     const index = buffer.data.indexOf(hash);
     if (buffer.dataSet[hash] && index > -1) {
       const item = buffer.dataSet[hash];
@@ -233,6 +240,10 @@ module.exports = (cncserver) => {
           })];
 
           break;
+
+        case 'special':
+          return { commands, duration, special: item.command.data };
+
         default:
       }
     } else if (typeof item.command === 'string') {

@@ -38,7 +38,7 @@ module.exports = (cncserver) => {
    * @param {number} speedOverride
    *   Percent of speed to set for this movement only.
    */
-  pen.setPen = (inPenState, callback, speedOverride = null) => {
+  pen.setPen = (inPenState, callback = () => {}, speedOverride = null) => {
     // What can happen here?
     // We're changing state, and what we need is the ability to find all the
     // passed, changed state from either the actual pen state, OR the tip of
@@ -141,7 +141,7 @@ module.exports = (cncserver) => {
         });
 
         pen.setPen({ ...endPoint, abs: 'mm' }, null, 0);
-
+        callback(true);
         return;
       }
 
