@@ -74,13 +74,13 @@ module.exports = (cncserver) => {
    * @param {string|object} body
    *  Input to be normalized, usually a string, sometimes an object.
    *
-   * @return {object|string|null}
-   *  Imported & normalized input, or null if incorrect input.
+   * @return {Promise}
+   *  Promise that returns on success the imported & normalized input, or error
+   *  on failure.
    */
-  actions.normalizeInput = (type, operation, body) => {
+  actions.normalizeInput = (type, operation, body) => new Promise((success, err) => {
     // Draw to temp layer for initial import.
     cncserver.drawing.base.layers.temp.activate();
-    let out = body;
 
     switch (type) {
       // If a project...
@@ -89,28 +89,31 @@ module.exports = (cncserver) => {
         if (['trace', 'fill', 'full'].includes(operation)) {
           // Try to import as JSON directly.
           try {
-            out = cncserver.drawing.base.project.importJSON(body);
-          } catch (error) {
+            success(cncserver.drawing.base.project.importJSON(body));
+          } catch (jsonError) {
             try {
               // Nope, JSON failed, try SVG (file or string content);
-              out = cncserver.drawing.base.project.importSVG(body.trim(), {
+              success(cncserver.drawing.base.project.importSVG(body.trim(), {
                 expandShapes: true,
                 applyMatrix: true,
-              });
-            } catch (error) {
+              }));
+            } catch (svgError) {
               // Both failed!
-              // TODO: return error back to client request.
-              return null;
+              err(svgError);
             }
           }
         } else if (operation === 'vectorize') {
           // ...for vectorize, body must be a URL of a raster, or a file URI.
           try {
-            out = new Raster(body);
-          } catch (error) {
+            const img = new Raster(body);
+            img.onLoad = () => {
+              success(img);
+            };
+
+            img.onError = err;
+          } catch (imageErr) {
             // Couldn't load image.
-            // TODO: return error back to client request.
-            return null;
+            err(imageErr);
           }
         }
         break;
@@ -118,12 +121,10 @@ module.exports = (cncserver) => {
       case 'job':
         if (['trace', 'fill', 'full'].includes(operation)) {
           try {
-            out = cncserver.drawing.base.normalizeCompoundPath(body);
-          } catch (error) {
-            console.error(error);
+            success(cncserver.drawing.base.normalizeCompoundPath(body));
+          } catch (pathError) {
             // Likely couldn't parse JSON import.
-            // TODO: return error back to client request.
-            return null;
+            err(pathError);
           }
         }
         break;
@@ -131,20 +132,36 @@ module.exports = (cncserver) => {
       default:
         break;
     }
-
-    return out;
-  };
+  });
 
   // Manage project or job creation into tasks & instructions.
-  actions.addItem = (payload) => {
+  actions.addItem = payload => new Promise((success, err) => {
+    const { type, operation, body } = payload;
+
+    // Normalize input to match expected given type & operation.
+    actions.normalizeInput(type, operation, body)
+      .then((inputContent) => {
+        actions.parseWork(payload, inputContent)
+          .then((item) => {
+            actions.hashToIndex[item.hash] = actions.items.length;
+            actions.items.push(item);
+            success(item);
+          })
+          .catch((error) => { err(error); });
+      })
+      .catch((error) => { err(error); });
+  });
+
+  // Parse an incoming payload to verify its intent.
+  actions.parseWork = (payload, inputContent) => new Promise((success, err) => {
     const hash = cncserver.utils.getHash(payload);
     const {
-      type, parent, body, operation, bounds, parkAfter, settings,
+      type, parent, body, operation, bounds, settings,
     } = payload;
 
     const item = {
-      status: 'ready',
       hash,
+      status: 'ready',
       bounds,
       operation,
       parent,
@@ -152,67 +169,43 @@ module.exports = (cncserver) => {
       body,
     };
 
-    // Actually render paths into drawing movements.
-    if (type === 'drawpreview') {
-      cncserver.control.renderPathsToMoves();
-      return { status: 'processing' };
-    }
-
-    // Normalize input to match expected given type & operation.
-    const inputContent = actions.normalizeInput(type, operation, body);
-    if (!inputContent) {
-      return {
-        status: 'error',
-        message: 'Failed to import content, check documentation for expected body content on operation type',
-        todo: 'something more specific and useful here 😁',
-      };
-    }
-
     if (type === 'job') {
       switch (operation) {
         case 'trace':
           cncserver.drawing.trace(inputContent, parent, bounds);
+          success(item);
           break;
 
         case 'fill':
           // CLEAR the preview canvas for every job/project.
           // cncserver.drawing.base.layers.preview.removeChildren();
           cncserver.drawing.fill(inputContent, hash, null, bounds, settings);
+          success(item);
           break;
 
         case 'text':
           cncserver.drawing.text.draw(hash, payload);
+          success(item);
           break;
 
         default:
+          err(new Error('invalid operation'));
           break;
       }
     } else if (type === 'project') {
       if (['trace', 'fill', 'full'].includes(operation)) {
         cncserver.drawing.project.processSVG(inputContent, parent, operation, bounds, settings);
+        success(item);
+      } else if (operation === 'vectorize') {
+        cncserver.drawing.vectorize(inputContent, hash, bounds, settings);
+        success(item);
       } else {
-        return {
-          status: 'error',
-          message: 'invalid operation',
-        };
+        err(new Error('invalid operation'));
       }
     } else {
-      return {
-        status: 'error',
-        message: 'invalid action type: must be job or project',
-      };
+      err(new Error('invalid action type: must be job or project'));
     }
-
-    // TODO: is this the right place for this?
-    if (parkAfter) {
-      cncserver.pen.park();
-    }
-
-    actions.hashToIndex[hash] = actions.items.length;
-    actions.items.push(item);
-
-    return item;
-  };
+  });
 
   // Get a job based on the hash.
   actions.getItem = (hash) => {
