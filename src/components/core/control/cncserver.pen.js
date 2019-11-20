@@ -131,17 +131,17 @@ module.exports = (cncserver) => {
           startPoint,
           endPoint,
         ]);
-        cncserver.sockets.sendPaperPreviewUpdate();
-        const accellPoints = cncserver.drawing.accell(movePath);
+        // cncserver.sockets.sendPaperPreviewUpdate();
 
-        // movePath.remove(); // TODO: Move this to when it's done?
-
+        const accellPoints = cncserver.drawing.accell.getPointsSync(movePath);
         accellPoints.forEach((pos) => {
           pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
         });
 
         pen.setPen({ ...endPoint, abs: 'mm' }, null, 0);
         callback(true);
+
+        // movePath.remove(); // TODO: Move this to when it's done?
         return;
       }
 

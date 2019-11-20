@@ -3,6 +3,9 @@
  */
 const zodiac = require('zodiac-ts');
 
+// Conglomerated feature export.
+const accell = { id: 'drawing.accell', state: 'idle' };
+
 // Path planning Settings
 const s = {
   accelRate: 10, // Percentage increase over distance.
@@ -10,6 +13,8 @@ const s = {
   minSpeed: 5,
   resolution: 0.5, // Steps to check along path by
   maxDeflection: 5,
+  // Time before work is sent to the callback for long operations.
+  splitTimeout: 2500,
 };
 
 // Path planning:
@@ -123,7 +128,48 @@ function stepCalc(path, inputOffset) {
 }
 
 module.exports = (cncserver, drawing) => {
-  const accell = (path) => {
+  function getSmoothed(vals, rawResults) {
+    const results = rawResults;
+    try {
+      const alpha = 0.3;
+      const ses = new zodiac.SimpleExponentialSmoothing(vals, alpha);
+      const forecast = ses.predict(0);
+
+      // Repair forecast ends, always start/end on 0.
+      forecast.pop();
+      /*
+      forecast[0] = 0;
+      forecast[forecast.length - 1] = 0;
+      */
+
+      // Reinsert smoothed values back to results.
+      forecast.forEach((smoothedSpeed, index) => {
+        results[index].speed = Math.round(smoothedSpeed * 10) / 10;
+      });
+    } catch (error) {
+      // Oh well.
+    }
+
+    return results;
+  }
+
+  // Allow external cancelling of accell process.
+  accell.cancel = () => {
+    accell.state = 'idle';
+  };
+
+  // Bind to Cancel.
+  cncserver.binder.bindTo('buffer.clear', accell.id, accell.cancel);
+
+  // SYNC - Get and return a list of accell points directly.
+  // WARNING: Will entirely block event loop on long paths.
+  accell.getPointsSync = (path) => {
+    // Accell should only be doing work on one path at a time.
+    if (accell.state !== 'idle') {
+      throw new Error('Can only accell one path at a time.');
+    }
+
+    accell.state = 'processing';
     const results = [];
     const vals = [];
     const traverseLength = path.length + s.resolution;
@@ -138,50 +184,67 @@ module.exports = (cncserver, drawing) => {
       }
     }
 
-    // fs.writeFileSync('results.txt', vals.join('\n'));
+    accell.state = 'idle';
+    return getSmoothed(vals, results);
+  };
 
-    try {
-      const alpha = 0.3;
-      const ses = new zodiac.SimpleExponentialSmoothing(vals, alpha);
-      const forecast = ses.predict(0);
-      // Repair forecast ends, always start/end on 0.
-      forecast.pop();
-      forecast[0] = 0;
-      forecast[forecast.length - 1] = 0;
-
-      // DEBUG =================================================================
-      let min = 100;
-      let max = 0;
-      let avg = 0;
-      const getAverage = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
-      avg = getAverage(forecast);
-      // DEBUG =================================================================
-
-      // Reinsert smoothed values back to results.
-      forecast.forEach((smoothedSpeed, index) => {
-        results[index].speed = Math.round(smoothedSpeed * 10) / 10;
-
-        // DEBUG =================================================================
-        if (results[index].speed < min) {
-          min = results[index].speed;
-        }
-        if (results[index].speed > max) {
-          max = results[index].speed;
-        }
-        // DEBUG =================================================================
-      });
-
-      // DEBUG =================================================================
-      // console.table({ min, max, avg });
-
-      // fs.writeFileSync('results.txt', vals.join('\n'));
-      // fs.writeFileSync('smoothed.txt', forecast.join('\n'));
-    } catch (error) {
-      // Oh well.
+  // ASYNC - Get a list of accelleration points, splitting the work up into batches.
+  accell.getPoints = (path, resultCallback) => {
+    // Accell should only be doing work on one path at a time.
+    if (accell.state !== 'idle') {
+      throw new Error('Can only accell one path at a time.');
     }
 
+    speed = 0; // Reset speed follow soft global.
 
-    return results;
+    let splitTimer = new Date();
+    const results = [];
+    const vals = [];
+    const traverseLength = path.length + s.resolution;
+    accell.state = 'processing';
+
+    // Start range of where to return results.
+    let returnResultIndex = 0;
+
+    let offset = 0;
+    const nextOffset = () => {
+      // If the state changes here then processing has been canceled.
+      if (accell.state === 'idle') {
+        resultCallback(null);
+        return;
+      }
+
+      // Process along the offset in the path.
+      if (offset <= traverseLength) {
+        const v = stepCalc(path, offset);
+        if (v) {
+          vals.push(v.speed);
+          results.push(v);
+        }
+
+        // Is this taking too long? Split the work up.
+        if (new Date() - splitTimer > s.splitTimeout) {
+          resultCallback(
+            getSmoothed(vals, results).slice(returnResultIndex)
+          );
+          returnResultIndex = vals.length;
+          splitTimer = new Date();
+        }
+        offset += s.resolution;
+        setTimeout(nextOffset, 0);
+      } else {
+        accell.state = 'idle';
+
+        // We're completely done with the path.
+        resultCallback(
+          getSmoothed(vals, results).slice(returnResultIndex)
+        );
+        resultCallback([]);
+      }
+    };
+
+    // Initialize getting the first offset.
+    setTimeout(nextOffset, 0);
   };
 
   return accell;

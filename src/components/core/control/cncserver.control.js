@@ -391,7 +391,7 @@ module.exports = (cncserver) => {
    *   Source paper object containing the children, defaults to preview layer.
    */
   control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview) => {
-    const { settings: { botConf } } = cncserver;
+    const { settings: { botConf }, drawing: { colors } } = cncserver;
     // const allPaths = drawing.base.getPaths(source);
 
     // console.log('DrawStuff', );
@@ -403,18 +403,7 @@ module.exports = (cncserver) => {
 
     // Store work for all paths grouped by color
     // TODO: Provide automatic luminance based ordering (lightest to darkest).
-    const workGroups = {
-      color4: [],
-      color3: [],
-      color8: [],
-      color5: [],
-      color2: [],
-      color6: [],
-      color9: [],
-      color1: [],
-      color0: [],
-      color7: [],
-    };
+    const workGroups = colors.getWorkGroups();
     const validColors = Object.keys(workGroups);
     source.children.forEach((path) => {
       // TODO: This will not process anything not recognised.
@@ -426,59 +415,113 @@ module.exports = (cncserver) => {
     });
 
 
-    Object.entries(workGroups).forEach(([colorID, paths]) => {
-      // TODO:
-      // * Build a message system linked to the 'wait' tools
-      // * Don't process empty work groups!
-      // * Notify with confirm (or something) which pen based on name/ID
-      // * Add tool changes after each group of paths
+    let workGroupIndex = 0;
+    function nextWorkGroup() {
+      const colorID = validColors[workGroupIndex];
+      if (colorID) {
+        const paths = workGroups[colorID];
 
-      if (paths.length) {
-        // Do we have a tool for this colorID? If not, use manualswap.
-        const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
-        control.setTool(changeTool, colorID);
-        paths.forEach((path) => {
-          control.accelMoveOnPath(path);
-        });
+        if (paths.length) {
+          // Do we have a tool for this colorID? If not, use manualswap.
+          if (colors.doColorParsing()) {
+            const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
+            control.setTool(changeTool, colorID);
+          }
+
+          let compoundPathIndex = 0;
+          const nextCompoundPath = () => {
+            console.log(`Processing ${colorID} path set ${compoundPathIndex}`);
+            if (paths[compoundPathIndex]) {
+              control.accelMoveOnPath(paths[compoundPathIndex]).then(() => {
+                // Path in this group done, move to the next.
+                compoundPathIndex++;
+                nextCompoundPath();
+              });
+            } else {
+              // No more paths in this group, move to the next.
+              workGroupIndex++;
+              nextWorkGroup();
+            }
+          };
+
+          // Start processing paths in the initial workgroup.
+          nextCompoundPath();
+        } else {
+          // There is no work for this group, move to the next one.
+          workGroupIndex++;
+          nextWorkGroup();
+        }
+      } else {
+        // Actually complete with all paths in all work groups!
+        // TODO: Fullfull a promise for the function?
       }
-    });
+    }
+    // Intitialize working on the first group on the next process tick.
+    process.nextTick(nextWorkGroup);
 
-    // Move through all paths and add each one as a job.
-    /* allPaths.forEach((rawPath) => {
-      const path = drawing.base.normalizeCompoundPath(rawPath);
-    }); */
+    console.log('Rendering paths to moves...');
   };
 
-  control.accelMoveOnPath = (path) => {
+  control.accelMoveOnPath = path => new Promise((success) => {
     // Move through all sub-paths within the compound path. For non-compound
     // paths, this will only iterate once.
-    path.children.forEach((subPath) => {
-      const accellPoints = cncserver.drawing.accell(subPath);
+    let childIndex = 0;
 
-      // Pen up
-      cncserver.pen.setPen({ state: 'up' });
-
-      // Move to start of path, then pen down.
-      cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
-      cncserver.pen.setPen({ state: 'draw' });
-
-      // Move through all accell points from start to nearest end point
-      accellPoints.forEach((pos) => {
-        cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
-      });
-
-      // Move to end of path...
-      cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
-
-      // If it's a closed path, overshoot back home.
-      if (subPath.closed) {
-        cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+    function nextSubPath() {
+      if (path.children[childIndex]) {
+        // Calculate and run in full movement for subpath, then run the next.
+        control.accelMoveSubPath(path.children[childIndex]).then(() => {
+          childIndex++;
+          nextSubPath();
+        });
+      } else {
+        // No more subpaths, fulfull the promise.
+        success();
       }
+    }
 
-      // End with pen up.
-      cncserver.pen.setPen({ state: 'up' });
+    nextSubPath();
+  });
+
+  control.accelMoveSubPath = subPath => new Promise((success) => {
+    // Pen up
+    cncserver.pen.setPen({ state: 'up' });
+
+    // Move to start of path, then pen down.
+    cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+    cncserver.pen.setPen({ state: 'draw' });
+
+    // Calculate groups of accell points and run them into moves.
+    cncserver.drawing.accell.getPoints(subPath, (accellPoints) => {
+      // If we have data, move to those points.
+      if (accellPoints && accellPoints.length) {
+        console.log(`Got ${accellPoints.length} accell points in split work`);
+        // Move through all accell points from start to nearest end point
+        accellPoints.forEach((pos) => {
+          cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+        });
+      } else {
+        // Null means generation of accell points was cancelled.
+        if (accellPoints !== null) {
+          // No points? We're done. Wrap up the line.
+          console.log('Accell done, finishing path!');
+          // Move to end of path...
+          cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
+
+          // If it's a closed path, overshoot back home.
+          if (subPath.closed) {
+            cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+          }
+
+          // End with pen up.
+          cncserver.pen.setPen({ state: 'up' });
+        }
+
+        // Fulfull the promise for this subpath.
+        success();
+      }
     });
-  };
+  });
 
 
   // Exports...
