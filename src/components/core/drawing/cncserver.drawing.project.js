@@ -37,8 +37,8 @@ module.exports = (cncserver, drawing) => {
     drawing.base.removeNonPaths(tempItem);
 
     // TODO: We need to make sure we're not destroying data when doing this.
-    //
-    // if (settings.fillOcclusion) drawing.occlusion('fill', item);
+    // TODO: This breaks initial color data transfer
+    // if (settings.fillOcclusion) drawing.occlusion('fill', tempItem);
     // if (settings.StrokeOcclusion) drawing.occlusion('stroke', item);
 
     // Update client preview.

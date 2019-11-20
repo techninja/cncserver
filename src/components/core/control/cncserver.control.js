@@ -394,7 +394,6 @@ module.exports = (cncserver) => {
     const { settings: { botConf }, drawing: { colors } } = cncserver;
     // const allPaths = drawing.base.getPaths(source);
 
-    // console.log('DrawStuff', );
     // TODO:
     // * Join extant non-closed paths with endpoint distances < 0.5mm
     // * Split work by colors
@@ -402,7 +401,6 @@ module.exports = (cncserver) => {
     // * Order paths by pickup/dropoff distance
 
     // Store work for all paths grouped by color
-    // TODO: Provide automatic luminance based ordering (lightest to darkest).
     const workGroups = colors.getWorkGroups();
     const validColors = Object.keys(workGroups);
     source.children.forEach((path) => {
@@ -430,7 +428,6 @@ module.exports = (cncserver) => {
 
           let compoundPathIndex = 0;
           const nextCompoundPath = () => {
-            console.log(`Processing ${colorID} path set ${compoundPathIndex}`);
             if (paths[compoundPathIndex]) {
               control.accelMoveOnPath(paths[compoundPathIndex]).then(() => {
                 // Path in this group done, move to the next.
@@ -458,8 +455,6 @@ module.exports = (cncserver) => {
     }
     // Intitialize working on the first group on the next process tick.
     process.nextTick(nextWorkGroup);
-
-    console.log('Rendering paths to moves...');
   };
 
   control.accelMoveOnPath = path => new Promise((success) => {
@@ -504,7 +499,7 @@ module.exports = (cncserver) => {
         // Null means generation of accell points was cancelled.
         if (accellPoints !== null) {
           // No points? We're done. Wrap up the line.
-          console.log('Accell done, finishing path!');
+
           // Move to end of path...
           cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
 
