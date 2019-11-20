@@ -149,6 +149,35 @@ module.exports = (cncserver, drawing) => {
     colors.setDefault();
   });
 
+  // Figure out if we should even parse color work
+  colors.doColorParsing = () => {
+    const items = {};
+    colors.set.forEach((item) => {
+      if (item.id !== 'ignore') {
+        items[item.id] = true;
+      }
+    });
+    return items.length > 1;
+  };
+
+  // Get a luminosity sorted list of colors.
+  colors.getSortedSet = () => colors.set.sort(
+    (a, b) => new Color(b.color).gray - new Color(a.color).gray
+  );
+
+  // Get an object keyed by color work ID, ordered by luminosity light->dark.
+  colors.getWorkGroups = () => {
+    const groups = {};
+    const sorted = colors.getSortedSet();
+
+    sorted.forEach((color) => {
+      if (color.id !== 'ignore') {
+        groups[color.id] = [];
+      }
+    });
+    return groups;
+  };
+
   /**
    * Snap all the paths in the given layer to a particular color.
    *
