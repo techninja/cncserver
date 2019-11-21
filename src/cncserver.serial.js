@@ -111,11 +111,7 @@ module.exports = function(cncserver){
     var portNames = [];
     var cleanList = [];
 
-    SerialPort.list(function (err, ports) {
-
-      // TODO: Catch errors thrown here.
-      err = err;
-
+    SerialPort.list().then(function (ports) {
       ports.forEach(function(port){
         var portMaker = (port.manufacturer || "").toLowerCase();
         // Convert reported product ID from hex string to decimal.
@@ -152,6 +148,8 @@ module.exports = function(cncserver){
       });
 
       callback({auto: detectList, names: portNames, full: cleanList});
+    }, function(err) {
+      throw new Error(err);
     });
   };
 
