@@ -433,6 +433,9 @@ module.exports = (cncserver) => {
                 // Path in this group done, move to the next.
                 compoundPathIndex++;
                 nextCompoundPath();
+              }).catch(() => {
+                // Path generation has been entirely cancelled.
+                workGroupIndex = validColors.length;
               });
             } else {
               // No more paths in this group, move to the next.
@@ -457,7 +460,7 @@ module.exports = (cncserver) => {
     process.nextTick(nextWorkGroup);
   };
 
-  control.accelMoveOnPath = path => new Promise((success) => {
+  control.accelMoveOnPath = path => new Promise((success, error) => {
     // Move through all sub-paths within the compound path. For non-compound
     // paths, this will only iterate once.
     let childIndex = 0;
@@ -468,7 +471,7 @@ module.exports = (cncserver) => {
         control.accelMoveSubPath(path.children[childIndex]).then(() => {
           childIndex++;
           nextSubPath();
-        });
+        }).catch(error);
       } else {
         // No more subpaths, fulfull the promise.
         success();
@@ -478,7 +481,7 @@ module.exports = (cncserver) => {
     nextSubPath();
   });
 
-  control.accelMoveSubPath = subPath => new Promise((success) => {
+  control.accelMoveSubPath = subPath => new Promise((success, error) => {
     // Pen up
     cncserver.pen.setPen({ state: 'up' });
 
@@ -490,7 +493,6 @@ module.exports = (cncserver) => {
     cncserver.drawing.accell.getPoints(subPath, (accellPoints) => {
       // If we have data, move to those points.
       if (accellPoints && accellPoints.length) {
-        console.log(`Got ${accellPoints.length} accell points in split work`);
         // Move through all accell points from start to nearest end point
         accellPoints.forEach((pos) => {
           cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
@@ -510,10 +512,14 @@ module.exports = (cncserver) => {
 
           // End with pen up.
           cncserver.pen.setPen({ state: 'up' });
+
+          // Fulfull the promise for this subpath.
+          success();
+          return;
         }
 
-        // Fulfull the promise for this subpath.
-        success();
+        // If we're here, path generation was cancelled, bubble it.
+        error();
       }
     });
   });
