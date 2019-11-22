@@ -157,7 +157,7 @@ module.exports = (cncserver, drawing) => {
         items[item.id] = true;
       }
     });
-    return items.length > 1;
+    return Object.keys(items).length > 1;
   };
 
   // Get a luminosity sorted list of colors.
