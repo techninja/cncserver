@@ -136,7 +136,15 @@ module.exports = (cncserver) => {
 
   // Manage project or job creation into tasks & instructions.
   actions.addItem = payload => new Promise((success, err) => {
-    const { type, operation, body } = payload;
+    const {
+      type, operation, body, clearPreview,
+    } = payload;
+
+    // Clear the project preview if client requests it.
+    if (type === 'project' && clearPreview) {
+      cncserver.drawing.base.layers.preview.removeChildren();
+      cncserver.sockets.sendPaperPreviewUpdate();
+    }
 
     // Normalize input to match expected given type & operation.
     actions.normalizeInput(type, operation, body)
