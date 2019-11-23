@@ -8,10 +8,11 @@ const { Project, Size, Path } = require('paper');
 const clipperLib = require('js-angusj-clipper');
 const ipc = require('node-ipc');
 
-const workingHash = process.argv[2];
 const hostname = 'cncserver';
-
-console.log('Hash should be', workingHash);
+const ipcBase = {
+  hash: process.argv[2],
+  type: 'filler',
+};
 
 // Config IPC.
 ipc.config.silent = true;
@@ -19,7 +20,7 @@ ipc.config.silent = true;
 // Generic message sender.
 const send = (command, data = {}) => {
   const packet = { command, data };
-  ipc.of[hostname].emit('filler.message', packet);
+  ipc.of[hostname].emit('spawner.message', packet);
 };
 
 // Clipper helper utilities.
@@ -105,14 +106,14 @@ const exp = {
       // Setup bindings now that the socket is ready.
       ipc.of[hostname].on('connect', () => {
         // Connected! Tell the server we're ready for data.
-        send('ready', workingHash);
+        send('ready', ipcBase);
       });
 
       // Bind central init, this gives us everything we need to do the work!
-      ipc.of[hostname].on('filler.init', ({ size, path, settings }) => {
+      ipc.of[hostname].on('spawner.init', ({ size, object, settings }) => {
         exp.project = new Project(new Size(size));
-        const item = exp.project.activeLayer.importJSON(path);
-        console.log('Path imported:', item.name, `${item.length}mm long`);
+        const item = exp.project.activeLayer.importJSON(object);
+        console.log('Path:', item.name, `${Math.round(item.length * 10) / 10}mm long`);
         initCallback(item, settings);
       });
     });
@@ -120,18 +121,15 @@ const exp = {
 
   // Report progress on processing.
   progress: (status, value) => {
-    send('progress', { status, value });
+    send('progress', { ...ipcBase, status, value });
   },
 
-  // Final fill paths! Send and shutdown when done.
+  // Final fill paths! Send and host will shutdown when done.
   finish: (paths = {}) => {
     send('complete', {
-      hash: workingHash,
-      paths: paths.exportJSON(), // exp.project.activeLayer.exportJSON()
+      ...ipcBase,
+      result: paths.exportJSON(), // exp.project.activeLayer.exportJSON()
     });
-
-    ipc.disconnect(hostname);
-    process.exit();
   },
 
   // Get only the ID of closest point in an intersection array.
@@ -174,5 +172,10 @@ const exp = {
   // Add in the Clipper utilities.
   clipper,
 };
+
+process.addListener('uncaughtException', (err) => {
+  console.error(err);
+  process.exit(1);
+});
 
 module.exports = exp;
