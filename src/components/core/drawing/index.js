@@ -8,6 +8,7 @@ module.exports = (cncserver) => {
   drawing.base = require('./cncserver.drawing.base.js')(cncserver);
   drawing.occlusion = require('./cncserver.drawing.occlusion.js')(cncserver, drawing);
   drawing.trace = require('./cncserver.drawing.trace.js')(cncserver, drawing);
+  drawing.spawner = require('./cncserver.drawing.spawner.js')(cncserver, drawing);
   drawing.fill = require('./cncserver.drawing.fill.js')(cncserver, drawing);
   drawing.vectorize = require('./cncserver.drawing.vectorize.js')(cncserver, drawing);
   drawing.text = require('./cncserver.drawing.text.js')(cncserver, drawing);
