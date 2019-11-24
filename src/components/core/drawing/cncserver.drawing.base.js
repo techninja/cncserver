@@ -24,6 +24,7 @@ module.exports = (cncserver) => {
     // Setup layers: temp, working
     // Whatever the last layer added was, will be default.
     base.layers = {
+      import: new Layer(),
       temp: new Layer(),
       preview: new Layer(),
     };
@@ -145,6 +146,87 @@ module.exports = (cncserver) => {
       fillColor: path.fillColor,
       strokeColor: path.strokeColor,
     }));
+  };
+
+  // Check if a fill/stroke color is "real".
+  // Returns True if not null or fully transparent.
+  base.hasColor = (color) => {
+    if (!color) {
+      return false;
+    }
+    return color.alpha !== 0;
+  };
+
+  // Takes a layer, and cleans up all the immediate children to verify they have
+  // either: Stroke with no fill, stroke with fill (closed), fill only.
+  // Removes or fixes all paths that don't fit here.
+  base.cleanupInput = (layer, fillStroke = false) => {
+    const { hasColor } = base;
+    base.removeNonPaths(layer);
+
+    const kids = [...layer.children];
+    kids.forEach((item) => {
+      const { name } = item;
+
+      // Maybe a fill?
+      if (hasColor(item.fillColor)) {
+        console.log('Fill', item.name, item.fillColor.toCSS());
+        item.closed = true;
+        item.fillColor.alpha = 1;
+
+        // Has a stroke?
+        if (hasColor(item.strokeColor) || item.strokeWidth) {
+          if (!hasColor(item.strokeColor)) {
+            item.strokeColor = item.fillColor || 'black';
+            item.strokeColor.alpha = 1;
+          }
+          if (!item.strokeWidth) {
+            item.strokeWidth = 1;
+          }
+        } else if (fillStroke) {
+          // Add a stroke to fills if requested.
+          console.log('Adding stroke to fill', item.name, item.fillColor.toCSS());
+          item.strokeColor = item.fillColor;
+          item.strokeWidth = 1;
+        }
+      } else if (hasColor(item.strokeColor) || item.strokeWidth) {
+        if (!hasColor(item.strokeColor)) {
+          item.strokeColor = item.fillColor || 'black';
+        } else {
+          item.strokeColor.alpha = 1;
+        }
+
+        if (!item.strokeWidth) {
+          item.strokeWidth = 1;
+        }
+      } else {
+        console.log('Removing No fill/stroke', item.name);
+        item.remove();
+      }
+    });
+  };
+
+  base.setPathOption = (path, options) => {
+    Object.entries(options).forEach(([key, value]) => {
+      path[key] = value;
+    });
+  };
+
+  // Prepare a layer to remove anything that isn't a fill.
+  base.cleanupFills = (tmp) => {
+    const kids = [...tmp.children];
+    kids.forEach((path) => {
+      if (!base.hasColor(path.fillColor)) {
+        path.remove();
+      } else {
+        // Bulk set path options.
+        base.setPathOption(path, {
+          closed: true,
+          strokeWidth: 0,
+          strokeColor: null,
+        });
+      }
+    });
   };
 
   // At this point, simply removing anything that isn't a path.

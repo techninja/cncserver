@@ -31,11 +31,10 @@ module.exports = (cncserver, drawing) => {
   /**
    * Returns a group of lines and characters rendered in single line hersheyfont
    */
-  text.renderHersheyPaths = (payload, options) => {
+  text.renderHersheyPaths = (textContent, bounds, settings) => {
     // Render the text array.
-    const t = hershey.renderTextArray(payload.body, {
-      ...options,
-      id: payload.name,
+    const t = hershey.renderTextArray(textContent, {
+      ...settings,
       pos: { x: 0, y: 0 },
     });
 
@@ -49,15 +48,15 @@ module.exports = (cncserver, drawing) => {
     let cLine = 0;
     t.forEach((char, index) => {
       if (char.type === 'space' || char.type === 'newline') {
-        caretPos.x += options.spaceWidth;
+        caretPos.x += settings.spaceWidth;
 
         // Allow line wrap on space
-        if (caretPos.x > options.wrapWidth || char.type === 'newline') {
+        if (caretPos.x > settings.wrapWidth || char.type === 'newline') {
           // Before wrapping, reverse the order of the chars.
           lines[cLine].reverseChildren();
 
           caretPos.x = 0;
-          caretPos.y += options.lineHeight;
+          caretPos.y += settings.lineHeight;
 
           cLine++;
           lines.push(new Group());
@@ -78,15 +77,15 @@ module.exports = (cncserver, drawing) => {
         // them to our group and set the details in the subpath.
         const tmpCompound = new CompoundPath(char.d);
 
-        if (options.smooth) {
-          tmpCompound.smooth(options.smooth);
+        if (settings.smooth) {
+          tmpCompound.smooth(settings.smooth);
         }
         tmpCompound.children.forEach((subpath) => {
           c.addChild(new Path({
             data,
             pathData: subpath.pathData,
-            strokeWidth: options.strokeWidth,
-            strokeColor: options.strokeColor,
+            strokeWidth: settings.strokeWidth,
+            strokeColor: settings.strokeColor,
           }));
         });
         tmpCompound.remove();
@@ -97,7 +96,7 @@ module.exports = (cncserver, drawing) => {
         c.position = caretPos;
 
         // Move the caret to the next position based on width and char spacing
-        caretPos.x += b.width + options.charSpacing;
+        caretPos.x += b.width + settings.charSpacing;
       }
     });
 
@@ -110,27 +109,27 @@ module.exports = (cncserver, drawing) => {
     chars.addChildren(lines);
 
     // Text sizing and position!
-    if (payload.bounds) {
+    if (bounds) {
       // Scale and fit within the given bounds rectangle.
-      drawing.base.fitBounds(chars, payload.bounds);
+      drawing.base.fitBounds(chars, bounds);
     } else {
       // Position off from center, or at exact position.
-      const anchorPos = drawing.base.getAnchorPos(chars, options.anchor);
+      const anchorPos = drawing.base.getAnchorPos(chars, settings.anchor);
 
-      if (options.position) {
-        chars.position = new Point(options.position).subtract(anchorPos);
+      if (settings.position) {
+        chars.position = new Point(settings.position).subtract(anchorPos);
       } else {
-        chars.position = view.center.add(new Point(options.hCenter, options.vCenter));
+        chars.position = view.center.add(new Point(settings.hCenter, settings.vCenter));
       }
-      chars.scale(options.scale, anchorPos);
+      chars.scale(settings.scale, anchorPos);
     }
 
     // Align the lines
-    if (options.textAlign === 'center') {
+    if (settings.textAlign === 'center') {
       lines.forEach((line) => {
         line.position.x = chars.position.x;
       });
-    } else if (options.textAlign === 'right') {
+    } else if (settings.textAlign === 'right') {
       lines.forEach((line) => {
         line.pivot = new Point(line.bounds.width, line.bounds.height / 2);
         line.position.x = chars.bounds.width;
@@ -143,15 +142,15 @@ module.exports = (cncserver, drawing) => {
   /**
    * Return a group characters rendered in filled compound path system font.
    */
-  text.renderFilledText = (payload, options) => {
+  text.renderFilledText = (textContent, bounds, settings) => {
     const canvas = createCanvas(8192, 1024);
     const {
       fontStyle, fontVariant, fontWeight, textBaseline = 'hanging', textAlign,
-    } = options;
-    const polygons = vectorizeText(payload.body, {
+    } = settings;
+    const polygons = vectorizeText(textContent, {
       polygons: true,
       width: 200,
-      font: options.systemFont,
+      font: settings.systemFont,
       context: canvas.getContext('2d'),
       fontStyle,
       fontVariant,
@@ -178,31 +177,32 @@ module.exports = (cncserver, drawing) => {
 
 
     // Text sizing and position!
-    if (payload.bounds) {
+    if (bounds) {
       // Scale and fit within the given bounds rectangle.
-      drawing.base.fitBounds(chars, payload.bounds);
+      drawing.base.fitBounds(chars, bounds);
     } else {
       // Position off from center, or at exact position.
-      const anchorPos = drawing.base.getAnchorPos(chars, options.anchor);
+      const anchorPos = drawing.base.getAnchorPos(chars, settings.anchor);
       const { view } = drawing.base.project;
 
-      if (options.position) {
-        chars.position = new Point(options.position).subtract(anchorPos);
+      if (settings.position) {
+        chars.position = new Point(settings.position).subtract(anchorPos);
       } else {
-        chars.position = view.center.add(new Point(options.hCenter, options.vCenter));
+        chars.position = view.center.add(new Point(settings.hCenter, settings.vCenter));
       }
-      chars.scale(options.scale, anchorPos);
+      chars.scale(settings.scale, anchorPos);
     }
 
     // Fill each character if settings are given.
-    if (typeof options.fillSettings === 'object') {
+    if (typeof settings.fillSettings === 'object') {
       chars.children.forEach((char) => {
+        char.fillColor = settings.color;
         cncserver.actions.addItem({
           operation: 'fill',
           type: 'job',
           parent: '123',
-          body: char,
-          settings: options.fillSettings,
+          body: char.exportJSON(),
+          settings: settings.fillSettings,
         });
       });
     }
@@ -211,20 +211,27 @@ module.exports = (cncserver, drawing) => {
   };
 
   // Actually build the paths for drawing.
-  text.draw = (hash, payload) => {
-    // Mesh in option defaults
-    const options = {
-      ...text.defaultSettings(),
-      ...payload.settings,
-    };
+  text.draw = (textContent, hash, parent = null, bounds, requestSettings) => {
+    // Mesh in settings defaults
+    const settings = { ...text.defaultSettings(), ...requestSettings };
 
-    const chars = options.systemFont
-      ? text.renderFilledText(payload, options)
-      : text.renderHersheyPaths(payload, options);
+    // Render content straight to the preview layer.
+    drawing.base.layers.preview.activate();
+
+    const chars = settings.systemFont
+      ? text.renderFilledText(textContent, bounds, settings)
+      : text.renderHersheyPaths(textContent, bounds, settings);
 
     if (chars) {
+      // Apply color/stroke.
+      chars.strokeColor = settings.color;
+      chars.strokeWidth = 1;
+
+      // Nothing on preview should have a fill.
+      chars.fillColor = null;
+
       // Rotation!
-      chars.rotate(options.rotation);
+      chars.rotate(settings.rotation);
 
       // Update client preview.
       cncserver.sockets.sendPaperPreviewUpdate();

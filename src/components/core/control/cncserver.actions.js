@@ -65,7 +65,8 @@ module.exports = (cncserver) => {
 
 
   /**
-   * Normalize addItem payload between allowed types given intent.
+   * Normalize addItem payload between allowed types given intent. Imports
+   * content to "import" layer.
    *
    * @param {string} type
    *  Type of action, project or job.
@@ -78,9 +79,11 @@ module.exports = (cncserver) => {
    *  Promise that returns on success the imported & normalized input, or error
    *  on failure.
    */
-  actions.normalizeInput = (type, operation, body) => new Promise((success, err) => {
-    // Draw to temp layer for initial import.
-    cncserver.drawing.base.layers.temp.activate();
+  actions.normalizeInput = (type, operation, body, color) => new Promise((success, err) => {
+    const { drawing: { base: { layers } } } = cncserver;
+    // Draw to empty import layer.
+    layers.import.activate();
+    layers.import.removeChildren();
 
     switch (type) {
       // If a project...
@@ -89,11 +92,11 @@ module.exports = (cncserver) => {
         if (['trace', 'fill', 'full'].includes(operation)) {
           // Try to import as JSON directly.
           try {
-            success(cncserver.drawing.base.project.importJSON(body));
+            success(layers.import.importJSON(body));
           } catch (jsonError) {
             try {
               // Nope, JSON failed, try SVG (file or string content);
-              success(cncserver.drawing.base.project.importSVG(body.trim(), {
+              success(layers.import.importSVG(body.trim(), {
                 expandShapes: true,
                 applyMatrix: true,
               }));
@@ -115,17 +118,30 @@ module.exports = (cncserver) => {
             // Couldn't load image.
             err(imageErr);
           }
+        } else {
+          err(new Error('invalid project operation'));
         }
         break;
 
       case 'job':
         if (['trace', 'fill', 'full'].includes(operation)) {
           try {
-            success(cncserver.drawing.base.normalizeCompoundPath(body));
+            const item = cncserver.drawing.base.normalizeCompoundPath(body);
+            if (operation === 'trace' && !item.strokeColor) item.strokeColor = color;
+            if (['fill', 'full'].includes(operation) && !item.fillColor) item.fillColor = color;
+            success(item);
           } catch (pathError) {
             // Likely couldn't parse JSON import.
             err(pathError);
           }
+        } else if (operation === 'text') {
+          if (typeof body === 'string') {
+            success(body);
+          } else {
+            err(new Error('text input requires a string as the body'));
+          }
+        } else {
+          err(new Error('invalid job operation'));
         }
         break;
 
@@ -137,7 +153,7 @@ module.exports = (cncserver) => {
   // Manage project or job creation into tasks & instructions.
   actions.addItem = payload => new Promise((success, err) => {
     const {
-      type, operation, body, clearPreview,
+      type, operation, body, clearPreview, color = 'black',
     } = payload;
 
     // Clear the project preview if client requests it.
@@ -147,7 +163,7 @@ module.exports = (cncserver) => {
     }
 
     // Normalize input to match expected given type & operation.
-    actions.normalizeInput(type, operation, body)
+    actions.normalizeInput(type, operation, body, color)
       .then((inputContent) => {
         actions.parseWork(payload, inputContent)
           .then((item) => {
@@ -164,7 +180,7 @@ module.exports = (cncserver) => {
   actions.parseWork = (payload, inputContent) => new Promise((success, err) => {
     const hash = cncserver.utils.getHash(payload);
     const {
-      type, parent, body, operation, bounds, settings,
+      type, parent, body, operation, bounds, settings = {}, name, color = 'black',
     } = payload;
 
     const item = {
@@ -192,7 +208,9 @@ module.exports = (cncserver) => {
           break;
 
         case 'text':
-          cncserver.drawing.text.draw(hash, payload);
+          settings.id = name;
+          settings.color = color;
+          cncserver.drawing.text.draw(inputContent, hash, null, bounds, settings);
           success(item);
           break;
 
