@@ -35,10 +35,14 @@ module.exports = (cncserver) => {
           res.status(200).send(item);
         })
         .catch((err) => {
-          res.status(406).send({
+          console.error(err);
+          const errBody = {
             status: 'error',
             message: `${err}`,
-          });
+          };
+
+          if (err.stack) errBody.stack = err.stack;
+          res.status(406).send(errBody);
         });
 
       return true; // Tell endpoint wrapper we'll handle the response
