@@ -112,7 +112,7 @@ module.exports = (cncserver, drawing) => {
     spawnData.process.stderr.on('data', (err) => {
       console.error(`SPAWN ERROR ${spawnKey}: ${err}`);
       spawnData.error(err);
-      spawnData.process.exit(1);
+      spawnData.process.kill('SIGHUP');
     });
 
     spawnData.process.on('exit', (exitCode) => {
