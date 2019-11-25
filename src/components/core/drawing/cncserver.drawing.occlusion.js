@@ -30,7 +30,7 @@ module.exports = (cncserver, drawing) => {
 
           // Set the new srcPath to the subtracted one inserted at the
           // same index.
-          console.log('Source subtract from:', srcPath.name, destPath.name);
+          // console.log('Source subtract from:', srcPath.name, destPath.name);
           srcPath = layer.insertChild(srcIndex, srcPath.subtract(destPath));
           srcPath.name = tmpPath.name ? tmpPath.name : `auto_path_${srcPath.id}`;
           srcPath.data = { ...tmpPath.data };
