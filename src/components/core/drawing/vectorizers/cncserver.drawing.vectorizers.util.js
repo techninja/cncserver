@@ -4,7 +4,9 @@
  * Holds all standardized processes for managing IPC, paper setup, and export
  * so the vectorization algorithm can do whatever it needs.
  */
-const { Project, Size } = require('paper');
+const {
+  Project, Size, Path, Rectangle,
+} = require('paper');
 const ipc = require('node-ipc');
 
 const hostname = 'cncserver';
@@ -74,6 +76,49 @@ const exp = {
    *   The output number after mapping.
    */
   map: (x, inMin, inMax, outMin, outMax) => (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin,
+
+  generateSpiralPath: (inputSpacing, spiralBounds) => {
+    // Calculate a single spiral coordinate given a distance and spacing.
+    function calculateSpiral(distance, spacing = 1, center) {
+      return {
+        x: (spacing * distance * Math.cos(distance)) + center.x,
+        y: (spacing * distance * Math.sin(distance)) + center.y,
+      };
+    }
+
+    // Make a list of points along a spiral.
+    function makeSpiral(turns, spacing, startOn, center) {
+      const start = startOn ? startOn * Math.PI * 2 : 0;
+      const points = [];
+      const stepAngle = Math.PI / 4; // We want at least 8 points per turn
+
+      for (let i = start; i < turns * Math.PI * 2; i += stepAngle) {
+        points.push(calculateSpiral(i, spacing, center));
+      }
+
+      return points;
+    }
+
+    // Setup the spiral:
+    const viewBounds = new Rectangle(spiralBounds) || exp.project.view.bounds;
+    const spiral = new Path();
+    const spacing = inputSpacing / (Math.PI * 2);
+
+    // This is the diagonal distance of the area in which we will be filling.
+    const boundsSize = viewBounds.topLeft.getDistance(viewBounds.bottomRight) / 2;
+
+    // Estimate the number of turns based on the spacing and boundsSize
+    const turns = Math.ceil(boundsSize / (spacing * 2 * Math.PI));
+
+    spiral.position = viewBounds.center;
+    spiral.addSegments(makeSpiral(turns, spacing, null, spiral.position));
+
+    spiral.smooth();
+
+    // The last few segments are not spiralular so remove them
+    spiral.removeSegments(spiral.segments.length - 4);
+    return spiral;
+  },
 };
 
 process.addListener('uncaughtException', (err) => {
