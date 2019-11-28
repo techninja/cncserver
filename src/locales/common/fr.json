@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "creator": "R10 avec l’aide de Sofia",
+    "target": "fr",
+    "langname": "Français",
+    "release": "0.9.6"
+  },
+  "common": {
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "stop": "Stop",
+    "time": {
+      "ms": "__count__ ms",
+      "sec": "__count__ sec",
+      "ms_plural": "millisecondes __count__",
+      "sec_plural": "secondes __count__",
+      "second": "__count__ secondes",
+      "second_plural": "seconde __count__"
+    },
+    "metric": {
+      "mm": "__count__ mm",
+      "cm": "__count__ cm"
+    },
+    "imperial": {
+      "in": "__count__ pouces",
+      "in_plural": "__count__ pouces"
+    },
+    "transparent": "Transparent",
+    "implement": {
+      "brush": "Brosse",
+      "pen": "Stylo"
+    },
+    "substrate": "Blanc / Livre",
+    "water": "Eau",
+    "action": {
+      "park": "Park Accueil",
+      "disable": "Débloquez Motors",
+      "parktitle": "Déplacez le chariot vers la position de la maison.",
+      "disabletitle": "Soulever et débloquer moteurs pas à pas afin que vous pouvez déplacer le chariot à la main.",
+      "pause": "Pause",
+      "stop": "Arrêtez",
+      "resume": "Cv",
+      "start": "Début",
+      "save": "Enregistrer",
+      "apply": "Appliquer",
+      "print": "Imprimer",
+      "cancel": "Annuler",
+      "done": "Fini",
+      "canceltitle": "Annuler actuel travail d'impression.",
+      "autocolortitle": "Choisissez le match le plus proche pour les couleurs existantes dans le dessin. Cliquez à nouveau pour le défaire.",
+      "autocolor": "Couleur Auto",
+      "brush": {
+        "lower": "Basse Brosse",
+        "wash": "Brosse de lavage",
+        "raise": "Levez Brush"
+      },
+      "pen": {
+        "lower": "Basse Pen",
+        "raise": "Levez Pen"
+      },
+      "cancelconfirm": "Etes-vous sûr que vous voulez annuler le travail en cours?"
+    },
+    "labels": {
+      "control": "Contrôle",
+      "status": "Statut",
+      "progress": "Les progrès actuels"
+    },
+    "dialog": {
+      "confirmexit": "Etes-vous sûr que vous voulez aller?\n\nQuitter ce mode en cours d'impression pour annuler tous vos travaux. Cliquez sur OK pour quitter."
+    }
+  },
+  "status": {
+    "start": "Mise en marche...",
+    "found": "Port trouvé, connexion en cours...",
+    "question": "Quelle est votre désir?",
+    "error": "Je ne peux pas connecter!",
+    "success": "Nous sommes connectés!",
+    "disconnect": "Bot déconnecté!",
+    "button": {
+      "continue": "Continuer en simulation",
+      "retry": "Essayer de se reconnecter"
+    },
+    "connecting": "Connexion à Robot ...",
+    "pausing": "Pause processus actuel ...",
+    "connected": "Connexion réussie!",
+    "resuming": "Reprise processus actuel ...",
+    "resumed": "Dessin repris ...",
+    "paused": "Pause. Cliquez sur Reprendre pour continuer.",
+    "parking": "Parking ...",
+    "unlocking": "Déverrouillage des moteurs ...",
+    "parkfail": "Vous ne pouvez pas Park, déjà stationné",
+    "parked": "Garé succès",
+    "unlocked": "Motors déverrouillées! Placez-les dans la maison coin quand fait",
+    "wait": "S'il vous plaît patienter pendant exécuté processus complet ...",
+    "pausetillempty": "Streaming toutes les commandes avant de commencer à prévenir ralentissement ..."
+  },
+  "nav": {
+    "toolbar": {
+      "home": "Écran d'accueil",
+      "edit": "Mode Création: Ouvrir, redimensionner, et modifier des illustrations vectorielles existant.",
+      "open": "Ouvrir une image existante.",
+      "printauto": "Mode Peinture: RoboPaint votre dessin!",
+      "printmanual": "Commande Manuelle: Personnalisez votre création.",
+      "help": "Aide! (Documentation en anglais)",
+      "settings": "Paramètres",
+      "version": "v"
+    },
+    "bubble": {
+      "edit": "Créer",
+      "printauto": "Imprimer",
+      "printmanual": "Manuelle"
+    }
+  },
+  "remoteprint": {
+    "title": "Peinture à distance",
+    "icontitle": {
+      "from": "de RoboPaint",
+      "through": "a travers l’internet ou votre réseau local",
+      "to": "à votre propre bot!"
+    },
+    "details": {
+      "title": "Détails et Contrôles:",
+      "exit": {
+        "text": "Quitter le mode Peinture à distance",
+        "title": "Annuler les opérations en cours et quitter ce mode."
+      }
+    },
+    "api": {
+      "disabled": "Importation de fichiers SVG est désactivée. Activer l'API dans les paramètres, puis cliquez sur le bouton dans RoboPaint.",
+      "busy": "Désolé, je ne peux pas ajouter votre fichier à la file d'attente avant le travail d'impression est terminé.",
+      "queued": "Préparé pour l'impression ...",
+      "wait": "En attente de votre dessin ..."
+    },
+    "confirms": {
+      "welcome": "Bonjour et bienvenue sur le mode Peinture à distance! Ce mode se met RoboPaint comme un serveur d'impression, prêt à prendre une image d'une autre application et l'imprimer immédiatement. \n\n* Les images envoyées ne seront reçus sauf ce mode est activer ​\n\n* Une fois l'image est terminé, ce mode sera quitter \n\n* Avant de cliquer sur OK, assurez-vous que votre bot est complètement configuré et prêt à partir! \n\n* Cliquez sur Annuler si vous n'êtes pas tout à fait prêt à aller. Vous pouvez également quitter à tout moment le mode Peinture à distance",
+      "exit": "Êtes-vous sûr de vouloir quitter le mode Peinture à distance ?\n\n Tous les processus d'impression et les autres applications seront annulées ou déconnecté."
+    }
+  },
+  "settings": {
+    "lang": {
+      "title": "Sélectionner la langue:"
+    },
+    "tabs": {
+      "output": "Style de Peinture",
+      "common": "Standard",
+      "advanced": "Avancé",
+      "media": "Outil",
+      "modes": "Modes"
+    },
+    "buttons": {
+      "reset": {
+        "title": "Reset",
+        "hover": "Rétablir les paramètres par défaut",
+        "confirm": "Réinitialiser tous les paramètres aux valeurs par défaut d'usine?"
+      },
+      "done": {
+        "title": "Terminé",
+        "hover": "Fermez la configuration des paramètres"
+      }
+    },
+    "output": {
+      "generaltitle": "Général",
+      "move": {
+        "title": "Vitesse du chariot:",
+        "up": "...tandis que le pinceau est dans l'air:",
+        "hint": "Déplacer vers la droite pour accélérer et vers la gauche pour ralentir.",
+        "down": "...tandis que le pinceau est abaissé:",
+        "speed0": "Escargot",
+        "speed1": "Très lent",
+        "speed2": "Moyen",
+        "speed3": "Vitesse normale (défaut)",
+        "speed4": "Tour de France"
+      },
+      "penmode": {
+        "title": "Mode de fonctionnement:",
+        "opt0": "Défaut (Pinceau, de l'eau, et de la peinture)",
+        "opt1": "Peinture à l'eau seulement (Pas de peinture: Buddha Board)",
+        "opt2": "Peinture seulement (Pas de l'eau: Non-aquarelles)",
+        "opt3": "Crayon ou un stylo (Pas de peinture et pas de l'eau)",
+        "warningPaint": "Attention : la peinture est nécessaire.",
+        "warningAll": "Attention : la peinture et de l’eau est nécessaire."
+      },
+      "showcolortext": {
+        "title": "Afficher les noms de couleurs:",
+        "detail": "Si elle est sélectionnée, les noms de chaque couleur s'affiche sur la palette de peinture, sinon les noms de couleur ne seront visibles lorsque la souris est sur ​​la couleur."
+      },
+      "colorsets": {
+        "title": "Pots de peinture:",
+        "media": "Médium:",
+        "name": "Nom:",
+        "desc": "Description:",
+        "type": "Fabricant:",
+        "add": "+ Ajouter un configuration des couleurs personnalisé"
+      },
+      "maxpaintdistance": {
+        "title": "Distance avant recharge:",
+        "hint": "Déplacer vers la gauche pour obtenir la peinture sur le pinceau le plus souvent, se déplacer vers la droite pour obtenir la peinture sur le pinceau moins souvent.",
+        "detail": "La distance pour le pinceau pour peindre sur le papier avant qu'il devrait aller chercher plus d'eau ou de la peinture. Défaut est **48cm / 19pouces**."
+      },
+      "strokeprecision": {
+        "title": "Précision de pinceau:",
+        "opt0": "Super fin [lent] (1)",
+        "opt1": "Très fin (2)",
+        "opt2": "Fin (4)",
+        "opt3": "Défaut (6)",
+        "opt4": "Brut (10)",
+        "opt5": "Maladroit [rapide] (15)",
+        "detail": "Précision des lignes tracées. Lorsque la valeur de précision est faible, RoboPaint crée un chemin de dessin plus détaillé et il faudra plus de temps pour créer et exécuter."
+      },
+      "strokeovershoot": {
+        "title": "Dépassement pinceau:",
+        "opt0": "Aucun (0)",
+        "opt1": "Un tout petit peu (2mm)",
+        "opt2": "Un peu (5mm)",
+        "opt3": "Beaucoup (8mm)",
+        "opt4": "Oh là là (13mm)",
+        "opt5": "Vraiment? (20mm)",
+        "detail": "La distance nécessaire pour aller au-delà de la ligne lorsque vous soulevez la brosse pour tenir compte de la courbure dans les poils de la brosse . La valeur par défaut est **5mm**.",
+        "optx": "(Automatique de mettre en œuvre)"
+      },
+      "filltitle": "Remplissage",
+      "filltype": {
+        "title": "Type:",
+        "opt0": "Tout droit",
+        "opt1": "Ligne triangulaire",
+        "opt2": "Sinusoïde",
+        "opt3": "Spirale",
+        "opt4": "n'importe quoi"
+      },
+      "linefilltitle": "Remplissage entre les lignes",
+      "fillangle": {
+        "title": "Direction de la ligne:",
+        "opt0": "Horizontale (0°)",
+        "opt1": "Diagonal (45°)",
+        "opt2": "Vertical (90°)"
+      },
+      "fillspacing": {
+        "title": "Espace interligne:",
+        "opt0": "Miniscule (1)",
+        "opt1": "Petit (5)",
+        "opt2": "Défaut (10)",
+        "opt3": "Moyen (15)",
+        "opt4": "Grand (25)",
+        "opt5": "Gorge du Verdon (40)"
+      },
+      "fillprecision": {
+        "title": "Précision de Remplissage:",
+        "opt0": "Super Fin (1)",
+        "opt1": "Très Fin (3)",
+        "opt2": "Fin (7)",
+        "opt3": "Défaut (14)",
+        "opt4": "Brut (21)",
+        "opt5": "Maladroit (35)"
+      },
+      "gapconnect": {
+        "title": "Connectez les petits espaces:",
+        "detail": "Améliore le motif de trait en faisant des transitions plus douces sur les bords."
+      },
+      "refillmode": {
+        "opt0": "Après Max Distance (par défaut)",
+        "title": "Recharge Mode:",
+        "opt1": "Après chaque chemin de SVG",
+        "detail": "Choisissez pour remplir la peinture soit après une certaine distance (par défaut), ou après chaque chemin de SVG."
+      },
+      "refillaction": {
+        "title": "Action recharge:",
+        "opt0": "Peinture pleine recharge (par défaut)",
+        "opt1": "Dip unique dans l'eau et la peinture",
+        "opt2": "Double plongeon dans l'eau et la peinture",
+        "detail": "Lors du remplissage de la peinture, obtenir beaucoup de peinture (par défaut) ou tout simplement rafraîchir dans la peinture une ou deux fois."
+      },
+      "usewhite": "Utiliser les médias blancs",
+      "prefill": "Tampon Prefill",
+      "optimize": "Optimiser ordre du chemin",
+      "render": {
+        "title": "Chemin Rendu",
+        "tab1": "Contour",
+        "tab2": "Remplir",
+        "general": "Remplir et aperçu général"
+      },
+      "usewhiteinfo": "Si elle est désactivée, lorsque vos paramètres de support contiennent une couleur blanche, elle sera ignorée quand un chemin blanc existe pour être tracée.",
+      "prefillinfo": "Si elle est activée, toutes les commandes de lots sur les modes de soutien seront envoyés avant le robot commence à travailler. Cela devrait éliminer le bégaiement au démarrage, si vous avez à attendre plus longtemps avant que votre travail commence à imprimer.",
+      "optimizeinfo": "Si elle est activée, tous les chemins automatiques de peinture (Remplissage et Contour) seront réorganisées en fonction de la couleur et la proximité de la fin de la trajectoire précédente. Chemins vont même être inversés pour assurer la plus faible distance entre le travail, mais peuvent prendre un chemin très étrange si vous travaillez avec plusieurs lignes de texte."
+    },
+    "common": {
+      "servo": {
+        "title": "Moteur de levage (servo)",
+        "up": "Soulever le pinceau:",
+        "paint": "Abaisser le pinceau:",
+        "wash": "Rincer le pinceau:",
+        "time": "durée:",
+        "timedetails": "Le nombre de millisecondes pour la brosse de passer de la position haute à la position basse. La valeur par défaut est 340ms."
+      }
+    },
+    "advanced": {
+      "steppers": {
+        "title": "X/Y Moteurs",
+        "invertx": "Inverser l'axe X:",
+        "inverty": "inverser l'axe Y:",
+        "invertdetail": "Au cas où l'un de vos moteurs se déplace vers l'arrière.",
+        "buffer": {
+          "title": "Buffer Smoothing:",
+          "detail": "Régler le temps intégré dans le procédure API, obliger le mouvement à être plus ou moins lisse. Défaut est **20 ms**. Valeurs négatives ajoutent du délai supplémentaire. Augmenter si la peinture n’est pas lisse.",
+          "hover": "Déplacer vers la droite pour créer une ligne plus lisse, déplacer vers la gauche pour créer une ligne plus saccadée."
+        },
+        "swap": "Echanger X pour Y:",
+        "swapdetail": "Au cas où moteur 1 est connecté comme moteur 2 par accident."
+      },
+      "misctitle": "Divers",
+      "modes": {
+        "title": "Modes",
+        "detail": "Activer ou désactiver les modes de fonctionnement expérimentales de RoboPaint",
+        "remoteprint": {
+          "title": "Peinture à distance:",
+          "detail": "Permet des applications tierces d’envoyer des photos à RoboPaint pour être peint ou dessiné. Pour que cela fonctionne avec d'autres appareils \"Autoriser uniquement les connexions à partir de cet ordinateur\" doit être **désactivé**."
+        }
+      },
+      "openlast": "Ouvrir dernière image de démarrage:",
+      "bottype": {
+        "title": "Catégorie de bot connecté:",
+        "hover": "Liste des bots acceptables",
+        "detail": "RoboPaint a été construit pour la WaterColorBot; cela dit, RoboPaint peut peut parler à n'importe quel bot qui peut communiquer avec un serveur CNC. ** nota bene: le changement exige un redémarrage.**",
+        "warning": "Attention , le bot sélectionnée est incompatible avec des outils de peinture."
+      },
+      "api": {
+        "title": "API Serveur",
+        "server": "Serveur à",
+        "detail": "C'est l'adresse IP et le numero de port du serveur. Entrer les data dans l'app. ** nota bene: le changement exige un redémarrage.**"
+      },
+      "httplocalonly": {
+        "title": "Autoriser uniquement les connexions à partir de cet ordinateur:",
+        "detail": "Décochez cette option pour connecter d'autres appareils au serveur CNC de RoboPaint. ** nota bene: le changement exige un redémarrage.**"
+      }
+    },
+    "stroke": {
+      "enable": "Chemin de Trace coups / contours",
+      "fill": "Remplissages Outline",
+      "enableinfo": "Si elle est désactivée, aucun Outlines / coups seront tracés dans toute la fonctionnalité du mode automatique.",
+      "invisible": "Stroke chemins invisibles",
+      "closefilled": "Fermer chemins remplis",
+      "fillinfo": "Si elle est activée, un aperçu de la même couleur sera ajouté pour les chemins remplis sans un accident vasculaire cérébral.",
+      "occlusionall": "Occlusion de l'AVC / détection de chevauchement",
+      "occfills": "Occlusion sous remplissages",
+      "closefilledinfo": "Si elle est activée, les chemins remplis non fermées seront décrites pleinement que si elles ont été fermées.",
+      "occlusionallinfo": "Si elle est désactivée, tous les contours / AVC traçage ignorera chemin chevauchement et l'ordre des couches.",
+      "invisibleinfo": "Si elle est activée, les coups seront ajoutés à tous les chemins existants, indépendamment de la largeur du trait ou la couleur.",
+      "occfillsinfo": "Si elle est désactivée, tous les contours / AVC traçage ignorera rempli couleur chevauche.",
+      "occstroke": "Occlusion vertu coups",
+      "occcolor": "Ignorer occlusion vertu même couleur",
+      "occstrokeinfo": "Si elle est désactivée, tous les contours / AVC traçage va ignorer course chevauche.",
+      "occtrans": "Ignorer occlusion sous fond ou de contour transparent",
+      "occcolorinfo": "Si elle est activée, tous les contours / AVC traçage du même Collor comme un remplissage ou un AVC chevauchement ignorera occlusion.",
+      "occtransinfo": "Si elle est activée, tous les contours / AVC traçage vertu chemins transparentes ignorera occlusion."
+    },
+    "fill": {
+      "enable": "Chemin de Trace remplit",
+      "enableinfo": "Si elle est désactivée, aucun remplissages seront tracés dans toute la fonctionnalité du mode automatique.",
+      "dynamic": "Options de remplissage de ligne dynamique",
+      "group": {
+        "title": "Regroupement Seuil:",
+        "opt0": "Aucun",
+        "opt20": "Small (20)",
+        "info": "Seuil minimum pour le groupement des fins de ligne dynamiques ensemble dans des groupes connectés. Grande valeur relie plusieurs groupes, 0 veillera à aucun groupes sont constitués.",
+        "opt40": "Par défaut (40)",
+        "opt60": "Moyen (60)",
+        "opt80": "Immense (80)",
+        "opt100": "Géant (100)"
+      },
+      "hatch": "Ajouter remplissage hachuré secondaire",
+      "random": "Aléatoire angle de remplissage",
+      "hatchinfo": "Si elle est activée, un angle de remplissage opposée secondaire sera ajouté pour chaque trajet. ** NE ** angle de match pour remplissage aléatoire ci-dessous.",
+      "overlay": "Options de remplissage Spirale",
+      "randominfo": "Si elle est activée, remplissez angle de chemins différents seront randomisés.",
+      "align": "Alignez remplissage spirale pour chaque trajet",
+      "precisioninfo": "Principalement pour le remplissage spirale, ce paramètre est également utilisé pour convertir le zig-lisse dans un post-traitement de la ligne polygonale.",
+      "occ": "Vérifiez Occlusion",
+      "aligninfo": "Si elle est activée (spirale type de remplissage seulement), la spirale de remplissage sera centré sur le chemin de remplissage. Si elle est désactivée, la spirale va aligner au centre de la toile pour chaque chemin.",
+      "occinfo": "Si elle est désactivée, tout remplissage traçage ignorera rempli couleur chevauche."
+    },
+    "trace": {
+      "title": "Trace Vitesse:",
+      "opt1": "Lent (1 ×)",
+      "info": "La quantité de travail effectué pour chaque trame. Supérieur nombre d'itérations devrait prendre moins de temps ensemble, mais mettre à jour moins souvent.",
+      "opt2": "Par défaut (2 x)",
+      "opt4": "Quad (4 ×)",
+      "opt10": "Super (10 ×)",
+      "opt20": "Maximum (20 x)",
+      "width": {
+        "title": "Aperçu ligne largeur:",
+        "optneg1": "Automatique (fixé par la mise en œuvre)",
+        "info": "Comment les grands sentiers tracés apparaissent dans l'aperçu en direct. Ne pas effectuer l'impression.",
+        "opt1": "Minimum (1)",
+        "opt5": "Moyen (5)",
+        "opt10": "Par défaut (10)",
+        "opt20": "Large (20)",
+        "opt30": "Extreme (30)"
+      }
+    },
+    "media": {
+      "media": "Médiatique",
+      "implements": "Outillages",
+      "refill": "Recharge médias"
+    }
+  },
+  "libs": {
+    "sub": "Dessin sous-chemin __num__",
+    "ignorewash": "La pleine commande de lavage ignoré pour le mode de tirage __mode__",
+    "problem": "Problème de connexion ☹",
+    "washed": "Brosse doit être propre",
+    "ignorewater": "Eau ignoré pour le mode de tirage __mode__",
+    "ignorepaint": "Peinture ignoré pour le mode de tirage __mode__",
+    "washing": "Faire un lavage de brosse pleine ...",
+    "inking": "Mettre un peu __media__ sur la brosse ...",
+    "reinking": "Aller chercher un peu plus __media __...",
+    "inked": "Il est maintenant __media__ sur la brosse",
+    "reinked": "Continuer à peindre avec __media__",
+    "reinkingdry": "Aller à obtenir un peu plus __media__, pas d'eau ...",
+    "autoinit": "Peinture automatique: chemins de __pathNum__, __jobsNum__ emplois »",
+    "autofill": "Chemin de remplissage __id __...",
+    "autostroke": "Chemin caressant __id __...",
+    "autocomplete": "Peinture automatique complet!",
+    "subrefill": "Obtenir la peinture puis en dessinant sous-chemin __num__",
+    "spool": {
+      "fill": "Tracing remplir chemin __id __...",
+      "stroke": "Tracing chemin de course __id __..."
+    }
+  }
+}

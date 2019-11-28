@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "hi",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "पानी का रंग",
+    "pen": "कलम",
+    "engraver": "हीरा उकेरक",
+    "wax": "इलेक्ट्रो-Kistka"
+  },
+  "colors": {
+    "beige": "बेज",
+    "black": "काला",
+    "blue": "ब्लू",
+    "bluegreen": "ब्लू ग्रीन",
+    "blueviolet": "ब्लू वायलेट",
+    "brown": "भूरा",
+    "canary": "पीतचटकी",
+    "copper": "तांबा",
+    "emerald": "पन्ना",
+    "fuchsia": "फ्यूशिया",
+    "gold": "गोल्ड",
+    "green": "हरा",
+    "grey": "ग्रे",
+    "indigo": "नील",
+    "lemon": "नींबू",
+    "lilac": "बकाइन",
+    "lime": "चूना",
+    "maroon": "लाल रंग",
+    "orange": "नारंगी",
+    "orangered": "नारंगी लाल",
+    "pink": "गुलाबी",
+    "purple": "बैंगनी",
+    "red": "रेड",
+    "redviolet": "लाल बैंगनी",
+    "ruby": "रुबी",
+    "salmon": "सैल्मन",
+    "sapphire": "नीलम",
+    "silver": "रजत",
+    "skyblue": "स्काई ब्लू",
+    "tangerine": "संतरा",
+    "teal": "टील",
+    "turquoise": "फ़िरोज़ा",
+    "turquoiseblue": "फ़िरोज़ा नीले",
+    "vermilion": "सिंदूर",
+    "white": "सफेद",
+    "yellow": "पीले",
+    "yellowgreen": "पीला हरा",
+    "yelloworange": "पीला, नारंगी"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "hi",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "CRAYOLA",
+      "name": "माध्यमिक",
+      "description": "CRAYOLA धो जल रंग, 16/24-रंग सेट (माध्यमिक समूहीकरण)।"
+    },
+    "tertiary": {
+      "manufacturer": "CRAYOLA",
+      "name": "तिगुना",
+      "description": "CRAYOLA धो जल रंग, 24 रंग सेट (तृतीयक समूहीकरण)।"
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "hi",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "सामान्य",
+      "name": "मानक",
+      "description": "मानक क्रम में प्राथमिक रंगों का सेट। शेयर Crayola, स्टोर ब्रांड या जंगम प्राथमिक रंग धूपदान के लिए प्रयोग करें।"
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "hi",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "नीचे गिराना",
+      "name": "चमक",
+      "description": "Prang ग्लिटर 8 अर्द्ध नम जल रंग, 8 रंग सेट"
+    },
+    "metallic": {
+      "manufacturer": "नीचे गिराना",
+      "name": "धातु का",
+      "description": "Prang धातुई 8 अर्द्ध नम जल रंग, 8 रंग सेट"
+    },
+    "secondary": {
+      "manufacturer": "नीचे गिराना",
+      "name": "माध्यमिक",
+      "description": "Prang ओवल 16 अर्द्ध नम जल रंग, 16-रंग सेट (माध्यमिक समूहीकरण)। प्राथमिक के लिए सामान्य मानक सेटिंग का उपयोग करें और पदों को सही करने के धूपदान चाल है।"
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "hi",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "सार्जेंट",
+      "name": "माध्यमिक",
+      "description": "16ct ओवल पान अर्द्ध नम प्रीमियम जल रंग और ब्रश (माध्यमिक समूहीकरण)। प्राथमिक के लिए सामान्य मानक सेटिंग का उपयोग करें और पदों को सही करने के धूपदान चाल है।"
+    }
+  }
+}

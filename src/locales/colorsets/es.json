@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "basetype": "colorset",
+    "target": "es",
+    "creator": "rogerfachini"
+  },
+  "media": {
+    "watercolor": "Acuarela",
+    "pen": "Pluma",
+    "engraver": "Diamond grabador",
+    "wax": "Electro-kistka"
+  },
+  "colors": {
+    "beige": "Beige",
+    "black": "Negro",
+    "blue": "Azul",
+    "bluegreen": "Azul Verde",
+    "blueviolet": "Azul Violeta",
+    "brown": "Marrón",
+    "canary": "Canario",
+    "copper": "Cobre",
+    "emerald": "Esmeralda",
+    "fuchsia": "Fucsia",
+    "gold": "Oro",
+    "green": "Verde",
+    "grey": "Gris",
+    "indigo": "Añil",
+    "lemon": "Limón",
+    "lilac": "Lila",
+    "lime": "Lima",
+    "maroon": "Granate",
+    "orange": "Naranja",
+    "orangered": "Rojo Anaranjado",
+    "pink": "Rosa",
+    "purple": "Púrpura",
+    "red": "Rojo",
+    "redviolet": "Rojo Violeta",
+    "ruby": "Rubí",
+    "salmon": "Salmón",
+    "sapphire": "Zafiro",
+    "silver": "Plata",
+    "skyblue": "Blue Sky",
+    "tangerine": "Mandarina",
+    "teal": "Teal",
+    "turquoise": "Turquesa",
+    "turquoiseblue": "Azul Turquesa",
+    "vermilion": "Bermellón",
+    "white": "Blanco",
+    "yellow": "Amarillo",
+    "yellowgreen": "Verde Amarillo",
+    "yelloworange": "Naranja Amarillo"
+  },
+  "crayola": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "es",
+      "creator": "rogerfachini"
+    },
+    "tertiary": {
+      "description": "Crayola lavable Acuarelas, set 24 colores (agrupación terciaria).",
+      "name": "Terciario",
+      "manufacturer": "Crayola"
+    },
+    "secondary": {
+      "description": "Crayola lavable Acuarelas, set 16/24 colores (agrupación secundaria).",
+      "name": "Secundario",
+      "manufacturer": "Crayola"
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "rogerfachini",
+      "target": "es",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Genérico",
+      "name": "Estándar",
+      "description": "Conjunto de colores primarios en orden estándar. Utilice para la acción de Crayola, marca de la tienda o sartenes primarias móviles de color."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "es",
+      "creator": "rogerfachini"
+    },
+    "secondary": {
+      "description": "Prang Oval 16 Semi-húmedo Acuarelas, conjunto de 16 colores (agrupación secundaria). Utilice el establecimiento de normas genérico para primaria y mover cacerolas para corregir posiciones.",
+      "name": "Secundario",
+      "manufacturer": "Prang"
+    },
+    "glitter": {
+      "description": "Prang Glitter 8 semi-húmedos Acuarelas, conjunto de 8 colores",
+      "name": "Glitter",
+      "manufacturer": "Prang"
+    },
+    "metallic": {
+      "description": "Prang metálicos 8 semi-húmedos Acuarelas, conjunto de 8 colores",
+      "name": "Metálico",
+      "manufacturer": "Prang"
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "es",
+      "creator": "rogerfachini"
+    },
+    "secondary": {
+      "description": "16ct Oval Pan semi-húmedo premium Acuarelas y cepillo (agrupación secundaria). Utilice el establecimiento de normas genérico para primaria y mover cacerolas para corregir posiciones.",
+      "name": "Secundario",
+      "manufacturer": "Sargent"
+    }
+  }
+}

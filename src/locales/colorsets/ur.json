@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "ur",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "پانی کے رنگ",
+    "pen": "قلم",
+    "engraver": "ڈائمنڈ اکیرک",
+    "wax": "الیکٹرو Kistka"
+  },
+  "colors": {
+    "beige": "خاکستری",
+    "black": "سیاہ",
+    "blue": "بلیو",
+    "bluegreen": "بلیو گرین",
+    "blueviolet": "نیلا بنفشی",
+    "brown": "براؤن",
+    "canary": "کینری",
+    "copper": "تانبے",
+    "emerald": "مرکت",
+    "fuchsia": "فشیا",
+    "gold": "گولڈ",
+    "green": "سبز",
+    "grey": "گرے",
+    "indigo": "انڈگو",
+    "lemon": "نیبو",
+    "lilac": "بان",
+    "lime": "چونے",
+    "maroon": "لال رنگ",
+    "orange": "اورنج",
+    "orangered": "ریڈ نارنگی",
+    "pink": "گلابی",
+    "purple": "جامنی",
+    "red": "ریڈ",
+    "redviolet": "سرخ وایلیٹ",
+    "ruby": "روبی",
+    "salmon": "سامن",
+    "sapphire": "نیلم",
+    "silver": "سلور",
+    "skyblue": "اسکائی بلیو",
+    "tangerine": "ایک tangerine",
+    "teal": "چیتی",
+    "turquoise": "فیروزی",
+    "turquoiseblue": "فیروزی بلیو",
+    "vermilion": "سندور",
+    "white": "وائٹ",
+    "yellow": "پیلے رنگ",
+    "yellowgreen": "پیلے رنگ سبز",
+    "yelloworange": "اورنج زرد"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ur",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "ثانوی",
+      "description": "Crayola دھو سکتے watercolors کے، 16/24 رنگ سیٹ (سیکنڈری گروہ بندی)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "ترتییک",
+      "description": "Crayola دھو سکتے watercolors کے، 24 رنگ سیٹ (ترتییک گروہ بندی)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ur",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "جنرک",
+      "name": "سٹینڈرڈ",
+      "description": "معیاری ترتیب میں بنیادی رنگوں کا سیٹ. اسٹاک Crayola، سٹور برانڈ یا جنگم بنیادی رنگ پین کے لئے استعمال."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ur",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "سے Prang",
+      "name": "چمک",
+      "description": "سے Prang چمک 8 نیم نم watercolors کے، 8 رنگ کے سیٹ"
+    },
+    "metallic": {
+      "manufacturer": "سے Prang",
+      "name": "دھاتی",
+      "description": "سے Prang داتوئک 8 نیم نم watercolors کے، 8 رنگ کے سیٹ"
+    },
+    "secondary": {
+      "manufacturer": "سے Prang",
+      "name": "ثانوی",
+      "description": "سے Prang اوول 16 نیم نم watercolors کے، 16 رنگ سیٹ (سیکنڈری گروہ بندی). پرائمری کے لئے عام معیار قائم کر استعمال کرتے ہیں اور عہدوں کو درست کرنے کے لئے پین منتقل."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ur",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "سارجنٹ",
+      "name": "ثانوی",
+      "description": "16ct اوول پین نیم نم پریمیم watercolors کے اور برش (ثانوی گروہ بندی). پرائمری کے لئے عام معیار قائم کر استعمال کرتے ہیں اور عہدوں کو درست کرنے کے لئے پین منتقل."
+    }
+  }
+}

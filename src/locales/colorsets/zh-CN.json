@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "zh-CN",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "水彩画",
+    "pen": "笔",
+    "engraver": "钻石雕刻",
+    "wax": "电Kistka"
+  },
+  "colors": {
+    "beige": "米色",
+    "black": "黑",
+    "blue": "蓝色",
+    "bluegreen": "蓝绿色",
+    "blueviolet": "蓝紫色",
+    "brown": "褐色",
+    "canary": "加纳利",
+    "copper": "铜",
+    "emerald": "翡翠",
+    "fuchsia": "紫红色",
+    "gold": "金",
+    "green": "绿",
+    "grey": "灰",
+    "indigo": "靛青",
+    "lemon": "柠檬",
+    "lilac": "紫丁香",
+    "lime": "酸橙",
+    "maroon": "栗色",
+    "orange": "橙",
+    "orangered": "橙红色",
+    "pink": "粉红色",
+    "purple": "紫",
+    "red": "红",
+    "redviolet": "红紫",
+    "ruby": "红宝石",
+    "salmon": "三文鱼",
+    "sapphire": "蓝宝石",
+    "silver": "银",
+    "skyblue": "天蓝色",
+    "tangerine": "柑橘",
+    "teal": "水鸭",
+    "turquoise": "绿松石",
+    "turquoiseblue": "翠蓝",
+    "vermilion": "朱红",
+    "white": "白",
+    "yellow": "黄",
+    "yellowgreen": "黄绿色",
+    "yelloworange": "黄橙"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "zh-CN",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "CRAYOLA",
+      "name": "次要",
+      "description": "克雷奥拉水洗水彩，24分之16色集（中学组）。"
+    },
+    "tertiary": {
+      "manufacturer": "CRAYOLA",
+      "name": "第三",
+      "description": "克雷奥拉水洗水彩，24色集（第三组）。"
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "zh-CN",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "通用",
+      "name": "标准",
+      "description": "设置原色的标准顺序。使用股票的Crayola，品牌专卖店或可移动原色锅。"
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "zh-CN",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "普朗",
+      "name": "闪光",
+      "description": "普朗金葱8半湿水彩，8色组"
+    },
+    "metallic": {
+      "manufacturer": "普朗",
+      "name": "金属的",
+      "description": "普朗金属8半湿水彩，8色组"
+    },
+    "secondary": {
+      "manufacturer": "普朗",
+      "name": "次要",
+      "description": "普朗椭圆16半湿润水彩，16色组（中学组）。使用通用的标准设置，主要和移动盘到正确的位置。"
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "zh-CN",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "萨金特",
+      "name": "次要",
+      "description": "16ct椭圆潘色蜜湿润高级水彩和画笔（中学组）。使用通用的标准设置，主要和移动盘到正确的位置。"
+    }
+  }
+}

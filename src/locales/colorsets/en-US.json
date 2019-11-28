@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "creator": "rogerfachini",
+    "target": "en-US",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "Watercolor",
+    "pen": "Pen",
+    "engraver": "Diamond Engraver",
+    "wax": "Electro-Kistka"
+  },
+  "colors": {
+    "beige": "Beige",
+    "black": "Black",
+    "blue": "Blue",
+    "bluegreen": "Blue Green",
+    "blueviolet": "Blue Violet",
+    "brown": "Brown",
+    "canary": "Canary",
+    "copper": "Copper",
+    "emerald": "Emerald",
+    "fuchsia": "Fuchsia",
+    "gold": "Gold",
+    "green": "Green",
+    "grey": "Grey",
+    "indigo": "Indigo",
+    "lemon": "Lemon",
+    "lilac": "Lilac",
+    "lime": "Lime",
+    "maroon": "Maroon",
+    "orange": "Orange",
+    "orangered": "Orange Red",
+    "pink": "Pink",
+    "purple": "Purple",
+    "red": "Red",
+    "redviolet": "Red Violet",
+    "ruby": "Ruby",
+    "salmon": "Salmon",
+    "sapphire": "Sapphire",
+    "silver": "Silver",
+    "skyblue": "Sky Blue",
+    "tangerine": "Tangerine",
+    "teal": "Teal",
+    "turquoise": "Turquoise",
+    "turquoiseblue": "Turquoise Blue",
+    "vermilion": "Vermilion",
+    "white": "White",
+    "yellow": "Yellow",
+    "yellowgreen": "Yellow Green",
+    "yelloworange": "Yellow Orange"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "rogerfachini",
+      "target": "en-US",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "Secondary",
+      "description": "Crayola Washable Watercolors, 16/24-color set (secondary grouping)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "Tertiary",
+      "description": "Crayola Washable Watercolors, 24-color set (tertiary grouping)."
+    },
+    "classic": {
+      "manufacturer": "Crayola",
+      "name": "Classic Markers",
+      "description": "Crayola Broad Line color markers."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "rogerfachini",
+      "target": "en-US",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Generic",
+      "name": "Standard",
+      "description": "Set of primary colors in standard order. Use for stock Crayola, store brand or movable primary color pans."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "rogerfachini",
+      "target": "en-US",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "Prang",
+      "name": "Glitter",
+      "description": "Prang Glitter 8 Semi-Moist Watercolors, 8-color set"
+    },
+    "metallic": {
+      "manufacturer": "Prang",
+      "name": "Metallic",
+      "description": "Prang Metallic 8 Semi-Moist Watercolors, 8-color set"
+    },
+    "secondary": {
+      "manufacturer": "Prang",
+      "name": "Secondary",
+      "description": "Prang Oval 16 Semi-Moist Watercolors, 16-color set (secondary grouping). Use generic standard setting for primary and move pans to correct positions."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "rogerfachini",
+      "target": "en-US",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Sargent",
+      "name": "Secondary",
+      "description": "16ct Oval Pan Semi-Moist Premium Watercolors & Brush (secondary grouping). Use generic standard setting for primary and move pans to correct positions."
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "pt",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "Aquarela",
+    "pen": "Caneta",
+    "engraver": "Diamante Gravador",
+    "wax": "Electro-Kistka"
+  },
+  "colors": {
+    "beige": "Bege",
+    "black": "Preto",
+    "blue": "Azul",
+    "bluegreen": "Azul Verde",
+    "blueviolet": "Blue Violet",
+    "brown": "Marrom",
+    "canary": "Canário",
+    "copper": "Cobre",
+    "emerald": "Esmeralda",
+    "fuchsia": "Fúcsia",
+    "gold": "Ouro",
+    "green": "Verde",
+    "grey": "Cinza",
+    "indigo": "Índigo",
+    "lemon": "Limão",
+    "lilac": "Lilás",
+    "lime": "Lima",
+    "maroon": "Castanho-avermelhado",
+    "orange": "Laranja",
+    "orangered": "Laranja, Vermelho",
+    "pink": "Rosa",
+    "purple": "Roxo",
+    "red": "Vermelho",
+    "redviolet": "Red Violet",
+    "ruby": "Rubi",
+    "salmon": "Salmão",
+    "sapphire": "Safira",
+    "silver": "Prata",
+    "skyblue": "Céu Azul",
+    "tangerine": "Tangerina",
+    "teal": "Cerceta",
+    "turquoise": "Turquesa",
+    "turquoiseblue": "Azul Turquesa",
+    "vermilion": "Vermelhão",
+    "white": "Branco",
+    "yellow": "Amarelo",
+    "yellowgreen": "Verde Amarelo",
+    "yelloworange": "Laranja Amarelo"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "pt",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "Secundário",
+      "description": "Crayola Washable Aquarelas, set 16/24-cores (agrupamento secundário)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "Terciário",
+      "description": "Crayola Washable Aquarelas, conjunto de 24 cores (agrupamento terciário)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "pt",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Genérico",
+      "name": "Padrão",
+      "description": "Jogo das cores primárias, a fim standard. Use para estoque Crayola, loja de marca ou móveis panelas de cores primárias."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "pt",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "Acertar em cheio",
+      "name": "Brilho",
+      "description": "Prang Glitter 8 Semi-Úmidas Aquarelas, conjunto de 8 cores"
+    },
+    "metallic": {
+      "manufacturer": "Acertar em cheio",
+      "name": "Metálico",
+      "description": "Prang metálicas 8 Semi-Úmidas Aquarelas, conjunto de 8 cores"
+    },
+    "secondary": {
+      "manufacturer": "Acertar em cheio",
+      "name": "Secundário",
+      "description": "Prang Oval 16 Semi-úmido Aquarelas, conjunto de 16 cores (agrupamento secundário). Use configuração padrão genérico para primária e mover panelas para corrigir posições."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "pt",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Sargent",
+      "name": "Secundário",
+      "description": "16ct Oval Pan Semi-úmido premium Aquarelas & Brush (agrupamento secundário). Use configuração padrão genérico para primária e mover panelas para corrigir posições."
+    }
+  }
+}

@@ -14,16 +14,17 @@ colors.initPresets = (selector) => {
     const options = [];
     const colorFilter = {};
     Object.entries(data.presets).forEach(([name, preset]) => {
-      options.push({ id: name, text: `${preset.manufacturer} ${preset.machineName}` });
+      const text = `${preset.manufacturerName} ${preset.name} ${preset.mediaName}`;
+      options.push({ id: name, text });
       // Move through all colors in all presets and add as suggestions.
-      Object.entries(preset.colors).forEach(([name, color]) => {
-        colorFilter[color.toUpperCase()] = name;
+      Object.entries(preset.colors).forEach(([id, item]) => {
+        colorFilter[item.color.toUpperCase()] = { text: item.name, id };
       });
     });
 
     // Convert the color key based colorFilter to a select 2 option array.
-    Object.entries(colorFilter).forEach(([color, id]) => {
-      colorSuggestions.push({ id, color, text: id });
+    Object.entries(colorFilter).forEach(([color, { id, text }]) => {
+      colorSuggestions.push({ id, color, text });
     });
 
     // Sort color suggestions by name.
@@ -40,7 +41,7 @@ colors.initPresets = (selector) => {
     const renderColors = (id) => {
       const preset = data.presets[id];
       const $container = $('<span>').addClass('colors');
-      Object.entries(preset.colors).forEach(([title, backgroundColor]) => {
+      Object.entries(preset.colors).forEach(([, {name: title, color: backgroundColor }]) => {
         $container.append(
           $('<b>').attr({ title }).css({ backgroundColor })
         );

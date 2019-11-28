@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "basetype": "colorset",
+    "target": "fr",
+    "creator": "rogerfachini et R10"
+  },
+  "media": {
+    "watercolor": "Aquarelle",
+    "pen": "Stylo",
+    "engraver": "Diamant Graveur",
+    "wax": "Electro-kistka"
+  },
+  "colors": {
+    "beige": "Beige",
+    "black": "Noir",
+    "blue": "Bleu",
+    "bluegreen": "Bleu Vert",
+    "blueviolet": "Bleu Violet",
+    "brown": "Marron",
+    "canary": "Canari",
+    "copper": "Cuivre",
+    "emerald": "Émeraude",
+    "fuchsia": "Fuchsia",
+    "gold": "Or",
+    "green": "Vert",
+    "grey": "Gris",
+    "indigo": "Indigo",
+    "lemon": "Citron",
+    "lilac": "Lilas",
+    "lime": "Citron Vert",
+    "maroon": "Bordeaux",
+    "orange": "Orange",
+    "orangered": "Orange Rouge",
+    "pink": "Rose",
+    "purple": "Violet",
+    "red": "Rouge",
+    "redviolet": "Rouge Violet",
+    "ruby": "Rubis",
+    "salmon": "Saumon",
+    "sapphire": "Saphir",
+    "silver": "Argent",
+    "skyblue": "Bleu Ciel",
+    "tangerine": "Clémentine",
+    "teal": "Sarcelle",
+    "turquoise": "Turquoise",
+    "turquoiseblue": "Bleu Turquoise",
+    "vermilion": "Vermillon",
+    "white": "Blanc",
+    "yellow": "Jaune",
+    "yellowgreen": "Jaune Vert",
+    "yelloworange": "Jaune Orange"
+  },
+  "crayola": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "fr",
+      "creator": "rogerfachini"
+    },
+    "tertiary": {
+      "description": "Crayola lavable Aquarelles, jeu 24-couleur (groupement tertiaire).",
+      "name": "Tertiaire",
+      "manufacturer": "Crayola"
+    },
+    "secondary": {
+      "description": "Crayola lavable Aquarelles, ensemble 16/24 couleur (groupement secondaire).",
+      "name": "Secondaire",
+      "manufacturer": "Crayola"
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "R10",
+      "target": "fr",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Générique",
+      "name": "Standard",
+      "description": "Utilisez ce modèle avec les aquarelles inclus avec votre WaterColorBot."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "fr",
+      "creator": "rogerfachini"
+    },
+    "secondary": {
+      "description": "Prang Oval 16 semi-humides Aquarelles, jeu de 16 couleurs (groupement secondaire). Utilisez réglage de norme générique pour le primaire et déplacer des casseroles pour corriger les positions.",
+      "name": "Secondaire",
+      "manufacturer": "Prang"
+    },
+    "glitter": {
+      "description": "Prang Glitter Aquarelles 8 semi-humides, set 8 couleurs",
+      "name": "Scintillement",
+      "manufacturer": "Prang"
+    },
+    "metallic": {
+      "description": "Prang métalliques Aquarelles 8 semi-humides, set 8 couleurs",
+      "name": "Métallique",
+      "manufacturer": "Prang"
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "basetype": "colorset",
+      "target": "fr",
+      "creator": "rogerfachini"
+    },
+    "secondary": {
+      "description": "16ct ovale Pan semi-humides prime Aquarelles & Pinceau (groupement secondaire). Utilisez réglage de norme générique pour le primaire et déplacer des casseroles pour corriger les positions.",
+      "name": "Secondaire",
+      "manufacturer": "Sargent"
+    }
+  }
+}

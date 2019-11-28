@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "bn",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "জল রং",
+    "pen": "কলম",
+    "engraver": "ডায়মন্ড খোদাইকারী",
+    "wax": "বৈদ্যুতিক Kistka"
+  },
+  "colors": {
+    "beige": "ধূসরবর্ণ পশমি বস্ত্রবিশেষ",
+    "black": "কালো",
+    "blue": "নীল",
+    "bluegreen": "নীল সবুজ",
+    "blueviolet": "ব্লু ভায়োলেট",
+    "brown": "বাদামী",
+    "canary": "হলদে",
+    "copper": "তামা",
+    "emerald": "পান্না",
+    "fuchsia": "Fuchsia",
+    "gold": "স্বর্ণ",
+    "green": "সবুজ",
+    "grey": "গ্রে",
+    "indigo": "বেগনি নীলবর্ণ",
+    "lemon": "লেবু",
+    "lilac": "বেগুনি",
+    "lime": "চুন",
+    "maroon": "তুবড়ি",
+    "orange": "কমলা",
+    "orangered": "কমলা লাল",
+    "pink": "পিঙ্ক",
+    "purple": "রক্তবর্ণ",
+    "red": "লাল",
+    "redviolet": "লাল বেগুনি",
+    "ruby": "চুনি",
+    "salmon": "স্যামন",
+    "sapphire": "নীলকান্তমণি",
+    "silver": "রূপালী",
+    "skyblue": "স্কাই ব্লু",
+    "tangerine": "মানডারিন",
+    "teal": "ক্ষুদ্র হংস",
+    "turquoise": "ফিরোজা",
+    "turquoiseblue": "ফিরোজা নীল",
+    "vermilion": "সিন্দূর",
+    "white": "সাদা",
+    "yellow": "হলুদ",
+    "yellowgreen": "হলুদ সবুজ",
+    "yelloworange": "হলুদ কমলা"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "bn",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "মাধ্যমিক",
+      "description": "Crayola ধোয়া Watercolors, 16/24-রঙ সেট (মাধ্যমিক গ্রুপ)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "তৃতীয় গঠনসংক্রান্ত",
+      "description": "Crayola ধোয়া Watercolors, 24-রঙ সেট (তৃতীয় গ্রুপ)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "bn",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "জাতিবাচক",
+      "name": "মান",
+      "description": "মান যাতে মৌলিক রং এর সেট করুন. স্টক Crayola, দোকান ব্র্যান্ড বা অস্থাবর প্রাথমিক রঙ pans জন্য ব্যবহার করুন."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "bn",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "কৃতিত্ব",
+      "name": "চিক্চিক",
+      "description": "কৃতিত্ব চিক্চিক 8 অর্ধ আর্দ্র Watercolors, 8 রঙ সেট"
+    },
+    "metallic": {
+      "manufacturer": "কৃতিত্ব",
+      "name": "ধাতব",
+      "description": "কৃতিত্ব ধাতব 8 অর্ধ আর্দ্র Watercolors, 8 রঙ সেট"
+    },
+    "secondary": {
+      "manufacturer": "কৃতিত্ব",
+      "name": "মাধ্যমিক",
+      "description": "কৃতিত্ব ওভাল 16 অর্ধ আর্দ্র Watercolors, 16 রঙ সেট (মাধ্যমিক গ্রুপ). প্রাথমিক জন্য জেনেরিক মান সেটিং ব্যবহার করুন এবং অবস্থানের সঠিক প্যান সরানো."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "bn",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "সার্জেন্ট",
+      "name": "মাধ্যমিক",
+      "description": "16ct ওভাল প্যান অর্ধ আর্দ্র প্রিমিয়াম Watercolors ও ব্রাশের (মাধ্যমিক গ্রুপ). প্রাথমিক জন্য জেনেরিক মান সেটিং ব্যবহার করুন এবং অবস্থানের সঠিক প্যান সরানো."
+    }
+  }
+}

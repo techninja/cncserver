@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "zh-CN",
+    "langname": "简体字",
+    "release": "0.9.6"
+  },
+  "common": {
+    "pause": "暂停",
+    "resume": "简历",
+    "stop": "停止",
+    "time": {
+      "ms": "__count__毫秒",
+      "sec": "__count__秒",
+      "second_plural": "__count__秒",
+      "sec_plural": "__count__秒",
+      "ms_plural": "__count__毫秒",
+      "second": "__count__第二"
+    },
+    "metric": {
+      "mm": "__count__毫米",
+      "cm": "__count__厘米"
+    },
+    "imperial": {
+      "in": "__count__英寸",
+      "in_plural": "__count__英寸"
+    },
+    "substrate": "白色/纸",
+    "water": "水",
+    "transparent": "透明",
+    "implement": {
+      "brush": "刷",
+      "pen": "笔"
+    },
+    "action": {
+      "park": "公园首页",
+      "disable": "解锁汽车",
+      "parktitle": "移动托架回到起始位置。",
+      "pause": "暂停",
+      "resume": "简历",
+      "stop": "停止",
+      "disabletitle": "提高和解锁步进电机，这样就可以用手移动马车。",
+      "start": "开始",
+      "save": "保存",
+      "print": "打印",
+      "apply": "申请",
+      "cancel": "取消",
+      "done": "DONE",
+      "canceltitle": "取消当前的打印作业。",
+      "autocolor": "自动色彩",
+      "autocolortitle": "挑选最匹配的图形中现有的颜色。再次点击撤消。",
+      "brush": {
+        "raise": "提高刷",
+        "lower": "刷下",
+        "wash": "洗脸刷牙"
+      },
+      "pen": {
+        "raise": "募集笔",
+        "lower": "较低的笔"
+      },
+      "cancelconfirm": "您确定要取消当前的工作吗？"
+    },
+    "labels": {
+      "control": "控制",
+      "status": "状态",
+      "progress": "目前的进展"
+    },
+    "dialog": {
+      "confirmexit": "你确定你要到哪里去？\n\n退出该模式下打印时，将取消所有的作业。点击确定退出​​。"
+    }
+  },
+  "status": {
+    "start": "启动...",
+    "found": "口发现，连接...",
+    "question": "你想让我做什么？",
+    "error": "无法连接！",
+    "success": "连接！",
+    "disconnect": "博特断开！",
+    "button": {
+      "continue": "继续在模拟模式",
+      "retry": "尝试重新连接"
+    },
+    "connecting": "连接到机器人......",
+    "pausing": "暂停当前​​进程...",
+    "connected": "连接成功！",
+    "paused": "暂停。点击继续，继续。",
+    "resuming": "恢复当前进程...",
+    "parking": "停车...",
+    "resumed": "图纸恢复...",
+    "parked": "停放成功地",
+    "parkfail": "不能停，停已",
+    "unlocking": "解锁电机...",
+    "wait": "而执行的过程中完成，请稍候...",
+    "unlocked": "汽车解锁！放置在家中的角落里完成时",
+    "pausetillempty": "流的所有命令开始，以防止经济放缓之前..."
+  },
+  "nav": {
+    "toolbar": {
+      "home": "主屏幕",
+      "edit": "打开，调整大小和编辑现有的矢量图形。",
+      "open": "打开一个设计实例",
+      "printauto": "打印模式：打印您的设计！",
+      "printmanual": "手动模式：自定义打印",
+      "help": "救命！ （打开网页文档）",
+      "settings": "设置",
+      "version": "V"
+    },
+    "bubble": {
+      "edit": "创建",
+      "printauto": "打印",
+      "printmanual": "手册"
+    }
+  },
+  "remoteprint": {
+    "title": "远程打印模式",
+    "icontitle": {
+      "from": "从客户端应用程序",
+      "through": "通过互联网或本地网络",
+      "to": "为了你自己的机器人！"
+    },
+    "details": {
+      "title": "详细信息/控制：",
+      "exit": {
+        "text": "退出远程打印模式",
+        "title": "取消当前操作，并退出该模式。"
+      }
+    },
+    "api": {
+      "disabled": "在SVG进口API目前已禁用。启用它的设置，然后单击RoboPaint GUI的按钮。",
+      "busy": "不能添加正在进行的打印作业时要排队。",
+      "queued": "排队打印...",
+      "wait": "等待的设计从客户端..."
+    },
+    "confirms": {
+      "welcome": "嘿，欢迎到远程打印模式！此模式将变成RoboPaint到图形“打印服务器”，准备拍摄图像从另一个应用程序，并立即将其打印！\n\n*发送才会收到，而这种模式上的图像\n\n*一旦图像被完成时，该模式将退出\n\n*在单击OK，请确保您的机器人是完全安装并准备去！\n\n*点击取消，如果你没有准备好去。您也可以随时退出，而在远程打印模式",
+      "exit": "你确定要离开远程打印模式？\n\n 任何打印流程和客户端应用程序将被取消/断开。"
+    }
+  },
+  "settings": {
+    "lang": {
+      "title": "选择语言："
+    },
+    "tabs": {
+      "output": "印刷样式",
+      "common": "基本设置",
+      "advanced": "先进",
+      "media": "具",
+      "modes": "模式"
+    },
+    "buttons": {
+      "reset": {
+        "title": "重置",
+        "hover": "恢复所有设置为默认",
+        "confirm": "所有设置复位到出厂默认设置？"
+      },
+      "done": {
+        "title": "DONE",
+        "hover": "关闭设置窗口"
+      }
+    },
+    "output": {
+      "generaltitle": "一般",
+      "move": {
+        "title": "运输移动速度：",
+        "up": "......同时刷为Up：",
+        "hint": "向左移动较慢，右为快。",
+        "down": "......同时刷为Down：",
+        "speed0": "画笔上的蜗牛",
+        "speed1": "痛苦的缓慢",
+        "speed2": "中",
+        "speed3": "快（默认）",
+        "speed4": "愚蠢的快！"
+      },
+      "penmode": {
+        "title": "打印模式：",
+        "opt0": "默认值（刷机，水和油漆）",
+        "opt1": "只有水（无漆：佛局）",
+        "opt2": "涂料（不使用水：非水彩）",
+        "opt3": "没有水或油漆（笔/铅笔模式）",
+        "warningPaint": "油漆必需的。打印模式与此设置不兼容。",
+        "warningAll": "水/涂料要求。打印模式与此设置不兼容。"
+      },
+      "showcolortext": {
+        "title": "显示颜色名称：",
+        "detail": "勾选后，颜色名称将显示在涂料调色的打印色彩，否则只会悬停可见。"
+      },
+      "colorsets": {
+        "title": "安装颜色设置：",
+        "media": "媒体：",
+        "name": "姓名：",
+        "desc": "说明：",
+        "type": "类型/制造商：",
+        "add": "+添加自定义设置"
+      },
+      "maxpaintdistance": {
+        "title": "笔芯距离：",
+        "hint": "向左移动，以获得更多的作画的时候，有权获得作画较少。",
+        "detail": "画笔的距离画在纸上才应该去获得更多的水/油漆刷上。默认值是**48.2厘米/ 19英寸**。"
+      },
+      "strokeprecision": {
+        "title": "行程精密：",
+        "opt0": "尤伯杯精细[慢]（1）",
+        "opt1": "非常精细（2）",
+        "opt2": "精细（4）",
+        "opt3": "默认（6）",
+        "opt4": "粗（10）的",
+        "opt5": "很粗[快]（15）",
+        "detail": "如何精确地概述了重新追踪到被打印。较小的精度值=更多的细节，但更多的处理/打印时间。"
+      },
+      "strokeovershoot": {
+        "title": "中风过冲：",
+        "opt0": "无（0）",
+        "opt1": "微小（2毫米）",
+        "opt2": "中期（5毫米）",
+        "opt3": "长（8毫米）",
+        "opt4": "哎呀（13毫米）",
+        "opt5": "无益（20毫米）",
+        "detail": "距离系数移动起重弥补刷弯时超越了画笔。默认值是** **5毫米。",
+        "optx": "（从自动执行）"
+      },
+      "filltitle": "补",
+      "filltype": {
+        "title": "类型：",
+        "opt0": "直线",
+        "opt1": "三角线",
+        "opt2": "正弦线",
+        "opt3": "螺旋中心",
+        "opt4": "TSP的Squiggle"
+      },
+      "linefilltitle": "行/哈奇填充",
+      "fillangle": {
+        "title": "线角度：",
+        "opt0": "水平的（0°）",
+        "opt1": "对角线（45°）",
+        "opt2": "垂直（90°）"
+      },
+      "fillspacing": {
+        "title": "行间距：",
+        "opt0": "微乎其微（1）",
+        "opt1": "微小的（5）",
+        "opt2": "默认（10）",
+        "opt3": "介质（15）",
+        "opt4": "宽（25）",
+        "opt5": "宽敞（40）"
+      },
+      "fillprecision": {
+        "title": "填写精度：",
+        "opt0": "尤伯杯美术（1）",
+        "opt1": "非常精细（3）",
+        "opt2": "精细（7）",
+        "opt3": "默认（14）",
+        "opt4": "粗（21）",
+        "opt5": "非常粗（35）"
+      },
+      "gapconnect": {
+        "title": "连接小的差距：",
+        "detail": "使得来回填充于未在边缘起重刷平滑。"
+      },
+      "refillmode": {
+        "opt0": "后最大距离（默认）",
+        "title": "笔芯方式：",
+        "opt1": "每个SVG路径后",
+        "detail": "选择再填充的涂料或者一定距离（默认）后，或之后的每个SVG路径。"
+      },
+      "refillaction": {
+        "title": "笔芯行动：",
+        "opt0": "满涂料填充（默认）",
+        "opt2": "二次探底水和油漆",
+        "opt1": "单浸在水和油漆",
+        "detail": "当注墨漆，获得了大量的油漆（默认）或只是浸在油漆一次或两次。"
+      },
+      "usewhite": "使用白色媒体",
+      "prefill": "预填充缓冲",
+      "optimize": "优化路径顺序",
+      "usewhiteinfo": "当禁止，当你的媒体设置含有白色的颜色，它会被当一个白色路径存在要跟踪忽略。",
+      "render": {
+        "title": "路径渲染",
+        "tab1": "概要",
+        "tab2": "填写",
+        "general": "填充和大纲一般"
+      },
+      "prefillinfo": "如果启用，在支持模式下的所有批处理命令将机器人开始工作之前发送。这将消除在开始口吃，但你不得不等待更长的工作开始打印前。",
+      "optimizeinfo": "如果启用，所有自动喷漆路径（填充和中风）会根据颜色和接近前一路径月底重新排序。路径甚至会被逆转，以确保工作的最低距离，但可以采取一个很奇怪的路径，如果使用多行文本。"
+    },
+    "common": {
+      "servo": {
+        "title": "刷电梯（伺服）电机",
+        "up": "向上的位置：",
+        "paint": "打印位置：",
+        "wash": "洗脸的位置：",
+        "time": "持续时间：",
+        "timedetails": "的时间（毫秒）量应该通过充分向上/向下范围等待的移动。 **默认值是340 **，设置为0，不等待。较小的运动将一个成比例的更小的量的时间。"
+      }
+    },
+    "advanced": {
+      "steppers": {
+        "title": "X / Y踏​​步",
+        "invertx": "倒置X轴：",
+        "inverty": "反转Y轴：",
+        "invertdetail": "如果您的发动机之一向后移动。",
+        "buffer": {
+          "title": "缓冲平滑：",
+          "detail": "移除API回调持续时间，力量缓冲和平滑随后位置的调用时间。默认为** 20 **毫秒。负值增加额外的延迟。只有当打印风声鹤唳增加。",
+          "hover": "向右移动更多的偏移量（平滑），左为负的偏移量（干）"
+        },
+        "swap": "交换X的Y：",
+        "swapdetail": "如果你不小心接线电机1，其中电机2应该去。"
+      },
+      "misctitle": "杂项",
+      "modes": {
+        "title": "模式",
+        "detail": "启用或禁用实验RoboPaint模式",
+        "remoteprint": {
+          "title": "远程漆：",
+          "detail": "允许正确配置的远程应用程序发送图形RoboPaint自动打印。对于这个到这台计算机的功能之外，对于复选框“仅允许从这台计算机连接”的必须是** **选中。"
+        }
+      },
+      "openlast": "打开最后一个设计上的启动：",
+      "bottype": {
+        "title": "印刷机器人的连接类型：",
+        "hover": "支持博特列表",
+        "detail": "RoboPaint为WaterColorBot被做，而是因为它是基于CNC服务器上可以谈，它支持任何僵尸！ **变化需要应用程序重新启动。**",
+        "warning": "选择机器人与印刷工具不兼容。"
+      },
+      "api": {
+        "title": "API服务器",
+        "server": "在服务器",
+        "detail": "当运行应用程序的支持，这将是服务器IP和端口进入到应用程序。 **变化需要应用程序重新启动。**"
+      },
+      "httplocalonly": {
+        "title": "只允许从这台计算机连接：",
+        "detail": "取消选中此连接到其他设备中RoboPaint的CNCServer API。 **变化需要应用程序重新启动。**"
+      }
+    },
+    "stroke": {
+      "enable": "跟踪路径招/轮廓",
+      "fill": "大纲填充",
+      "invisible": "行程无形的路径",
+      "enableinfo": "如果禁用，没有轮廓/笔画将被跟踪在任何自动模式功能。",
+      "closefilled": "关闭填充路径",
+      "fillinfo": "如果启用，同色的轮廓会为没有笔触填充路径添加。",
+      "occlusionall": "行程闭塞/重叠检测",
+      "invisibleinfo": "如果启用，笔划将被添加到无论笔划宽度或颜色的所有存在的路径。",
+      "closefilledinfo": "如果启用，未闭合的填充路径将全面概括为，如果他们被封闭。",
+      "occfills": "在填充闭塞",
+      "occlusionallinfo": "如果禁用，所有的大纲/行程跟踪将忽略路径的重叠和图层顺序。",
+      "occstroke": "在招闭塞",
+      "occfillsinfo": "如果禁用，所有的大纲/行程跟踪将忽略填充颜色重叠。",
+      "occstrokeinfo": "如果禁用，所有的大纲/行程跟踪将忽略行程重叠。",
+      "occcolor": "忽略在相同颜色的闭塞",
+      "occtrans": "忽略在透明填充或中风闭塞",
+      "occcolorinfo": "如果启用，同科洛尔的所有轮廓/行程跟踪为重叠填充或笔触将忽略闭塞。",
+      "occtransinfo": "如果启用，在透明路径的全部轮廓/笔画跟踪将忽略闭塞。"
+    },
+    "fill": {
+      "enable": "跟踪路径填充",
+      "group": {
+        "title": "分组阈值：",
+        "opt0": "无",
+        "info": "最低门槛为分组动态行尾连成连接组。大额连接多个组，0将确保没有组进行。",
+        "opt20": "小（20）",
+        "opt40": "默认（40）",
+        "opt60": "介质（60）",
+        "opt80": "巨大的（80）",
+        "opt100": "巨人（100）"
+      },
+      "dynamic": "动态线填充选项",
+      "enableinfo": "如果禁用，没有填充将被跟踪在任何自动模式功能。",
+      "hatch": "添加辅助孵化填写",
+      "random": "随机填充角度",
+      "hatchinfo": "如果启用，辅助对角填充会为每个路径添加。请问** **不低于随便填匹配的角度。",
+      "overlay": "螺旋填充选项",
+      "randominfo": "如果启用，填补了不同的路径角度将被随机。",
+      "align": "螺旋填充对齐到每个路径",
+      "occ": "检查遮挡",
+      "aligninfo": "如果启用（只螺旋填充型），填充螺旋将集中填充路径上。如果禁止，螺旋将调整到画布为每一路径的中心。",
+      "occinfo": "如果禁用，所有的填充跟踪将忽略填充颜色重叠。",
+      "precisioninfo": "主要用于螺旋填充，这个设置也可用于转换锯齿平滑成折线后处理。"
+    },
+    "trace": {
+      "title": "跟踪速度：",
+      "opt1": "慢（1×）",
+      "opt2": "默认（2×）",
+      "info": "针对每个帧的工作量进行。更高的迭代次数应采取更少的时间的整体​​，但不经常更新。",
+      "opt4": "四（4×）",
+      "opt10": "超级（10×）",
+      "opt20": "最大（20×）",
+      "width": {
+        "title": "预览线宽：",
+        "info": "如何大的追踪路径将出现在实时预览。不影响打印。",
+        "optneg1": "自动（通过实施设定）",
+        "opt5": "介质（5）",
+        "opt1": "最低（1）",
+        "opt10": "缺省值（10）",
+        "opt20": "广角（20）",
+        "opt30": "极端（30）"
+      }
+    },
+    "media": {
+      "media": "传媒",
+      "implements": "器物",
+      "refill": "笔芯媒体"
+    }
+  },
+  "libs": {
+    "problem": "连接问题☹",
+    "sub": "绘制子路径__num__",
+    "ignorewash": "忽略绘制模式__mode__充分洗涤指令",
+    "ignorewater": "水忽视绘制模式__mode__",
+    "inking": "把一些__media__上刷...",
+    "washing": "做一个完整的刷洗...",
+    "washed": "刷子要干净",
+    "ignorepaint": "油漆忽略绘制模式__mode__",
+    "inked": "现在有__media__上刷",
+    "reinkingdry": "会得到一些更__media__，没有水...",
+    "reinking": "会得到一些更多的__media __...",
+    "reinked": "继续涂刷__media__",
+    "autoinit": "自动喷漆：__pathNum__路径，__jobsNum__工作“",
+    "autofill": "填充路径__id __...",
+    "autostroke": "抚摸路径__id __...",
+    "autocomplete": "自动喷漆完成！",
+    "subrefill": "获得油漆然后画子路径__num__",
+    "spool": {
+      "fill": "追踪填写路径__id __...",
+      "stroke": "跟踪描边路径__id __..."
+    }
+  }
+}

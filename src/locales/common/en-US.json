@@ -1,0 +1,431 @@
+{
+  "_meta": {
+    "creator": "techninja",
+    "target": "en-US",
+    "langname": "English",
+    "release": "2.0.0"
+  },
+  "common": {
+    "transparent": "Transparent",
+    "substrate": "White/Paper",
+    "water": "Water",
+    "implement": {
+      "brush": "Brush",
+      "pen": "Pen"
+    },
+    "dialog": {
+      "confirmexit": "Are you sure you want to go?\n\nExiting this mode while printing will cancel all your jobs. Click OK to leave."
+    },
+    "action": {
+      "park": "Park Home",
+      "parktitle": "Move the carriage back to the home position.",
+      "disable": "Unlock Motors",
+      "disabletitle": "Raise and unlock stepper motors so that you can move the carriage by hand.",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop",
+      "start": "Start",
+      "reset": "Reset",
+      "save": "Save",
+      "print": "Print",
+      "cancel": "Cancel",
+      "connect": "Connect",
+      "canceltitle": "Cancel current print job.",
+      "cancelconfirm": "Are you sure you want to cancel the current job?",
+      "apply": "Apply",
+      "done": "Done",
+      "autocolor": "Auto Color",
+      "autocolortitle": "Pick the closest match for existing colors in the drawing. Click again to UNDO.",
+      "brush": {
+        "raise": "Raise Brush",
+        "lower": "Lower Brush",
+        "wash": "Wash Brush"
+      },
+      "pen": {
+        "raise": "Raise Pen",
+        "lower": "Lower Pen"
+      }
+    },
+    "time": {
+      "ms": "__count__ ms",
+      "ms_plural": "__count__ ms",
+      "sec": "__count__ sec",
+      "sec_plural": "__count__ secs",
+      "second": "__count__ second",
+      "second_plural": "__count__ seconds"
+    },
+    "metric": {
+      "mm": "__count__ mm",
+      "cm": "__count__ cm"
+    },
+    "imperial": {
+      "in": "__count__ inch",
+      "in_plural": "__count__ inches"
+    },
+    "labels": {
+      "control": "Control",
+      "status": "Status",
+      "progress": "Current progress"
+    }
+  },
+  "libs": {
+    "sub": "Drawing sub-path __num__",
+    "subrefill": "Getting paint then drawing sub-path __num__",
+    "problem": "Connection Problem ☹",
+    "ignorewash": "Full wash command ignored for draw mode __mode__",
+    "ignorewater": "Water ignored for draw mode __mode__",
+    "ignorepaint": "Paint ignored for draw mode __mode__",
+    "washing": "Doing a full brush wash...",
+    "washed": "Brush should be clean",
+    "inking": "Putting some __media__ on the brush...",
+    "inked": "There is now __media__ on the brush",
+    "reinking": "Going to get some more __media__...",
+    "reinkingdry": "Going to get some more __media__, no water...",
+    "reinked": "Continuing to paint with __media__",
+    "autoinit": "Automatic Paint: __pathNum__ paths, __jobsNum__ jobs'",
+    "autofill": "Filling path __id__...",
+    "autostroke": "Stroking path __id__...",
+    "autocomplete": "Automatic Paint Complete!",
+    "spool": {
+      "stroke": "Tracing stroke path __id__...",
+      "fill": "Tracing fill path __id__...",
+      "fillOcclusion": "Processing fill occlusion __id__..."
+    }
+  },
+  "external": {
+    "title": "External Server",
+    "address": "Enter the address and port to connect to:",
+    "status": {
+      "wait": "Waiting...",
+      "connect": "Connecting...",
+      "connected": "Connected!",
+      "error": "Connection failed. Check that your port/domain is correct and that this computer is connected to the same network."
+    }
+  },
+  "status": {
+    "connecting": "Connecting to robot...",
+    "connected": "Connected Successfully!",
+    "pausing": "Pausing current process...",
+    "paused": "Paused. Click resume to continue.",
+    "resuming": "Resuming current process...",
+    "resumed": "Drawing resumed...",
+    "start": "Starting up...",
+    "parking": "Parking...",
+    "parked": "Parked succesfully",
+    "parkfail": "Can't Park, already parked",
+    "unlocking": "Unlocking motors...",
+    "wait": "Please wait while executed processes complete...",
+    "unlocked": "Motors unlocked! Place in home corner when done",
+    "found": "Port found, connecting...",
+    "question": "What do you want to do?",
+    "error": "Couldn't connect!",
+    "success": "Connected!",
+    "disconnect": "Bot Disconnected!",
+    "pausetillempty": "Streaming instructions to prevent slowdown...",
+    "modeproblem": {
+      "load": "Failed to load mode!",
+      "loaddetail": "Something went wrong when loading that mode, see the debug console for details.",
+      "loadconsole": "Toggle the console",
+      "loaddone": "OK"
+    },
+    "button": {
+      "continue": "Continue in Simulation mode",
+      "retry": "Try to Reconnect"
+    }
+  },
+  "nav": {
+    "toolbar": {
+      "home": "Home Screen",
+      "open": "Open an example design",
+      "calibrate": "Calibrate height",
+      "help": "Help! (Open web docs)",
+      "settings": "Settings",
+      "history": "SVG History",
+      "version": "v"
+    },
+    "history": {
+      "none": "No Recent SVGs found.",
+      "delete": {
+        "message": "Delete this file from your history?",
+        "detail": "The SVG cache file will be removed from this list and from your computer, this cannot be undone.",
+        "confirm": "Delete"
+      }
+    },
+    "bubble": {
+      "edit": "Create",
+      "printauto": "Print",
+      "printmanual": "Manual"
+    }
+  },
+  "calibrator": {
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "done": "Close"
+    },
+    "steps": {
+      "intro": {
+        "detail": "Before you can start making art, you must ensure your drawing tool is the right position above your drawing surface.",
+        "instruction": "Make sure your robot's holder is empty, then click the button to begin calibration."
+      },
+      "unlock": {
+        "detail": "The carriage has been moved to the top left of the drawing area, the motors have been unlocked, and the tool holder is in the lowest position.",
+        "instruction": "Once ready, insert your tool to its lowest expected position and tighten it completely, then click next."
+      },
+      "finish": {
+        "detail": "The tool should now be up and above any obstacles or the drawing surface. If not, you may need to adjust the height in advanced settings.",
+        "instruction": "You're done! Move the carriage by hand to the parking position and you can start making art."
+      }
+    }
+  },
+  "settings": {
+    "tabs": {
+      "output": "Style",
+      "media": "Tool",
+      "advanced": "Advanced",
+      "modes": "Modes"
+    },
+    "buttons": {
+      "reset": {
+        "title": "Reset",
+        "hover": "Revert all settings to default",
+        "confirm": "Reset all settings to factory defaults?"
+      },
+      "done": {
+        "title": "Done",
+        "hover": "Close the settings window"
+      }
+    },
+    "stroke": {
+      "enable": "Trace path strokes and outlines",
+      "enableinfo": "Allow robopaint to trace along paths and outlines automatically.",
+      "fill": "Outline fills",
+      "fillinfo": "If enabled, an outline of the same color will be added for filled paths without a stroke.",
+      "invisible": "Stroke invisible paths",
+      "invisibleinfo": "If enabled, strokes will be added to all existing paths regardless of stroke width or color.",
+      "closefilled": "Close filled paths",
+      "closefilledinfo": "If enabled, unclosed filled paths will be outlined fully as if they were closed.",
+      "occlusionall": "Stroke occlusion / overlap detection",
+      "occlusionallinfo": "If disabled, all outlines / stroke tracing will ignore path overlap and layer order. Stroke Precision value above will improve the precision of overlap detection.",
+      "occfills": "Occlusion under fills",
+      "occfillsinfo": "If disabled, all outlines / stroke tracing will ignore filled color overlaps.",
+      "occstroke": "Occlusion under strokes",
+      "occstrokeinfo": "If disabled, all outlines / stroke tracing will ignore stroke overlaps.",
+      "occcolor": "Ignore occlusion under same color",
+      "occcolorinfo": "If enabled, all outlines / stroke tracing of the same collor as an overlapping fill or stroke will ignore occlusion.",
+      "occtrans": "Ignore occlusion under transparent fill or stroke",
+      "occtransinfo": "If enabled, all outlines / stroke tracing under transparent paths will ignore occlusion."
+    },
+    "fill": {
+      "enable": "Trace path fills",
+      "enableinfo": "If disabled, no fills will be traced in any automatic mode functionality.",
+      "dynamic": "Hatch options",
+      "group": {
+        "title": "Grouping Threshold:",
+        "info": "Minimum threshold for grouping hatch line endings together into connected groups. Large value connects more groups with fewer tool lifts, 0 will ensure no groups are made.",
+        "opt0": "None",
+        "opt20": "Small (20)",
+        "opt40": "Default (40)",
+        "opt60": "Medium (60)",
+        "opt80": "Huge (80)",
+        "opt100": "Giant (100)"
+      },
+      "hatch": "Add secondary hatch fill",
+      "hatchinfo": "If enabled, a secondary 90° opposite angle fill will be added for each path.",
+      "random": "Randomize hatch angle",
+      "randominfo": "If enabled, each object will be filled with paths at a random angle, instead of the above value.",
+      "overlay": "Spiral fill options",
+      "inset": "Fill inset amount",
+      "insetinfo": "The amount that the rendered fill path should pull away from the edge of the fill shape border. Applies to all fill types.",
+      "precisioninfo": "Primarily for spiral fill, this setting is also used for converting the zig-smooth into a polygonal line post processing.",
+      "align": "Align spiral fill to each path",
+      "aligninfo": "If enabled (spiral fill type only), the fill spiral will be centered on the fill path. If disabled, the spiral will align to the center of the canvas for every path.",
+      "occ": "Check for Occlusion",
+      "occinfo": "If disabled, all fill tracing will ignore filled color overlaps."
+    },
+    "trace": {
+      "title": "Trace Speed:",
+      "info": "The amount of work done for each frame. Higher iteration count should take less time overall, but update less often.",
+      "opt1": "Slow (1×)",
+      "opt2": "Default (2×)",
+      "opt4": "Quad (4×)",
+      "opt10": "Super (10×)",
+      "opt20": "Maximum (20×)",
+      "width": {
+        "title": "Preview line width:",
+        "info": "How large traced paths will appear in the live preview. Does not effect printing.",
+        "optneg1": "Automatic (set by implement)",
+        "opt1": "Minimum (1)",
+        "opt5": "Medium (5)",
+        "opt10": "Default (10)",
+        "opt20": "Wide (20)",
+        "opt30": "Extreme (30)"
+      }
+    },
+    "output": {
+      "skipwhite": "Skip White Paint",
+      "skipwhiteinfo": "When your media settings (paint colors) contain white, ignore any paths that would be painted in that color. You may want to turn this off when painting on a background that is not white.",
+      "optimize": "Optimize path order",
+      "optimizeinfo": "If enabled, all automatic painting paths (fill and stroke) will be reordered according to color and proximity to previous path end. Paths will even be reversed to ensure lowest distance between work, but can take a very strange path if working with multiple lines of text.",
+      "generaltitle": "General",
+      "move": {
+        "title": "Carriage Movement Speed:",
+        "up": "...while Brush is Up:",
+        "hint": "Move left for slower, right for faster.",
+        "down": "...while Brush is Down:",
+        "speed0": "Paintbrush on a Snail",
+        "speed1": "Painfully Slow",
+        "speed2": "Medium",
+        "speed3": "Fast (default)",
+        "speed4": "Stupid Fast!"
+      },
+      "penmode": {
+        "title": "Printing Mode:",
+        "opt0": "Default (Brush, Water & Paint)",
+        "opt1": "Water Only (No Paint: Buddha Board)",
+        "opt2": "Paint Only (No Water: Non-watercolors)",
+        "opt3": "No Water or Paint (Pen/Pencil mode)",
+        "warningPaint": "Paint required. Printing Mode incompatible with this setting.",
+        "warningAll": "Water/Paint required. Printing Mode incompatible with this setting."
+      },
+      "showcolortext": {
+        "title": "Show color names",
+        "detail": "When enabled, color names will display on the paint palette for print colors, otherwise they will only be visible on hover."
+      },
+      "colorsets": {
+        "title": "Installed Color Set:",
+        "media": "Media:",
+        "name": "Name:",
+        "desc": "Description:",
+        "type": "Type/Manufacturer:",
+        "add": "+ Add Custom Set"
+      },
+      "maxpaintdistance": {
+        "title": "Refill Distance:",
+        "hint": "Move left to get paint more often, right to get paint less often.",
+        "detail": " The distance for the brush to paint on the paper before it should go get more water/paint on the brush. Default is **48.2cm / 19in**."
+      },
+      "refillmode": {
+        "title": "Refill Mode:",
+        "opt0": "After Max Distance (default)",
+        "opt1": "After Each SVG Path",
+        "detail": "Choose to refill the paint either after a certain distance (default), or after each SVG path."
+      },
+      "refillaction": {
+        "title": "Refill Action:",
+        "opt0": "Full paint refill (default)",
+        "opt1": "Single dip in water and paint",
+        "opt2": "Double dip in water and paint",
+        "detail": "When refilling paint, get a lot of paint (default) or just dip in the paint either once or twice."
+      },
+      "strokeprecision": {
+        "title": "Stroke Precision:",
+        "opt0": "Uber Fine [slow] (1)",
+        "opt1": "Very Fine (2)",
+        "opt2": "Fine (4)",
+        "opt3": "Default (6)",
+        "opt4": "Coarse (10)",
+        "opt5": "Very Coarse [fast] (15)",
+        "detail": "How accurately outlines are re-traced to be printed. Smaller precision value = more detail, but more processing/printing time."
+      },
+      "strokeovershoot": {
+        "title": "Stroke Overshoot:",
+        "optx": "(Automatic from Implement)",
+        "opt0": "None (0)",
+        "opt1": "Tiny (2mm)",
+        "opt2": "Medium (5mm)",
+        "opt3": "Longer (8mm)",
+        "opt4": "Yikes (13mm)",
+        "opt5": "Unhelpful (20mm)",
+        "detail": "The distance factor to move the brush beyond when lifting to make up for brush bend. Default is **5mm**."
+      },
+      "render": {
+        "title": "Path Rendering",
+        "tab1": "Outline",
+        "tab2": "Fill",
+        "general": "Fill & Outline general"
+      },
+      "filltype": {
+        "title": "Type:",
+        "opt0": "Hatch (Zig-zag)",
+        "opt1": "Hatch (Straight)",
+        "opt2": "Hatch (Smooth)",
+        "opt3": "Center spiral",
+        "opt4": "Offset"
+      },
+      "fillangle": "Hatch angle:",
+      "fillspacing": {
+        "title": "Fill line spacing:",
+        "opt0": "Miniscule (1)",
+        "opt1": "Tiny (5)",
+        "opt2": "Default (10)",
+        "opt3": "Medium (15)",
+        "opt4": "Wide (25)",
+        "opt5": "Spacious (40)"
+      },
+      "fillprecision": {
+        "title": "Fill Precision:",
+        "opt0": "Uber Fine (1)",
+        "opt1": "Very Fine (3)",
+        "opt2": "Fine (7)",
+        "opt3": "Default (14)",
+        "opt4": "Coarse (21)",
+        "opt5": "Very Coarse (35)"
+      }
+    },
+    "media": {
+      "media": "Media",
+      "implements": "Implements",
+      "refill": "Refill media"
+    },
+    "common": {
+      "servo": {
+        "title": "Brush-lift (servo) Motor",
+        "up": "Up Position:",
+        "paint": "Print Position:",
+        "wash": "Wash Position:",
+        "time": "Duration:",
+        "timedetails": "Amount of time (in milliseconds) we should wait for a movement through the full up/down range. **Default is 340**, set to 0 to not wait at all. Smaller movements will take a proportionately smaller amount of time."
+      }
+    },
+    "advanced": {
+      "steppers": {
+        "title": "X/Y Steppers",
+        "invertx": "Invert X axis",
+        "inverty": "Invert Y axis",
+        "invertdetail": "In case one of your motors moves backwards.",
+        "buffer": {
+          "title": "Buffer Smoothing:",
+          "detail": "Removes time from API callback duration, forces buffering and smoothing out subsequent position calls. Default is **20 ms**. Negative values add extra delay. Only increase if printing is jittery.",
+          "hover": "Move right for more offset (smooth), left for negative offset (jerky)"
+        },
+        "swap": "Swap X for Y",
+        "swapdetail": "In case you've accidentally wired up Motor 1 where Motor 2 is supposed to go."
+      },
+      "debug": "RoboPaint Debug / Developer features",
+      "debugdetail": "If enabled, extra features for developers like devtools will be opened automatically for the main window, and for modes marked with debug true.",
+      "misctitle": "Misc",
+      "modes": {
+        "title": "Modes",
+        "detail": "Enable or disable experimental RoboPaint modes"
+      },
+      "openlast": "Open last design on startup",
+      "bottype": {
+        "title": "Type of printing bot connected:",
+        "hover": "Supported Bot List",
+        "detail": "RoboPaint was made for the WaterColorBot, but because it's based on CNC Server it can talk to any bot that it supports! **Change requires App restart.**",
+        "warning": "Selected bot incompatible with printing tools."
+      },
+      "api": {
+        "title": "API Server",
+        "server": "Server at",
+        "detail": "When running supported apps, this would be the server IP and port to enter into the app. **Change requires App restart.**"
+      },
+      "httplocalonly": {
+        "title": "Only allow connections from this computer:",
+        "detail": " Uncheck this to connect to the CNCServer API in RoboPaint from other devices. **Change requires App restart.**"
+      }
+    }
+
+  }
+}

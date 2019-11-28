@@ -12,7 +12,7 @@ module.exports = (cncserver) => {
         code: 200,
         body: {
           set: colors.set,
-          presets: colors.presets,
+          presets: colors.listPresets(),
         },
       };
     }

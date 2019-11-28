@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "ru",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "Акварель",
+    "pen": "Пен",
+    "engraver": "Алмазный гравер",
+    "wax": "Электро-Kistka"
+  },
+  "colors": {
+    "beige": "Бежевый",
+    "black": "Черный",
+    "blue": "Синий",
+    "bluegreen": "Синий Зеленый",
+    "blueviolet": "Синие",
+    "brown": "Коричневый",
+    "canary": "Канарейка",
+    "copper": "Медь",
+    "emerald": "Изумруд",
+    "fuchsia": "Фуксия",
+    "gold": "Золото",
+    "green": "Зеленый",
+    "grey": "Серый",
+    "indigo": "Индиго",
+    "lemon": "Лимон",
+    "lilac": "Сиреневый",
+    "lime": "Лайм",
+    "maroon": "Темно-бордовый",
+    "orange": "Оранжевый",
+    "orangered": "Оранжевый Красный",
+    "pink": "Розовый",
+    "purple": "Фиолетовый",
+    "red": "Красный",
+    "redviolet": "Красный Фиолетовый",
+    "ruby": "Рубин",
+    "salmon": "Лосось",
+    "sapphire": "Сапфир",
+    "silver": "Серебро",
+    "skyblue": "Небесно-голубой",
+    "tangerine": "Мандарин",
+    "teal": "Чирок",
+    "turquoise": "Бирюзовый",
+    "turquoiseblue": "Бирюзовый",
+    "vermilion": "Киноварь",
+    "white": "Белый",
+    "yellow": "Желтый",
+    "yellowgreen": "Желтый Зеленый",
+    "yelloworange": "Желтый Оранжевый"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ru",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "Вторичный",
+      "description": "Crayola Моющиеся акварель, 16/24-набор цветов (вторичный группировка)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "Третичный",
+      "description": "Crayola Моющиеся акварель, 24-набор цветов (третичный группировка)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ru",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Общий",
+      "name": "Стандарт",
+      "description": "Набор основных цветов в стандартном порядке. Используйте для фондового Crayola, фирменный магазин или подвижных основных цветов кастрюли."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ru",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "Авария",
+      "name": "Блеск",
+      "description": "Пранг Блеск 8 полувлажные акварели, 8-цветный набор"
+    },
+    "metallic": {
+      "manufacturer": "Авария",
+      "name": "Металлический",
+      "description": "Пранг Металлические 8 полувлажные акварели, 8-цветный набор"
+    },
+    "secondary": {
+      "manufacturer": "Авария",
+      "name": "Вторичный",
+      "description": "Пранг Овальный 16 полувлажные Акварели, 16-набор цветов (вторичный группировка). Используйте параметр групповой стандарт по основным и двигаться кастрюли, чтобы исправить положение."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ru",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Сарджент",
+      "name": "Вторичный",
+      "description": "16ct Овальный Pan полувлажные Премиум Акварели и щетки (вторичный группировка). Используйте параметр групповой стандарт по основным и двигаться кастрюли, чтобы исправить положение."
+    }
+  }
+}

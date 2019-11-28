@@ -1,0 +1,116 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "ar",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "لوحة مائية",
+    "pen": "قلم",
+    "engraver": "الماس حفارة",
+    "wax": "الكهربائية Kistka"
+  },
+  "colors": {
+    "beige": "البيج",
+    "black": "أسود",
+    "blue": "أزرق",
+    "bluegreen": "أزرق أخضر",
+    "blueviolet": "أزرق بنفسجي",
+    "brown": "أسمر",
+    "canary": "كناري",
+    "copper": "نحاس",
+    "emerald": "زمرد",
+    "fuchsia": "ضارب الى الحمرة",
+    "gold": "الذهب",
+    "green": "أخضر",
+    "grey": "رمادي",
+    "indigo": "اللون النيلي",
+    "lemon": "ليمون",
+    "lilac": "أرجواني",
+    "lime": "كلس",
+    "maroon": "كستنائي",
+    "orange": "البرتقالي",
+    "orangered": "البرتقال الأحمر",
+    "pink": "وردي",
+    "purple": "أرجواني",
+    "red": "أحمر",
+    "redviolet": "أحمر بنفسجي",
+    "ruby": "ياقوت",
+    "salmon": "سمك السلمون",
+    "sapphire": "ياقوت أزرق",
+    "silver": "فضة",
+    "skyblue": "أزرق",
+    "tangerine": "يوسفي",
+    "teal": "الحذف بط نهري صغير",
+    "turquoise": "فيروز",
+    "turquoiseblue": "الفيروز الأزرق",
+    "vermilion": "اللون القرمزي",
+    "white": "أبيض",
+    "yellow": "أصفر",
+    "yellowgreen": "الأصفر الأخضر",
+    "yelloworange": "أصفر برتقالي"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ar",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "كرايولا",
+      "name": "ثانوي",
+      "description": "كرايولا قابل للغسل الألوان المائية، مجموعة 16/24 اللون (التجمع الثانوي)."
+    },
+    "tertiary": {
+      "manufacturer": "كرايولا",
+      "name": "القطاع الثالث",
+      "description": "كرايولا قابل للغسل الألوان المائية، مجموعة 24 لونا (التجمع التعليم العالي)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ar",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "عام",
+      "name": "معيار",
+      "description": "مجموعة من الألوان الأساسية من أجل القياسية. استخدام لكرايولا الأسهم، متجر العلامة التجارية أو منقولة المقالي اللون الأولية."
+    }
+  },
+  "prang": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ar",
+      "basetype": "colorset"
+    },
+    "glitter": {
+      "manufacturer": "برانغ",
+      "name": "لمعان",
+      "description": "برانغ بريق 8 شبه الرطبة مائية، مجموعة 8 لون"
+    },
+    "metallic": {
+      "manufacturer": "برانغ",
+      "name": "معدني",
+      "description": "برانغ معدنية 8 شبه الرطبة مائية، مجموعة 8 لون"
+    },
+    "secondary": {
+      "manufacturer": "برانغ",
+      "name": "ثانوي",
+      "description": "برانغ البيضاوي 16 شبه الرطبة مائية، مجموعة 16 لون (التجمع الثانوي). استخدام وضع المعايير لعام الابتدائي والانتقال المقالي لتصحيح المواقف."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "ar",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "سارجنت",
+      "name": "ثانوي",
+      "description": "16ct البيضاوي عموم شبه الرطبة قسط مائية وفرشاة (التجمع الثانوي). استخدام وضع المعايير لعام الابتدائي والانتقال المقالي لتصحيح المواقف."
+    }
+  }
+}

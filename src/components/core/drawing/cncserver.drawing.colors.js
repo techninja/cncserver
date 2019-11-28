@@ -45,6 +45,34 @@ module.exports = (cncserver, drawing) => {
     }
   });
 
+  // Function to render presets for the API, translating human readable strings.
+  colors.listPresets = () => {
+    const { i18n: { t } } = cncserver;
+    const out = {};
+    Object.entries(colors.presets).forEach(([key, p]) => {
+      const basekey = `colorsets:${p.manufacturer}.${p.machineName}`;
+      out[key] = {
+        manufacturer: p.manufacturer,
+        media: p.media,
+        machineName: p.machineName,
+        manufacturerName: t(`${basekey}.manufacturer`),
+        name: t(`${basekey}.name`),
+        description: t(`${basekey}.description`),
+        mediaName: t(`colorsets:media.${p.media}`),
+        colors: {},
+      };
+
+      Object.entries(p.colors).forEach(([id, color]) => {
+        out[key].colors[id] = {
+          color,
+          name: t(`colorsets:colors.${id}`),
+        };
+      });
+    });
+
+    return out;
+  };
+
   colors.getIDs = () => {
     const items = [];
     colors.set.forEach(({ id }) => {
@@ -125,11 +153,18 @@ module.exports = (cncserver, drawing) => {
     if (colors.presets[presetName]) {
       const set = [];
       Object.entries(colors.presets[presetName].colors).forEach(([name, color]) => {
-        set.push({ id: `color${set.length}`, name, color });
+        set.push({
+          id: `color${set.length}`,
+          name: cncserver.i18n.t(`colorsets:colors.${name}`),
+          color,
+        });
       });
 
       // TODO: Allow this to be set somewhere?
-      set.push(ignoreWhite);
+      set.push({
+        ...ignoreWhite,
+        name: cncserver.i18n.t('colorsets:colors.white'),
+      });
       return set;
     }
 

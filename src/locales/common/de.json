@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "de",
+    "langname": "Deutsch",
+    "release": "0.9.6"
+  },
+  "common": {
+    "pause": "Pause",
+    "resume": "Lebenslauf",
+    "stop": "Stopp",
+    "time": {
+      "ms": "__count__ ms",
+      "sec": "__count__ sec",
+      "ms_plural": "__count__ Millisekunden",
+      "sec_plural": "__count__ Sekunden",
+      "second": "__count__ zweiten",
+      "second_plural": "__count__ Sekunden"
+    },
+    "metric": {
+      "mm": "__count__ mm",
+      "cm": "__count__ cm"
+    },
+    "imperial": {
+      "in": "__count__ inch",
+      "in_plural": "__count__ Zoll"
+    },
+    "substrate": "Weiß / Papier",
+    "transparent": "Transparent",
+    "water": "Wasser",
+    "implement": {
+      "brush": "Bürste",
+      "pen": "Stift"
+    },
+    "action": {
+      "disable": "Entsperren Motors",
+      "park": "Park Startseite",
+      "parktitle": "Bewegen Sie den Schlitten wieder in die Ausgangsposition.",
+      "disabletitle": "Heben Sie und entsperren Schrittmotoren, so dass Sie den Wagen mit der Hand bewegen.",
+      "pause": "Pause",
+      "resume": "Lebenslauf",
+      "stop": "Stopp",
+      "save": "Speichern",
+      "start": "Start",
+      "print": "Drucken",
+      "cancel": "Stornieren",
+      "canceltitle": "Druckauftrag abbrechen.",
+      "done": "Gemacht",
+      "autocolor": "Auto-Farbe",
+      "apply": "Anwenden",
+      "autocolortitle": "Wählen Sie die beste Übereinstimmung für die bestehenden Farben in der Zeichnung. Klicken Sie erneut, um rückgängig zu machen.",
+      "brush": {
+        "lower": "Nieder Pinsel",
+        "raise": "Heben Sie Pinsel",
+        "wash": "Waschbürste"
+      },
+      "pen": {
+        "raise": "Heben Pen",
+        "lower": "Lower Pen"
+      },
+      "cancelconfirm": "Sind Sie sicher, Sie wollen den aktuellen Auftrag abzubrechen?"
+    },
+    "labels": {
+      "control": "Steuerung",
+      "status": "Status",
+      "progress": "Aktuelle Fortschritte"
+    },
+    "dialog": {
+      "confirmexit": "Sind Sie sicher, Sie gehen wollen?\n\nVerlassen Sie diesen Modus während des Druckvorgangs werden alle Ihre Aufträge zu stornieren. Klicken Sie auf OK, um zu verlassen."
+    }
+  },
+  "status": {
+    "start": "Inbetriebnahme ...",
+    "found": "Hafen gefunden, verbindet ...",
+    "question": "Was möchten Sie tun?",
+    "error": "Es konnte keine Verbindung!",
+    "success": "Connected!",
+    "disconnect": "Bot Disconnected!",
+    "button": {
+      "continue": "Weiter im Simulationsmodus",
+      "retry": "Versuchen Sie, wieder anschließen"
+    },
+    "connected": "Erfolgreich verbunden!",
+    "connecting": "Anschluss an Roboter ...",
+    "pausing": "Pausieren der aktuellen Prozess ...",
+    "resumed": "Zeichnung wieder aufgenommen ...",
+    "paused": "Machte eine Pause. Klicken Sie auf Fortsetzen, um fortzufahren.",
+    "resuming": "Wiederaufnahme der aktuellen Prozess ...",
+    "parking": "Parkplatz ...",
+    "parked": "Erfolgreich geparkt",
+    "parkfail": "Kann nicht Park, bereits geparkt",
+    "wait": "Bitte warten ausgeführten Prozesse komplette ...",
+    "unlocked": "Motors freigeschaltet! Legen Sie im Haus Ecke, wenn Sie fertig",
+    "unlocking": "Unlocking Motoren ...",
+    "pausetillempty": "Streaming alle Befehle vor Beginn der Verlangsamung zu vermeiden ..."
+  },
+  "nav": {
+    "toolbar": {
+      "home": "Home-Bildschirm",
+      "edit": "Open, Größe ändern, und bearbeiten Sie vorhandene Vektorgrafiken.",
+      "open": "Öffnen Sie ein Beispiel Design",
+      "printauto": "Druckmodus: Drucken Sie Ihr Design!",
+      "printmanual": "Manueller Modus: Passen Sie Ihre Druck",
+      "help": "Hilfe! (Open Web-docs)",
+      "settings": "Einstellungen",
+      "version": "v"
+    },
+    "bubble": {
+      "edit": "Schaffen",
+      "printauto": "Drucken",
+      "printmanual": "Handbuch"
+    }
+  },
+  "remoteprint": {
+    "title": "Remote-Druckmodus",
+    "icontitle": {
+      "from": "Von der Client-Anwendung",
+      "through": "Über das Internet oder das lokale Netzwerk",
+      "to": "Ihre ganz eigene Bot!"
+    },
+    "details": {
+      "title": "Details / Kontrollen:",
+      "exit": {
+        "text": "Beenden Sie Remote-Druckmodus",
+        "title": "Abbrechen der laufenden Geschäftstätigkeit und verlassen Sie diesen Modus."
+      }
+    },
+    "api": {
+      "disabled": "Die SVG-Import-API ist derzeit deaktiviert. Aktivieren Sie in den Einstellungen und klicken Sie auf die Schaltfläche in der RoboPaint GUI.",
+      "busy": "Kann nicht in den während des laufenden Druckauftrag die Warteschlange.",
+      "queued": "Der Druckwarteschlange stehenden ...",
+      "wait": "Warten auf Design von Kunden ..."
+    },
+    "confirms": {
+      "welcome": "Hallo, herzlich willkommen auf Remote Print-Modus! Dieser Modus wird RoboPaint in ein Grafik \"Druckserver\" drehen, bereit, um ein Bild aus einer anderen Anwendung zu nehmen und drucken Sie es sofort!\n\n* Bilder gesendet werden nur empfangen werden, wenn dieser Modus aktiviert ist\n\n* Sobald ein Bild fertig ist, wird dieser Modus verlassen\n\n* Bevor Sie auf OK klicken, stellen Sie sicher, dass Ihr Bot ist komplett aufgebaut und bereit zu gehen!\n\n* Klicken Sie auf Abbrechen, wenn Sie nicht ganz bereit zu gehen. Sie können auch jederzeit zu beenden, während in Remote-Druckmodus",
+      "exit": "Sind Sie sicher, Sie wollen, um Remote-Druckmodus zu verlassen?\n\n Alle Druckverfahren und Client-Anwendungen wird abgebrochen / getrennt werden."
+    }
+  },
+  "settings": {
+    "lang": {
+      "title": "Wählen Sie eine Sprache:"
+    },
+    "tabs": {
+      "output": "Drucken-Art",
+      "common": "Grundeinstellungen",
+      "advanced": "Fortgeschritten",
+      "media": "Tool",
+      "modes": "Modes"
+    },
+    "buttons": {
+      "reset": {
+        "title": "Rücksetzen",
+        "hover": "Sie können dabei alle Einstellungen auf die Standard",
+        "confirm": "Setzt alle Einstellungen auf die Werkseinstellungen?"
+      },
+      "done": {
+        "title": "Gemacht",
+        "hover": "Schließen Sie das Fenster Einstellungen"
+      }
+    },
+    "output": {
+      "generaltitle": "General",
+      "move": {
+        "title": "Wagenbewegungsgeschwindigkeit:",
+        "up": "... Während Brush ist Up:",
+        "hint": "Bewegen für langsamere links, rechts für schnellere.",
+        "down": "... Während Brush ist unten:",
+        "speed0": "Pinsel auf eine Schnecke",
+        "speed1": "Quälend langsam",
+        "speed2": "Medium",
+        "speed3": "Schnell (Standard)",
+        "speed4": "Dumm Fast!"
+      },
+      "penmode": {
+        "title": "Druckmodus:",
+        "opt0": "Standard (Pinsel, Wasser & Paint)",
+        "opt1": "Wasser (keine Lackierung: Buddha Board)",
+        "opt2": "Farbe (keine Wasser: Nicht-Aquarelle)",
+        "opt3": "Kein Wasser oder Paint (Stift / Bleistift-Modus)",
+        "warningPaint": "Farbe erforderlich. Druckmodus mit dieser Einstellung nicht kompatibel.",
+        "warningAll": "Wasser / Farbe benötigt. Druckmodus mit dieser Einstellung nicht kompatibel."
+      },
+      "showcolortext": {
+        "title": "Zeigen Sie Farbnamen:",
+        "detail": "Wenn diese Option aktiviert, werden Farbnamen auf der Farbpalette für Druckfarben angezeigt, da sie sonst nur auf schweben zu sehen sein."
+      },
+      "colorsets": {
+        "title": "Installierte Color Set:",
+        "media": "Medien:",
+        "name": "Name:",
+        "desc": "Beschreibung:",
+        "type": "Typ / Hersteller:",
+        "add": "+ Add Custom Set"
+      },
+      "maxpaintdistance": {
+        "title": "Füllen Entfernung:",
+        "hint": "Nach links, um zu malen öfter, um richtig zu machen malen seltener.",
+        "detail": "Der Abstand für den Pinsel auf das Papier zu malen, bevor sie sollten erhalte mehr Wasser / Farbe auf den Pinsel. Standard ist ** 48.2cm / 19in **."
+      },
+      "strokeprecision": {
+        "title": "Stroke Präzision:",
+        "opt0": "Uber Fine [langsam] (1)",
+        "opt1": "Sehr Schön (2)",
+        "opt2": "Fine (4)",
+        "opt3": "Standard (6)",
+        "opt4": "Grob (10)",
+        "opt5": "Sehr Grob [fast] (15)",
+        "detail": "Wie genau skizziert werden wieder zurückgeführt, die gedruckt werden. Kleinere Genauigkeitswert = näher, aber mehr Verarbeitung / Druckzeit."
+      },
+      "strokeovershoot": {
+        "title": "Stroke Überschwingen:",
+        "opt0": "None (0)",
+        "opt1": "Tiny (2mm)",
+        "opt2": "Medium (5 mm)",
+        "opt3": "Mehr (8 mm)",
+        "opt4": "Huch (13 mm)",
+        "opt5": "Wenig hilfreich (20mm)",
+        "detail": "Die Distanzfaktor, um die Bürste über beim Anheben, um Pinsel Bend machen oben zu verschieben. Der Standardwert ist 5 mm ** **.",
+        "optx": "(Automatic von Implement)"
+      },
+      "filltitle": "Füllen",
+      "filltype": {
+        "title": "Typ:",
+        "opt0": "Gerade",
+        "opt1": "Triangle Linie",
+        "opt2": "Sinuslinie",
+        "opt3": "Center-Spirale",
+        "opt4": "TSP Kringel"
+      },
+      "linefilltitle": "Line / Schraffurfüllungen",
+      "fillangle": {
+        "title": "Linienwinkel:",
+        "opt0": "Horizontal (0 °)",
+        "opt1": "Diagonal (45 °)",
+        "opt2": "Vertikale (90 °)"
+      },
+      "fillspacing": {
+        "title": "Zeilenabstand:",
+        "opt0": "Winzige (1)",
+        "opt1": "Tiny (5)",
+        "opt2": "Standard (10)",
+        "opt3": "Medium (15)",
+        "opt4": "Breite (25)",
+        "opt5": "Geräumig (40)"
+      },
+      "fillprecision": {
+        "title": "Füllen Präzision:",
+        "opt0": "Uber Fine (1)",
+        "opt1": "Very Fine (3)",
+        "opt2": "Fine (7)",
+        "opt3": "Standard (14)",
+        "opt4": "Grob (21)",
+        "opt5": "Sehr Grob (35)"
+      },
+      "gapconnect": {
+        "title": "Schließen Sie kleine Lücken:",
+        "detail": "Macht hin und her füllt glatter durch nicht anheben Bürste an Kanten."
+      },
+      "refillmode": {
+        "title": "Refill-Modus:",
+        "opt0": "Nach Max Entfernung (default)",
+        "opt1": "Nach jedem SVG-Pfad",
+        "detail": "Wählen Sie die Farbe entweder nach einer bestimmten Distanz (Standard), oder nach jedem SVG Weg wieder zu füllen."
+      },
+      "refillaction": {
+        "title": "Refill Aktion:",
+        "opt0": "Vollfarbe nachfüllen (default)",
+        "opt1": "Single Bad im Wasser und Farbe",
+        "opt2": "Double-Dip in Wasser und Farbe",
+        "detail": "Beim Nachfüllen von Farbe, bekommen eine Menge von Farbe (Standard) oder nur dip in der Farbe entweder einmal oder zweimal."
+      },
+      "usewhite": "Verwenden Sie weißes Medien",
+      "prefill": "Prefill Puffer",
+      "optimize": "Optimieren Weg um",
+      "usewhiteinfo": "Wenn deaktiviert, wenn der Medieneinstellungen enthalten eine weiße Farbe, wird es ignoriert, wenn ein weißer Pfad vorhanden ist, um zurückverfolgt werden.",
+      "render": {
+        "tab1": "Umriss",
+        "title": "Pfad Rendering",
+        "tab2": "Füllen",
+        "general": "Fill & Skizzieren allgemeinen"
+      },
+      "prefillinfo": "Wenn aktiviert, werden alle Batch-Befehle auf die Unterstützung der Betriebsarten gesendet werden, bevor der Roboter Arbeit beginnt. Dies sollte das Stottern beim Start zu vermeiden, wenn Sie länger warten, bevor die Arbeit beginnt der Druck zu haben.",
+      "optimizeinfo": "Wenn aktiviert, werden alle automatischen Malerei Wege (zu füllen und Schlaganfall) nach Farbe und Nähe zum vorherigen Bahnende erst nachbestellt werden. Pfade werden sogar umgekehrt werden, um geringste Abstand zwischen der Arbeit zu gewährleisten, kann aber eine sehr seltsame Pfad, wenn Sie mit mehreren Textzeilen zu nehmen."
+    },
+    "common": {
+      "servo": {
+        "title": "Pinsel-Lift (Servo) Motor",
+        "up": "Bis Position:",
+        "paint": "Druckposition:",
+        "wash": "Wash Position:",
+        "time": "Dauer:",
+        "timedetails": "Zeitdauer (in Millisekunden), wir sollten für eine Bewegung durch die vollständige Auf- / Ab-Bereich warten. ** Der Standardwert ist 340 **, auf 0 bis nicht warten haupt eingestellt. Kleinere Bewegungen wird eine proportional geringere Menge an Zeit in Anspruch nehmen."
+      }
+    },
+    "advanced": {
+      "steppers": {
+        "title": "X / Y-Steppers",
+        "invertx": "Invert X-Achse:",
+        "inverty": "Invert Y-Achse:",
+        "invertdetail": "Im Falle bewegt sich eine Ihrer Motoren rückwärts.",
+        "buffer": {
+          "title": "Buffer Smoothing:",
+          "detail": "Entfernt Zeit vom API Rückrufdauer, Kräfte Pufferung und Glättung anschließenden Positions Anrufe. Der Standardwert ist 20 ms ** **. Negative Werte addieren zusätzliche Verzögerung. Nur zu erhöhen, wenn Druck ist nervös.",
+          "hover": "Nach rechts, um weitere Offset (glatt), für negative links versetzt (ruckartige)"
+        },
+        "swap": "Swap-X für Y:",
+        "swapdetail": "Falls Sie versehentlich auf Motor 1 in dem Motor 2 soll gehen verdrahtet."
+      },
+      "misctitle": "Sonstiges",
+      "modes": {
+        "title": "Modes",
+        "detail": "Aktivieren oder Deaktivieren von experimentellen RoboPaint Modi",
+        "remoteprint": {
+          "title": "Fern Farbe:",
+          "detail": "Ermöglicht richtig konfiguriert Remote-Anwendungen, um Grafiken zu RoboPaint senden, um automatisch gedruckt. Damit dies außerhalb dieser Computer funktionieren, das Kontrollkästchen für \"erlauben nur Verbindungen von diesem Computer\" weiter unten muss deaktiviert sein ** **."
+        }
+      },
+      "openlast": "Öffnen letzten Design beim Start:",
+      "bottype": {
+        "title": "Druckart Bot verbunden:",
+        "hover": "Unterstützte Bot Liste",
+        "detail": "RoboPaint wurde für die WaterColorBot gemacht, aber weil es auf CNC-Server auf der Basis es kann zu jedem bot, die es unterstützt zu sprechen! ** Veränderung erfordert App Neustart. **",
+        "warning": "Ausgewählte bot mit Druck-Tools kompatibel."
+      },
+      "api": {
+        "title": "API-Server",
+        "server": "Server an",
+        "detail": "Bei der Ausführung von Anwendungen unterstützt, wäre dies die Server-IP und den Port in die App eingeben. ** Veränderung erfordert App Neustart. **"
+      },
+      "httplocalonly": {
+        "title": "Nur Verbindungen aus diesem Computer:",
+        "detail": "Deaktivieren Sie diese Option, um die CNCServer API in RoboPaint von anderen Geräten zu verbinden. ** Veränderung erfordert App Neustart. **"
+      }
+    },
+    "stroke": {
+      "enable": "Trace-Pfad Hübe / Konturen",
+      "fill": "Umriss Füllungen",
+      "enableinfo": "Wenn deaktiviert, werden keine Konturen / Striche in jeder Automatik-Modus-Funktionalität zurückverfolgt werden.",
+      "invisible": "Stroke unsichtbaren Pfaden",
+      "closefilled": "Schließen gefüllt Wege",
+      "fillinfo": "Wenn aktiviert, wird ein Umriss der gleichen Farbe für gefüllte Pfade ohne Strich hinzugefügt.",
+      "invisibleinfo": "Wenn aktiviert, werden Striche auf alle vorhandenen Wege unabhängig von der Strichbreite oder Farbe hinzugefügt werden.",
+      "occlusionall": "Stroke Okklusion / Überlappungserfassungs",
+      "closefilledinfo": "Wenn aktiviert, werden nicht geschlossene gefüllte Pfade vollständig beschrieben, als ob sie waren geschlossen werden.",
+      "occfills": "Occlusion unter Füllungen",
+      "occlusionallinfo": "Wenn deaktiviert, werden alle Konturen / Hub Abtastbahn Überschneidungen und Layer-Reihenfolge ignorieren.",
+      "occfillsinfo": "Wenn deaktiviert, werden alle Konturen / Hub Verfolgung gefüllt Farbe ignorieren überlappt.",
+      "occstroke": "Occlusion unter Striche",
+      "occstrokeinfo": "Wenn deaktiviert, alle Konturen / Hub Verfolgung ignoriert Schlaganfall überlappt.",
+      "occcolor": "Ignorieren Okklusion unter gleichen Farbe",
+      "occtrans": "Ignorieren Okklusion unter transparenten Fläche oder Kontur",
+      "occtransinfo": "Wenn aktiviert, werden alle Konturen / Hub-Tracing unter transparenten Pfade Okklusion zu ignorieren.",
+      "occcolorinfo": "Wenn aktiviert, werden alle Konturen / Hub Verfolgung des gleichen Collor als einer überlappenden Fläche oder Kontur Okklusion zu ignorieren."
+    },
+    "fill": {
+      "enable": "Trace-Pfad füllt",
+      "group": {
+        "title": "Gruppieren Schwelle:",
+        "opt0": "Keine",
+        "info": "Mindestschwelle für die Gruppierung der dynamischen Zeilenenden zusammen in Gruppen verbunden. Großer Wert verbindet mehrere Gruppen, 0 wird dafür sorgen, keine Gruppen vorgenommen werden.",
+        "opt20": "Klein (20)",
+        "opt40": "Standard (40)",
+        "opt80": "Huge (80)",
+        "opt60": "Medium (60)",
+        "opt100": "Giant (100)"
+      },
+      "enableinfo": "Wenn deaktiviert, werden keine Füllungen in jeder Automatik-Modus-Funktionalität zurückverfolgt werden.",
+      "dynamic": "Dynamische Zeilen-Füll-Optionen",
+      "hatch": "In Sekundär Ausräumen",
+      "random": "Randomize fill Winkel",
+      "hatchinfo": "Wenn aktiviert, wird eine sekundäre entgegengesetzten Winkel Füllung für jeden Pfad hinzugefügt werden. Will ** nicht ** Spiel Winkel für zufällige Füllung unten.",
+      "overlay": "Spiral fill Optionen",
+      "randominfo": "Wenn aktiviert, füllen Winkel unterschiedliche Wege werden randomisiert.",
+      "align": "Ausrichten Spiral Füllung auf jeden Pfad",
+      "occ": "Überprüfen Sie für Occlusion",
+      "aligninfo": "Wenn aktiviert (nur Spiral Fülltyp), wird die Füllung Spirale auf der Füllungspfad zentriert werden. Wenn deaktiviert, wird die Spirale in die Mitte der Leinwand für jeden Pfad auszurichten.",
+      "occinfo": "Wenn deaktiviert, werden alle satt Verfolgung gefüllt Farbe ignorieren überlappt.",
+      "precisioninfo": "In erster Linie für Spiralfüllung, wird diese Einstellung auch für die Umwandlung der Zick-glatt in eine polygonale Linie Nachbearbeitung verwendet."
+    },
+    "trace": {
+      "title": "Spuren Speed:",
+      "opt1": "Langsam (1 x)",
+      "opt2": "Default (2x)",
+      "info": "Der Arbeitsaufwand für jeden Rahmen durchgeführt. Höhere Iterationszähler sollte weniger Zeit Gesamt nehmen, aber aktualisieren seltener.",
+      "opt4": "Quad (4 x)",
+      "opt10": "Super (10 x)",
+      "width": {
+        "title": "Vorschau Linienbreite:",
+        "opt1": "Minimum (1)",
+        "opt10": "Standard (10)",
+        "optneg1": "Automatisch (durch Umsetzung eingestellt)",
+        "opt5": "Medium (5)",
+        "info": "Wie groß zurückzuführen Pfade werden in der Live-Vorschau angezeigt. Hat keinen Einfluss auf den Druck.",
+        "opt30": "Extreme (30)",
+        "opt20": "Wide (20)"
+      },
+      "opt20": "Maximum (20 x)"
+    },
+    "media": {
+      "media": "Medien",
+      "implements": "Implementiert",
+      "refill": "Refill Medien"
+    }
+  },
+  "libs": {
+    "sub": "Zeichnung Unterpfad __num__",
+    "problem": "Anschluss Problem ☹",
+    "ignorewash": "Vollwaschbefehl für Zeichenmodus __mode__ ignoriert",
+    "washed": "Pinsel sollte sauber sein",
+    "ignorewater": "Wasser für Zeichenmodus __mode__ ignoriert",
+    "ignorepaint": "Farbe für Zeichenmodus __mode__ ignoriert",
+    "washing": "Doing eine komplette Bürstenwäsche ...",
+    "inking": "Setzen einige __media__ auf die Bürste ...",
+    "reinking": "Werde ein paar mehr __media bekommen __...",
+    "inked": "Es ist jetzt __media__ am Bürsten",
+    "reinkingdry": "Möchten Sie etwas mehr __media__, kein Wasser zu bekommen ...",
+    "autoinit": "Automatische Paint: __pathNum__ Wege, __jobsNum__ Arbeitsplätze \"",
+    "autofill": "Füllen Weg __id __...",
+    "reinked": "Die weitere Zusammenarbeit mit __media__ malen",
+    "autostroke": "Streicheln Weg __id __...",
+    "autocomplete": "Automatische Farb Complete!",
+    "subrefill": "Anreise Farbe dann Ziehen Unterpfad __num__",
+    "spool": {
+      "stroke": "Tracing Hubweg __id __...",
+      "fill": "Tracing füllen Pfad __id __..."
+    }
+  }
+}

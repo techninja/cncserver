@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "creator": "docprofsky from Google Translate",
+    "target": "de",
+    "basetype": "colorset"
+  },
+  "media": {
+    "watercolor": "Aquarell",
+    "pen": "Stift",
+    "engraver": "Diamant Engraver",
+    "wax": "Elektro Kistka"
+  },
+  "colors": {
+    "beige": "Beige",
+    "black": "Schwarz",
+    "blue": "Blau",
+    "bluegreen": "Blau Grün",
+    "blueviolet": "Blau Violett",
+    "brown": "Braun",
+    "canary": "Kanarienvogel",
+    "copper": "Kupfer",
+    "emerald": "Smaragd",
+    "fuchsia": "Fuchsie",
+    "gold": "Gold",
+    "green": "Grün",
+    "grey": "Grau",
+    "indigo": "Indigo",
+    "lemon": "Zitrone",
+    "lilac": "Flieder",
+    "lime": "Kalk",
+    "maroon": "Kastanienbraun",
+    "orange": "Orange",
+    "orangered": "Orange Rot",
+    "pink": "Rosa",
+    "purple": "Lila",
+    "red": "Rote",
+    "redviolet": "Rot Violett",
+    "ruby": "Rubin",
+    "salmon": "Lachs",
+    "sapphire": "Saphir",
+    "silver": "Silber",
+    "skyblue": "Sky Blue",
+    "tangerine": "Mandarine",
+    "teal": "Teal",
+    "turquoise": "Türkis",
+    "turquoiseblue": "Türkis-Blau",
+    "vermilion": "Zinnober",
+    "white": "Weiß",
+    "yellow": "Gelb",
+    "yellowgreen": "Gelb Grün",
+    "yelloworange": "Gelb Orange"
+  },
+  "crayola": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "de",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Crayola",
+      "name": "Sekundär-",
+      "description": "Crayola Waschbar Aquarelle, 16/24-Farbsatz (sekundäre Gruppierung)."
+    },
+    "tertiary": {
+      "manufacturer": "Crayola",
+      "name": "Tertiär-",
+      "description": "Crayola Waschbar Aquarelle, 24 Farbsatz (tertiäre Gruppierung)."
+    }
+  },
+  "generic": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "de",
+      "basetype": "colorset"
+    },
+    "generic": {
+      "manufacturer": "Generisches",
+      "name": "Standard",
+      "description": "Satz von Primärfarben in Standard-Reihenfolge. Verwenden Sie für Aktien Crayola, Eigenmarke oder bewegliche Primärfarbschälchen."
+    }
+  },
+  "sargent": {
+    "_meta": {
+      "creator": "docprofsky from Google Translate",
+      "target": "de",
+      "basetype": "colorset"
+    },
+    "secondary": {
+      "manufacturer": "Sargent",
+      "name": "Sekundär-",
+      "description": "16ct Oval Pan halbfeuchtes Premium-Aquarelle und Pinsel (sekundäre Gruppierung). Verwenden Sie generische Standard-Einstellung für die primäre und bewegen Pfannen, um Positionen zu korrigieren."
+    }
+  }
+}

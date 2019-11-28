@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "creator": "techninja/google",
+    "target": "es",
+    "langname": "Español",
+    "release": "0.9.6"
+  },
+  "common": {
+    "pause": "Pausa",
+    "resume": "Reanudar",
+    "stop": "Parada",
+    "time": {
+      "ms": "__count__ ms",
+      "sec": "__count__ seg",
+      "sec_plural": "seg __count__",
+      "ms_plural": "milisegundos __count__",
+      "second_plural": "segundo __count__",
+      "second": "__count__ segundos"
+    },
+    "metric": {
+      "mm": "__count__ mm",
+      "cm": "__count__ cm"
+    },
+    "imperial": {
+      "in": "__count__ pulgadas",
+      "in_plural": "__count__ pulgadas"
+    },
+    "labels": {
+      "status": "Estado",
+      "control": "Control",
+      "progress": "Los avances actuales"
+    },
+    "action": {
+      "pen": {
+        "lower": "Bajo la pluma",
+        "raise": "Levante Pen"
+      },
+      "brush": {
+        "wash": "Cepillo de lavar",
+        "lower": "Bajo Cepillo",
+        "raise": "Levante Brush"
+      },
+      "autocolortitle": "Escoja la coincidencia más cercana para los colores existentes en el dibujo. Haga clic de nuevo para deshacer.",
+      "autocolor": "Color automático",
+      "done": "Hecho",
+      "apply": "Aplicar",
+      "print": "Impresión",
+      "save": "Guardar",
+      "start": "Comienzo",
+      "stop": "Deténgase",
+      "resume": "Currículum",
+      "disabletitle": "Levante y desbloquear motores paso a paso para que pueda mover el carro con la mano.",
+      "disable": "Desbloquear Motors",
+      "parktitle": "Mueva el carro de regreso a la posición inicial.",
+      "park": "Park Inicio",
+      "canceltitle": "Cancelar trabajo de impresión actual.",
+      "pause": "Pausa",
+      "cancel": "Cancelar",
+      "cancelconfirm": "¿Seguro que desea cancelar el trabajo actual?"
+    },
+    "implement": {
+      "pen": "Pluma",
+      "brush": "Cepillo"
+    },
+    "water": "Agua",
+    "substrate": "Blanco / Papel",
+    "transparent": "Transparente",
+    "dialog": {
+      "confirmexit": "¿Seguro que quieres ir?\n\nSalir de este modo durante la impresión se cancelará todos sus trabajos. Haga clic en Aceptar para salir."
+    }
+  },
+  "status": {
+    "start": "Puesta en marcha...",
+    "found": "Puerto encontró, que conecta...",
+    "question": "¿Qué quieres hacer?",
+    "error": "¡No se pudo conectar!",
+    "success": "¡Conectado!",
+    "disconnect": "Robot desconectado",
+    "button": {
+      "continue": "Continuar en el modo de simulación",
+      "retry": "Intente volver a conectar"
+    },
+    "connecting": "Conexión al robot ...",
+    "connected": "Conectado con éxito!",
+    "pausing": "Haciendo una pausa actual proceso ...",
+    "resuming": "Reanudación actual proceso ...",
+    "paused": "En pausa. Haga clic en Reanudar para continuar.",
+    "resumed": "Dibujo reanudó ...",
+    "parking": "Estacionamiento...",
+    "parked": "Estacionado con éxito",
+    "parkfail": "No se puede aparcar, ya estacionado",
+    "unlocking": "Motores desbloqueo ...",
+    "unlocked": "Motores desbloqueados! Coloque en la esquina casa cuando se hace",
+    "wait": "Por favor, espere mientras se ejecuta procesos completa ...",
+    "pausetillempty": "Streaming todos los comandos antes de comenzar a prevenir desaceleración ..."
+  },
+  "nav": {
+    "toolbar": {
+      "home": "Pantalla de Inicio",
+      "edit": "Abrir, cambiar el tamaño y editar material gráfico vectorial existente.",
+      "open": "Abra una imagen de ejemplo",
+      "printauto": "Modo de Pintura: ¡Imprimir el dibujo!",
+      "printmanual": "Modo Manual: Avanzado su impresión",
+      "help": "¡Ayuda! (Web de documentación abierto)",
+      "settings": "Configuración",
+      "version": "v"
+    },
+    "bubble": {
+      "edit": "Crear",
+      "printauto": "Imprimir",
+      "printmanual": "Avanzado"
+    }
+  },
+  "remoteprint": {
+    "title": "Modo de pintura remota",
+    "icontitle": {
+      "from": "Desde la aplicación cliente",
+      "through": "A través de la internet o su red local",
+      "to": "¡Para su propio robot!"
+    },
+    "details": {
+      "title": " Detalles / Controles:",
+      "exit": {
+        "text": " Salir del modo de pintura remota",
+        "title": "Cancelar las operaciones actuales y salir de este modo."
+      }
+    },
+    "api": {
+      "disabled": "La API de importación SVG está actualmente deshabilitado. Habilite en la configuración y luego haga clic en el botón en la interfaz gráfica de usuario RoboPaint.",
+      "busy": "No se puede agregar a la cola durante el trabajo de impresión en curso.",
+      "queued": "En cola para la impresión...",
+      "wait": "A la espera de la dibujo de cliente..."
+    },
+    "confirms": {
+      "welcome": "¡Hola, bienvenidos a modo de pintura remota! ¡Este modo se convertirá en un RoboPaint gráficos \"servidor de impresión\", listo para tomar una imagen desde otra aplicación e imprimirla inmediatamente! * Las imágenes enviadas solo serán recibidos mientras este modo está activado* Una vez que una imagen se terminó, este modo se cerrará * ¡Antes de hacer clic en Aceptar, asegúrese de que el bot está completamente configurado y listo para ir! * haga clic en Cancelar si no estás listo para ir. También puede salir en cualquier momento, mientras que en el modo de pintura remoto.",
+      "exit": "¿Está seguro de que desea salir del modo de pintura remoto?\n\nCualquier proceso de impresión y aplicaciones de cliente se cancelarán / desconectado."
+    }
+  },
+  "settings": {
+    "lang": {
+      "title": "Seleziona una lingua:"
+    },
+    "tabs": {
+      "output": "Pintura Estilo",
+      "common": "Configuración básica",
+      "advanced": "Avanzado",
+      "media": "Herramienta",
+      "modes": "Modos"
+    },
+    "buttons": {
+      "reset": {
+        "title": "Reinicializar",
+        "hover": "Revertir todos los ajustes a los valores predeterminados",
+        "confirm": "¿Restablecer todos los ajustes a los valores de fábrica?"
+      },
+      "done": {
+        "title": "Completar",
+        "hover": "Cierre la ventana de configuración"
+      }
+    },
+    "output": {
+      "generaltitle": "General",
+      "move": {
+        "title": "Movimiento Velocidad carro:",
+        "up": "...mientras que el cepillo es de hasta:",
+        "hint": "Mover a la izquierda para más lenta, a la derecha para acelerar.",
+        "down": "...mientras que el cepillo está abajo:",
+        "speed0": "Pincel sobre un caracol",
+        "speed1": "Dolorosamente Lento",
+        "speed2": "Medio",
+        "speed3": "Rápido (predeterminado)",
+        "speed4": "¡Rápido estúpido!"
+      },
+      "penmode": {
+        "title": "Modo Pintura/Diseño:",
+        "opt0": "Por defecto (cepillo, agua y pintura)",
+        "opt1": "Sólo agua (No Pintura: Junta de Buda)",
+        "opt2": "Sólo pintar (No Agua: No-acuarelas)",
+        "opt3": "No hay agua o pintura (modo de pluma / lápiz)",
+        "warningPaint": "Pintura requerido. Modo Pintura / Dibujo incompatible con esta configuración.",
+        "warningAll": "Agua / pintura requerida. Modo Pintura / Dibujo incompatible con esta configuración."
+      },
+      "showcolortext": {
+        "title": "Mostrar nombres de colores:",
+        "detail": "Cuando se marca, nombres de los colores se muestran en la paleta de colores para los colores de impresión, de lo contrario, sólo serán visibles en vuelo estacionario."
+      },
+      "colorsets": {
+        "title": "Instalado conjunto de la colores:",
+        "media": "Medios",
+        "name": "Nombre:",
+        "desc": "Descripción:",
+        "type": "Tipo/Fabricante:",
+        "add": "+ Crear Personaliz"
+      },
+      "maxpaintdistance": {
+        "title": "Vuelva a llenar Distancia:",
+        "hint": "Mover a la izquierda para conseguir pintar más a menudo, derecho a conseguir la pintura con menos frecuencia.",
+        "detail": "La distancia para el pincel para pintar sobre el papel antes de que se debe ir a buscar más agua / pintura en el pincel. El valor predeterminado es **48.2cm / 19pulg.**"
+      },
+      "strokeprecision": {
+        "title": "Precisión del esquema:",
+        "opt0": "Extremadamente Fina [lento] (1)",
+        "opt1": "Muy Fina (2)",
+        "opt2": "Fina (4)",
+        "opt3": "Defecto (6)",
+        "opt4": "Àspero (10)",
+        "opt5": "Muy Àspereo [rapido] (15)",
+        "detail": "La precisión con se trazan los contornos que se elaborará. Valor más pequeño de precisión = más detalle, pero más tiempo de procesamiento / elaboración."
+      },
+      "strokeovershoot": {
+        "title": "Esquema de exceso:",
+        "opt0": "Nada (0)",
+        "opt1": "Pequeño (2mm)",
+        "opt2": "Medio (5mm)",
+        "opt3": "Largo (8mm)",
+        "opt4": "Uff (13mm)",
+        "opt5": "Poco útil (20mm)",
+        "detail": "El factor distancia para mover el pincel más allá al levantar para compensar la curvatura del cepillo. El valor predeterminado es **5 mm.**",
+        "optx": "(Automática desde Implementar)"
+      },
+      "filltitle": "Llenar",
+      "filltype": {
+        "title": "Tipo:",
+        "opt0": "Línea Recta",
+        "opt1": "Línea Triángulo",
+        "opt2": "Línea Sine",
+        "opt3": "Centro Espiral",
+        "opt4": "Garabato TSP"
+      },
+      "linefilltitle": "Rellenos Línea / sombreado",
+      "fillangle": {
+        "title": "Ángulo de línea:",
+        "opt0": "Horizontal (0°)",
+        "opt1": "Diagonal (45°)",
+        "opt2": "Vertical (90°)"
+      },
+      "fillspacing": {
+        "title": "Interlineado:",
+        "opt0": "Minúsculo (1)",
+        "opt1": "Diminuto (5)",
+        "opt2": "Defecto (10)",
+        "opt3": "Medio (15)",
+        "opt4": "Amplio (25)",
+        "opt5": "Espacioso (40)"
+      },
+      "fillprecision": {
+        "title": " Rellene Precisión:",
+        "opt0": "Extremadamente Fina [lento] (1)",
+        "opt1": "Muy Fina (3)",
+        "opt2": "Fina (7)",
+        "opt3": "Defecto (14)",
+        "opt4": "Àspero (21)",
+        "opt5": "Muy Àspero (35)"
+      },
+      "gapconnect": {
+        "title": "Conecte pequeñas lagunas:",
+        "detail": "Hace un lado a otro se llena más suave al no levantar el cepillo en los bordes."
+      },
+      "refillmode": {
+        "title": "Modo de Recarga:",
+        "opt1": "Después de cada ruta SVG",
+        "opt0": "Después de Max Distancia (predeterminado)",
+        "detail": "Elija para rellenar la pintura, ya sea después de una cierta distancia (por defecto), o después de cada ruta SVG."
+      },
+      "refillaction": {
+        "title": "Acción de recarga:",
+        "opt0": "Recarga pintura completa (por defecto)",
+        "opt1": "Inmersión individual en agua y pintura",
+        "opt2": "Inmersión doble en agua y pintura",
+        "detail": "Al rellenar pintura, obtener una gran cantidad de pintura (por defecto) o simplemente chapuzón en la pintura, ya sea una o dos veces."
+      },
+      "usewhite": "Utilice medios blancas",
+      "prefill": "Búfer prellenado",
+      "optimize": "Optimizar orden ruta",
+      "usewhiteinfo": "Si está desactivada, cuando la configuración de los medios contienen un color blanco, que se tendrá en cuenta cuando existe un camino blanco para ser rastreado.",
+      "render": {
+        "title": "Rendering Path",
+        "tab2": "Rellene",
+        "tab1": "contorno",
+        "general": "Llenar y esbozo general"
+      },
+      "prefillinfo": "Si se activa, se enviarán todos los comandos por lotes en los modos de apoyo antes de que el robot comienza a trabajar. Esto debería eliminar la tartamudez en el arranque, aunque tienes que esperar más tiempo antes de que su trabajo se inicia la impresión.",
+      "optimizeinfo": "Si se activa, todos los caminos de pintura automáticas (llenar y accidente cerebrovascular) se reordenan según el color y la proximidad a finales trayectoria anterior. Caminos incluso invertirse para asegurar la distancia menor entre el trabajo, pero si se trabaja con varias líneas de texto pueden tomar un camino muy extraño."
+    },
+    "common": {
+      "servo": {
+        "title": "Elevación del cepillo del motor (servo)",
+        "up": "Posición Hasta:",
+        "paint": "Dibuje Posición:",
+        "wash": "Lave Posición:",
+        "time": "Duración:",
+        "timedetails": "Cantidad de tiempo (en milisegundos) que debe esperar a que un movimiento a través de toda la gama de arriba / abajo. **El valor predeterminado es 340**, establece en 0 para no esperar en absoluto. Movimientos más pequeños tendrán una cantidad proporcionalmente menor de tiempo."
+      }
+    },
+    "advanced": {
+      "steppers": {
+        "title": "Steppers X/Y",
+        "invertx": "Invertir eje X:",
+        "inverty": "Invertir eje Y:",
+        "invertdetail": "En caso de que uno de sus motores se mueve hacia atrás.",
+        "buffer": {
+          "title": "Suavizado Búfer:",
+          "detail": "Elimina el tiempo de duración de la API de devolución de llamada, las fuerzas de amortiguación y suavizar las llamadas de posición subsiguientes. El valor predeterminado es **20 ms**. Los valores negativos se suman retardo adicional. Sólo aumentará si la pintura es de nerviosismo.",
+          "hover": " Mover a la derecha para más compensado (liso), te faltan para offset negativo (carne seca)"
+        },
+        "swap": "Intercambiar X para Y:",
+        "swapdetail": "En caso de que hayas conectado por cable accidentalmente Motor 1 donde se supone que el motor 2 para ir."
+      },
+      "misctitle": "Vario",
+      "modes": {
+        "title": "Modos",
+        "detail": "Activar o desactivar los modos RoboPaint experimentales",
+        "remoteprint": {
+          "title": "Pintura remoto:",
+          "detail": "Permite que las aplicaciones remotas configuradas correctamente para enviar gráficos para RoboPaint para automáticamente pintaron / dibujado. Para que esto funcione, fuera de esta computadora, la casilla \"Permitir sólo las conexiones desde este equipo\" a continuación deben ser **sin control.**"
+        }
+      },
+      "openlast": "Abrir última imagen en el arranque:",
+      "bottype": {
+        "title": "Tipo de dibujo bot conectados:",
+        "hover": "Lista Bot Apoyado",
+        "detail": "¡RoboPaint fue hecho para el WaterColorBot, pero debido a que está basado en CNC de servidor que puede hablar con cualquier bot que apoya! **El cambio requiere reiniciar la aplicación.**",
+        "warning": "Bot incompatible con herramientas de pintura seleccionado."
+      },
+      "api": {
+        "title": "servidor de la IPA",
+        "server": "Servidor en",
+        "detail": "Cuando se ejecutan aplicaciones compatibles, esta sería la IP del servidor y el puerto para entrar en la aplicación. **El cambio requiere reiniciar la aplicación.**"
+      },
+      "httplocalonly": {
+        "title": "Sólo permiten conexiones desde este equipo:",
+        "detail": "Desactive esta para conectarse al servidor IPA CNC en RoboPaint de otros dispositivos. **El cambio requiere reiniciar la aplicación.**"
+      }
+    },
+    "stroke": {
+      "enable": "Ruta traza acaricia / contornos",
+      "enableinfo": "Si está desactivada, no hay esquemas / accidentes cerebrovasculares se pueden rastrear en cualquier funcionalidad modo automático.",
+      "fill": "Rellenos de esquema",
+      "invisible": "Caminos invisibles Stroke",
+      "closefilled": "Cerrar caminos llenos",
+      "fillinfo": "Si está activado, se añadirá un esbozo del mismo color para los caminos llenos sin un derrame cerebral.",
+      "occlusionall": "Oclusión Carrera / detección de solapamiento",
+      "invisibleinfo": "Si se activa, se añadirán golpes para todos los caminos independientemente del grosor del trazo o color existentes.",
+      "closefilledinfo": "Si se activa, caminos rellenos sin cerrar se describen totalmente como si estuvieran cerrados.",
+      "occfills": "Oclusión bajo rellenos",
+      "occlusionallinfo": "Si está desactivada, todos los contornos / carrera trazado ignorará solapamiento ruta y el orden de las capas.",
+      "occstroke": "Oclusión bajo golpes",
+      "occfillsinfo": "Si está desactivada, todos los contornos / carrera trazado ignorará lleno de color se superpone.",
+      "occcolor": "No haga caso de la oclusión bajo mismo color",
+      "occstrokeinfo": "Si está desactivada, todas rastreo contornos / carrera ignorará trazo se superpone.",
+      "occtrans": "No haga caso de la oclusión en virtud de relleno o trazo transparente",
+      "occtransinfo": "Si se activa, todos rastreo contornos / carrera bajo caminos transparentes ignorará oclusión.",
+      "occcolorinfo": "Si se activa, todos los contornos / carrera trazado de la misma Collor como un relleno de superposición o un derrame cerebral ignorará oclusión."
+    },
+    "fill": {
+      "enable": "Ruta traza llena",
+      "dynamic": "Opciones de relleno de línea dinámico",
+      "group": {
+        "title": "La agrupación de Umbral:",
+        "opt0": "Ninguno",
+        "info": "Umbral mínimo para agrupar los finales de línea dinámicos juntos en grupos conectados. Valor grande conecta más grupos, 0 asegurará hay grupos se hacen.",
+        "opt20": "Pequeño (20)",
+        "opt40": "Por defecto (40)",
+        "opt60": "Medio (60)",
+        "opt100": "Gigante (100)",
+        "opt80": "Enorme (80)"
+      },
+      "enableinfo": "Si está desactivada, no hay rellenos se pueden rastrear en cualquier funcionalidad modo automático.",
+      "hatch": "Añadir relleno escotilla secundaria",
+      "random": "Randomize ángulo de llenado",
+      "hatchinfo": "Si está activado, se añadirá un relleno ángulo opuesto secundario para cada ruta. Will ** no ** ángulo de la altura de relleno al azar a continuación.",
+      "randominfo": "Si se activa, llenar ángulo de diferentes caminos se asignó al azar.",
+      "overlay": "Opciones de relleno Espiral",
+      "align": "Alinear relleno de caracol a cada ruta",
+      "occ": "Compruebe Oclusión",
+      "precisioninfo": "Principalmente para relleno espiral, este ajuste también se utiliza para convertir el zig-suave en un procesamiento posterior línea poligonal.",
+      "aligninfo": "Si está habilitado (espiral tipo de relleno solamente), la espiral de relleno se centrará en el camino de llenado. Si está desactivada, la espiral se alineará con el centro de la tela para cada ruta.",
+      "occinfo": "Si está desactivado, toda trazado relleno ignorará lleno de color se superpone."
+    },
+    "trace": {
+      "title": "Trazar Velocidad:",
+      "opt2": "Incumplimiento (2 ×)",
+      "opt1": "Lenta (1 ×)",
+      "info": "La cantidad de trabajo realizado para cada cuadro. Mayor número de iteraciones debería tomar menos tiempo en general, pero actualizar con menos frecuencia.",
+      "opt4": "Quad (4 ×)",
+      "opt10": "Súper (10 ×)",
+      "opt20": "Máximo (20 ×)",
+      "width": {
+        "title": "Vista previa de ancho de línea:",
+        "info": "Cómo grandes caminos trazados aparecerán en la vista previa en vivo. No afecta la impresión.",
+        "opt1": "Mínima (1)",
+        "optneg1": "Automático (establecido por la aplicación)",
+        "opt5": "Medio (5)",
+        "opt10": "Por defecto (10)",
+        "opt20": "Amplia (20)",
+        "opt30": "Extreme (30)"
+      }
+    },
+    "media": {
+      "media": "Medios",
+      "implements": "Implementa",
+      "refill": "Medios de recarga"
+    }
+  },
+  "libs": {
+    "autocomplete": "Pintura automática completa!",
+    "autostroke": "Camino Acariciando __id __...",
+    "reinking": "El ir a conseguir más __media __...",
+    "inked": "Ahora hay __media__ en el cepillo",
+    "inking": "Poner un poco de __media__ en el cepillo ...",
+    "washed": "Cepillo debe estar limpio",
+    "ignorepaint": "La pintura ignorado para el modo de sorteo __mode__",
+    "ignorewater": "Agua ignorado para el modo de sorteo __mode__",
+    "ignorewash": "Comando de lavado completo ignorado para el modo de sorteo __mode__",
+    "problem": "Problema de conexión ☹",
+    "sub": "Dibujo subtrayecto __num__",
+    "reinkingdry": "El ir a conseguir un poco más __media__, no hay agua ...",
+    "autoinit": "Pintura automática: caminos __pathNum__, __jobsNum__ empleos '",
+    "washing": "Hacer un lavado cepillo completo ...",
+    "reinked": "Continuando a pintar con __media__",
+    "autofill": "Camino Llenado __id __...",
+    "subrefill": "Conseguir la pintura y luego dibujo subtrayecto __num__",
+    "spool": {
+      "stroke": "Rastreo de ruta de carrera __id __...",
+      "fill": "Rastreo de llenar ruta __id __..."
+    }
+  }
+}
