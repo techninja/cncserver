@@ -46,8 +46,7 @@ module.exports = (cncserver, drawing) => {
   });
 
   // Function to render presets for the API, translating human readable strings.
-  colors.listPresets = () => {
-    const { i18n: { t } } = cncserver;
+  colors.listPresets = (t) => {
     const out = {};
     Object.entries(colors.presets).forEach(([key, p]) => {
       const basekey = `colorsets:${p.manufacturer}.${p.machineName}`;

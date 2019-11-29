@@ -4,9 +4,9 @@
 
 module.exports = {
   utils: './components/core/utils/cncserver.utils',
-  i18n: './components/core/utils/cncserver.i18n',
   binder: './components/core/utils/cncserver.binder',
   settings: './components/core/utils/cncserver.settings',
+  i18n: './components/core/utils/cncserver.i18n',
   server: './components/core/comms/cncserver.server',
   rest: './components/core/comms/cncserver.rest',
   api: './components/core/comms/cncserver.api',

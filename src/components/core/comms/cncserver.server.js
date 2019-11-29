@@ -35,6 +35,9 @@ module.exports = (cncserver) => {
     // Setup remaining middleware.
     server.app.use(express.bodyParser());
     server.app.use(slashes());
+
+    // Allow any implementing binder support for middleware or static routes.
+    cncserver.binder.trigger('server.configure', server.app);
   });
 
   // Start express HTTP server for API on the given port
