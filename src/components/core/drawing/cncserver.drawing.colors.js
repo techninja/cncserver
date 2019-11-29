@@ -154,7 +154,7 @@ module.exports = (cncserver, drawing) => {
       Object.entries(colors.presets[presetName].colors).forEach(([name, color]) => {
         set.push({
           id: `color${set.length}`,
-          name: cncserver.i18n.t(`colorsets:colors.${name}`),
+          name, // cncserver.i18n.t(`colorsets:colors.${name}`),
           color,
         });
       });
@@ -162,7 +162,7 @@ module.exports = (cncserver, drawing) => {
       // TODO: Allow this to be set somewhere?
       set.push({
         ...ignoreWhite,
-        name: cncserver.i18n.t('colorsets:colors.white'),
+        // name: cncserver.i18n.t('colorsets:colors.white'),
       });
       return set;
     }
