@@ -38,7 +38,7 @@ module.exports = (cncserver) => {
           console.error(err);
           const errBody = {
             status: 'error',
-            message: `${err}`,
+            message: err,
           };
 
           if (err.stack) errBody.stack = err.stack;
