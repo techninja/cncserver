@@ -2,7 +2,7 @@
  * @file Drawing base code used by other drawing utils.
  */
 const {
-  Point, Size, Project, Group, Path, CompoundPath, Layer,
+  Point, Size, Project, Rectangle, Group, Path, CompoundPath, Layer,
 } = require('paper');
 
 // Central drawing base export
@@ -13,11 +13,15 @@ module.exports = (cncserver) => {
 
   cncserver.binder.bindTo('controller.setup', base.id, () => {
     const { settings: { bot } } = cncserver;
-    // Setup the project with the base cavas size in mm.
-    base.size = new Size(
-      bot.workArea.width / bot.stepsPerMM.x,
-      bot.workArea.height / bot.stepsPerMM.y
-    );
+    console.log(bot);
+    // Setup the project with the max cavas size in mm.
+    base.size = new Size(bot.maxAreaMM.width, bot.maxAreaMM.height);
+
+    // Setup the actual printable work space as a rectangle.
+    base.workspace = new Rectangle({
+      from: [bot.workAreaMM.left, bot.workAreaMM.top],
+      to: [bot.workAreaMM.right, bot.workAreaMM.bottom],
+    });
 
     base.project = new Project(base.size);
 
@@ -49,10 +53,24 @@ module.exports = (cncserver) => {
   };
 
   // Get a default bound for high level drawings.
-  base.defaultBounds = (margin = 10) => ({
+  base.defaultBounds = (margin = 10) => new Rectangle({
     point: [margin, margin],
-    size: [base.size.width - margin * 2, base.size.height - margin * 2],
+    size: [base.workspace.width - margin * 2, base.workspace.height - margin * 2],
   });
+
+  // Offset any passed bounds to fit within the workspace.
+  base.fitToWorkspace = (bounds) => {
+    const adjBounds = bounds.clone();
+
+    // No negative bounds positions.
+    if (adjBounds.point.x < 0) adjBounds.point.x = 0;
+    if (adjBounds.point.y < 0) adjBounds.point.y = 0;
+
+    // Offset for top/left workspaces.
+    adjBounds.point = adjBounds.point.add(base.workspace);
+
+    return adjBounds;
+  };
 
   // Fit the given item within either the drawing bounds, or custom one.
   base.fitBounds = (item, rawBounds) => {
@@ -60,9 +78,14 @@ module.exports = (cncserver) => {
 
     if (!bounds) {
       bounds = base.defaultBounds();
+    } else if (!(bounds instanceof Rectangle)) {
+      bounds = new Rectangle(bounds);
     }
 
+    bounds = base.fitToWorkspace(bounds);
+
     item.fitBounds(bounds);
+    return bounds;
   };
 
   // Get the position of item via anchor from relative offset EG {x:0, y:-1}
