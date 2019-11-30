@@ -161,7 +161,7 @@ module.exports = (cncserver) => {
   cncserver.binder.bindTo('control.render.path.finish', watercolorbot.id, (path) => {
     watercolorbot.paintDistance += path.length;
     if (watercolorbot.paintDistance >= watercolorbot.maxPaintDistance - 1) {
-      watercolorbot.reink();
+      watercolorbot.reink(cncserver.drawing.base.getColorID(path));
     }
   });
 
