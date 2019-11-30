@@ -122,7 +122,7 @@ module.exports = (cncserver) => {
 
       // Override this to move with accelleration if override isn't set.
       // TODO: Allow switching between accell and flat speed movements.
-      if (speedOverride === null) {
+      /* if (speedOverride === null) {
         // Convert the percentage or absolute in/mm XY values into absolute steps.
         const startPoint = cncserver.utils.stepsToAbs(pen.state, 'mm');
         const endPoint = cncserver.utils.stepsToAbs(cncserver.utils.inPenToSteps(point), 'mm');
@@ -143,7 +143,7 @@ module.exports = (cncserver) => {
 
         // movePath.remove(); // TODO: Move this to when it's done?
         return;
-      }
+      } */
 
       // Convert the percentage or absolute in/mm XY values into absolute steps.
       const absInput = cncserver.utils.inPenToSteps(point);
