@@ -18,7 +18,7 @@ module.exports = (cncserver, drawing) => {
 
     // If bounds set, resize the path.
     if (bounds) {
-      path.fitBounds(new Rectangle(bounds));
+      drawing.base.fitBounds(path, bounds);
     }
 
     // Update client preview.
