@@ -22,7 +22,10 @@ module.exports = (cncserver) => {
     if (req.route.method === 'post') {
       // Are we drawing the preview?
       if (req.body.type === 'drawpreview') {
-        cncserver.control.renderPathsToMoves();
+        cncserver.control.renderPathsToMoves(
+          cncserver.drawing.base.layers.preview,
+          req.body.settings
+        );
         return {
           code: 202,
           body: { status: 'processing' },

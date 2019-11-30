@@ -43,6 +43,12 @@ function getCurvatureBetween(path, from, to, curvatureThreshold) {
 
   // Split the path at the from and to locations.
   p = p.splitAt(from); // Returns the part after from.
+
+  // Is the result valid? If not, return immediately.
+  if (!p) {
+    return { curvature: 90, maxPointDistance: 0 };
+  }
+
   const garbage = p.splitAt(to - from); // We can throw away the result after to.
   if (garbage) {
     garbage.remove();

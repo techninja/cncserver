@@ -57,9 +57,10 @@ module.exports = (cncserver) => {
     bounds: cncserver.drawing.base.defaultBounds(),
   });
 
+  // Add a child job to a parent project.
   actions.addChild = (parent, payload) => {
     if (actions.hashToIndex[parent]) {
-
+      // TODO: this.
     }
   };
 

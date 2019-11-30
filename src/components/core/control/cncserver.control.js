@@ -390,8 +390,12 @@ module.exports = (cncserver) => {
    * @param {object} source
    *   Source paper object containing the children, defaults to preview layer.
    */
-  control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview) => {
+  control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview, reqSettings = {}) => {
     const { settings: { botConf }, drawing: { colors } } = cncserver;
+    const settings = {
+      parkAfter: true,
+      ...reqSettings,
+    };
     // TODO:
     // * Join extant non-closed paths with endpoint distances < 0.5mm
     // * Split work by colors
@@ -407,6 +411,8 @@ module.exports = (cncserver) => {
 
       if (path.length && colorID && validColors.includes(colorID)) {
         workGroups[colorID].push(path);
+        // Allow implementing triggers to modify current list of paths.
+        workGroups[colorID] = cncserver.binder.trigger('control.render.path.select', workGroups[colorID]);
       } else if (colorID !== 'ignore') {
         console.log(`DEBUG: Invalid Draw path ${colorID} ${path.name} ==================`);
       }
@@ -419,6 +425,9 @@ module.exports = (cncserver) => {
         const paths = workGroups[colorID];
 
         if (paths.length) {
+          // Bind trigger for implementors on work group begin.
+          cncserver.binder.trigger('control.render.group.begin', colorID);
+
           // Do we have a tool for this colorID? If not, use manualswap.
           if (colors.doColorParsing()) {
             const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
@@ -429,6 +438,9 @@ module.exports = (cncserver) => {
           const nextPath = () => {
             if (paths[pathIndex]) {
               control.accelMoveOnPath(paths[pathIndex]).then(() => {
+                // Trigger implementors for plath render complete.
+                cncserver.binder.trigger('control.render.path.finish', paths[pathIndex]);
+
                 // Path in this group done, move to the next.
                 pathIndex++;
                 nextPath();
@@ -457,6 +469,12 @@ module.exports = (cncserver) => {
       } else {
         // Actually complete with all paths in all work groups!
         // TODO: Fullfull a promise for the function?
+
+        // Trigger binding for implementors on sucessfull rendering completion.
+        cncserver.binder.trigger('control.render.finish');
+
+        // If settings say to park.
+        if (settings.parkAfter) cncserver.pen.park();
       }
     }
     // Intitialize working on the first group on the next process tick.

@@ -37,6 +37,10 @@ module.exports = (cncserver) => {
     let runningPayload = payload;
 
     if (typeof hooks[event] === 'object') {
+      // Debug for unbound triggers.
+      if (cncserver.settings.gConf.get('debug') && !Object.keys(hooks[event]).length) {
+        console.log(`Event "${event}" triggered with NO BOUND IMPLEMENTORS`);
+      }
       for (const [caller, callback] of Object.entries(hooks[event])) {
         if (typeof callback === 'function') {
           if (cncserver.settings.gConf.get('debug')) {
