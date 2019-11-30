@@ -482,11 +482,16 @@ module.exports = (cncserver) => {
   });
 
   control.accelMoveSubPath = subPath => new Promise((success, error) => {
+    const move = (point, speed = null) => {
+      const stepPoint = cncserver.utils.absToSteps(point, 'mm', true);
+      control.movePenAbs(stepPoint, null, true, null, speed);
+    };
+
     // Pen up
     cncserver.pen.setPen({ state: 'up' });
 
     // Move to start of path, then pen down.
-    cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+    move(subPath.getPointAt(0));
     cncserver.pen.setPen({ state: 'draw' });
 
     // Calculate groups of accell points and run them into moves.
@@ -495,7 +500,7 @@ module.exports = (cncserver) => {
       if (accellPoints && accellPoints.length) {
         // Move through all accell points from start to nearest end point
         accellPoints.forEach((pos) => {
-          cncserver.pen.setPen({ ...pos.point, abs: 'mm' }, null, pos.speed);
+          move(pos.point, pos.speed);
         });
       } else {
         // Null means generation of accell points was cancelled.
@@ -503,11 +508,11 @@ module.exports = (cncserver) => {
           // No points? We're done. Wrap up the line.
 
           // Move to end of path...
-          cncserver.pen.setPen({ ...subPath.getPointAt(subPath.length), abs: 'mm' });
+          move(subPath.getPointAt(subPath.length));
 
           // If it's a closed path, overshoot back home.
           if (subPath.closed) {
-            cncserver.pen.setPen({ ...subPath.getPointAt(0), abs: 'mm' });
+            move(subPath.getPointAt(0));
           }
 
           // End with pen up.
