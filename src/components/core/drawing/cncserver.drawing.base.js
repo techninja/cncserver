@@ -58,6 +58,13 @@ module.exports = (cncserver) => {
     size: [base.workspace.width - margin * 2, base.workspace.height - margin * 2],
   });
 
+  // Get the snapped stroke color ID of an item through its parentage.
+  base.getColorID = (item) => {
+    if (item.data.colorID) return item.data.colorID;
+    if (item.parent) return base.getColorID(item.parent);
+    return null;
+  };
+
   // Offset any passed bounds to fit within the workspace.
   base.fitToWorkspace = (bounds) => {
     const adjBounds = bounds.clone();

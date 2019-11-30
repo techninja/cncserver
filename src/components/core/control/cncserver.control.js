@@ -392,8 +392,6 @@ module.exports = (cncserver) => {
    */
   control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview) => {
     const { settings: { botConf }, drawing: { colors } } = cncserver;
-    // const allPaths = drawing.base.getPaths(source);
-
     // TODO:
     // * Join extant non-closed paths with endpoint distances < 0.5mm
     // * Split work by colors
@@ -403,15 +401,16 @@ module.exports = (cncserver) => {
     // Store work for all paths grouped by color
     const workGroups = colors.getWorkGroups();
     const validColors = Object.keys(workGroups);
-    source.children.forEach((path) => {
-      // TODO: This will not process anything not recognised.
-      if (validColors.includes(path.data.colorID)) {
-        workGroups[path.data.colorID].push(path);
-      } else {
-        console.log(`No data! ${path.name}`);
+    const allPaths = cncserver.drawing.base.getPaths(source);
+    allPaths.forEach((path) => {
+      const colorID = cncserver.drawing.base.getColorID(path);
+
+      if (path.length && colorID && validColors.includes(colorID)) {
+        workGroups[colorID].push(path);
+      } else if (colorID !== 'ignore') {
+        console.log(`DEBUG: Invalid Draw path ${colorID} ${path.name} ==================`);
       }
     });
-
 
     let workGroupIndex = 0;
     function nextWorkGroup() {
@@ -426,15 +425,19 @@ module.exports = (cncserver) => {
             control.setTool(changeTool, colorID);
           }
 
-          let compoundPathIndex = 0;
-          const nextCompoundPath = () => {
-            if (paths[compoundPathIndex]) {
-              control.accelMoveOnPath(paths[compoundPathIndex]).then(() => {
+          let pathIndex = 0;
+          const nextPath = () => {
+            if (paths[pathIndex]) {
+              control.accelMoveOnPath(paths[pathIndex]).then(() => {
                 // Path in this group done, move to the next.
-                compoundPathIndex++;
-                nextCompoundPath();
-              }).catch(() => {
-                // Path generation has been entirely cancelled.
+                pathIndex++;
+                nextPath();
+              }).catch((error) => {
+                // If we have an error object, it's an actual error!
+                if (error) {
+                  console.error(error);
+                }
+                // Otherwise, path generation has been entirely cancelled.
                 workGroupIndex = validColors.length;
               });
             } else {
@@ -445,7 +448,7 @@ module.exports = (cncserver) => {
           };
 
           // Start processing paths in the initial workgroup.
-          nextCompoundPath();
+          nextPath();
         } else {
           // There is no work for this group, move to the next one.
           workGroupIndex++;
@@ -461,27 +464,6 @@ module.exports = (cncserver) => {
   };
 
   control.accelMoveOnPath = path => new Promise((success, error) => {
-    // Move through all sub-paths within the compound path. For non-compound
-    // paths, this will only iterate once.
-    let childIndex = 0;
-
-    function nextSubPath() {
-      if (path.children[childIndex]) {
-        // Calculate and run in full movement for subpath, then run the next.
-        control.accelMoveSubPath(path.children[childIndex]).then(() => {
-          childIndex++;
-          nextSubPath();
-        }).catch(error);
-      } else {
-        // No more subpaths, fulfull the promise.
-        success();
-      }
-    }
-
-    nextSubPath();
-  });
-
-  control.accelMoveSubPath = subPath => new Promise((success, error) => {
     const move = (point, speed = null) => {
       const stepPoint = cncserver.utils.absToSteps(point, 'mm', true);
       control.movePenAbs(stepPoint, null, true, null, speed);
@@ -491,11 +473,11 @@ module.exports = (cncserver) => {
     cncserver.pen.setPen({ state: 'up' });
 
     // Move to start of path, then pen down.
-    move(subPath.getPointAt(0));
+    move(path.getPointAt(0));
     cncserver.pen.setPen({ state: 'draw' });
 
     // Calculate groups of accell points and run them into moves.
-    cncserver.drawing.accell.getPoints(subPath, (accellPoints) => {
+    cncserver.drawing.accell.getPoints(path, (accellPoints) => {
       // If we have data, move to those points.
       if (accellPoints && accellPoints.length) {
         // Move through all accell points from start to nearest end point
@@ -508,11 +490,11 @@ module.exports = (cncserver) => {
           // No points? We're done. Wrap up the line.
 
           // Move to end of path...
-          move(subPath.getPointAt(subPath.length));
+          move(path.getPointAt(path.length));
 
           // If it's a closed path, overshoot back home.
-          if (subPath.closed) {
-            move(subPath.getPointAt(0));
+          if (path.closed) {
+            move(path.getPointAt(0));
           }
 
           // End with pen up.
