@@ -55,7 +55,7 @@ module.exports = (cncserver) => {
       return { code: 200, body: getSettings() };
     }
     if (req.route.method === 'put') {
-      for (const [key, value] of req.body) {
+      for (const [key, value] of Object.entries(req.body)) {
         conf.set(key, value);
       }
       return { code: 200, body: getSettings() };
