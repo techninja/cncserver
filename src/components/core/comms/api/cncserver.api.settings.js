@@ -59,13 +59,18 @@ module.exports = (cncserver) => {
         conf.set(key, value);
       }
 
-      // Send debug setting to the runner when changed
-      // TODO: what other settings should be updated on the runner?
-      if (setType === 'global' && req.body.debug != undefined ){
+      console.log((req.body.debug != undefined || req.body.showSerial != undefined))
+
+      // Send updated setting to the runner when changed
+      if (setType === 'global' && (req.body.debug != undefined || req.body.showSerial != undefined)){
         cncserver.ipc.sendMessage('runner.config', {
           debug: req.body.debug,
+          showSerial: req.body.showSerial
         });
-
+      }else if (setType === 'bot' && (req.body.controller != undefined )){
+        cncserver.ipc.sendMessage('runner.config', {
+          controller: req.body.controller,
+        });
       }
       return { code: 200, body: getSettings() };
     }
