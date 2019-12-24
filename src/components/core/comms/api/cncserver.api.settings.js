@@ -58,6 +58,15 @@ module.exports = (cncserver) => {
       for (const [key, value] of Object.entries(req.body)) {
         conf.set(key, value);
       }
+
+      // Send debug setting to the runner when changed
+      // TODO: what other settings should be updated on the runner?
+      if (setType === 'global' && req.body.debug != undefined ){
+        cncserver.ipc.sendMessage('runner.config', {
+          debug: req.body.debug,
+        });
+
+      }
       return { code: 200, body: getSettings() };
     }
 
