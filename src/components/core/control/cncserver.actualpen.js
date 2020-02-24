@@ -20,6 +20,9 @@ module.exports = (cncserver) => {
    */
   actualPen.updateState = (state) => {
     actualPen.state = extend({}, state);
+
+    // Trigger an update for actualPen change.
+    cncserver.sockets.sendPenUpdate();
   };
 
   /**

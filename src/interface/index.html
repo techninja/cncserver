@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="/bulma/bulma.min.css">
     <link rel="stylesheet" href="/select2/css/select2.min.css">
     <link rel="stylesheet" href="/styles/interface.css">
+    <script type="module" src="/modules/weightless.js"></script>
+    <script type="module" src="/modules/components/index.mjs"></script>
   </head>
   <title>CNC Server client</title>
 <body>
@@ -28,230 +30,42 @@
       </div>
     </div>
   </section>
-  <div class="section columns is-multiline">
-    <section class="column is-half section">
-      <div class="tabs is-boxed"> <!-- Tab buttons only -->
-        <ul>
-          <li class="is-active" data-tab="1"><a>
-            <span class="icon is-small"><i class="fas fa-vial" aria-hidden="true"></i></span>
-            <span>Basic</span>
-          </a></li>
-          <li data-tab="2"><a>
-            <span class="icon is-small"><i class="fas fa-vials" aria-hidden="true"></i></span>
-            <span>Advanced</span>
-          </a></li>
-          <li data-tab="3"><a>
-            <span class="icon is-small"><i class="fas fa-cogs" aria-hidden="true"></i></span>
-            <span>Settings</span>
-          </a></li>
-          <li data-tab="4"><a>
-            <span class="icon is-small"><i class="fas fa-tasks" aria-hidden="true"></i></span>
-            <span>Diagnostics</span>
-          </a></li>
-        </ul>
-      </div>
-      <div class="tabs-content">
-        <div class="tab-content is-active" data-content="1"><!-- Basic -->
-
-          <div class="box">
-            <label class="label">
-              <span class="icon"><i class="fas fa-toolbox" aria-hidden="true"></i></span>
-              <span>Tools:</span>
-            </label>
-            <div class="field" id="tools">
-              <h4>Loading tool set...</h4>
-            </div>
-          </div>
 
 
-          <div class="box" id="heightbuttons">
-            <label class="label">
-              <span class="icon"><i class="fas fa-ruler-vertical" aria-hidden="true"></i></span>
-              <span>Height Settings/Presets</span>
-            </label>
-            <div>
-              <label for="skipbuffer">Bypass buffer</label>
-              <input id="skipbuffer" type="checkbox">
-            </div>
-          </div>
+<div class="section columns is-multiline">
+  <section class="column is-half" id="left-col-tabs">
+    <tab-group>
+      <tab-item name="Basic" icon="vial">
+        <panel-basic></panel-basic>
+      </tab-item>
+      <tab-item name="Advanced" icon="vials" active>
+        <panel-advanced></panel-advanced>
+      </tab-item>
+      <tab-item name="Settings" icon="cogs">
+        <panel-settings></panel-settings>
+      </tab-item>
+      <tab-item name="Colors" icon="palette">
+        <panel-colors></panel-colors>
+      </tab-item>
+      <tab-item name="Tests" icon="tasks">
+        <panel-diagnostics></panel-diagnostics>
+      </tab-item>
+    </tab-group>
+  </section>
 
-          <div class="box">
-            <label class="label">
-              <span class="icon"><i class="fas fa-location-arrow" aria-hidden="true"></i></span>
-              <span>Scratch Turtle:</span>
-            </label>
-            <button type="move" direction="left" amount="90" title="Turn left 90 degrees">&#8624;</button>
-            <button type="move" direction="forward" amount="10" title="Move forward 10">&#8593;</button>
-            <button type="move" direction="forward" amount="100" title="Move forward 100">&#8607;</button>
-            <button type="move" direction="right" amount="90" title="Turn right 90 degrees">&#8625;</button>
-            <turtle title="Turtle angle">&#10140;</turtle>
-          </div>
+  <section class="column is-half" id="right-col-preview">
+    <div class="box">
+      <toolbar-top></toolbar-top>
+    </div>
+    <div id="canvas-wrapper">
+      <canvas class="simcanvas" id="paper"></canvas>
+    </div>
+    <div class="box">
+      <toolbar-bottom></toolbar-bottom>
+    </div>
+  </section>
+</div>
 
-        </div>
-        <div class="tab-content" data-content="2"><!-- Advanced -->
-
-          <label class="label">Select an SVG file:</label>
-          <div class="field has-addons has-addons">
-            <div class="control">
-              <input class="input" type="file" id="svgfile">
-            </div>
-            <div class="control">
-              <button id="plotstart" class="button is-primary" disabled="disabled">
-                <span>Load Selected File</span>
-                <span class="icon is-small">
-                  <i class="fa fa-print"></i>
-                </span>
-              </button>
-            </div>
-          </div>
-          <div class="field is-grouped">
-            <p class="control">
-              <button class="button is-success" id="forceready">Force Ready State</button>
-            </p>
-            <p class="control">
-              <button id="plotend" class="button is-light is-danger is-outlined">CANCEL</button>
-            </p>
-          </div>
-        </div>
-        <div class="tab-content" data-content="3"><!-- Settings -->
-          SETTINGS
-          <div id="colors" class="box field">
-            <label class="label">
-              <span class="icon"><i class="fas fa-palette" aria-hidden="true"></i></span>
-              <span>Colorset</span>
-            </label>
-            <div class="field columns is-multiline" id="colorset">
-              <section class="column is-half">
-                <div class="list is-hoverable">
-                  COLORSET GOES HERE
-                </div>
-              </section>
-              <section id="color-editor" class="column is-half">
-                <div class="box columns is-multiline">
-                  <section class="column is-half">
-                    <div class="field">
-                      <label class="label">Tool/ID</label>
-                      <div class="control">
-                        <input class="input id" type="text" placeholder="Tool or ID">
-                      </div>
-                      <p class="help">Unique identifier for the color, match to a tool to change to it</p>
-                    </div>
-
-                    <div class="field">
-                      <label class="label">Color</label>
-                      <div class="control">
-                        <input class="input color" type="color" value="#000000">
-                      </div>
-                      <p class="help">Path fill and stroke nearest this color will snap to the matching tool/id</p>
-                    </div>
-
-                    <a class="button is-danger is-fullwidth" id="color-cancel">
-                      <span class="icon"><i class="fas fa-window-close" aria-hidden="true"></i></span>
-                      <span>Cancel</span>
-                    </a>
-                  </section>
-                  <section class="column is-half">
-                    <div class="field">
-                      <label class="label">Display Name</label>
-                      <div class="control">
-                        <input class="input name" type="text" placeholder="Display Name">
-                      </div>
-                      <p class="help">Human readable label for the color and/or implement</p>
-                    </div>
-
-                    <div class="field">
-                      <label class="small label">
-                        <span>Preset Colors</span>
-                      </label>
-                      <select><option></option></select>
-                      <p class="help">Find/select a color from the presets to build a colorset</p>
-                    </div>
-                    <a class="button is-success is-fullwidth" id="color-add">
-                      <span class="icon"><i class="fas fa-plus-circle" aria-hidden="true"></i></span>
-                      <span>Add</span>
-                    </a>
-                    <a class="button is-warning is-hidden is-fullwidth" id="color-save">
-                      <span class="icon"><i class="fas fa-save" aria-hidden="true"></i></span>
-                      <span>Save</span>
-                    </a>
-                  </section>
-                </div>
-              </section>
-            </div>
-
-            <div class="field" id="color-presets">
-              <label class="label">
-                <span class="icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
-                <span>Presets</span>
-              </label>
-              <div class="field">
-                <select><option></option></select>
-              </div>
-            </div>
-          </div>
-
-        </div>
-        <div class="tab-content" data-content="4"><!-- Diagnostics -->
-
-          <legend>Composite Functions</legend>
-          <button class="button" id="diagtest">Run Diag Test</button>
-          <button class="button" id="ruler">Draw Ruler</button>
-
-        </div>
-      </div>
-
-    </section>
-
-
-    <section class="column is-half"> <!-- Tools / Preview / Status -->
-      <div class="box">
-        <a class="button is-warning" id="park">
-          <span class="icon"><i class="fas fa-home" aria-hidden="true"></i></span>
-          <span>Park</span>
-        </a>
-        <a class="button is-secondary" id="unlock">
-          <span class="icon"><i class="fas fa-unlock" aria-hidden="true"></i></span>
-          <span>Unlock & ⇱∅</span>
-        </a>
-        <a class="button is-success" id="toggle-pen">
-          <span class="icon"><i class="fas fa-pen" aria-hidden="true"></i></span>
-          <span>
-            <option data-op="up">Down ⭳</option>
-            <option data-op="draw" style="display: none;">Up ↥</option>
-          </span>
-        </a>
-        <label class="checkbox box is-pulled-right" style="padding: 0.1em 0.5em;">
-          Direct
-          <input type="checkbox" class="switch" id="skipbuffer">
-        </label>
-      </div>
-      <div id="canvas-wrapper">
-        <canvas class="simcanvas" id="paper"></canvas>
-      </div>
-      <div class="box">
-        <div class="is-pulled-right">
-          <a class="button is-primary" id="draw">
-            <span class="icon"><i class="fas fa-star-half-alt" aria-hidden="true"></i></span>
-            <span>Draw Preview</span>
-          </a>
-          <a class="button is-warning" id="toggle-buffer">
-            <span class="icon"><i class="fas fa-pause" aria-hidden="true"></i></span>
-            <span>
-              <option data-op="resume">Pause</option>
-              <option data-op="pause" style="display: none;">Resume</option>
-            </span>
-          </a>
-          <a class="button is-danger" id="cancel">
-            <span class="icon"><i class="fas fa-trash-alt" aria-hidden="true"></i></span>
-            <span>Cancel</span>
-          </a>
-        </div>
-        <label class="subtitle is-5 is-bold">Current Status</label>
-        <progress class="progress is-primary is-large" value="0" max="100"></progress>
-        <div class="subtitle has-text-centered has-text-dark" id="status">Idle...</div>
-      </div>
-    </section>
-  </div>
 
 <script>
   // Establish base global GUI base state variable
@@ -279,10 +93,8 @@
   import cncserver from '/lib/cncserver.client.api.js';
   import main from '/modules/main.mjs';
   import socket from '/modules/socket.mjs';
-  import buttons from '/modules/buttons.mjs';
   import preview from '/modules/preview.mjs';
   import utils from '/modules/utils.mjs';
-  import colors from '/modules/colors.mjs';
 
   // Globalize various imports.
   ['cncserver', 'preview', 'utils'].forEach((name) => {
@@ -295,15 +107,14 @@
     port: location.port ? location.port : 80,
     protocol: 'http',
     version: '1',
-    ax: axios
+    ax: axios,
+    socketio: io,
+  }).then(() => {
+    socket.init();
   });
 
   main.initPaper();
-  main.initTools();
-  main.bindClick('button, a.button', buttons);
 
-  colors.initPresets('#color-presets select');
-  colors.initColorManager('#colorset');
 </script>
 </body>
 </html>

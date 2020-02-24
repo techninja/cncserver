@@ -31,6 +31,7 @@ module.exports = (cncserver) => {
     server.app.use('/select2', express.static(`${nm}/select2/dist/`));
     server.app.use('/font-awesome', express.static(`${nm}/@fortawesome/fontawesome-free/css/`));
     server.app.use('/webfonts', express.static(`${nm}/@fortawesome/fontawesome-free/webfonts/`));
+    server.app.use('/modules', express.static(`${global.__basedir}/../web_modules/`));
 
     // Setup remaining middleware.
     server.app.use(express.bodyParser());

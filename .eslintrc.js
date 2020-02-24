@@ -11,6 +11,7 @@ module.exports = {
       "arrays": "always-multiline",
       "objects": "always-multiline"
     }],
+    "class-methods-use-this": "off",
     "no-console": "off", // TODO: Move to some other logging method.
     "no-multi-str": "off",
   }

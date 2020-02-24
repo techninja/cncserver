@@ -114,8 +114,12 @@ module.exports = (cncserver) => {
               success(img);
             };
 
-            img.onError = err;
+            img.onError = (error) => {
+              // TODO: This is really super unhelpful for implementors.
+              err(new Error(`Problem loading image: ${error}`));
+            };
           } catch (imageErr) {
+            console.log('Error catch');
             // Couldn't load image.
             err(imageErr);
           }

@@ -122,9 +122,6 @@ module.exports = (cncserver) => {
       // Update the state of the actualPen to match the one in the buffer.
       item.pen.bufferHash = hash;
       cncserver.actualPen.updateState(item.pen);
-
-      // Trigger an update for actualPen change.
-      cncserver.sockets.sendPenUpdate();
     } else {
       // TODO: when this happens, account for why or PREVENT IT.
       console.error(

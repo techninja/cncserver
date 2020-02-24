@@ -124,12 +124,14 @@ input.switch:checked:after {
   height: 43px;
 }
 
-.select2-container span.preset-color {
+.select2-container span.preset-color,
+.preset .colors {
   display: flex;
   align-items: center;
 }
 
-.select2-container span.preset-color b {
+.select2-container span.preset-color b,
+.preset .colors b {
   content: " ";
   display: block;
   height: 2em;
@@ -139,7 +141,7 @@ input.switch:checked:after {
 }
 
 /* Colorset viewer */
-#colorset .card b {
+.colorset-item.card b {
   content: " ";
   display: block;
   width: 5.5em;
@@ -152,41 +154,37 @@ input.switch:checked:after {
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
-#colorset .card {
+.colorset-item.card {
   cursor: pointer;
 }
 
-#colorset .card:hover {
+.colorset-item.card:hover {
   background-color: rgba(240,240,240,1);
 }
 
-#colorset .card a {
+.colorset-item.card a {
   color: rgba(255,0,0,0.5);
   transition: all 0.25s;
 }
 
-#colorset .card a:hover {
+.colorset-item.card a:hover {
   color: rgba(255,0,0,1);
   transform: scale(1.4);
 }
 
-#colorset .card.active {
+.colorset-item.card.active {
   background-color: #3273dc;
 }
 
-#colorset .card:hover b {
+.colorset-item.card:hover b {
   background: linear-gradient(90deg, rgba(240,240,240,0) 65%, rgba(240,240,240,1) 100%);
 }
 
-#colorset .card.active b,
-#colorset .card.active:hover b {
+.colorset-item.card.active b,
+.colorset-item.card.active:hover b {
   background: linear-gradient(90deg, rgba(50,115,220,0) 65%, rgba(50,115,220,1) 100%);
 }
 
-#colorset .card.active .card-header-title {
+.colorset-item.card.active .card-header-title {
   color: white;
-}
-
-#colorset .card.active .card-header a {
-
 }

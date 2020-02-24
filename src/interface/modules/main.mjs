@@ -7,6 +7,8 @@
 const main = {};
 
 main.initPaper = () => {
+  $('wl-tab').on('change', console.log);
+
   // Setup live display box, pull in the bot specific settings
   cncserver.api.settings.bot().then((response) => {
     const { data: bot } = response;
@@ -123,83 +125,6 @@ main.initPaper = () => {
       $canvas.css('transform', `scale(${scale})`);
       $wrapper.css('height', $canvas.height() * scale);
     }).resize();
-  });
-};
-
-// Populate tool buttons
-main.initTools = () => {
-  // Manage control tabs.
-  $('.tabs li').on('click', function tabClick() {
-    const $item = $(this);
-    const $content = $item.parents('.tabs').next();
-    const tab = $item.data('tab');
-
-    $item.siblings('li').removeClass('is-active');
-    $item.addClass('is-active');
-
-    $content.find('.tab-content').removeClass('is-active');
-    $(`.tab-content[data-content="${tab}"]`).addClass('is-active');
-  });
-
-  // Get the list of tools and output them.
-  cncserver.api.tools.list().then((response) => {
-    if (response.data) {
-      $('#tools h4').remove();
-      const toolGroups = {};
-      response.data.tools.forEach((tool) => {
-        const td = response.data.toolData[tool];
-        const group = td.group || 'none';
-
-        if (!toolGroups[group]) {
-          toolGroups[group] = [];
-        }
-
-        toolGroups[group].push(tool);
-      });
-
-      Object.keys(toolGroups).forEach((group) => {
-        const $buttons = $('<div>').addClass('buttons');
-
-        toolGroups[group].forEach((tool) => {
-          $('<p>')
-            .addClass('control')
-            .append(
-              $('<button>')
-                .text(tool)
-                .addClass('button is-info is-small')
-            )
-            .appendTo($buttons);
-        });
-
-        if (group === 'none') {
-          $('#tools').append($buttons);
-        } else {
-          $('#tools').append(
-            $('<details>')
-              .addClass('box')
-              .append(
-                $('<summary>')
-                  .addClass('label')
-                  .text(group),
-                $buttons
-              )
-          );
-        }
-      });
-
-      $('#tools button').click(function buttonClick() {
-        cncserver.api.tools.change($(this).text());
-      });
-    } else {
-      $('#tools h4').text('Failed to load tools :(');
-    }
-  });
-};
-
-main.bindClick = (selector, callbacks) => {
-  $(selector).click(function click(e) {
-    const { id } = this;
-    if (callbacks[id]) callbacks[id](e);
   });
 };
 
