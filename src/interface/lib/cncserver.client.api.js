@@ -19,13 +19,17 @@ let axios = {}; // Placeholder.
 // Initialize wrapper object is this library is being used elsewhere
 const cncserver = {
   init: ({
-    domain = 'localhost', port = 4242, protocol = 'http', version = 1, ax,
-  }) => {
+    domain = 'localhost', port = 4242, protocol = 'http', version = 1, ax, socketio,
+  }) => new Promise((resolve) => {
     axios = ax;
+    if (socketio) cncserver.socket = socketio(`${protocol}://${domain}:${port}`);
     cncserver.api.server = {
       domain, port, protocol, version,
     };
-  },
+
+    // Resolve the promise when initialized.
+    resolve();
+  }),
 };
 
 // Define central request setup.
@@ -127,14 +131,17 @@ cncserver.api = {
         settings,
       },
     }),
-    project: (body, bounds, settings, operation = 'full') => _post('actions', {
+    project: options => _post('actions', {
       data: {
+        name: 'default-project',
+        clearPreview: true,
+        // Up from here, suggested defaults.
+
+        // Fold in passed options.
+        ...options,
+
+        // From here down, non-overridable.
         type: 'project',
-        operation,
-        name: 'svg-project',
-        bounds,
-        body,
-        settings,
       },
     }),
     drawPreview: () => _post('actions', { data: { type: 'drawpreview' } }),
@@ -252,6 +259,13 @@ cncserver.api = {
     resume: () => _put('buffer', { data: { paused: false } }),
 
     /**
+     * Toggle bot operations
+     */
+    toggle: doPause => (
+      doPause ? cncserver.api.buffer.resume() : cncserver.api.buffer.pause()
+    ),
+
+    /**
      * Push a message into the buffer
      */
     message: message => _post('buffer', { data: { message } }),
@@ -281,19 +295,21 @@ cncserver.api = {
 
   // Scratch turtle/abstracted API, non-ReSTful.
   scratch: {
-    move: (direction, amount) => axios.all([
-      _get(`/move.${direction}./${amount}`),
-      _get('/poll', {
-        transformResponse: (data) => {
-          const out = {};
-          data.split('\n').forEach((item) => {
-            const [key, val] = item.split(' ');
-            out[key] = val;
-          });
-          return out;
-        },
-      }),
-    ]),
+    move: (direction, amount) => new Promise((success) => {
+      _get(`/move.${direction}./${amount}`).then(() => {
+        cncserver.api.scratch.stat().then(success);
+      });
+    }),
+    stat: () => new Promise((success) => {
+      _get('/poll').then(({ data }) => {
+        const out = {};
+        data.split('\n').forEach((item) => {
+          const [key, val] = item.split(' ');
+          out[key] = val;
+        });
+        success(out);
+      });
+    }),
   },
 
   // Batch API for lowering command send overhead.
