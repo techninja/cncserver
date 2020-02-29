@@ -6,6 +6,7 @@ import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
 import initSocket from './draw-preview.socket.mjs';
 import { initPaper, initOverlay } from './draw-preview.paper.mjs';
+import './draw-preview.tools.mjs';
 
 function initState(host, bot) {
   host.stepsPerMM = {
