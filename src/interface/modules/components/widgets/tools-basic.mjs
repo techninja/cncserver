@@ -3,13 +3,14 @@
  */
 /* globals cncserver */
 import { html } from '/modules/hybrids.js';
+import apiInit from '/modules/utils/api-init.mjs';
 
 // Load and group all tools from the API.
 function loadTools(host) {
-  cncserver.api.tools.list().then((response) => {
+  cncserver.api.tools.list().then(response => {
     if (response.data) {
       const toolGroups = {};
-      response.data.tools.forEach((tool) => {
+      response.data.tools.forEach(tool => {
         const td = response.data.toolData[tool];
         const group = td.group || 'Default';
 
@@ -30,21 +31,25 @@ function loadTools(host) {
 
 // Actually switch to the tool.
 function switchTool(toolName) {
-  return () => { cncserver.api.tools.change(toolName); };
+  return () => {
+    cncserver.api.tools.change(toolName);
+  };
 }
 
 // Initialize the widget.
 function init(host) {
-  if (!host.initialized) {
-    host.initialized = true;
+  apiInit(() => {
+    if (!host.initialized) {
+      host.initialized = true;
 
-    // Bind tool change to pen updates.
-    cncserver.socket.on('pen update', ({ tool }) => {
-      host.currentTool = tool;
-    });
+      // Bind tool change to pen updates.
+      cncserver.socket.on('pen update', ({ tool }) => {
+        host.currentTool = tool;
+      });
 
-    loadTools(host);
-  }
+      loadTools(host);
+    }
+  });
 }
 
 // Export the widget definition.
@@ -56,21 +61,31 @@ export default styles => ({
     ${styles}
     <label-title icon="toolbox">Tools:</label-title>
     <div class="field">
-      ${toolGroups.map(({ name, tools }) => html`
-        <div>
-          <h3>${name}</h3>
-          <div class="tools">
-            ${tools.map((toolName) => {
-    if (toolName === currentTool) {
-      return html`<wl-button>${toolName}</wl-button>`;
-    }
-    return html`
-      <wl-button flat inverted outlined onclick="${switchTool(toolName)}">${toolName}</wl-button>
-    `;
-  })}
+      ${toolGroups.map(
+        ({ name, tools }) => html`
+          <div>
+            <h3>${name}</h3>
+            <div class="tools">
+              ${tools.map(toolName => {
+                if (toolName === currentTool) {
+                  return html`
+                    <wl-button>${toolName}</wl-button>
+                  `;
+                }
+                return html`
+                  <wl-button
+                    flat
+                    inverted
+                    outlined
+                    onclick="${switchTool(toolName)}"
+                    >${toolName}</wl-button
+                  >
+                `;
+              })}
+            </div>
           </div>
-        </div>
-      `)}
+        `
+      )}
     </div>
     ${init}
   `,
