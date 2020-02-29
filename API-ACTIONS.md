@@ -20,6 +20,20 @@ is drawn to a virtual `preview` canvas, returned via the Socket.io connection
 when internally updated in the form of Paper.js JSON object.
 
 **TODO: ADD SCREENSHOT OF FINISHED PREVIEW**
+TODO: Make sure this shows an animation of the intended workflow:
+Image -> Stage -> Render -> Draw!
+
+The intent is that through the API a client can `stage` a piece of content (SVG
+Vector, source raster) to an intermediate layer, allowing for clientside
+refining of positioning/scale relative to other objects and the draw area. Once
+staged, content can be rendered into drawing paths using global defaults or per
+object overrides, allowing as many staged source content -> to render previews
+as needed for the user to achieve their expected result.
+
+If you just want to render a piece of content once, knowing fully where/how you
+want to render it, you can specify your operation intent and settings via the
+semi-volatile action method that renders immediately to the preview, ready to be
+printed.
 
 When the client is "ready", this work can be order optimized (or simply drawn as
 given), and will be converted into tasks and instructions. This allows for
