@@ -6,6 +6,7 @@ import TabItem from './tab-item.mjs';
 import ButtonToggle from './button-toggle.mjs';
 import ButtonSingle from './button-single.mjs';
 import LabelTitle from './label-title.mjs';
+import MainTitle from './main-title.mjs';
 
 export default styles => ({
   'tab-item': TabItem,
@@ -13,4 +14,5 @@ export default styles => ({
   'button-toggle': ButtonToggle(styles),
   'button-single': ButtonSingle(styles),
   'label-title': LabelTitle(styles),
+  'main-title': MainTitle(styles),
 });
