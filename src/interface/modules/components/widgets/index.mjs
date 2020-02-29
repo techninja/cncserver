@@ -9,6 +9,7 @@ import HeightPresets from './height-presets.mjs';
 import ToolsBasic from './tools-basic.mjs';
 import ScratchControls from './scratch-controls.mjs';
 import ProjectLoader from './project-loader.mjs';
+import DrawPreview from './draw-preview/draw-preview.mjs';
 
 export default styles => ({
   'colorset-item': ColorsetItem,
@@ -18,4 +19,5 @@ export default styles => ({
   'scratch-controls': ScratchControls(styles),
   'height-presets': HeightPresets(styles),
   'project-loader': ProjectLoader(styles),
+  'draw-preview': DrawPreview(styles),
 });

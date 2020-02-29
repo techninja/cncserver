@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <script src="/jquery/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/paper/paper-full.min.js"></script>
     <script src="/axios/axios.min.js"></script>
     <script src="/select2/js/select2.full.min.js"></script>
-    <link rel="stylesheet" href="/font-awesome/fontawesome.min.css">
-    <link rel="stylesheet" href="/font-awesome/solid.min.css">
-    <link rel="stylesheet" href="/font-awesome/brands.min.css">
-    <link rel="stylesheet" href="/bulma/bulma.min.css">
-    <link rel="stylesheet" href="/select2/css/select2.min.css">
-    <link rel="stylesheet" href="/styles/interface.css">
+    <link rel="stylesheet" href="/font-awesome/fontawesome.min.css" />
+    <link rel="stylesheet" href="/font-awesome/solid.min.css" />
+    <link rel="stylesheet" href="/font-awesome/brands.min.css" />
+    <link rel="stylesheet" href="/bulma/bulma.min.css" />
+    <link rel="stylesheet" href="/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="/styles/interface.css" />
     <script type="module" src="/modules/weightless.js"></script>
     <script type="module" src="/modules/components/index.mjs"></script>
   </head>
@@ -20,90 +23,72 @@
   <body>
     <main-title></main-title>
 
+    <div class="section columns is-multiline">
+      <section class="column is-half" id="left-col-tabs">
+        <tab-group>
+          <tab-item name="Basic" icon="vial">
+            <panel-basic></panel-basic>
+          </tab-item>
+          <tab-item name="Advanced" icon="vials" active>
+            <panel-advanced></panel-advanced>
+          </tab-item>
+          <tab-item name="Settings" icon="cogs">
+            <panel-settings></panel-settings>
+          </tab-item>
+          <tab-item name="Colors" icon="palette">
+            <panel-colors></panel-colors>
+          </tab-item>
+          <tab-item name="Tests" icon="tasks">
+            <panel-diagnostics></panel-diagnostics>
+          </tab-item>
+        </tab-group>
+      </section>
 
-<div class="section columns is-multiline">
-  <section class="column is-half" id="left-col-tabs">
-    <tab-group>
-      <tab-item name="Basic" icon="vial">
-        <panel-basic></panel-basic>
-      </tab-item>
-      <tab-item name="Advanced" icon="vials" active>
-        <panel-advanced></panel-advanced>
-      </tab-item>
-      <tab-item name="Settings" icon="cogs">
-        <panel-settings></panel-settings>
-      </tab-item>
-      <tab-item name="Colors" icon="palette">
-        <panel-colors></panel-colors>
-      </tab-item>
-      <tab-item name="Tests" icon="tasks">
-        <panel-diagnostics></panel-diagnostics>
-      </tab-item>
-    </tab-group>
-  </section>
-
-  <section class="column is-half" id="right-col-preview">
-    <div class="box">
-      <toolbar-top></toolbar-top>
+      <section class="column is-half" id="right-col-preview">
+        <div class="box">
+          <toolbar-top></toolbar-top>
+        </div>
+        <draw-preview></draw-preview>
+        <div class="box">
+          <toolbar-bottom></toolbar-bottom>
+        </div>
+      </section>
     </div>
-    <div id="canvas-wrapper">
-      <canvas class="simcanvas" id="paper"></canvas>
-    </div>
-    <div class="box">
-      <toolbar-bottom></toolbar-bottom>
-    </div>
-  </section>
-</div>
 
+    <script>
+      // Establish base global GUI base state variable
+      window.cstate = {
+        runningTest: false,
+        pen: {},
+        lastPen: {},
+        buffer: {},
+        drawPoints: [], // Array of points from buffer to draw
+        stepsPerMM: { x: 1, y: 1 },
+        botName: '', // Placeholder for the name of the bot.
+        colorset: {}, // Placeholder for current colorset, keyed by ID.
+      };
+    </script>
 
-<script>
-  // Establish base global GUI base state variable
-  window.cstate = {
-    runningTest: false,
-    $draw: $('#drawarea'),
-    pen: {},
-    lastPen: {},
-    buffer: {},
-    drawPoints: [], // Array of points from buffer to draw
-    stepsPerMM: { x: 1, y: 1 },
-    botName: '', // Placeholder for the name of the bot.
-    colorset: {}, // Placeholder for current colorset, keyed by ID.
+    <script type="module">
+      import cncserver from '/lib/cncserver.client.api.js';
+      import preview from '/modules/preview.mjs';
+      import utils from '/modules/utils.mjs';
+      import shapes from '/modules/shapes.mjs';
 
-    // Paper and canvas vars.
-    crosshair: {},
-    crosshairTip: {},
-    workarea: {},
-    layers: {}, /// All the paper layers we care abotu working with.
-    tempPreview: "", // Hold onto the intial full pane preview content
-  };
-</script>
+      // Globalize various imports.
+      ['cncserver', 'preview', 'utils', 'shapes'].forEach(name => {
+        window[name] = eval(name);
+      });
 
-<script type="module">
-  import cncserver from '/lib/cncserver.client.api.js';
-  import main from '/modules/main.mjs';
-  import socket from '/modules/socket.mjs';
-  import preview from '/modules/preview.mjs';
-  import utils from '/modules/utils.mjs';
-
-  // Globalize various imports.
-  ['cncserver', 'preview', 'utils'].forEach((name) => {
-    window[name] = eval(name);
-  });
-
-  // Initialize CNC Server connection details
-  cncserver.init({
-    domain: document.domain,
-    port: location.port ? location.port : 80,
-    protocol: 'http',
-    version: '1',
-    ax: axios,
-    socketio: io,
-  }).then(() => {
-    socket.init();
-  });
-
-  main.initPaper();
-
-</script>
-</body>
+      // Initialize CNC Server connection details
+      cncserver.init({
+        domain: document.domain,
+        port: location.port ? location.port : 80,
+        protocol: 'http',
+        version: '1',
+        ax: axios,
+        socketio: io,
+      });
+    </script>
+  </body>
 </html>
