@@ -76,7 +76,7 @@ module.exports = (cncserver, drawing) => {
     // temp.children[0].copyTo(preview);
 
     // Update client preview.
-    // cncserver.sockets.sendPaperPreviewUpdate();
+    // cncserver.sockets.sendPaperUpdate();
 
     // Move through all imemdiate temp child paths for fill jobs.
     if (doFill) {

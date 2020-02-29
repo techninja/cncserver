@@ -111,7 +111,8 @@ module.exports = (cncserver) => {
     io.emit('buffer update', data);
 
     // Send this second.
-    sockets.sendPaperPreviewUpdate();
+    sockets.sendPaperUpdate('preview');
+    sockets.sendPaperUpdate('stage');
   };
 
   /**
@@ -154,10 +155,16 @@ module.exports = (cncserver) => {
   /**
    * Send an update to all stream clients for a Paper layer update.
    */
-  sockets.sendPaperPreviewUpdate = () => {
-    cncserver.drawing.colors.snapPathColors(cncserver.drawing.base.layers.preview);
-    io.emit('paper preview', {
-      paperJSON: cncserver.drawing.base.layers.preview.exportJSON(),
+  sockets.sendPaperUpdate = (layer = 'preview') => {
+    if (layer === 'preview') {
+      cncserver.drawing.colors.snapPathColors(
+        cncserver.drawing.base.layers.preview
+      );
+    }
+
+    io.emit('paper layer', {
+      layer,
+      paperJSON: cncserver.drawing.base.layers[layer].exportJSON(),
       timestamp: new Date().toString(),
     });
   };
@@ -170,13 +177,10 @@ module.exports = (cncserver) => {
       });
     },
 
-    height: (data) => {
-      cncserver.pen.setPen(
-        { state: data.state },
-        () => {
-          if (data.returnData) io.emit('height', cncserver.pen.state);
-        }
-      );
+    height: data => {
+      cncserver.pen.setPen({ state: data.state }, () => {
+        if (data.returnData) io.emit('height', cncserver.pen.state);
+      });
     },
   };
 

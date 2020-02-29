@@ -16,36 +16,44 @@ module.exports = (cncserver, drawing) => {
     threshold: 10, // Dynamic line grouping threshold
   };
 
-  const fill = (path, hash, parent = null, bounds = null, requestSettings = {}) => new Promise((success, error) => {
-    const settings = { ...settingDefaults, ...requestSettings };
+  const fill = (
+    path,
+    hash,
+    parent = null,
+    bounds = null,
+    requestSettings = {}
+  ) =>
+    new Promise((success, error) => {
+      const settings = { ...settingDefaults, ...requestSettings };
 
-    // TODO: Should we fitbounds here? Or earlier?
-    if (bounds) {
-      drawing.base.fitBounds(path, bounds);
-    }
+      // TODO: Should we fitbounds here? Or earlier?
+      if (bounds) {
+        drawing.base.fitBounds(path, bounds);
+      }
 
-    const { method } = settings;
-    const script = `${__dirname}/fillers/cncserver.drawing.fillers.${method}.js`;
+      const { method } = settings;
+      const script = `${__dirname}/fillers/cncserver.drawing.fillers.${method}.js`;
 
-    // Use spawner to run fill process.
-    drawing.spawner({
-      type: 'filler',
-      hash,
-      script,
-      settings,
-      object: path.exportJSON(),
-    })
-      .then((result) => {
-        const item = drawing.base.layers.preview.importJSON(result);
-        item.fillColor = null;
-        item.strokeWidth = 1;
-        item.strokeColor = path.fillColor;
+      // Use spawner to run fill process.
+      drawing
+        .spawner({
+          type: 'filler',
+          hash,
+          script,
+          settings,
+          object: path.exportJSON(),
+        })
+        .then(result => {
+          const item = drawing.base.layers.preview.importJSON(result);
+          item.fillColor = null;
+          item.strokeWidth = 1;
+          item.strokeColor = path.fillColor;
 
-        cncserver.sockets.sendPaperPreviewUpdate();
-        success();
-      })
-      .catch(error);
-  });
+          cncserver.sockets.sendPaperUpdate();
+          success();
+        })
+        .catch(error);
+    });
 
   return fill;
 };

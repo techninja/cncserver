@@ -22,7 +22,7 @@ module.exports = (cncserver, drawing) => {
     }
 
     // Update client preview.
-    cncserver.sockets.sendPaperPreviewUpdate();
+    cncserver.sockets.sendPaperUpdate();
   };
 
   return trace;

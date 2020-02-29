@@ -234,7 +234,7 @@ module.exports = (cncserver, drawing) => {
       chars.rotate(settings.rotation);
 
       // Update client preview.
-      cncserver.sockets.sendPaperPreviewUpdate();
+      cncserver.sockets.sendPaperUpdate();
     }
   };
 

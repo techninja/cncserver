@@ -131,7 +131,7 @@ module.exports = (cncserver) => {
           startPoint,
           endPoint,
         ]);
-        // cncserver.sockets.sendPaperPreviewUpdate();
+        // cncserver.sockets.sendPaperUpdate();
 
         const accellPoints = cncserver.drawing.accell.getPointsSync(movePath);
         accellPoints.forEach((pos) => {

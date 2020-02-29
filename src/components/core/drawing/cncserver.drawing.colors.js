@@ -134,7 +134,7 @@ module.exports = (cncserver, drawing) => {
     const preset = colors.setFromPreset(presetName);
     if (preset) {
       colors.set = preset;
-      cncserver.sockets.sendPaperPreviewUpdate();
+      cncserver.sockets.sendPaperUpdate();
       return true;
     }
     return null;

@@ -28,16 +28,21 @@ module.exports = (cncserver) => {
     // Setup layers: temp, working
     // Whatever the last layer added was, will be default.
     base.layers = {
-      import: new Layer(),
-      temp: new Layer(),
-      preview: new Layer(),
+      import: new Layer({ name: 'import' }),
+      temp: new Layer({ name: 'temp' }),
+      stage: new Layer({ name: 'stage' }),
+      preview: new Layer({ name: 'preview' }),
     };
   });
 
   // Clear preview canvas on cancel/clear.
   cncserver.binder.bindTo('buffer.clear', base.id, () => {
     base.layers.preview.removeChildren();
-    cncserver.sockets.sendPaperPreviewUpdate();
+    cncserver.sockets.sendPaperUpdate('preview');
+
+    // TODO: We likely don't want to do this here, but it helps for now.
+    base.layers.stage.removeChildren();
+    cncserver.sockets.sendPaperUpdate('stage');
   });
 
   // Get a list of all simple paths from all children as an array.
