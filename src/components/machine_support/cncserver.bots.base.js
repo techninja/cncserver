@@ -10,15 +10,10 @@ module.exports = (cncserver) => {
     if (typeof tool.wait !== 'undefined') {
       // Queue a callback to pause continued execution on tool.wait value
       if (tool.wait) {
-        const { lastDuration: moveDuration } = cncserver.pen.state;
         cncserver.run('callback', () => {
-          // Trigger the manualswap with virtual index for the client/user.
-          cncserver.buffer.setPauseCallback(() => {
-            setTimeout(() => {
-              cncserver.sockets.manualSwapTrigger(tool.index);
-            }, moveDuration);
-          });
+          cncserver.sockets.manualSwapTrigger(tool.index);
         });
+
         // Queue a special low-level pause in the runner.
         cncserver.run('special', 'pause');
       }

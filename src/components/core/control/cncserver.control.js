@@ -48,6 +48,9 @@ module.exports = (cncserver) => {
     // Move to the tool
     cncserver.control.movePenAbs(tool);
 
+    // Set the tip of state pen to the tool now that the change is done.
+    cncserver.pen.forceState({ tool: name });
+
     // Trigger the binder event.
     cncserver.binder.trigger('tool.change', {
       ...tool,

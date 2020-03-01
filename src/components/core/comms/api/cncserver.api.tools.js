@@ -27,7 +27,6 @@ module.exports = (cncserver) => {
     if (req.route.method === 'put') { // Set Tool
       if (cncserver.settings.botConf.get(`tools:${toolName}`)) {
         cncserver.control.setTool(toolName, null, () => {
-          cncserver.pen.forceState({ tool: toolName });
           res.status(200).send(JSON.stringify({
             status: `Tool changed to ${toolName}`,
           }));
