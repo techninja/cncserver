@@ -46,7 +46,7 @@ function getOptions(cncserver) {
   });
 }
 
-module.exports = cncserver => {
+module.exports = (cncserver) => {
   actions.projects = [];
   actions.items = [];
   actions.hashToIndex = {};
@@ -76,224 +76,223 @@ module.exports = cncserver => {
    *  Promise that returns on success the imported & normalized input, or error
    *  on failure.
    */
-  actions.normalizeInput = (type, operation, body, color) =>
-    new Promise((success, err) => {
-      const {
-        drawing: {
-          base: { layers },
-        },
-      } = cncserver;
+  actions.normalizeInput = (type, operation, body, color) => new Promise((success, err) => {
+    const {
+      drawing: {
+        base: { layers },
+      },
+    } = cncserver;
       // Draw to empty import layer.
-      layers.import.activate();
-      layers.import.removeChildren();
+    layers.import.activate();
+    layers.import.removeChildren();
 
-      switch (type) {
-        // If a project...
-        case 'project':
-          // ...for trace, fill & full, body should be Paper JSON, SVG, or file.
-          if (['trace', 'fill', 'full', 'stage'].includes(operation)) {
-            // Try to import as JSON directly.
+    switch (type) {
+      // If a project...
+      case 'project':
+        // ...for trace, fill & full, body should be Paper JSON, SVG, or file.
+        if (['trace', 'fill', 'full', 'stage'].includes(operation)) {
+          // Try to import as JSON directly.
+          try {
+            success(layers.import.importJSON(body));
+          } catch (jsonError) {
             try {
-              success(layers.import.importJSON(body));
-            } catch (jsonError) {
-              try {
-                // Nope, JSON failed, try SVG (file or string content);
-                success(
-                  layers.import.importSVG(body.trim(), {
-                    expandShapes: true,
-                    applyMatrix: true,
-                  })
-                );
-              } catch (svgError) {
-                // Both failed!
-                err(svgError);
-              }
+              // Nope, JSON failed, try SVG (file or string content);
+              success(
+                layers.import.importSVG(body.trim(), {
+                  expandShapes: true,
+                  applyMatrix: true,
+                })
+              );
+            } catch (svgError) {
+              // Both failed!
+              err(svgError);
             }
-          } else if (operation === 'vectorize') {
-            // ...for vectorize, body must be a URL of a raster, or a file URI.
-            try {
-              const img = new Raster(body);
-              img.onLoad = () => {
-                success(img);
-              };
-
-              img.onError = error => {
-                // TODO: This is really super unhelpful for implementors.
-                err(new Error(`Problem loading image: ${error}`));
-              };
-            } catch (imageErr) {
-              console.log('Error catch');
-              // Couldn't load image.
-              err(imageErr);
-            }
-          } else {
-            err(new Error('invalid project operation'));
           }
-          break;
+        } else if (operation === 'vectorize') {
+          // ...for vectorize, body must be a URL of a raster, or a file URI.
+          try {
+            const img = new Raster(body);
+            img.onLoad = () => {
+              success(img);
+            };
 
-        case 'job':
-          if (['trace', 'fill', 'full', 'stage'].includes(operation)) {
-            try {
-              const item = cncserver.drawing.base.normalizeCompoundPath(body);
-              if (operation === 'trace' && !item.strokeColor) {
-                item.strokeColor = color;
-              }
-
-              if (['fill', 'full'].includes(operation) && !item.fillColor) {
-                item.fillColor = color;
-              }
-
-              cncserver.drawing.base.layers.import.addChild(item);
-              success(item);
-            } catch (pathError) {
-              // Likely couldn't parse JSON import.
-              err(pathError);
-            }
-          } else if (operation === 'text') {
-            if (typeof body === 'string') {
-              success(body);
-            } else {
-              err(new Error('text input requires a string as the body'));
-            }
-          } else {
-            err(new Error('invalid job operation'));
+            img.onError = (error) => {
+              // TODO: This is really super unhelpful for implementors.
+              err(new Error(`Problem loading image: ${error}`));
+            };
+          } catch (imageErr) {
+            console.log('Error catch');
+            // Couldn't load image.
+            err(imageErr);
           }
-          break;
+        } else {
+          err(new Error('invalid project operation'));
+        }
+        break;
 
-        default:
-          break;
-      }
-    });
+      case 'job':
+        if (['trace', 'fill', 'full', 'stage'].includes(operation)) {
+          try {
+            const item = cncserver.drawing.base.normalizeCompoundPath(body);
+            if (operation === 'trace' && !item.strokeColor) {
+              item.strokeColor = color;
+            }
+
+            if (['fill', 'full'].includes(operation) && !item.fillColor) {
+              item.fillColor = color;
+            }
+
+            cncserver.drawing.base.layers.import.addChild(item);
+            success(item);
+          } catch (pathError) {
+            // Likely couldn't parse JSON import.
+            err(pathError);
+          }
+        } else if (operation === 'text') {
+          if (typeof body === 'string') {
+            success(body);
+          } else {
+            err(new Error('text input requires a string as the body'));
+          }
+        } else {
+          err(new Error('invalid job operation'));
+        }
+        break;
+
+      default:
+        break;
+    }
+  });
 
   // Manage project or job creation into tasks & instructions.
-  actions.addItem = payload =>
-    new Promise((success, err) => {
-      const { type, operation, body, clearPreview, color = 'black' } = payload;
+  actions.addItem = payload => new Promise((success, err) => {
+    const {
+      type, operation, body, clearPreview, color = 'black',
+    } = payload;
 
-      // Clear the project preview if client requests it.
-      if (type === 'project' && clearPreview) {
-        cncserver.drawing.base.layers.preview.removeChildren();
-        cncserver.sockets.sendPaperUpdate();
-      }
+    // Clear the project preview if client requests it.
+    if (type === 'project' && clearPreview) {
+      cncserver.drawing.base.layers.preview.removeChildren();
+      cncserver.sockets.sendPaperUpdate();
+    }
 
-      // Normalize input to match expected given type & operation.
-      actions
-        .normalizeInput(type, operation, body, color)
-        .then(inputContent => {
-          actions
-            .parseWork(payload, inputContent)
-            .then(item => {
-              actions.hashToIndex[item.hash] = actions.items.length;
-              actions.items.push(item);
-              success(item);
-            })
-            .catch(error => {
-              err(error);
-            });
-        })
-        .catch(error => {
-          err(error);
-        });
-    });
+    // Normalize input to match expected given type & operation.
+    actions
+      .normalizeInput(type, operation, body, color)
+      .then((inputContent) => {
+        actions
+          .parseWork(payload, inputContent)
+          .then((item) => {
+            actions.hashToIndex[item.hash] = actions.items.length;
+            actions.items.push(item);
+            success(item);
+          })
+          .catch((error) => {
+            err(error);
+          });
+      })
+      .catch((error) => {
+        err(error);
+      });
+  });
 
   // Parse an incoming payload to verify its intent.
-  actions.parseWork = (payload, inputContent) =>
-    new Promise((success, err) => {
-      const hash = cncserver.utils.getHash(payload);
+  actions.parseWork = (payload, inputContent) => new Promise((success, err) => {
+    const hash = cncserver.utils.getHash(payload);
 
-      // Set item's name to its hash.
-      inputContent.name = hash;
+    // Set item's name to its hash.
+    inputContent.name = hash;
 
-      const {
-        type,
-        parent,
-        body,
-        operation,
-        bounds,
-        settings = {},
-        name,
-        color = 'black',
-      } = payload;
+    const {
+      type,
+      parent,
+      body,
+      operation,
+      bounds,
+      settings = {},
+      name,
+      color = 'black',
+    } = payload;
 
-      const item = {
-        hash,
-        status: 'ready',
-        bounds,
-        operation,
-        parent,
-        type,
-        settings,
-        // body, // This is not useful.
-      };
+    const item = {
+      hash,
+      status: 'ready',
+      bounds,
+      operation,
+      parent,
+      type,
+      settings,
+      // body, // This is not useful.
+    };
 
-      if (type === 'job') {
-        switch (operation) {
-          case 'trace':
-            cncserver.drawing.trace(inputContent, parent, bounds);
-            success(item);
-            break;
+    if (type === 'job') {
+      switch (operation) {
+        case 'trace':
+          cncserver.drawing.trace(inputContent, parent, bounds);
+          success(item);
+          break;
 
-          case 'fill':
-            // CLEAR the preview canvas for every job/project.
-            // cncserver.drawing.base.layers.preview.removeChildren();
-            cncserver.drawing.fill(inputContent, hash, null, bounds, settings);
-            success(item);
-            break;
+        case 'fill':
+          // CLEAR the preview canvas for every job/project.
+          // cncserver.drawing.base.layers.preview.removeChildren();
+          cncserver.drawing.fill(inputContent, hash, null, bounds, settings);
+          success(item);
+          break;
 
-          case 'text':
-            settings.id = name;
-            settings.color = color;
-            cncserver.drawing.text.draw(
-              inputContent,
-              hash,
-              null,
-              bounds,
-              settings
-            );
-            success(item);
-            break;
-
-          case 'stage':
-            cncserver.drawing.base.fitBounds(inputContent, bounds);
-            cncserver.drawing.base.layers.stage.addChild(inputContent);
-            cncserver.sockets.sendPaperUpdate('stage');
-            item.status = 'staged';
-            success(item);
-            break;
-
-          default:
-            err(new Error('invalid operation'));
-            break;
-        }
-      } else if (type === 'project') {
-        if (['trace', 'fill', 'full'].includes(operation)) {
-          cncserver.drawing.project.processSVG(
+        case 'text':
+          settings.id = name;
+          settings.color = color;
+          cncserver.drawing.text.draw(
             inputContent,
-            parent,
-            operation,
+            hash,
+            null,
             bounds,
             settings
           );
           success(item);
-        } else if (operation === 'vectorize') {
-          cncserver.drawing.vectorize(inputContent, hash, bounds, settings);
-          success(item);
-        } else if (operation === 'stage') {
+          break;
+
+        case 'stage':
           cncserver.drawing.base.fitBounds(inputContent, bounds);
           cncserver.drawing.base.layers.stage.addChild(inputContent);
+          cncserver.sockets.sendPaperUpdate('stage');
           item.status = 'staged';
           success(item);
-          cncserver.sockets.sendPaperUpdate('stage');
-        } else {
+          break;
+
+        default:
           err(new Error('invalid operation'));
-        }
-      } else {
-        err(new Error('invalid action type: must be job or project'));
+          break;
       }
-    });
+    } else if (type === 'project') {
+      if (['trace', 'fill', 'full'].includes(operation)) {
+        cncserver.drawing.project.processSVG(
+          inputContent,
+          parent,
+          operation,
+          bounds,
+          settings
+        );
+        success(item);
+      } else if (operation === 'vectorize') {
+        cncserver.drawing.vectorize(inputContent, hash, bounds, settings);
+        success(item);
+      } else if (operation === 'stage') {
+        cncserver.drawing.base.fitBounds(inputContent, bounds);
+        cncserver.drawing.base.layers.stage.addChild(inputContent);
+        item.status = 'staged';
+        success(item);
+        cncserver.sockets.sendPaperUpdate('stage');
+      } else {
+        err(new Error('invalid operation'));
+      }
+    } else {
+      err(new Error('invalid action type: must be job or project'));
+    }
+  });
 
   // Get a job based on the hash.
-  actions.getItem = hash => {
+  actions.getItem = (hash) => {
     let job = null;
     const index = actions.hashToIndex[hash];
     if (index) {
@@ -304,7 +303,7 @@ module.exports = cncserver => {
   };
 
   // Get a job based on the hash.
-  actions.removeItem = hash => {
+  actions.removeItem = (hash) => {
     let job = null;
     const index = actions.hashToIndex[hash];
     if (index) {
