@@ -13,7 +13,6 @@ module.exports = (cncserver) => {
 
   cncserver.binder.bindTo('controller.setup', base.id, () => {
     const { settings: { bot } } = cncserver;
-    console.log(bot);
     // Setup the project with the max cavas size in mm.
     base.size = new Size(bot.maxAreaMM.width, bot.maxAreaMM.height);
 
