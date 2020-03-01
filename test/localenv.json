@@ -1,0 +1,17 @@
+{
+    "id": "e6b1a9d9-90b5-da80-0acf-7b0ffd6b47d4",
+    "name": "Local",
+    "values": [
+        {
+            "key": "cncserver-host",
+            "value": "localhost",
+            "type": "text"
+        },
+        {
+            "key": "cncserver-port",
+            "value": "4242",
+            "type": "text"
+        }
+    ],
+    "timestamp": 1431061320379
+}
