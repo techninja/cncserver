@@ -42,7 +42,7 @@ function getOptions(cncserver) {
         fonts: cncserver.drawing.text.fonts,
       },
     },
-    bounds: cncserver.drawing.base.defaultBounds(),
+    bounds: cncserver.drawing.base.defaultBoundsRaw(),
   });
 }
 

@@ -56,11 +56,14 @@ module.exports = (cncserver) => {
     return [...items, parent];
   };
 
-  // Get a default bound for high level drawings.
-  base.defaultBounds = (margin = 10) => new Rectangle({
+  // Just the object for the rectangle (for JSON).
+  base.defaultBoundsRaw = (margin = 10) => ({
     point: [margin, margin],
     size: [base.workspace.width - margin * 2, base.workspace.height - margin * 2],
   });
+
+  // Get a default bound for high level drawings.
+  base.defaultBounds = margin => new Rectangle(base.defaultBoundsRaw(margin));
 
   // Get the snapped stroke color ID of an item through its parentage.
   base.getColorID = (item) => {
