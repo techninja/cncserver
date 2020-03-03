@@ -253,9 +253,7 @@ module.exports = (cncserver) => {
           break;
 
         case 'stage':
-          cncserver.drawing.base.fitBounds(inputContent, bounds);
-          cncserver.drawing.base.layers.stage.addChild(inputContent);
-          cncserver.sockets.sendPaperUpdate('stage');
+          cncserver.drawing.stage.import(inputContent, hash, bounds);
           item.status = 'staged';
           success(item);
           break;
@@ -278,8 +276,7 @@ module.exports = (cncserver) => {
         cncserver.drawing.vectorize(inputContent, hash, bounds, settings);
         success(item);
       } else if (operation === 'stage') {
-        cncserver.drawing.base.fitBounds(inputContent, bounds);
-        cncserver.drawing.base.layers.stage.addChild(inputContent);
+        cncserver.drawing.stage.import(inputContent, hash, bounds);
         item.status = 'staged';
         success(item);
         cncserver.sockets.sendPaperUpdate('stage');
