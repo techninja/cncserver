@@ -18,24 +18,24 @@ function init(host) {
   apiInit(() => {
     if (!host.initialized) {
       host.initialized = true;
+      initSocket(host);
       cncserver.api.settings.bot().then(({ data: bot }) => {
         initState(host, bot);
         initPaper(host, bot);
         initOverlay(host, bot);
-        initSocket(host);
       });
     }
   });
 }
 
-function tabChange(host, { originalTarget: { name } }) {
+function tabChange(host, event) {
+  const { name } = event.path[0];
   host.layer = name;
 }
 
 function layerChangeFactory(defaultLayer = '') {
   return {
     set: (host, value) => {
-      console.log(`Set layer ${value}`);
       if (host.layers) {
         Object.entries(host.layers).forEach(([key, layer]) => {
           if (key !== 'overlay') {
@@ -46,7 +46,6 @@ function layerChangeFactory(defaultLayer = '') {
       return value;
     },
     connect: (host, key) => {
-      console.log('Connect layer');
       if (host[key] === undefined) {
         host[key] = defaultLayer;
       }
@@ -57,6 +56,8 @@ function layerChangeFactory(defaultLayer = '') {
 export default styles => ({
   initialized: false,
   layer: layerChangeFactory('stage'),
+  layerPayloads: {},
+  scale: 1,
   paper: null,
   orientation: '0',
   layers: {},

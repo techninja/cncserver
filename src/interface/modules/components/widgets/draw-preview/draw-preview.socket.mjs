@@ -3,20 +3,14 @@
  */
 /* globals cncserver */
 
-// Payloads from stream updates.
-const layerPayloads = {
-  stage: '',
-  preview: '',
-};
-
 export default function initSocket(host) {
   // Preview & Stage layers from CNCserver (Paper to paper connection!)
   cncserver.socket.on('paper layer', ({ layer, paperJSON }) => {
-    if (host.layers[layer]) {
+    if (host.layers) {
       host.layers[layer].removeChildren();
       host.layers[layer].importJSON(paperJSON);
     } else {
-      layerPayloads[layer] = paperJSON;
+      host.layerPayloads = { ...host.layerPayloads, [layer]: paperJSON };
     }
   });
 

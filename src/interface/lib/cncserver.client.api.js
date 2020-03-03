@@ -25,36 +25,34 @@ const cncserver = {
     version = 1,
     ax,
     socketio,
-  }) =>
-    new Promise(resolve => {
-      axios = ax;
-      if (socketio) {
-        cncserver.socket = socketio(`${protocol}://${domain}:${port}`);
-      }
+  }) => new Promise((resolve) => {
+    axios = ax;
+    if (socketio) {
+      cncserver.socket = socketio(`${protocol}://${domain}:${port}`);
+    }
 
-      cncserver.api.server = {
-        domain,
-        port,
-        protocol,
-        version,
-      };
+    cncserver.api.server = {
+      domain,
+      port,
+      protocol,
+      version,
+    };
 
-      if (Event && document) {
-        const initComplete = new Event('cncserver-init');
-        document.dispatchEvent(initComplete);
-      }
+    if (Event && document) {
+      const initComplete = new Event('cncserver-init');
+      document.dispatchEvent(initComplete);
+    }
 
-      // Resolve the promise when initialized.
-      resolve();
-    }),
+    // Resolve the promise when initialized.
+    resolve();
+  }),
 };
 
 // Define central request setup.
 function _request(method, path, options = {}) {
   const { server: srv } = cncserver.api;
   if (!srv) {
-    const message =
-      'CNC Server API client domain configuration not ready. \
+    const message = 'CNC Server API client domain configuration not ready. \
     Set cncserver.api.server correctly!';
     return Promise.reject(new Error(message));
   }
@@ -120,54 +118,49 @@ cncserver.api = {
      * TODO: Basic docs for these wrappers.
      */
     stat: () => _get('actions'),
-    text: (body, bounds, settings) =>
-      _post('actions', {
-        data: {
-          type: 'job',
-          operation: 'text',
-          name: 'text-job',
-          bounds,
-          body,
-          settings,
-        },
-      }),
-    strokePath: (body, bounds, settings) =>
-      _post('actions', {
-        data: {
-          type: 'job',
-          operation: 'trace',
-          name: 'trace-job',
-          bounds,
-          body,
-          settings,
-        },
-      }),
-    fillPath: (body, bounds, settings) =>
-      _post('actions', {
-        data: {
-          type: 'job',
-          operation: 'fill',
-          name: 'fill-job',
-          bounds,
-          body,
-          settings,
-        },
-      }),
-    project: options =>
-      _post('actions', {
-        data: {
-          name: 'default-project',
-          clearPreview: true,
-          operation: 'stage',
-          // Up from here, suggested defaults.
+    text: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'text',
+        name: 'text-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    strokePath: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'trace',
+        name: 'trace-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    fillPath: (body, bounds, settings) => _post('actions', {
+      data: {
+        type: 'job',
+        operation: 'fill',
+        name: 'fill-job',
+        bounds,
+        body,
+        settings,
+      },
+    }),
+    project: options => _post('actions', {
+      data: {
+        name: 'default-project',
+        operation: 'stage',
+        // Up from here, suggested defaults.
 
-          // Fold in passed options.
-          ...options,
+        // Fold in passed options.
+        ...options,
 
-          // From here down, non-overridable.
-          type: 'project',
-        },
-      }),
+        // From here down, non-overridable.
+        type: 'project',
+      },
+    }),
     drawPreview: () => _post('actions', { data: { type: 'drawpreview' } }),
   },
   colors: {
@@ -190,8 +183,7 @@ cncserver.api = {
      * @param {object} options
          Options object with key overrides.
      */
-    height: (value, options = {}) =>
-      _put('pen', { data: { ...options, state: value } }),
+    height: (value, options = {}) => _put('pen', { data: { ...options, state: value } }),
 
     // Shortcut call to the above with flop set to true
     up: options => cncserver.api.pen.height(0, options),
@@ -227,7 +219,7 @@ cncserver.api = {
      *   {x, y} point object of coordinate within 0-100% of canvas to move to,
      *   or with `abs` key set to 'mm' or 'in' for absolute position.
      */
-    move: point => {
+    move: (point) => {
       if (typeof point === 'undefined') {
         return Promise.reject(new Error('Invalid coordinates for move'));
       }
@@ -268,8 +260,7 @@ cncserver.api = {
      * @param {function} options
      *   The base of the full object to send for API options
      */
-    change: (toolName, options = {}) =>
-      _put(`tools/${toolName}`, { data: options }),
+    change: (toolName, options = {}) => _put(`tools/${toolName}`, { data: options }),
   },
 
   buffer: {
@@ -286,8 +277,7 @@ cncserver.api = {
     /**
      * Toggle bot operations
      */
-    toggle: doPause =>
-      doPause ? cncserver.api.buffer.resume() : cncserver.api.buffer.pause(),
+    toggle: doPause => (doPause ? cncserver.api.buffer.resume() : cncserver.api.buffer.pause()),
 
     /**
      * Push a message into the buffer
@@ -319,23 +309,21 @@ cncserver.api = {
 
   // Scratch turtle/abstracted API, non-ReSTful.
   scratch: {
-    move: (direction, amount) =>
-      new Promise(success => {
-        _get(`/move.${direction}./${amount}`).then(() => {
-          cncserver.api.scratch.stat().then(success);
+    move: (direction, amount) => new Promise((success) => {
+      _get(`/move.${direction}./${amount}`).then(() => {
+        cncserver.api.scratch.stat().then(success);
+      });
+    }),
+    stat: () => new Promise((success) => {
+      _get('/poll').then(({ data }) => {
+        const out = {};
+        data.split('\n').forEach((item) => {
+          const [key, val] = item.split(' ');
+          out[key] = val;
         });
-      }),
-    stat: () =>
-      new Promise(success => {
-        _get('/poll').then(({ data }) => {
-          const out = {};
-          data.split('\n').forEach(item => {
-            const [key, val] = item.split(' ');
-            out[key] = val;
-          });
-          success(out);
-        });
-      }),
+        success(out);
+      });
+    }),
   },
 
   // Batch API for lowering command send overhead.
@@ -462,7 +450,7 @@ cncserver.api = {
       _post('batch', {
         data: dump,
         timeout: 1000 * 60 * 10, // Timeout of 10 mins!
-        success: d => {
+        success: (d) => {
           console.timeEnd('process-batch');
           console.info(d);
           callback();
