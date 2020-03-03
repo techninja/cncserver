@@ -3,17 +3,14 @@
  */
 /* globals paper */
 
-const { Path, CompoundPath, Group, Point, Rectangle } = paper;
-const tool = new paper.Tool();
+const { Path, Point, Rectangle } = paper;
 let selectRect;
-let path;
-let selectChangeOnly;
-let marquee;
 
+// Deselect/destroy the selection rectangle.
 function deselect() {
-  if (paper.selectRect) {
+  if (selectRect) {
     // Completely deselect sub paths
-    selectRect.ppaths.forEach(ppath => {
+    selectRect.ppaths.forEach((ppath) => {
       ppath.selected = false;
       ppath.fullySelected = false;
     });
@@ -23,155 +20,106 @@ function deselect() {
   }
 }
 
-function select(path) {
+// Create a selection rectangle with handles.
+function select(item) {
   deselect();
 
   // Ensure we're selecting the right path.
-  path = ensureSelectable(path, true);
-  if (!path) return;
+  /* path = ensureSelectable(path, true);
+  if (!path) {
+    console.log('Item not selectable!');
+    return;
+  } */
 
-  const reset =
-    path.rotation === 0 && path.scaling.x === 1 && path.scaling.y === 1;
-  let bounds;
+  const reset = item.rotation === 0 && item.scaling.x === 1 && item.scaling.y === 1;
+  let { bounds } = item;
 
   if (reset) {
     // Actually reset bounding box
-    bounds = path.bounds;
-    path.pInitialBounds = path.bounds;
+    item.pInitialBounds = item.bounds;
   } else {
     // No bounding box reset
-    bounds = path.pInitialBounds ? path.pInitialBounds : path.bounds;
+    bounds = item.pInitialBounds ? item.pInitialBounds : item.bounds;
   }
 
-  const b = bounds.clone().expand(10, 10);
+  const b = bounds.clone();
 
+  paper.project.layers.overlay.activate();
   selectRect = new Path.Rectangle(b);
   selectRect.pivot = selectRect.position;
+
+  // Add center position points.
   selectRect.insert(2, new Point(b.center.x, b.top));
-  selectRect.insert(2, new Point(b.center.x, b.top - 25));
-  selectRect.insert(2, new Point(b.center.x, b.top));
+  selectRect.insert(4, new Point(b.right, b.center.y));
+  selectRect.insert(6, new Point(b.center.x, b.bottom));
+  selectRect.insert(1, new Point(b.left, b.center.y));
 
   if (!reset) {
-    selectRect.position = path.bounds.center;
-    selectRect.rotation = path.rotation;
-    selectRect.scaling = path.scaling;
+    selectRect.position = item.bounds.center;
+    selectRect.rotation = item.rotation;
+    selectRect.scaling = item.scaling;
   }
 
-  selectRect.strokeWidth = 2;
-  selectRect.strokeColor = 'blue';
+  selectRect.strokeWidth = 1;
+  selectRect.strokeColor = 'black';
+  selectRect.opacity = 0.7;
+  selectRect.dashArray = [10, 4];
   selectRect.name = 'selection rectangle';
   selectRect.selected = true;
-  selectRect.ppath = path;
-  selectRect.ppaths = [path];
+  selectRect.ppath = item;
+  selectRect.ppaths = [item];
   selectRect.ppath.pivot = selectRect.pivot;
 }
 
-// Make sure the passed path is selectable, returns null, the path (or parent)
-function ensureSelectable(path, skipType) {
-  // Falsey passed? Can't select that.
-  if (!path) {
+// Set the overall paper cursor via style adjustment.
+function setCursor(name) {
+  paper.view.element.style.cursor = name;
+}
+
+/**
+ * Move up the heirarchy to find the parent level item at the layer level.
+ *
+ * @param { Paper.* } item
+ *   Paper item from hitResult.
+ *
+ * @returns
+ *   Item at the top level (Paper.Group if on stage).
+ */
+function getLayerParent(item) {
+  if (!item) {
     return null;
   }
 
-  // Is a child of a compound path? Select the parent.
-  if (path.parent instanceof CompoundPath) {
-    path = path.parent;
+  if (item.parent instanceof paper.Layer) {
+    return item;
   }
 
-  // Is a part of the overlay? Don't select that!
-  if (path.layer.name === 'overlay') {
-    return null;
-  }
-
-  console.log('Check path...', path);
-
-  if (!skipType) {
-    // Not a path or compound path? Can't select that.
-    if (!(path instanceof Path) && !(path instanceof CompoundPath)) {
-      return null;
-    }
-  }
-
-  // If we have a selection...
-  if (selectRect) {
-    // Is the same path as the select rectangle? Can't select that.
-    if (path === selectRect) {
-      return null;
-    }
-
-    // Already selected? Can't select it.
-    if (selectRect.ppaths.indexOf(path) !== -1) {
-      return null;
-    }
-  }
-
-  return path;
+  return getLayerParent(item.parent);
 }
 
-function getBoundSelection(point, ignoreSelectRect) {
-  // Check for items that are overlapping a rect around the event point
-  const items = paper.project.getItems({
-    overlapping: new Rectangle(
-      point.x - 2,
-      point.y - 2,
-      point.x + 2,
-      point.y + 2
-    ),
-  });
-
-  let selectedItem = null;
-  items.forEach(item => {
-    if (ignoreSelectRect) {
-      if (item === selectRect) return; // Don't select select rect.
-    }
-
-    // TODO: Prioritize selection of paths completely inside of other paths
-    if (item instanceof Path) {
-      if (item.contains(point)) {
-        selectedItem = item;
-      }
-    }
-  });
-
-  // If we're ignoring the select Rect, we want only somehting selctable.
-  if (ignoreSelectRect) {
-    return ensureSelectable(selectedItem);
-  }
-  return selectedItem;
-}
-
-function selectTestResult(event, options) {
+// Test to see if we have a selection.
+function testSelect(point, options = {}) {
   const hitOptions = {
     segments: true,
     stroke: true,
     fill: true,
     tolerance: 5,
+    layer: 'stage',
 
     ...options,
   };
 
-  let hitResult = paper.project.hitTest(event.point, hitOptions);
+  const hitResult = paper.project.layers[hitOptions.layer].hitTest(point, hitOptions);
 
   // If we didn't hit anything with hitTest...
   if (!hitResult) {
-    // Find any items that are Paths (not layers) that contain the point
-    const item = getBoundSelection(event.point);
-
-    // If we actually found something, fake a fill hitResult
-    if (item) {
-      hitResult = {
-        type: 'bounds',
-        item,
-      };
-    } else {
-      return false;
-    }
+    return null;
   }
 
   // From this point on, we must have clicked something.
-  const path = hitResult.item;
+  const { item } = hitResult;
 
-  console.log('It\'s on ', path.layer.name);
+  hitResult.layerParent = getLayerParent(item);
 
   // Figure out useful selection state switches:
   hitResult.pickingSelectRect = false;
@@ -185,12 +133,12 @@ function selectTestResult(event, options) {
     const { ppaths } = selectRect;
     hitResult.hasSelection = true;
     hitResult.multiSelect = ppaths.length > 1;
-    hitResult.itemSelected = ppaths.indexOf(path) > -1;
-    hitResult.pickingSelectRect = selectRect === path;
+    hitResult.itemSelected = ppaths.indexOf(item) > -1;
+    hitResult.pickingSelectRect = selectRect === item;
 
     // If we're selecting the selectRect via bounds, try to find an item a
     // user might be trying to select inside of it.
-    hitResult.insideItem = getBoundSelection(event.point, true);
+    hitResult.insideItem = getBoundSelection(point, true);
     hitResult.insideItemSelected = ppaths.indexOf(hitResult.insideItem) > -1;
 
     // If not picking select rect and no inside item, default to current.
@@ -203,60 +151,172 @@ function selectTestResult(event, options) {
   return hitResult;
 }
 
-tool.name = 'tools.select';
-tool.key = 'select';
-tool.cursorOffset = '1 1'; // Position for cursor point
+/**
+ * Figure out what kind of resize/rotate state we should be in given a box and
+ * a point relative to that box.
+ *
+ * @param {Paper.Rectangle} b
+ *   Rectangle that defines the dynabox bounds.
+ * @param {Paper.Point} point
+ *   Point to check against.
+ *
+ * @returns {String | null}
+ *   String matching the css cursor, or null if not applicable.
+ */
+function getDynaboxState(b, point) {
+  let state = null;
+  const m = 10;
+  const h = m / 2;
 
-tool.onMouseDown = event => {
-  const clickResult = selectTestResult(event);
+  // List of targets keyed by identifier.
+  const targets = {
+    move: b,
+    'nw-resize': new Rectangle(b.left - h, b.top - h, m, m),
+    'ne-resize': new Rectangle(b.right - h, b.top - h, m, m),
+    'sw-resize': new Rectangle(b.left - h, b.bottom - h, m, m),
+    'se-resize': new Rectangle(b.right - h, b.bottom - h, m, m),
+    'n-resize': new Rectangle(b.left + h, b.top - h, b.width - m, m),
+    's-resize': new Rectangle(b.left + h, b.bottom - h, b.width - m, m),
+    'e-resize': new Rectangle(b.right - h, b.top + h, m, b.height - m),
+    'w-resize': new Rectangle(b.left - h, b.top + h, m, b.height - m),
+  };
 
-  // Finish early and deselect if we didn't click anything.
-  if (!clickResult) {
-    // If we're pressing shift, don't deselect.
-    if (!event.modifiers.shift) {
+  // Select target key based on box contain.
+  Object.entries(targets).forEach(([target, box]) => {
+    if (box.contains(point)) {
+      state = target;
+    }
+  });
+
+  return state;
+}
+
+// Adjust dynabox based on state.
+function setDynaboxAdjust(item, state, delta) {
+  switch (state) {
+    case 'move':
+      item.position = item.position.add(delta);
+      break;
+
+    case 'n-resize':
+      selectRect.scale(1, 1 - delta.y / item.bounds.height, item.bounds.bottomCenter);
+      break;
+
+    case 's-resize':
+      selectRect.scale(1, 1 + delta.y / item.bounds.height, item.bounds.topCenter);
+      break;
+
+    case 'e-resize':
+      selectRect.scale(1 + delta.x / item.bounds.width, 1, item.bounds.leftCenter);
+      break;
+
+    case 'w-resize':
+      selectRect.scale(1 - delta.x / item.bounds.width, 1, item.bounds.rightCenter);
+      break;
+
+    case 'nw-resize':
+      selectRect.scale(
+        1 - delta.x / item.bounds.width,
+        1 - delta.y / item.bounds.height,
+        item.bounds.bottomRight
+      );
+      break;
+
+    case 'ne-resize':
+      selectRect.scale(
+        1 + delta.x / item.bounds.width,
+        1 - delta.y / item.bounds.height,
+        item.bounds.bottomLeft
+      );
+      break;
+
+    case 'sw-resize':
+      selectRect.scale(
+        1 - delta.x / item.bounds.width,
+        1 + delta.y / item.bounds.height,
+        item.bounds.topRight
+      );
+      break;
+
+    case 'se-resize':
+      selectRect.scale(
+        1 + delta.x / item.bounds.width,
+        1 + delta.y / item.bounds.height,
+        item.bounds.topLeft
+      );
+      break;
+
+
+    default:
+      break;
+  }
+}
+
+// Force a standard rectangle path to batch a bounds rect.
+function matchRectToBounds({ bounds }, dest) {
+  dest.segments[0].point = bounds.bottomLeft;
+  dest.segments[1].point = bounds.topLeft;
+  dest.segments[2].point = bounds.topRight;
+  dest.segments[3].point = bounds.bottomRight;
+}
+
+// Default export, initialize all tools.
+export default function initTools(host) {
+  const tool = new paper.Tool();
+  tool.name = 'tools.select';
+  tool.key = 'select';
+  tool.cursorOffset = '1 1'; // Position for cursor point
+
+  // Click to select/deselect.
+  tool.onMouseDown = (event) => {
+    const scaledPoint = event.point.multiply(1 / host.scale);
+    const hitResult = testSelect(scaledPoint);
+
+    if (hitResult) {
+      select(hitResult.layerParent);
+    } else {
       deselect();
     }
+  };
 
-    console.log('Nothing!');
-    // Not selecting anything, create marquee!
-    /* marquee = new Path.Rectangle({
-      point: event.point,
-      size: [1, 1],
-      strokeColor: 'white',
-      strokeWidth: 3,
-      dashArray: [10, 4],
-    }); */
-    return;
-  }
 
-  path = clickResult.item;
+  tool.onMouseMove = (event) => {
+    const scaledPoint = event.point.multiply(1 / host.scale);
 
-  // Clicking one of the selection modifier hitbox nodes:
-  if (clickResult.pickingSelectRect && clickResult.type === 'segment') {
-    if (clickResult.segment.index >= 2 && clickResult.segment.index <= 4) {
-      // Rotation hitbox
-      //selectionRectangleRotation = 0;
-      console.log('Rotate');
+    if (selectRect) {
+      const state = getDynaboxState(selectRect.bounds, scaledPoint);
+      setCursor(state);
     } else {
-      // Scale hitbox
-      console.log('Scale');
-      //var center = event.point.subtract(paper.selectRect.bounds.center);
-      //selectionRectangleScale = center.length / path.scaling.x;
-      //lastScaleRatio = 1;
+      setCursor('');
     }
-  }
+  };
 
-  // If pressing shift, try to look for paths inside of selection.
-  if (event.modifiers.shift) {
-    if (!clickResult.insideItemSelected) {
-      selectChangeOnly = true;
-      //addToSelection(clickResult.insideItem);
-    } else {
-      selectChangeOnly = true;
-      //removeFromSelection(clickResult.insideItem);
+  tool.onMouseDrag = (event) => {
+    const scaledPoint = event.point.multiply(1 / host.scale);
+    const scaledDelta = event.delta.multiply(1 / host.scale);
+    // const scaledDownPoint = event.downPoint.multiply(1 / host.scale);
+
+    // If we have a selection...
+    if (selectRect) {
+      const state = getDynaboxState(selectRect.bounds, scaledPoint);
+      setDynaboxAdjust(selectRect, state, scaledDelta);
+
+      // TODO: Add support for moving existing selection without being on object.
+
+      // Manage the contained object.
+      if (state === 'move') {
+        // Move it to match.
+        selectRect.ppath.position = selectRect.position;
+      } else {
+        // Scale the item.
+        selectRect.ppath.children.content.fitBounds(selectRect.bounds);
+        matchRectToBounds(selectRect, selectRect.ppath.children.bounds);
+        matchRectToBounds(selectRect.ppath.children.content, selectRect.ppath.children['content-bounds']);
+      }
     }
-  } else if (!clickResult.itemSelected && !clickResult.pickingSelectRect) {
-    selectChangeOnly = true;
-    select(path);
-  }
-};
+  };
+
+  tool.onMouseUp = (event) => {
+    // TODO: Send update to server after a bounds update.
+  };
+}

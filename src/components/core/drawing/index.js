@@ -15,5 +15,6 @@ module.exports = (cncserver) => {
   drawing.accell = require('./cncserver.drawing.accell.js')(cncserver, drawing);
   drawing.colors = require('./cncserver.drawing.colors.js')(cncserver, drawing);
   drawing.project = require('./cncserver.drawing.project.js')(cncserver, drawing);
+  drawing.stage = require('./cncserver.drawing.stage.js')(cncserver, drawing);
   return drawing;
 };
