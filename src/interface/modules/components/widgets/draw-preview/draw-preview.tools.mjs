@@ -138,8 +138,8 @@ function testSelect(point, options = {}) {
 
     // If we're selecting the selectRect via bounds, try to find an item a
     // user might be trying to select inside of it.
-    hitResult.insideItem = getBoundSelection(point, true);
-    hitResult.insideItemSelected = ppaths.indexOf(hitResult.insideItem) > -1;
+    // hitResult.insideItem = getBoundSelection(point, true);
+    // hitResult.insideItemSelected = ppaths.indexOf(hitResult.insideItem) > -1;
 
     // If not picking select rect and no inside item, default to current.
     if (!hitResult.insideItem && !hitResult.pickingSelectRect) {
@@ -260,12 +260,44 @@ function matchRectToBounds({ bounds }, dest) {
   dest.segments[3].point = bounds.bottomRight;
 }
 
+// Respect boundaries.
+function respectWorkArea(workArea) {
+  if (selectRect.bounds.left < workArea.left) {
+    selectRect.pivot = selectRect.bounds.topLeft;
+    selectRect.position.x = workArea.left;
+  }
+
+  if (selectRect.bounds.top < workArea.top) {
+    selectRect.pivot = selectRect.bounds.topLeft;
+    selectRect.position.y = workArea.top;
+  }
+
+  if (selectRect.bounds.right > workArea.right) {
+    selectRect.pivot = selectRect.bounds.bottomRight;
+    selectRect.position.x = workArea.right;
+  }
+
+  if (selectRect.bounds.bottom > workArea.bottom) {
+    selectRect.pivot = selectRect.bounds.bottomRight;
+    selectRect.position.y = workArea.bottom;
+  }
+
+  selectRect.pivot = selectRect.bounds.center;
+}
+
 // Default export, initialize all tools.
 export default function initTools(host) {
   const tool = new paper.Tool();
+  let lockState = null;
+
   tool.name = 'tools.select';
   tool.key = 'select';
   tool.cursorOffset = '1 1'; // Position for cursor point
+
+  // Catch layer changes, just deselect.
+  host.addEventListener('layerchange', () => {
+    deselect();
+  });
 
   // Click to select/deselect.
   tool.onMouseDown = (event) => {
@@ -274,37 +306,42 @@ export default function initTools(host) {
 
     if (hitResult) {
       select(hitResult.layerParent);
+      const state = getDynaboxState(selectRect.bounds, scaledPoint);
+      lockState = state;
+      setCursor(state);
     } else {
       deselect();
     }
   };
 
 
+  // Hover state.
   tool.onMouseMove = (event) => {
     const scaledPoint = event.point.multiply(1 / host.scale);
 
     if (selectRect) {
-      const state = getDynaboxState(selectRect.bounds, scaledPoint);
-      setCursor(state);
+      setCursor(getDynaboxState(selectRect.bounds, scaledPoint));
     } else {
       setCursor('');
     }
   };
 
+  // Clicking and dragging with delta.
   tool.onMouseDrag = (event) => {
     const scaledPoint = event.point.multiply(1 / host.scale);
     const scaledDelta = event.delta.multiply(1 / host.scale);
     // const scaledDownPoint = event.downPoint.multiply(1 / host.scale);
 
     // If we have a selection...
-    if (selectRect) {
-      const state = getDynaboxState(selectRect.bounds, scaledPoint);
-      setDynaboxAdjust(selectRect, state, scaledDelta);
+    if (selectRect && lockState) {
+      setDynaboxAdjust(selectRect, lockState, scaledDelta);
 
       // TODO: Add support for moving existing selection without being on object.
 
+      respectWorkArea(host.workArea);
+
       // Manage the contained object.
-      if (state === 'move') {
+      if (lockState === 'move') {
         // Move it to match.
         selectRect.ppath.position = selectRect.position;
       } else {
@@ -318,5 +355,6 @@ export default function initTools(host) {
 
   tool.onMouseUp = (event) => {
     // TODO: Send update to server after a bounds update.
+    lockState = null;
   };
 }

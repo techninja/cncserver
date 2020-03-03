@@ -4,12 +4,45 @@
 /* globals cncserver, paper, window, Event */
 import initTools from './draw-preview.tools.mjs';
 
+const { Path, Layer, Rectangle } = paper;
+
 // The scale to adjust for pixel to MM offset.
 const viewScale = 3;
 
 const state = { pen: {}, lastPen: {} };
 let currentPos = {};
 let destinationPos = {};
+
+function initGrid(layer, workArea, rawOptions = {}) {
+  const options = {
+    gridArray: [10, 50],
+    colors: ['blue', 'black'],
+    sizes: [0.25, 0.5],
+    opacity: 0.15,
+
+    ...rawOptions,
+  };
+
+  layer.opacity = options.opacity;
+
+  for (let i = 0; i < options.gridArray.length; i++) {
+    for (let x = workArea.left; x < workArea.right; x += options.gridArray[i]) {
+      layer.addChild(new Path({
+        segments: [[x, workArea.top], [x, workArea.bottom]],
+        strokeColor: options.colors[i],
+        strokeWidth: options.sizes[i],
+      }));
+    }
+
+    for (let y = workArea.top; y < workArea.bottom; y += options.gridArray[i]) {
+      layer.addChild(new Path({
+        segments: [[workArea.left, y], [workArea.right, y]],
+        strokeColor: options.colors[i],
+        strokeWidth: options.sizes[i],
+      }));
+    }
+  }
+}
 
 export function initPaper(host, bot) {
   // Initialize paper on the shadowroot canvas with settings.
@@ -31,10 +64,11 @@ export function initPaper(host, bot) {
 
   // Setup 4 layers: Drawing, moving, preview, and overlay.
   host.layers = {
-    draw: new paper.Layer({ name: 'draw' }),
-    stage: new paper.Layer({ name: 'stage' }),
-    preview: new paper.Layer({ name: 'preview' }),
-    overlay: new paper.Layer({ name: 'overlay' }),
+    underlay: new Layer({ name: 'underlay' }),
+    draw: new Layer({ name: 'draw' }),
+    stage: new Layer({ name: 'stage' }),
+    preview: new Layer({ name: 'preview' }),
+    overlay: new Layer({ name: 'overlay' }),
   };
 
   // Set default from existing on init.
@@ -72,12 +106,21 @@ export function initOverlay(host, bot) {
   host.layers.overlay.activate();
 
   // Setup workarea (on active overlay layer)
-  paper.Path.Rectangle({
-    point: [
+  host.workArea = new Rectangle({
+    from: [
       bot.workArea.left / host.stepsPerMM.x,
       bot.workArea.top / host.stepsPerMM.y,
     ],
-    size: [bot.maxAreaMM.width, bot.maxAreaMM.height],
+    to: [bot.maxAreaMM.width, bot.maxAreaMM.height],
+  });
+
+  // Setup the background grid.
+  initGrid(host.layers.underlay, host.workArea);
+
+  // Setup red work area signifier.
+  Path.Rectangle({
+    point: host.workArea.point,
+    size: host.workArea.size,
     strokeWidth: 2,
     strokeColor: 'red',
   });
@@ -100,4 +143,25 @@ export function initOverlay(host, bot) {
   destinationPos.strokeColor = 'green';
   destinationPos.strokeWidth = size / 2;
   destinationPos.sendToBack();
+}
+
+// What happens when the layer is changed from the tabs?
+export function layerChangeFactory(defaultLayer = '') {
+  return {
+    set: (host, value) => {
+      if (host.layers) {
+        Object.entries(host.layers).forEach(([key, layer]) => {
+          if (key !== 'overlay' && key !== 'underlay') {
+            layer.visible = key === value;
+          }
+        });
+      }
+      return value;
+    },
+    connect: (host, key) => {
+      if (host[key] === undefined) {
+        host[key] = defaultLayer;
+      }
+    },
+  };
 }
