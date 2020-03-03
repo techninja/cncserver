@@ -25,11 +25,10 @@ function select(item) {
   deselect();
 
   // Ensure we're selecting the right path.
-  /* path = ensureSelectable(path, true);
-  if (!path) {
-    console.log('Item not selectable!');
+  // ensureSelectable(item, true);
+  if (!item) {
     return;
-  } */
+  }
 
   const reset = item.rotation === 0 && item.scaling.x === 1 && item.scaling.y === 1;
   let { bounds } = item;
@@ -53,6 +52,9 @@ function select(item) {
   selectRect.insert(4, new Point(b.right, b.center.y));
   selectRect.insert(6, new Point(b.center.x, b.bottom));
   selectRect.insert(1, new Point(b.left, b.center.y));
+
+  // Store name of item.
+  selectRect.itemName = item.name;
 
   if (!reset) {
     selectRect.position = item.bounds.center;
@@ -297,6 +299,14 @@ export default function initTools(host) {
   // Catch layer changes, just deselect.
   host.addEventListener('layerchange', () => {
     deselect();
+  });
+
+  // Catch layer updates: attempt to re-select.
+  host.addEventListener('layerupdate', ({ detail: { layer } }) => {
+    if (selectRect && layer === 'stage') {
+      const hash = selectRect.itemName;
+      select(host.layers.stage.children[hash]);
+    }
   });
 
   // Click to select/deselect.

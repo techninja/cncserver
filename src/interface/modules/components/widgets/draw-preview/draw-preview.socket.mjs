@@ -2,6 +2,7 @@
  * @file Draw preview socket update code.
  */
 /* globals cncserver */
+import { dispatch } from '/modules/hybrids.js';
 
 export default function initSocket(host) {
   // Preview & Stage layers from CNCserver (Paper to paper connection!)
@@ -12,6 +13,9 @@ export default function initSocket(host) {
     } else {
       host.layerPayloads = { ...host.layerPayloads, [layer]: paperJSON };
     }
+
+    // Dispatch a named update.
+    dispatch(host, 'layerupdate', { detail: { layer } });
   });
 
   // Catch when it's time to manually swap pen over.

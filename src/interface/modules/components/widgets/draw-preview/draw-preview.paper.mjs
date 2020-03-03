@@ -1,7 +1,7 @@
 /**
  * @file Draw preview/PaperJS widget definition with bindings.
  */
-/* globals cncserver, paper, window, Event */
+/* globals paper, window, Event */
 import initTools from './draw-preview.tools.mjs';
 
 const { Path, Layer, Rectangle } = paper;
@@ -13,6 +13,7 @@ const state = { pen: {}, lastPen: {} };
 let currentPos = {};
 let destinationPos = {};
 
+// Create a display grid on the passed layer (underlay).
 function initGrid(layer, workArea, rawOptions = {}) {
   const options = {
     gridArray: [10, 50],
@@ -62,12 +63,17 @@ export function initPaper(host, bot) {
   ];
   paper.project.view.scaling = [viewScale, viewScale];
 
-  // Setup 4 layers: Drawing, moving, preview, and overlay.
+  // Setup all the layers.
   host.layers = {
+    // Base, beneath all others, non interactive.
     underlay: new Layer({ name: 'underlay' }),
+
+    // All interactive/visible layers.
     draw: new Layer({ name: 'draw' }),
     stage: new Layer({ name: 'stage' }),
     preview: new Layer({ name: 'preview' }),
+
+    // Overlay, on top of everything, non interactive.
     overlay: new Layer({ name: 'overlay' }),
   };
 
