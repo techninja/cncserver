@@ -21,7 +21,7 @@ module.exports = (cncserver, drawing) => {
       const tmpLen = layer.children.length;
       for (let destIndex = srcIndex; destIndex < tmpLen; destIndex++) {
         const destPath = layer.children[destIndex];
-        if (type === 'fill' && !destPath.closed) {
+        if (!destPath.closed) {
           // eslint-disable-next-line no-continue
           continue;
         }
