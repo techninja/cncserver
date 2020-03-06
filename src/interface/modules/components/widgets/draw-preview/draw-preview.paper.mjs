@@ -2,6 +2,7 @@
  * @file Draw preview/PaperJS widget definition with bindings.
  */
 /* globals paper, window, Event */
+import { dispatch } from '/modules/hybrids.js';
 import initTools from './draw-preview.tools.mjs';
 
 const { Path, Layer, Rectangle } = paper;
@@ -81,13 +82,15 @@ export function initPaper(host, bot) {
   host.layer = host.layer;
 
   // Import initial payloads if existing
-  if (host.layerPayloads) {
-    if (host.layerPayloads.stage) {
-      host.layers.stage.importJSON(host.layerPayloads.stage);
+  if (host.socketPayloads) {
+    if (host.socketPayloads.stage) {
+      host.layers.stage.importJSON(host.socketPayloads.stage);
+      dispatch(host, 'layerupdate', { detail: { layer: 'stage' } });
     }
 
-    if (host.layerPayloads.preview) {
-      host.layers.preview.importJSON(host.layerPayloads.preview);
+    if (host.socketPayloads.preview) {
+      host.layers.preview.importJSON(host.socketPayloads.preview);
+      dispatch(host, 'layerupdate', { detail: { layer: 'preview' } });
     }
   }
 
@@ -129,6 +132,7 @@ export function initOverlay(host, bot) {
     size: host.workArea.size,
     strokeWidth: 2,
     strokeColor: 'red',
+    name: 'workArea',
   });
 
   // Make crosshair (on active overlay layer).
@@ -143,30 +147,76 @@ export function initOverlay(host, bot) {
     ],
     strokeColor: 'black',
     strokeWidth: size / 5,
+    name: 'currentPos',
   });
 
   destinationPos = currentPos.clone();
+  destinationPos.name = 'destinationPos';
   destinationPos.strokeColor = 'green';
   destinationPos.strokeWidth = size / 2;
   destinationPos.sendToBack();
+
+  // Set position if we have one saved from socket.
+  if (host.socketPayloads.position) {
+    const { x, y } = host.socketPayloads.position;
+    host.position = {
+      pos: [x / host.stepsPerMM.x, y / host.stepsPerMM.y],
+      dur: 0,
+    };
+  }
 }
 
 // What happens when the layer is changed from the tabs?
 export function layerChangeFactory(defaultLayer = '') {
   return {
     set: (host, value) => {
+      // If set externally (no through tabs), update the tabs.
+      if (host.shadowRoot) {
+        const tg = host.shadowRoot.querySelector('wl-tab-group');
+        if (tg) {
+          // Update the indicator AFTER this runs.
+          setTimeout(() => { tg.updateIndicatorPosition(); }, 1);
+        }
+      }
+
+      // If we have layers setup, update visibility.
       if (host.layers) {
         Object.entries(host.layers).forEach(([key, layer]) => {
           if (key !== 'overlay' && key !== 'underlay') {
             layer.visible = key === value;
           }
         });
+
+        dispatch(host, 'layerchange');
       }
       return value;
     },
     connect: (host, key) => {
       if (host[key] === undefined) {
         host[key] = defaultLayer;
+      }
+    },
+  };
+}
+
+// What happens when position changes from sockets?
+export function positionChangeFactory(defaultPos = { pos: [0, 0], dur: 0 }) {
+  return {
+    set: (host, value) => {
+      if (host.layers) {
+        // If the duration is more than cutoff, animate it
+        if (value.dur > 150) {
+          currentPos.tweenTo({ position: value.pos }, value.dur);
+        } else {
+          // Set position directly
+          currentPos.position = value.pos;
+        }
+      }
+      return value;
+    },
+    connect: (host, key) => {
+      if (host[key] === undefined) {
+        host[key] = defaultPos;
       }
     },
   };

@@ -83,11 +83,22 @@ module.exports = (cncserver) => {
     // Offset for top/left workspaces.
     adjBounds.point = adjBounds.point.add(base.workspace);
 
+    // Keep width/height from overflowing.
+    if (adjBounds.right > base.workspace.right) {
+      // console.log('Too far right!', adjBounds, adjBounds.right - base.workspace.right);
+      adjBounds.width -= adjBounds.right - base.workspace.right;
+    }
+
+    if (adjBounds.bottom > base.workspace.bottom) {
+      adjBounds.height -= adjBounds.bottom - base.workspace.bottom;
+      // console.log('Too far down!', adjBounds);
+    }
+
     return adjBounds;
   };
 
-  // Fit the given item within either the drawing bounds, or custom one.
-  base.fitBounds = (item, rawBounds) => {
+  // Verify a set of given bounds.
+  base.validateBounds = (rawBounds) => {
     let bounds = rawBounds;
 
     if (!bounds) {
@@ -96,8 +107,12 @@ module.exports = (cncserver) => {
       bounds = new Rectangle(bounds);
     }
 
-    bounds = base.fitToWorkspace(bounds);
+    return base.fitToWorkspace(bounds);
+  };
 
+  // Fit the given item within either the drawing bounds, or custom one.
+  base.fitBounds = (item, rawBounds) => {
+    const bounds = base.validateBounds(rawBounds);
     item.fitBounds(bounds);
     return bounds;
   };

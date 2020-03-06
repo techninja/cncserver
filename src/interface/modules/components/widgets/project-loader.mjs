@@ -39,10 +39,10 @@ function loadAsText(file, asURI = false) {
   });
 }
 
-function svgFileChange(host, { target: { files } }) {
+function fileChange(host, { target: { files } }) {
   if (files.length) {
     loadAsText(files[0]).then((svgContent) => {
-      // cncserver.api.actions.project(svgContent);
+      cncserver.api.actions.project({ body: svgContent });
     });
   }
 }
@@ -87,6 +87,7 @@ export default styles => ({
           <input
             class="input file"
             type="file"
+            onchange=${fileChange}
             accept="${allowedMimes.join(',')}"
           >
         </div>

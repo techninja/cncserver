@@ -11,14 +11,26 @@ module.exports = (cncserver, drawing) => {
     // TODO
   });
 
+  // Remove an item from the stage, returns true if it worked.
+  stage.remove = (hash) => {
+    if (drawing.base.layers.stage.children[hash]) {
+      drawing.base.layers.stage.children[hash].remove();
+      return true;
+    }
+    return false;
+  };
+
   // Import an imported paper item into the stage layer.
   stage.import = (importItem, hash, bounds) => {
     const finalBounds = drawing.base.fitBounds(importItem, bounds);
 
+    // If an existing item with a matching hash exists, remove it first.
+    stage.remove(hash);
+
     // Build a group with the name/id of the hash, containing the content and a
     // path rectangle matching the bounds.
     importItem.name = 'content';
-    drawing.base.layers.stage.addChild(
+    const newStageItem = drawing.base.layers.stage.addChild(
       new Group({
         name: hash,
         children: [
@@ -44,11 +56,34 @@ module.exports = (cncserver, drawing) => {
       })
     );
     cncserver.sockets.sendPaperUpdate('stage');
+    return newStageItem;
+  };
+
+  // Update an item on the stage with its action item.
+  stage.updateItem = (item) => {
+    // Update bounds.
+    const stageGroup = drawing.base.layers.stage.children[item.hash];
+    if (stageGroup) {
+      return stage.import(stageGroup.children.content, item.hash, item.bounds);
+    }
   };
 
   // Render a linked object to the preview canvas from stage.
-  stage.render = (hash) => {
-    // TODO
+  stage.renderToPreview = (hash = null) => {
+    // Clear out preview.
+    drawing.base.layers.preview.removeChildren();
+    cncserver.sockets.sendPaperUpdate('preview');
+
+    // Render each item.
+    drawing.base.layers.stage.children.forEach((item) => {
+      cncserver.actions.addItem({
+        body: item.children.content.clone({ insert: false }),
+        name: `${item.name}-render`,
+        type: 'project',
+        operation: 'full',
+        bounds: item.bounds,
+      });
+    });
   };
 
   return stage;

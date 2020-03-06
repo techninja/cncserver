@@ -117,6 +117,11 @@ cncserver.api = {
     /**
      * TODO: Basic docs for these wrappers.
      */
+    item: {
+      stat: hash => _get(`actions/${hash}`),
+      update: (hash, data) => _put(`actions/${hash}`, { data }),
+      delete: hash => _delete(`actions/${hash}`),
+    },
     stat: () => _get('actions'),
     text: (body, bounds, settings) => _post('actions', {
       data: {
@@ -162,6 +167,7 @@ cncserver.api = {
       },
     }),
     drawPreview: () => _post('actions', { data: { type: 'drawpreview' } }),
+    renderStage: () => _post('actions', { data: { type: 'renderstage' } }),
   },
   colors: {
     stat: () => _get('colors'),

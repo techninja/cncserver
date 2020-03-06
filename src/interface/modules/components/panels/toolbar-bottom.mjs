@@ -9,6 +9,13 @@ export default styles => ({
 
     <div class="is-pulled-right">
       <button-single
+        title="Render Stage"
+        icon="hammer"
+        style="secondary"
+        onclick="cncserver.api.actions.renderStage(); document.querySelector('draw-preview').layer = 'preview'"
+      ></button-single>
+
+      <button-single
         title="Draw Preview"
         icon="star-half-alt"
         style="primary"

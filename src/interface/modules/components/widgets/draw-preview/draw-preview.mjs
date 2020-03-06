@@ -2,10 +2,12 @@
  * @file Draw preview/PaperJS widget definition with bindings.
  */
 /* globals cncserver */
-import { html, dispatch } from '/modules/hybrids.js';
+import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
 import initSocket from './draw-preview.socket.mjs';
-import { initPaper, initOverlay, layerChangeFactory } from './draw-preview.paper.mjs';
+import {
+  initPaper, initOverlay, layerChangeFactory, positionChangeFactory
+} from './draw-preview.paper.mjs';
 
 function initState(host, bot) {
   host.stepsPerMM = {
@@ -31,13 +33,13 @@ function init(host) {
 function tabChange(host, event) {
   const { name } = event.path[0];
   host.layer = name;
-  dispatch(host, 'layerchange');
 }
 
 export default styles => ({
   initialized: false,
   layer: layerChangeFactory('stage'),
-  layerPayloads: {},
+  position: positionChangeFactory({ pos: [0, 0], dur: 0 }),
+  socketPayloads: {},
   scale: 1,
   workArea: {},
   paper: null,

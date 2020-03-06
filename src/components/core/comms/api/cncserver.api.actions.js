@@ -20,12 +20,23 @@ module.exports = (cncserver) => {
 
     // Add an action.
     if (req.route.method === 'post') {
-      // Are we drawing the preview?
-      if (req.body.type === 'drawpreview') {
-        cncserver.control.renderPathsToMoves(
-          cncserver.drawing.base.layers.preview,
-          req.body.settings
-        );
+      // Catch special process posts.
+      if (['drawpreview', 'renderstage'].includes(req.body.type)) {
+        switch (req.body.type) {
+          case 'drawpreview':
+            cncserver.control.renderPathsToMoves(
+              cncserver.drawing.base.layers.preview,
+              req.body.settings
+            );
+            break;
+
+          case 'renderstage':
+            cncserver.drawing.stage.renderToPreview();
+            break;
+
+          default:
+            break;
+        }
         return {
           code: 202,
           body: { status: 'processing' },
@@ -67,7 +78,7 @@ module.exports = (cncserver) => {
       return [404, `Action with hash ID "${hash}" not found`];
     }
 
-    // Display action.
+    // Display action item.
     if (req.route.method === 'get') {
       return {
         code: 200,
@@ -75,9 +86,18 @@ module.exports = (cncserver) => {
       };
     }
 
+    // Patch original item
+    if (req.route.method === 'put') {
+      return {
+        code: 200,
+        body: actions.editItem(hash, req.body),
+      };
+    }
+
     // Remove action.
     if (req.route.method === 'delete') {
-      return [200, `Action with has "${hash}" removed`];
+      actions.removeItem(hash);
+      return [200, `Action identified by hash "${hash}" removed`];
     }
 
     // Error to client for unsupported request types.

@@ -61,6 +61,26 @@ module.exports = (cncserver) => {
     }
   };
 
+  // Edit an item.
+  // TODO: Allow this to do more.
+  actions.editItem = (hash, body) => {
+    const index = actions.hashToIndex[hash];
+
+    if (body.bounds) {
+      // Set bounds soft.
+      actions.items[index].bounds = body.bounds;
+      const item = cncserver.drawing.stage.updateItem(actions.items[index]);
+
+      // Pull bounds directly from the item after processing.
+      /* actions.items[index].bounds = {
+        point: [item.bounds.point.y, item.bounds.point.x],
+        size: [item.bounds.size.width, item.bounds.size.height],
+      }; */
+    }
+
+    return actions.items[index];
+  };
+
   /**
    * Normalize addItem payload between allowed types given intent. Imports
    * content to "import" layer.
@@ -216,13 +236,14 @@ module.exports = (cncserver) => {
 
     const item = {
       hash,
+      name,
       status: 'ready',
       bounds,
       operation,
       parent,
       type,
       settings,
-      // body, // This is not useful.
+      body,
     };
 
     if (type === 'job') {
@@ -292,17 +313,23 @@ module.exports = (cncserver) => {
   actions.getItem = (hash) => {
     let job = null;
     const index = actions.hashToIndex[hash];
-    if (index) {
+    if (index !== undefined) {
       job = actions.items[index];
     }
 
     return job;
   };
 
-  // Get a job based on the hash.
+  // Remove an action item based on the hash.
   actions.removeItem = (hash) => {
     let job = null;
     const index = actions.hashToIndex[hash];
+
+    // Removing any matching items from the stage.
+    if (cncserver.drawing.stage.remove(hash)) {
+      cncserver.sockets.sendPaperUpdate('stage');
+    }
+
     if (index) {
       job = actions.items[index];
       job.status = 'deleted';

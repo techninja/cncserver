@@ -1,7 +1,8 @@
 /**
  * @file Draw preview Tool definitions.
  */
-/* globals paper */
+/* globals paper, cncserver */
+import { dispatch } from '/modules/hybrids.js';
 
 const { Path, Point, Rectangle } = paper;
 let selectRect;
@@ -74,7 +75,7 @@ function select(item) {
 }
 
 // Set the overall paper cursor via style adjustment.
-function setCursor(name) {
+function setCursor(name = '') {
   paper.view.element.style.cursor = name;
 }
 
@@ -299,6 +300,7 @@ export default function initTools(host) {
   // Catch layer changes, just deselect.
   host.addEventListener('layerchange', () => {
     deselect();
+    dispatch(host, 'selectionchange', { detail: { selection: null } });
   });
 
   // Catch layer updates: attempt to re-select.
@@ -309,6 +311,20 @@ export default function initTools(host) {
     }
   });
 
+  // Update an items bound sby hash and absolute bounds.
+  function updateItemBounds(hash, absBounds) {
+    const drawBounds = absBounds.clone();
+    return cncserver.api.actions.item.update(hash, {
+      bounds: {
+        point: [
+          drawBounds.point.x - host.workArea.point.x,
+          drawBounds.point.y - host.workArea.point.y,
+        ],
+        size: [drawBounds.size.width, drawBounds.size.height],
+      },
+    });
+  }
+
   // Click to select/deselect.
   tool.onMouseDown = (event) => {
     const scaledPoint = event.point.multiply(1 / host.scale);
@@ -316,11 +332,14 @@ export default function initTools(host) {
 
     if (hitResult) {
       select(hitResult.layerParent);
+      dispatch(host, 'selectionchange', { detail: { selection: selectRect.itemName } });
+
       const state = getDynaboxState(selectRect.bounds, scaledPoint);
       lockState = state;
       setCursor(state);
     } else {
       deselect();
+      dispatch(host, 'selectionchange', { detail: { selection: null } });
     }
   };
 
@@ -332,7 +351,7 @@ export default function initTools(host) {
     if (selectRect) {
       setCursor(getDynaboxState(selectRect.bounds, scaledPoint));
     } else {
-      setCursor('');
+      setCursor();
     }
   };
 
@@ -364,7 +383,59 @@ export default function initTools(host) {
   };
 
   tool.onMouseUp = (event) => {
-    // TODO: Send update to server after a bounds update.
+    // Send update to server after a bounds update.
+    if (lockState && selectRect) {
+      updateItemBounds(selectRect.itemName, selectRect.bounds);
+    }
+
+    // Clear lockstate.
     lockState = null;
+  };
+
+  // Keybindings.
+  tool.onKeyDown = (event) => {
+    if (selectRect) {
+      // Nudge selected objects.
+      if (['up', 'down', 'left', 'right'].indexOf(event.key) !== -1) {
+        const adjust = [0, 0];
+        const amount = event.modifiers.shift ? 50 : 10;
+        switch (event.key) {
+          case 'up':
+            adjust[1] = -amount;
+            break;
+          case 'down':
+            adjust[1] = amount;
+            break;
+          case 'left':
+            adjust[0] = -amount;
+            break;
+          case 'right':
+            adjust[0] = amount;
+            break;
+          default:
+            break;
+        }
+
+        // Actually move by adjusted amount.
+        selectRect.translate(adjust);
+        selectRect.ppath.translate(adjust);
+
+        updateItemBounds(selectRect.itemName, selectRect.bounds);
+      }
+
+      // Delete a selected path
+      if (event.key === 'delete' || event.key === 'backspace') {
+        cncserver.api.actions.item.delete(selectRect.itemName);
+        dispatch(host, 'selectionchange', { detail: { selection: null } });
+        setCursor();
+      }
+
+      // Deselect
+      if (event.key === 'escape') {
+        deselect();
+        setCursor();
+        dispatch(host, 'selectionchange', { detail: { selection: null } });
+      }
+    }
   };
 }

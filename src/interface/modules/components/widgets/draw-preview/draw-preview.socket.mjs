@@ -4,6 +4,14 @@
 /* globals cncserver */
 import { dispatch } from '/modules/hybrids.js';
 
+function paperToMove([x, y]) {
+  return { x, y, abs: 'mm' };
+}
+
+function stepsToPaper(host, { x, y }) {
+  return [x / host.stepsPerMM.x, y / host.stepsPerMM.y];
+}
+
 export default function initSocket(host) {
   // Preview & Stage layers from CNCserver (Paper to paper connection!)
   cncserver.socket.on('paper layer', ({ layer, paperJSON }) => {
@@ -11,7 +19,7 @@ export default function initSocket(host) {
       host.layers[layer].removeChildren();
       host.layers[layer].importJSON(paperJSON);
     } else {
-      host.layerPayloads = { ...host.layerPayloads, [layer]: paperJSON };
+      host.socketPayloads = { ...host.socketPayloads, [layer]: paperJSON };
     }
 
     // Dispatch a named update.
@@ -20,7 +28,7 @@ export default function initSocket(host) {
 
   // Catch when it's time to manually swap pen over.
   cncserver.socket.on('manualswap trigger', ({ index }) => {
-    const message = `Your ${cstate.botName} is now ready to draw with ${cstate.colorset[index]}.
+    const message = `We are now ready to draw with ${cstate.colorset[index]}.
       When it's in and ready, click ok.`;
     // eslint-disable-next-line no-alert
     if (window.confirm(message)) {
@@ -41,37 +49,18 @@ export default function initSocket(host) {
 
   // Update pen positions
   // TODO: This needs an overhaul, no jQuery
-  /* cncserver.socket.on('pen update', data => {
-    let animPen = {};
-    state.pen = { ...data };
-    const { pen, lastPen } = state;
-
-    if (pen.lastDuration > 250) {
-      animPen = { ...lastPen };
-      if (typeof lastPen.x !== 'undefined') {
-        $(lastPen).animate(
-          { x: pen.x, y: pen.y },
-          {
-            duration: pen.lastDuration - 5,
-            easing: 'linear',
-            step(val, fx) {
-              animPen[fx.prop] = val;
-              currentPos.position = utils.stepsToPaper(animPen);
-            },
-            complete: () => {
-              // lastPen = $.extend({}, pen);
-              // removeSegment(data.bufferHash);
-            },
-          }
-        );
-      }
+  cncserver.socket.on('pen update', ({ x, y, lastDuration: dur }) => {
+    // TODO: First payload is too early :/
+    if (host.stepsPerMM) {
+      host.position = {
+        pos: stepsToPaper(host, { x, y }),
+        dur,
+      };
     } else {
-      $(lastPen).stop();
-      if (currentPos) {
-        currentPos.position = utils.stepsToPaper(pen);
-      }
-      state.lastPen = { ...pen };
-      // removeSegment(data.bufferHash);
+      host.socketPayloads = {
+        ...host.socketPayloads,
+        position: { x, y },
+      };
     }
-  }); */
+  });
 }
