@@ -72,11 +72,10 @@
     <script type="module">
       import cncserver from '/lib/cncserver.client.api.js';
       import preview from '/modules/preview.mjs';
-      import utils from '/modules/utils.mjs';
       import shapes from '/modules/shapes.mjs';
 
       // Globalize various imports.
-      ['cncserver', 'preview', 'utils', 'shapes'].forEach(name => {
+      ['cncserver', 'preview', 'shapes'].forEach(name => {
         window[name] = eval(name);
       });
 
