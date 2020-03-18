@@ -5,7 +5,7 @@
 const { Path, Group } = require('paper');
 const fs = require('fs');
 const path = require('path');
-const fillUtil = require('./cncserver.drawing.fillers.util');
+const fillUtil = require('../cncserver.drawing.fillers.util');
 
 let viewBounds = {};
 let settings = {
@@ -14,6 +14,12 @@ let settings = {
   spacing: 5,
   scale: 1,
   rotation: 0,
+  density: 1,
+  lineOptions: {
+    type: 'straight',
+    wavelength: 5,
+    amplitude: 0.5,
+  },
 };
 
 function spiralOutsideBounds(spiral, bounds) {
@@ -126,11 +132,113 @@ function generateFromLib(name, fillPath) {
   return pattern;
 }
 
+// Return a new path top to bottom based on passed options.
+function generateLine(bounds, { type, wavelength, amplitude }) {
+  const start = [bounds.left, bounds.top];
+  const end = [bounds.left, bounds.bottom];
+  const line = new Path();
+  let flip = true;
+
+  // Straight line is easy!
+  if (type === 'straight') {
+    line.add(start, end);
+    return line;
+  }
+
+  // Otherwise, generate points based on wavelength.
+  for (let y = start[1]; y < end[1]; y += wavelength) {
+    // Triangle and saw produce same output, it's just smoothed for sine.
+    if (['triangle', 'sine'].includes(type)) {
+      line.add([
+        start[0] + ((amplitude / 2) * (flip ? -1 : 1)), y,
+      ]);
+    } else if (type === 'square') {
+      if (flip) {
+        line.add(
+          [start[0], y],
+          [start[0] + amplitude, y]
+        );
+      } else {
+        line.add(
+          [start[0] + amplitude, y],
+          [start[0], y]
+        );
+      }
+    } else if (type === 'saw') {
+      line.add(
+        [start[0] + amplitude, y],
+        [start[0], y]
+      );
+    }
+    flip = !flip;
+  }
+
+  if (type === 'sine') {
+    line.smooth({ type: 'continuous' });
+  }
+
+  return line;
+}
+
+function generateLinePaths() {
+  const b = viewBounds;
+  const baseLine = generateLine(b, settings.lineOptions);
+
+  const workLine = baseLine.clone();
+  const patternGroup = new Group([workLine]);
+  let flip = true;
+
+  for (let x = b.left + settings.spacing; x < b.right; x += settings.spacing) {
+    const newLine = baseLine.clone();
+    newLine.translate([x, 0]);
+    if (flip) newLine.reverse();
+    flip = !flip;
+    workLine.join(newLine);
+  }
+
+  switch (settings.density) {
+    case 2:
+      patternGroup.addChild(workLine.clone().rotate(90));
+      break;
+
+    case 3:
+      patternGroup.addChild(workLine.clone().rotate(120));
+      patternGroup.addChild(workLine.clone().rotate(240));
+      break;
+
+    case 4:
+      patternGroup.addChild(workLine.clone().rotate(90));
+      patternGroup.addChild(workLine.clone().rotate(45));
+      patternGroup.addChild(workLine.clone().rotate(135));
+      break;
+
+    case 5:
+      patternGroup.addChild(workLine.clone().rotate(72));
+      patternGroup.addChild(workLine.clone().rotate(144));
+      patternGroup.addChild(workLine.clone().rotate(216));
+      patternGroup.addChild(workLine.clone().rotate(288));
+      break;
+
+    default:
+      break;
+  }
+
+  // console.log(line.bounds);
+  return patternGroup;
+}
+
 // Generate a compound path pattern
 function generatePattern(name, fillPath) {
   let pattern = null;
 
   switch (name) {
+    case 'line':
+      pattern = generateLinePaths();
+      pattern.scale(settings.scale);
+      pattern.rotate(settings.rotation);
+      pattern.position = fillPath.position;
+      break;
+
     case 'spiral':
       pattern = generateSpiralPath();
       pattern.scale(settings.scale);

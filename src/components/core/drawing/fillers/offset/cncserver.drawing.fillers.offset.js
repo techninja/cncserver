@@ -4,7 +4,7 @@
  */
 
 const { Group } = require('paper');
-const fillUtil = require('./cncserver.drawing.fillers.util');
+const fillUtil = require('../cncserver.drawing.fillers.util');
 
 let settings = {};
 let exportGroup = {};
