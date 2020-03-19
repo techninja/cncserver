@@ -223,7 +223,6 @@ function generateLinePaths() {
       break;
   }
 
-  // console.log(line.bounds);
   return patternGroup;
 }
 

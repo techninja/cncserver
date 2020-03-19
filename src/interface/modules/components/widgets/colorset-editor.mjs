@@ -4,7 +4,9 @@
 /* globals window */
 import ColorsetItem from './colorset-item.mjs';
 import apiInit from '/modules/utils/api-init.mjs';
-import { html, children, dispatch, property } from '/modules/hybrids.js';
+import {
+  html, children, dispatch, property
+} from '/modules/hybrids.js';
 
 function findItem(items, name) {
   return items.filter(item => (item.active = item.name === name))[0];
@@ -24,8 +26,7 @@ function removeItem(title, name) {
 
 // Trigger editing of the item
 function editItem(name) {
-  return host => {
-    // cancelEdit(host);
+  return (host) => {
     host.activeItem = name;
     host.isEditing = !!findItem(host.items, name);
 
@@ -52,7 +53,7 @@ function cancelEdit(host) {
 }
 
 function saveItem(op) {
-  return host => {
+  return (host) => {
     // First, check that we have all the info we need.
     if (!host.activeName.trim()) {
       host.errorName = true;
@@ -134,8 +135,9 @@ export default styles => ({
     <div class="field columns is-multiline" id="colorset">
       <section class="column">
         <div class="list is-hoverable">
-          ${items.map(
-            ({ name, title, color, active }) => html`
+          ${items.map(({
+    name, title, color, active,
+  }) => html`
               <div
                 title="Edit this Color"
                 class="${{ 'colorset-item': true, card: true, active }}"
@@ -155,8 +157,7 @@ export default styles => ({
                   </a>
                 </header>
               </div>
-            `
-          )}
+            `)}
         </div>
       </section>
       <section id="color-editor" class="column is-half">
@@ -199,11 +200,7 @@ export default styles => ({
               <label class="label">Display Name</label>
               <div class="control">
                 <input
-                  class="${{
-                    input: true,
-                    name: true,
-                    'is-danger': errorTitle,
-                  }}"
+                  class="${{ input: true, name: true, 'is-danger': errorTitle }}"
                   type="text"
                   placeholder="Display Name"
                   value="${activeTitle}"
@@ -222,8 +219,8 @@ export default styles => ({
                 icon="window-close"
                 style="danger"
               ></button-single>
-              ${!isEditing &&
-                html`
+              ${!isEditing
+                && html`
                   <button-single
                     onclick="${saveItem('create')}"
                     title="Add"
@@ -231,8 +228,8 @@ export default styles => ({
                     style="success"
                   ></button-single>
                 `}
-              ${isEditing &&
-                html`
+              ${isEditing
+                && html`
                   <button-single
                     onclick="${saveItem('save')}"
                     title="Save"
