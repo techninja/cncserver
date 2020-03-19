@@ -1,7 +1,7 @@
 /**
  * @file Draw preview socket update code.
  */
-/* globals cncserver */
+/* globals cncserver, window, document */
 import { dispatch } from '/modules/hybrids.js';
 
 function paperToMove([x, y]) {
@@ -10,6 +10,10 @@ function paperToMove([x, y]) {
 
 function stepsToPaper(host, { x, y }) {
   return [x / host.stepsPerMM.x, y / host.stepsPerMM.y];
+}
+
+function getColorName(index) {
+  return document.querySelector('panel-colors').items.filter(({ name }) => name === index)[0].title;
 }
 
 export default function initSocket(host) {
@@ -28,8 +32,9 @@ export default function initSocket(host) {
 
   // Catch when it's time to manually swap pen over.
   cncserver.socket.on('manualswap trigger', ({ index }) => {
-    const message = `We are now ready to draw with ${cstate.colorset[index]}.
+    const message = `We are now ready to draw with ${getColorName(index)}.
       When it's in and ready, click ok.`;
+
     // eslint-disable-next-line no-alert
     if (window.confirm(message)) {
       cncserver.api.tools.change('manualresume');
