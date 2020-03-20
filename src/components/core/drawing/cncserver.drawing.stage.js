@@ -69,19 +69,23 @@ module.exports = (cncserver, drawing) => {
   };
 
   // Render a linked object to the preview canvas from stage.
-  stage.renderToPreview = (hash = null) => {
+  stage.renderToPreview = (specificHash = null) => {
     // Clear out preview.
     drawing.base.layers.preview.removeChildren();
     cncserver.sockets.sendPaperUpdate('preview');
 
     // Render each item.
+    // TODO: Render specifically passed hash.
     drawing.base.layers.stage.children.forEach((item) => {
+      const hash = item.name;
+      const actionItem = cncserver.actions.getItem(hash);
       cncserver.actions.addItem({
         body: item.children.content.clone({ insert: false }),
         name: `${item.name}-render`,
         type: 'project',
         operation: 'full',
         bounds: item.bounds,
+        settings: actionItem.settings,
       });
     });
   };
