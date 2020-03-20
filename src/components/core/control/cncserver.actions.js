@@ -309,15 +309,15 @@ module.exports = (cncserver) => {
     }
   });
 
-  // Get a job based on the hash.
+  // Get an action based on the hash.
   actions.getItem = (hash) => {
-    let job = null;
+    let action = null;
     const index = actions.hashToIndex[hash];
     if (index !== undefined) {
-      job = actions.items[index];
+      action = actions.items[index];
     }
 
-    return job;
+    return action;
   };
 
   // Remove an action item based on the hash.
