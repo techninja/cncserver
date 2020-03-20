@@ -180,12 +180,11 @@ function generateLine(bounds, { type, wavelength, amplitude }) {
   return line;
 }
 
-function generateLinePaths() {
+function generateLinePath() {
   const b = viewBounds;
   const baseLine = generateLine(b, settings.lineOptions);
 
   const workLine = baseLine.clone();
-  const patternGroup = new Group([workLine]);
   let flip = true;
 
   for (let x = b.left + settings.spacing; x < b.right; x += settings.spacing) {
@@ -196,32 +195,45 @@ function generateLinePaths() {
     workLine.join(newLine);
   }
 
-  switch (settings.density) {
+  return workLine;
+}
+
+// Duplicates and rotates a fill path to a new group.
+function applyDensity(density, singlePath) {
+  const patternGroup = new Group([singlePath]);
+  let obverseAlign = false;
+  let densityArray = [];
+
+  // If it's a line we're apply to, we need to adjust the angles so we don't
+  // align to the exact obverse angle on even densities (or we won't see it!).
+  if (settings.pattern === 'line') {
+    obverseAlign = true;
+  }
+
+  switch (density) {
     case 2:
-      patternGroup.addChild(workLine.clone().rotate(90));
+      densityArray = obverseAlign ? [90] : [180];
       break;
 
     case 3:
-      patternGroup.addChild(workLine.clone().rotate(120));
-      patternGroup.addChild(workLine.clone().rotate(240));
+      densityArray = [120, 240];
       break;
 
     case 4:
-      patternGroup.addChild(workLine.clone().rotate(90));
-      patternGroup.addChild(workLine.clone().rotate(45));
-      patternGroup.addChild(workLine.clone().rotate(135));
+      densityArray = obverseAlign ? [45, 90, 135] : [90, 180, 270];
       break;
 
     case 5:
-      patternGroup.addChild(workLine.clone().rotate(72));
-      patternGroup.addChild(workLine.clone().rotate(144));
-      patternGroup.addChild(workLine.clone().rotate(216));
-      patternGroup.addChild(workLine.clone().rotate(288));
+      densityArray = [72, 144, 216, 288];
       break;
 
     default:
       break;
   }
+
+  densityArray.forEach((angle) => {
+    patternGroup.addChild(singlePath.clone().rotate(angle));
+  });
 
   return patternGroup;
 }
@@ -232,28 +244,30 @@ function generatePattern(name, fillPath) {
 
   switch (name) {
     case 'line':
-      pattern = generateLinePaths();
-      pattern.scale(settings.scale);
-      pattern.rotate(settings.rotation);
-      pattern.position = fillPath.position;
+      pattern = generateLinePath();
       break;
 
     case 'spiral':
       pattern = generateSpiralPath();
-      pattern.scale(settings.scale);
-      pattern.rotate(settings.rotation);
-
-      if (!settings.overlayFillAlignPath) {
-        // Align spiral to center by default.
-        pattern.position = fillUtil.project.view.center;
-      } else {
-        // Otherwise align to center of fill path.
-        pattern.position = fillPath.position;
-      }
       break;
 
     default:
       pattern = generateFromLib(name, fillPath);
+  }
+
+  // For line or spiral, apply density, scale, rotation & alignment.
+  if (['line', 'spiral'].includes(name)) {
+    pattern = applyDensity(settings.density, pattern);
+    pattern.scale(settings.scale);
+    pattern.rotate(settings.rotation);
+
+    if (!settings.overlayFillAlignPath) {
+      // Align spiral to center by default.
+      pattern.position = fillUtil.project.view.center;
+    } else {
+      // Otherwise align to center of fill path.
+      pattern.position = fillPath.position;
+    }
   }
 
   return pattern;
