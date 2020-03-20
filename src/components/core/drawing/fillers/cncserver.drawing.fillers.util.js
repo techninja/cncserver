@@ -4,7 +4,9 @@
  * Holds all standardized processes for managing IPC, paper setup, and export
  * so the fill algorithm can do whatever it needs.
  */
-const { Project, Size, Path } = require('paper');
+const {
+  Project, Size, Path, CompoundPath,
+} = require('paper');
 const clipperLib = require('js-angusj-clipper');
 const ipc = require('node-ipc');
 
@@ -76,6 +78,20 @@ const clipper = {
     return geometries;
   },
 
+  // Offset passed geometry by a given delta, returns complete offset paths.
+  getOffsetPaths: (data, delta, clipperInstance) => {
+    const result = clipperInstance.offsetToPaths({
+      delta: delta * -clipper.scalePrecision,
+      offsetInputs: [{
+        data,
+        joinType: 'miter',
+        endType: 'closedPolygon',
+      }],
+    });
+
+    return clipper.resultToPaths(result);
+  },
+
   // Convert an array of result geometries into an array of Paper paths.
   resultToPaths: (result, closed = true) => {
     const out = [];
@@ -113,8 +129,19 @@ const exp = {
       ipc.of[hostname].on('spawner.init', ({ size, object, settings }) => {
         exp.project = new Project(new Size(size));
         const item = exp.project.activeLayer.importJSON(object);
-        console.log('Path:', item.name, `${Math.round(item.length * 10) / 10}mm long`);
-        initCallback(item, settings);
+        // console.log('Path:', item.name, `${Math.round(item.length * 10) / 10}mm long`);
+
+        // For any non-zero value, we want to inset the object before it gets in.
+        if (settings.inset) {
+          clipper.getInstance().then((clipperInstance) => {
+            const geo = clipper.getPathGeo(item, settings.flattenResolution);
+            const paths = clipper.getOffsetPaths(geo, settings.inset, clipperInstance);
+
+            initCallback(new CompoundPath(paths), settings);
+          });
+        } else {
+          initCallback(item, settings);
+        }
       });
     });
   },
