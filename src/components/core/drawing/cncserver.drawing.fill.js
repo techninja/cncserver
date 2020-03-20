@@ -8,9 +8,9 @@ module.exports = (cncserver, drawing) => {
     method: 'offset', // Fill method application machine name.
     flattenResolution: 0.25, // Path overlay fill type trace resolution.
     // Pass a path object to be used for overlay fills:
-    angle: 28, // Dynamic line fill type line angle
-    insetAmount: 0, // Amount to negatively offset the fill path.
-    randomizeAngle: false, // Randomize the angle above for dynamic line fill.
+    rotation: 28, // Dynamic line fill type line angle
+    inset: 0, // Amount to negatively offset the fill path.
+    randomizeRotation: false, // Randomize the angle above for dynamic line fill.
     hatch: false, // If true, runs twice at opposing angles
     spacing: 3, // Dynamic line fill spacing nominally between each line.
     threshold: 10, // Dynamic line grouping threshold
@@ -32,26 +32,26 @@ module.exports = (cncserver, drawing) => {
       minimum: 0.01,
       maximum: 5,
     },
-    angle: {
+    rotation: {
       type: 'number',
-      title: 'Angle',
-      description: 'If applicable, the angle for a fill method.',
+      title: 'Rotation',
+      description: 'If applicable, the rotation for a fill method.',
       default: 28,
       minimum: 0,
       maximum: 360,
     },
-    insetAmount: {
+    inset: {
       type: 'number',
-      title: 'Inset Amount',
-      description: 'The amount to negatively offset a fill path, allowing for space betweek outside stroke and internal size.',
+      title: 'Inset',
+      description: 'The number of mm to negatively offset a fill path, allowing for space between outside stroke and internal size.',
       default: 0,
-      minimum: -5,
-      maximum: 5,
+      minimum: -50,
+      maximum: 50,
     },
-    randomizeAngle: {
+    randomizeRotation: {
       type: 'boolean',
-      title: 'Randomize Angle',
-      description: 'If set, the angle setting will be ignored and a single random angle will be selected for each fill.',
+      title: 'Randomize Rotation',
+      description: 'If set, the rotation setting will be ignored and a single random angle will be selected for each fill.',
       default: false,
     },
     spacing: {
@@ -66,6 +66,11 @@ module.exports = (cncserver, drawing) => {
 
   const fill = (path, hash, parent = null, bounds = null, requestSettings = {}) => new Promise((success, error) => {
     const settings = { ...settingDefaults, ...requestSettings };
+
+    // Add in computed settings values here.
+    if (settings.randomizeRotation) {
+      settings.rotation = Math.round(Math.random() * 360);
+    }
 
     // TODO: Should we fitbounds here? Or earlier?
     if (bounds) {
