@@ -134,8 +134,8 @@ function generateFromLib(name, fillPath) {
 
 // Return a new path top to bottom based on passed options.
 function generateLine(bounds, { type, wavelength, amplitude }) {
-  const start = [bounds.left, bounds.top];
-  const end = [bounds.left, bounds.bottom];
+  const start = [0, 0];
+  const end = [0, bounds.width > bounds.height ? bounds.width : bounds.height];
   const line = new Path();
   let flip = true;
 
