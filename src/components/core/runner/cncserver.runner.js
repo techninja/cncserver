@@ -156,10 +156,10 @@ state.setPaused = (paused, init = false) => {
   }
 
   if (paused) {
-    console.log('CORKED RENDERER');
+    // console.log('CORKED RENDERER');
     instructionRenderer.cork();
   } else {
-    console.log('UNCORKED RENDERER');
+    // console.log('UNCORKED RENDERER');
     instructionRenderer.uncork();
   }
 };
