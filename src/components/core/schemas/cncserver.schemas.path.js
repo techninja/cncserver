@@ -5,15 +5,10 @@
  * external properties otherwise.
  *
  */
+/* eslint-disable max-len */
 module.exports = () => ({
   type: 'object',
   properties: {
-    closed: {
-      type: 'boolean',
-      title: 'Closed path',
-      description: 'If the path is closed, the end will connect to the start.',
-      default: false,
-    },
     fillColor: {
       type: 'string',
       title: 'Fill Color',

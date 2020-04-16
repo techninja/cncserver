@@ -4,6 +4,7 @@
  * This schema defines the specific allowed settings and therefore the API
  * interface restrictions and expectations for all data IO.
  */
+/* eslint-disable max-len */
 module.exports = (cncserver) => {
   const { base } = cncserver.drawing;
   const bounds = base.defaultBounds();
@@ -45,7 +46,8 @@ module.exports = (cncserver) => {
         },
         content: {
           type: 'string',
-          title: 'Content of the expected type',
+          title: 'Content Body',
+          description: 'String content of the specified type, or binary data URI for rasters',
         },
       },
       /* if: { // TODO: This doesn't work, but it really should.
@@ -104,5 +106,11 @@ module.exports = (cncserver) => {
     },
   };
 
-  return { type: 'object', properties, required: ['source'] };
+  return {
+    type: 'object',
+    title: 'Content',
+    description: 'Full definition of a single unit of content for a project.',
+    properties,
+    required: ['source'],
+  };
 };

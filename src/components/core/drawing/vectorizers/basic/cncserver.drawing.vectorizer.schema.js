@@ -21,19 +21,25 @@ module.exports = {
   },
   cleanup: {
     type: 'object',
+    title: 'Cleanup Vectorization',
+    description: 'Minor options for cleaning up the output of vectorization.',
     properties: {
       level: {
         type: 'integer',
         default: 0,
         minimum: 0,
         maximum: 20,
+        title: 'Level',
+        description: 'Amount of despeckle cleanup for small imperfections.',
       },
       tightness: {
         type: 'number',
         default: 2,
         minimum: 0,
         maximum: 8,
+        title: 'Tightness',
+        description: 'Despeckle tightness value cleanup for small imperfections.',
       },
-    }
+    },
   },
 };

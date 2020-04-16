@@ -5,11 +5,12 @@
  * application to import and use for settings validation and documentation.
  *
  */
+/* eslint-disable max-len */
 const strokeSchema = {
   render: {
     type: 'boolean',
     title: 'Render',
-    description: 'Whether stroke should be rendered, set false to skip.',
+    description: 'Render stroke',
     default: true,
   },
   cutoutOcclusion: {

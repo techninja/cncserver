@@ -5,6 +5,7 @@
  * application to import and use for settings validation and documentation.
  *
  */
+/* eslint-disable max-len */
 const fs = require('fs');
 const path = require('path');
 
@@ -15,7 +16,7 @@ module.exports = () => {
     render: {
       type: 'boolean',
       title: 'Render',
-      description: 'Whether vectorization should be rendered, set false to skip.',
+      description: 'Render vectorization',
       default: true,
     },
     method: {
@@ -49,25 +50,25 @@ module.exports = () => {
         invert: {
           type: 'boolean',
           title: 'Invert',
-          description: 'If true, will invert the pixel color before processing.',
+          description: 'Invert the pixel color before processing.',
           default: false,
         },
         grayscale: {
           type: 'boolean',
           title: 'Grayscale',
-          description: 'If true, will convert the image to black and white grayscale.',
+          description: 'Convert the image to black and white grayscale.',
           default: false,
         },
         normalize: {
           type: 'boolean',
           title: 'Normalize',
-          description: 'If true, will normalize the color channels to correct for minor exposure issues.',
+          description: 'Normalize color channels to correct for exposure/color temperature.',
           default: false,
         },
         flatten: {
           type: 'boolean',
           title: 'Flatten transparency',
-          description: 'If true, alpha transparency in the image will be flattened to the flatten color.',
+          description: 'Flatten alpha transparency in the image will to the flatten color.',
           default: false,
         },
         flattenColor: {

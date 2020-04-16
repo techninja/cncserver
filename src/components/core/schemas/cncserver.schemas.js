@@ -117,18 +117,20 @@ module.exports = (cncserver) => {
   };
 
   // Validate data given a specific schema by name from above.
-  schemas.validateData = (type, data, provideDefaults = false) => new Promise((resolve, reject) => {
-    const isValid = ajv.validate(type, data);
-    if (isValid) {
-      if (provideDefaults) {
-        resolve(schemas.getDataDefault(type, data));
+  schemas.validateData = (type, data, provideDefaults = false) => new Promise(
+    (resolve, reject) => {
+      const isValid = ajv.validate(type, data);
+      if (isValid) {
+        if (provideDefaults) {
+          resolve(schemas.getDataDefault(type, data));
+        } else {
+          resolve(data);
+        }
       } else {
-        resolve(data);
+        reject(formatMessages(ajv.errors));
       }
-    } else {
-      reject(formatMessages(ajv.errors));
     }
-  });
+  );
 
 
   return schemas;

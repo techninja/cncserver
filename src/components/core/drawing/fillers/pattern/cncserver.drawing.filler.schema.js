@@ -26,8 +26,8 @@ module.exports = {
     title: 'Fill Position Offset',
     description: 'How much to adjust the position of the fill: X, Y in mm.',
     properties: {
-      x: { type: 'number', default: 0 },
-      y: { type: 'number', default: 0 },
+      x: { title: 'X', type: 'number', default: 0 },
+      y: { title: 'Y', type: 'number', default: 0 },
     },
   },
   pattern: {

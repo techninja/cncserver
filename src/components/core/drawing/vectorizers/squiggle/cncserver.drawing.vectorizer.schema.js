@@ -4,6 +4,7 @@
  * This schema defines the vectorizer method specific settings schema for the
  * application to import and use for settings validation and documentation.
  */
+/* eslint-disable max-len */
 module.exports = {
   sampleWidth: {
     type: 'number',
@@ -64,8 +65,8 @@ module.exports = {
     title: 'Overlay Position Offset',
     description: 'How much to adjust the position of the overlay lines: X, Y in mm.',
     properties: {
-      x: { type: 'number', default: 0 },
-      y: { type: 'number', default: 0 },
+      x: { title: 'X', type: 'number', default: 0 },
+      y: { title: 'Y', type: 'number', default: 0 },
     },
   },
   style: {
@@ -80,13 +81,13 @@ module.exports = {
     title: 'Color Components',
     description: 'Which image color components to parse',
     properties: {
-      cyan: { type: 'boolean', default: false },
-      magenta: { type: 'boolean', default: false },
-      yellow: { type: 'boolean', default: false },
-      gray: { type: 'boolean', default: true },
-      red: { type: 'boolean', default: false },
-      green: { type: 'boolean', default: false },
-      blue: { type: 'boolean', default: false },
+      cyan: { title: 'Parse Cyan', type: 'boolean', default: false },
+      magenta: { title: 'Parse Magenta', type: 'boolean', default: false },
+      yellow: { title: 'Parse Yellow', type: 'boolean', default: false },
+      gray: { title: 'Parse Gray', type: 'boolean', default: true },
+      red: { title: 'Parse Red', type: 'boolean', default: false },
+      green: { title: 'Parse Green', type: 'boolean', default: false },
+      blue: { title: 'Parse Blue', type: 'boolean', default: false },
     },
   },
 };

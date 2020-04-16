@@ -4,6 +4,7 @@
  * This schema defines the specific allowed settings and therefore the API
  * interface restrictions and expectations for all data IO.
  */
+/* eslint-disable max-len */
 module.exports = () => {
   const properties = {
     /* hash: {
@@ -47,5 +48,10 @@ module.exports = () => {
     },
   };
 
-  return { type: 'object', properties };
+  return {
+    type: 'object',
+    properties,
+    title: 'Project',
+    description: 'Full definition of a project that holds content',
+  };
 };
