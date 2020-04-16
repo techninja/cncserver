@@ -4,13 +4,13 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/settings'] = function settingsGet(req) {
+  handlers['/v2/settings'] = function settingsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {
         code: 200,
         body: {
-          global: '/v1/settings/global',
-          bot: '/v1/settings/bot',
+          global: '/v2/settings/global',
+          bot: '/v2/settings/bot',
         },
       };
     }
@@ -18,7 +18,7 @@ module.exports = (cncserver) => {
     return false;
   };
 
-  handlers['/v1/settings/:type'] = function settingsMain(req) {
+  handlers['/v2/settings/:type'] = function settingsMain(req) {
     // TODO: Refactor most/all of this to be more consistent, and pull useful
     // cleaned up config from cnccserver.settings.[x]
 

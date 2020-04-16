@@ -48,13 +48,15 @@ module.exports = (cncserver) => {
       if (req.route.method === 'options') {
         res.set(
           'Access-Control-Allow-Methods',
-          'PUT, POST, GET, DELETE'
+          'PUT, PATCH, POST, GET, DELETE'
         );
         res.set(
           'Access-Control-Allow-Headers',
           'Origin, X-Requested-Width, Content-Type, Accept'
         );
-        res.status(200).send();
+
+        // Attach the schema and send, if any.
+        res.status(200).send(cncserver.schemas.getFromRequest(path));
         return;
       }
 

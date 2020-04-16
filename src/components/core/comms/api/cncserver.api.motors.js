@@ -4,7 +4,7 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/motors'] = function motorsMain(req) {
+  handlers['/v2/motors'] = function motorsMain(req) {
     // Disable/unlock motors
     if (req.route.method === 'delete') {
       cncserver.run('custom', cncserver.buffer.cmdstr('disablemotors'));

@@ -2,9 +2,8 @@
  * @file Squiggle vectorizer!
  */
 
-const { Group, Path, Rectangle } = require('paper');
-const util = require('./cncserver.drawing.vectorizers.util');
-
+const { Group, Path } = require('paper');
+const util = require('../cncserver.drawing.vectorizers.util');
 
 const components = {
   cyan: 'red',
@@ -18,18 +17,7 @@ const components = {
 
 let exportGroup;
 let evenOdd = null;
-let settings = {
-  sampleWidth: 2,
-  spacing: 5,
-  overlap: 1,
-  maxDensity: 4,
-  brightness: 0.05,
-  joinPaths: false,
-  skipWhite: false,
-  angle: 0,
-  style: 'lines',
-  colorComponents: ['gray'],
-};
+let settings = {}; // Globalization of full passed settings.vectorize >
 
 function bright(lum, amt) {
   return Math.min(1, lum + amt);
@@ -44,8 +32,8 @@ function newPath(colorComponent) {
 
 function renderSquiggleAlongPath(image, path, colorComponent) {
   const {
-    brightness, maxDensity, spacing, sampleWidth, overlap,
-  } = settings;
+    maxDensity, spacing, sampleWidth, overlap, skipWhite,
+  } = settings.squiggle;
 
   let yUp = true;
   let line = newPath(colorComponent);
@@ -65,19 +53,19 @@ function renderSquiggleAlongPath(image, path, colorComponent) {
 
       const color = image.getAverageColor(area);
       if (color) {
-        const lum = 1 - bright(color[components[colorComponent]], brightness);
+        const lum = 1 - bright(color[components[colorComponent]], 0.1);
         const amp = util.map(lum, 0, 1, 0, (spacing + overlap) / 2);
         const density = Math.ceil(maxDensity * lum);
         const pointSpacing = sampleWidth / density;
 
         // Add a straight point in the center and end path for pure white.
         if (!density) {
-          if (!settings.skipWhite) {
+          if (!skipWhite) {
             // const centerPos = pos + (sampleWidth / 2);
             line.add(path.getPointAt(pos + sampleWidth));
           }
 
-          if (line.segments.length && settings.skipWhite) {
+          if (line.segments.length && skipWhite) {
             line.smooth();
             exportGroup.addChild(line);
             line = newPath(colorComponent);
@@ -113,11 +101,21 @@ function renderSquiggleAlongPath(image, path, colorComponent) {
 }
 
 // Connect to the main process, start the fill operation.
-util.connect((image, settingsOverride) => {
-  settings = { ...settings, ...settingsOverride };
+util.connect('paper', (image, rawSettings) => {
+  settings = { ...rawSettings };
+
+  // Convert color components from the schema verifiable object into the array
+  // that's not, but is way easier to work with.
+  const arrCC = [];
+  Object.entries(settings.squiggle.colorComponents).forEach(([color, doProcess]) => {
+    if (doProcess) arrCC.push(color);
+  });
+  if (!arrCC.length) arrCC.push('gray');
+  settings.squiggle.colorComponents = arrCC;
+
   const {
     spacing, overlap, joinPaths, style, angle, colorComponents,
-  } = settings;
+  } = settings.squiggle;
   exportGroup = new Group();
 
   // Back and forth line sweeping
@@ -133,7 +131,7 @@ util.connect((image, settingsOverride) => {
 
     guideLines.strokeWidth = 1; guideLines.strokeColor = 'red';
     // exportGroup.addChild(guideLines);
-    guideLines.position = image.position;
+    guideLines.position = image.position.add(settings.squiggle.offset);
 
     colorComponents.forEach((colorComponent, index) => {
       guideLines.rotation = angle + ((360 / colorComponents.length) * index);
@@ -163,7 +161,7 @@ util.connect((image, settingsOverride) => {
       });
     });
   } else if (style === 'spiral') {
-    const spiral = util.generateSpiralPath(spacing, image.bounds);
+    const spiral = util.generateSpiralPath(spacing, image.bounds, settings.squiggle.offset);
     colorComponents.forEach((colorComponent, index) => {
       spiral.rotation = angle + ((360 / colorComponents.length) * index);
       renderSquiggleAlongPath(image, spiral, colorComponent);

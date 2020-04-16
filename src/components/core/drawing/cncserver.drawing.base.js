@@ -6,7 +6,7 @@ const {
 } = require('paper');
 
 // Central drawing base export
-const base = { id: 'drawing.base' };
+const base = { id: 'drawing.base', layers: {} };
 
 module.exports = (cncserver) => {
   base.project = {};
@@ -26,12 +26,13 @@ module.exports = (cncserver) => {
 
     // Setup layers: temp, working
     // Whatever the last layer added was, will be default.
-    base.layers = {
-      import: new Layer({ name: 'import' }),
-      temp: new Layer({ name: 'temp' }),
-      stage: new Layer({ name: 'stage' }),
-      preview: new Layer({ name: 'preview' }),
-    };
+    const layers = ['import', 'temp', 'stage', 'preview'];
+    layers.forEach((name) => {
+      base.layers[name] = new Layer({ name });
+    });
+
+    // Trigger paper ready.
+    cncserver.binder.trigger('paper.ready');
   });
 
   // Clear preview canvas on cancel/clear.
@@ -46,7 +47,7 @@ module.exports = (cncserver) => {
 
   // Get a list of all simple paths from all children as an array.
   base.getPaths = (parent = base.layers.preview, items = []) => {
-    if (parent.children && parent.children.length) {
+    if (parent.children && parent.children.length && !(parent instanceof CompoundPath)) {
       let moreItems = [];
       parent.children.forEach((child) => {
         moreItems = base.getPaths(child, moreItems);
@@ -58,8 +59,10 @@ module.exports = (cncserver) => {
 
   // Just the object for the rectangle (for JSON).
   base.defaultBoundsRaw = (margin = 10) => ({
-    point: [margin, margin],
-    size: [base.workspace.width - margin * 2, base.workspace.height - margin * 2],
+    x: margin,
+    y: margin,
+    width: base.workspace.width - margin * 2,
+    height: base.workspace.height - margin * 2,
   });
 
   // Get a default bound for high level drawings.
@@ -187,6 +190,11 @@ module.exports = (cncserver) => {
       }
     }
 
+    // If we don't have a path at this point we failed to import the JSON.
+    if (!path || !path.length) {
+      throw new Error('Invalid path source, verify input content and try again.');
+    }
+
     // If the passed object already is compounnd, return it directly.
     if (path instanceof CompoundPath) {
       return base.setName(path);
@@ -209,10 +217,11 @@ module.exports = (cncserver) => {
     return color.alpha !== 0;
   };
 
-  // Takes a layer, and cleans up all the immediate children to verify they have
-  // either: Stroke with no fill, stroke with fill (closed), fill only.
-  // Removes or fixes all paths that don't fit here.
-  base.cleanupInput = (layer, fillStroke = false) => {
+  // Takes an item with children, and cleans up all the first level children to
+  // verify they have either: Stroke with no fill, stroke with fill (closed),
+  // fill only. Removes or fixes all paths that don't fit here.
+  base.cleanupInput = (layer, settings) => {
+    const { trace: fillStroke } = settings.fill;
     const { hasColor } = base;
     base.removeNonPaths(layer);
 
@@ -222,14 +231,14 @@ module.exports = (cncserver) => {
 
       // Maybe a fill?
       if (hasColor(item.fillColor)) {
-        console.log('Fill', item.name, item.fillColor.toCSS());
+        // console.log('Fill', item.name, item.fillColor.toCSS());
         item.closed = true;
         item.fillColor.alpha = 1;
 
         // Has a stroke?
         if (hasColor(item.strokeColor) || item.strokeWidth) {
           if (!hasColor(item.strokeColor)) {
-            item.strokeColor = item.fillColor || 'black';
+            item.strokeColor = item.fillColor || settings.path.fillColor;
             item.strokeColor.alpha = 1;
           }
           if (!item.strokeWidth) {
@@ -237,13 +246,13 @@ module.exports = (cncserver) => {
           }
         } else if (fillStroke) {
           // Add a stroke to fills if requested.
-          console.log('Adding stroke to fill', item.name, item.fillColor.toCSS());
+          // console.log('Adding stroke to fill', item.name, item.fillColor.toCSS());
           item.strokeColor = item.fillColor;
           item.strokeWidth = 1;
         }
       } else if (hasColor(item.strokeColor) || item.strokeWidth) {
         if (!hasColor(item.strokeColor)) {
-          item.strokeColor = item.fillColor || 'black';
+          item.strokeColor = item.fillColor || settings.path.fillColor;
         } else {
           item.strokeColor.alpha = 1;
         }

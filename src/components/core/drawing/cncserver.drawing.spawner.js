@@ -12,15 +12,24 @@ const fs = require('fs');
 const workingQueue = {};
 
 module.exports = (cncserver, drawing) => {
+  // Generate a spawn key using a data object.
+  function getSpawnKey({ hash, type, subIndex }) {
+    const spawnKeys = [type, hash];
+    if (subIndex || subIndex === 0) spawnKeys.push(subIndex);
+
+    return spawnKeys.join('-');
+  }
+
   // IPC recieve message handler.
   const gotMessage = (packet, socket) => {
     const { command, data } = packet;
-    const spawnKey = `${data.type}-${data.hash}`;
+    const spawnKey = getSpawnKey(data);
     const workingQueueItem = workingQueue[spawnKey];
 
     // Catch any non-matching spawn data. This shouldn't happen, but could.
     if (!workingQueueItem) {
-      throw new Error(`Spawn data item mismatch: ${data.type}-${data.hash}`);
+      // TODO: If this happens, need to clear out process source SOMEHOW.
+      throw new Error(`Spawn data item mismatch: ${spawnKey}`);
     }
 
     const timeTaken = Math.round((new Date() - workingQueueItem.start) / 100) / 10;
@@ -73,6 +82,8 @@ module.exports = (cncserver, drawing) => {
    *   The hash that identifies the work.
    * @param {string} arg.type
    *   The identifier for what kind of process this is, EG 'filler'.
+   * @param {string} arg.subIndex
+   *   An extra identifier for delineating a sub fill within a base hash.
    * @param {string} arg.script
    *   The full path of the script to pass to the node binary.
    * @param {object} arg.object
@@ -85,15 +96,16 @@ module.exports = (cncserver, drawing) => {
    *   otherwise results in error if spawn process dies with non-zero exit code.
    */
   const spawner = ({
-    hash, type, script, object, settings,
+    hash, type, script, object, settings, subIndex = '',
   }) => new Promise((success, error) => {
-    const spawnKey = `${type}-${hash}`;
+    const spawnKey = getSpawnKey({ hash, type, subIndex });
     const spawnData = {
       start: new Date(),
       settings,
       object,
       success,
       error,
+      subIndex,
     };
 
     const resolvedScript = path.resolve(script);
@@ -102,7 +114,7 @@ module.exports = (cncserver, drawing) => {
     }
 
     // Spawn process and bind basic i/o.
-    spawnData.process = spawn('node', [resolvedScript, hash]);
+    spawnData.process = spawn('node', [resolvedScript, hash, subIndex]);
     spawnData.process.stdout.on('data', (rawData) => {
       rawData.toString().split('\n').forEach((line) => {
         if (line.length) console.log(`SPAWN ${spawnKey}: ${line}`);

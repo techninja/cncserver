@@ -22,7 +22,7 @@ const cncserver = {
     domain = 'localhost',
     port = 4242,
     protocol = 'http',
-    version = 1,
+    version = 2,
     ax,
     socketio,
   }) => new Promise((resolve) => {
@@ -105,69 +105,55 @@ function _post(path, options) {
 function _put(path, options) {
   return _request('put', path, options);
 }
+function _patch(path, options) {
+  return _request('patch', path, options);
+}
 function _delete(path, options) {
   return _request('delete', path, options);
+}
+function _options(path) {
+  return _request('options', path);
 }
 
 /**
  * Restful API wrappers
  */
 cncserver.api = {
-  actions: {
+  projects: {
     /**
      * TODO: Basic docs for these wrappers.
      */
+    stat: () => _get('projects'),
+    add: data => _post('projects', { data }),
+
     item: {
-      stat: hash => _get(`actions/${hash}`),
-      update: (hash, data) => _put(`actions/${hash}`, { data }),
-      delete: hash => _delete(`actions/${hash}`),
+      stat: hash => _get(`projects/${hash}`),
+      update: (hash, data) => _patch(`projects/${hash}`, { data }),
+      delete: hash => _delete(`projects/${hash}`),
     },
-    stat: () => _get('actions'),
-    text: (body, bounds, settings) => _post('actions', {
-      data: {
-        type: 'job',
-        operation: 'text',
-        name: 'text-job',
-        bounds,
-        body,
-        settings,
-      },
-    }),
-    strokePath: (body, bounds, settings) => _post('actions', {
-      data: {
-        type: 'job',
-        operation: 'trace',
-        name: 'trace-job',
-        bounds,
-        body,
-        settings,
-      },
-    }),
-    fillPath: (body, bounds, settings) => _post('actions', {
-      data: {
-        type: 'job',
-        operation: 'fill',
-        name: 'fill-job',
-        bounds,
-        body,
-        settings,
-      },
-    }),
-    project: options => _post('actions', {
-      data: {
-        name: 'default-project',
-        operation: 'stage',
-        // Up from here, suggested defaults.
+    renderStage: () => _patch('projects', { data: { rendering: true } }),
+    drawPreview: () => _patch('projects', { data: { drawing: true } }),
+    options: () => _options('projects'),
+  },
+  content: {
+    stat: () => _get('content'),
+    add: {
+      direct: data => _post('content', { data }),
+      local: (type, content, options = {}) => _post('content', {
+        data: { ...options, source: { type, content } },
+      }),
+      remote: (type, url, options = {}) => _post('content', {
+        data: { ...options, source: { type, url } },
+      }),
+    },
 
-        // Fold in passed options.
-        ...options,
-
-        // From here down, non-overridable.
-        type: 'project',
-      },
-    }),
-    drawPreview: () => _post('actions', { data: { type: 'drawpreview' } }),
-    renderStage: () => _post('actions', { data: { type: 'renderstage' } }),
+    item: {
+      stat: hash => _get(`content/${hash}`),
+      update: (hash, data) => _patch(`content/${hash}`, { data }),
+      delete: hash => _delete(`content/${hash}`),
+    },
+    delete: () => _delete('content'), // Remove all content from project.
+    options: () => _options('content'),
   },
   colors: {
     stat: () => _get('colors'),

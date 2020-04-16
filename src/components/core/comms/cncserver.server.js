@@ -5,6 +5,8 @@
 const express = require('express'); // Express Webserver Requires
 const slashes = require('connect-slashes'); // Middleware to manage URI slashes
 const http = require('http');
+const path = require('path');
+const { homedir } = require('os');
 
 const server = {}; // Global component export.
 
@@ -17,21 +19,33 @@ module.exports = (cncserver) => {
   // Global express initialization (must run before any endpoint creation)
   server.app.configure(() => {
     // Base static path for remote interface.
-    server.app.use('/', express.static(`${global.__basedir}/interface/`));
+    server.app.use('/', express.static(path.join(global.__basedir, 'interface')));
 
     // Configure module JS file mime type.
     express.static.mime.define({ 'text/javascript': ['mjs'] });
 
     // Add static libraries from node_modules.
-    const nm = `${global.__basedir}/../node_modules`;
-    server.app.use('/paper', express.static(`${nm}/paper/dist/`));
-    server.app.use('/axios', express.static(`${nm}/axios/dist/`));
-    server.app.use('/jquery', express.static(`${nm}/jquery/dist/`));
-    server.app.use('/bulma', express.static(`${nm}/bulma/css/`));
-    server.app.use('/select2', express.static(`${nm}/select2/dist/`));
-    server.app.use('/font-awesome', express.static(`${nm}/@fortawesome/fontawesome-free/css/`));
-    server.app.use('/webfonts', express.static(`${nm}/@fortawesome/fontawesome-free/webfonts/`));
-    server.app.use('/modules', express.static(`${global.__basedir}/../web_modules/`));
+    const nm = path.resolve(global.__basedir, '..', 'node_modules');
+
+    // Custom static dirs.
+    const statics = {
+      paper: path.join(nm, 'paper', 'dist'),
+      axios: path.join(nm, 'axios', 'dist'),
+      jquery: path.join(nm, 'jquery', 'dist'),
+      jsonform: path.join(nm, 'jsonform', 'lib'),
+      underscore: path.join(nm, 'underscore'),
+      bulma: path.join(nm, 'bulma', 'css'),
+      select2: path.join(nm, 'select2', 'dist'),
+      'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
+      webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
+      modules: path.resolve(global.__basedir, '..', 'web_modules'),
+      home: path.join(path.resolve(homedir(), 'cncserver')),
+    };
+
+    // Add routing for all static dirs.
+    Object.entries(statics).forEach(([staticPath, dirSource]) => {
+      server.app.use(`/${staticPath}`, express.static(dirSource));
+    });
 
     // Setup remaining middleware.
     server.app.use(express.bodyParser());

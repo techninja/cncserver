@@ -157,7 +157,7 @@ export function initOverlay(host, bot) {
   destinationPos.sendToBack();
 
   // Set position if we have one saved from socket.
-  if (host.socketPayloads.position) {
+  if (host.socketPayloads && host.socketPayloads.position) {
     const { x, y } = host.socketPayloads.position;
     host.position = {
       pos: [x / host.stepsPerMM.x, y / host.stepsPerMM.y],

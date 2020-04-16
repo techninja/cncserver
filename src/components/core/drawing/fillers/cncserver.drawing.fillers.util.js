@@ -13,6 +13,7 @@ const ipc = require('node-ipc');
 const hostname = 'cncserver';
 const ipcBase = {
   hash: process.argv[2],
+  subIndex: process.argv[3],
   type: 'filler',
 };
 
@@ -145,6 +146,9 @@ const exp = {
       });
     });
   },
+
+  // Get information about this spawn process.
+  info: { ...ipcBase },
 
   // Report progress on processing.
   progress: (status, value) => {

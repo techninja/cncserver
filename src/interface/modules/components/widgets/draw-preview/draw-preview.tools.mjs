@@ -7,6 +7,25 @@ import { dispatch } from '/modules/hybrids.js';
 const { Path, Point, Rectangle } = paper;
 let selectRect;
 
+const round = (number, precision = 2) => {
+  const p = 10 ** precision;
+  return Math.round(number * p) / p;
+};
+
+const roundPoint = (point, precision = 2) => {
+  if (Array.isArray(point)) {
+    return [
+      round(point[0], precision),
+      round(point[1], precision),
+    ];
+  }
+
+  return {
+    x: round(point.x, precision),
+    y: round(point.y, precision),
+  };
+};
+
 // Deselect/destroy the selection rectangle.
 function deselect() {
   if (selectRect) {
@@ -311,16 +330,16 @@ export default function initTools(host) {
     }
   });
 
-  // Update an items bound sby hash and absolute bounds.
+  // Update an items bounds by hash and absolute bounds.
   function updateItemBounds(hash, absBounds) {
     const drawBounds = absBounds.clone();
-    return cncserver.api.actions.item.update(hash, {
+    // TODO: And update support on the API, then update this to match reqs.
+    return cncserver.api.content.item.update(hash, {
       bounds: {
-        point: [
-          drawBounds.point.x - host.workArea.point.x,
-          drawBounds.point.y - host.workArea.point.y,
-        ],
-        size: [drawBounds.size.width, drawBounds.size.height],
+        x: round(drawBounds.point.x - host.workArea.point.x),
+        y: round(drawBounds.point.y - host.workArea.point.y),
+        width: round(drawBounds.size.width),
+        height: round(drawBounds.size.height),
       },
     });
   }
@@ -425,7 +444,7 @@ export default function initTools(host) {
 
       // Delete a selected path
       if (event.key === 'delete' || event.key === 'backspace') {
-        cncserver.api.actions.item.delete(selectRect.itemName);
+        cncserver.api.content.item.delete(selectRect.itemName);
         dispatch(host, 'selectionchange', { detail: { selection: null } });
         setCursor();
       }

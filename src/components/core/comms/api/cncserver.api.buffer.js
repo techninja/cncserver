@@ -4,7 +4,7 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/buffer'] = function bufferMain(req, res) {
+  handlers['/v2/buffer'] = function bufferMain(req, res) {
     const { buffer } = cncserver;
     if (req.route.method === 'get' || req.route.method === 'put') {
       // Pause/resume (normalize input)
@@ -130,7 +130,7 @@ module.exports = (cncserver) => {
         return [200, 'Callback name added to buffer'];
       }
 
-      return [400, '/v1/buffer POST only accepts "message" or "callback"'];
+      return [400, '/v2/buffer POST only accepts "message" or "callback"'];
     }
 
     if (req.route.method === 'delete') {

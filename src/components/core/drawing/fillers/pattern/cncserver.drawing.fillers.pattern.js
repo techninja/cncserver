@@ -8,19 +8,7 @@ const path = require('path');
 const fillUtil = require('../cncserver.drawing.fillers.util');
 
 let viewBounds = {};
-let settings = {
-  overlayFillAlignPath: true,
-  pattern: 'spiral',
-  spacing: 5,
-  scale: 1,
-  rotation: 0,
-  density: 1,
-  lineOptions: {
-    type: 'straight',
-    wavelength: 5,
-    amplitude: 0.5,
-  },
-};
+let settings = {}; // Globalize settings from settings.fill >
 
 function spiralOutsideBounds(spiral, bounds) {
   const spiralSize = spiral.position.getDistance(spiral.lastSegment.point);
@@ -90,7 +78,7 @@ function generateFromLib(name, fillPath) {
   });
 
   let root = p.children[1];
-  root.scale(settings.scale);
+  root.scale(settings.pattern.scale);
 
   let pattern = root.clone();
 
@@ -133,6 +121,8 @@ function generateFromLib(name, fillPath) {
 }
 
 // Return a new path top to bottom based on passed options.
+// TODO: Move to left to right base for more consistent rotation meaning.
+// TODO: Apply scaling and offset here to prevent edge visibility.
 function generateLine(bounds, { type, wavelength, amplitude }) {
   const start = [0, 0];
   const end = [0, bounds.width > bounds.height ? bounds.width : bounds.height];
@@ -182,7 +172,7 @@ function generateLine(bounds, { type, wavelength, amplitude }) {
 
 function generateLinePath() {
   const b = viewBounds;
-  const baseLine = generateLine(b, settings.lineOptions);
+  const baseLine = generateLine(b, settings.pattern.lineOptions);
 
   const workLine = baseLine.clone();
   let flip = true;
@@ -206,7 +196,7 @@ function applyDensity(density, singlePath) {
 
   // If it's a line we're apply to, we need to adjust the angles so we don't
   // align to the exact obverse angle on even densities (or we won't see it!).
-  if (settings.pattern === 'line') {
+  if (settings.pattern.pattern === 'line') {
     obverseAlign = true;
   }
 
@@ -238,6 +228,19 @@ function applyDensity(density, singlePath) {
   return patternGroup;
 }
 
+// Convert an input string identifier for alignment into a point.
+function getFillAlignmentPoint(fillPath, type) {
+  switch (type) {
+    case 'canvas':
+      return viewBounds.center;
+
+    case 'path':
+    default:
+      // Align to center of fill path.
+      return fillPath.position;
+  }
+}
+
 // Generate a compound path pattern
 function generatePattern(name, fillPath) {
   let pattern = null;
@@ -257,28 +260,23 @@ function generatePattern(name, fillPath) {
 
   // For line or spiral, apply density, scale, rotation & alignment.
   if (['line', 'spiral'].includes(name)) {
-    pattern = applyDensity(settings.density, pattern);
-    pattern.scale(settings.scale);
+    pattern = applyDensity(settings.pattern.density, pattern);
+    pattern.scale(settings.pattern.scale);
     pattern.rotate(settings.rotation);
-
-    if (!settings.overlayFillAlignPath) {
-      // Align spiral to center by default.
-      pattern.position = fillUtil.project.view.center;
-    } else {
-      // Otherwise align to center of fill path.
-      pattern.position = fillPath.position;
-    }
   }
+
+  pattern.position = getFillAlignmentPoint(fillPath, settings.pattern.align);
+  pattern.position = pattern.position.add(settings.pattern.offset);
 
   return pattern;
 }
 
 // Actually connect to the main process, start the fill operation.
-fillUtil.connect((fillPath, settingsOverride) => {
+fillUtil.connect((fillPath, rawSettings) => {
   fillUtil.clipper.getInstance().then((clipper) => {
-    settings = { ...settings, ...settingsOverride };
+    settings = { ...rawSettings };
     viewBounds = fillUtil.project.view.bounds;
-    const pattern = generatePattern(settings.pattern, fillPath);
+    const pattern = generatePattern(settings.pattern.pattern, fillPath);
 
     // Convert the paths to clipper geometry.
     const spiralGeo = fillUtil.clipper.getPathGeo(

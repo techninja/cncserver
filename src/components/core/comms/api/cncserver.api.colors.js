@@ -4,7 +4,7 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/colors'] = (req) => {
+  handlers['/v2/colors'] = (req) => {
     const { drawing: { colors } } = cncserver;
 
     if (req.route.method === 'get') { // Get current colorset and
@@ -52,7 +52,7 @@ module.exports = (cncserver) => {
     return false;
   };
 
-  handlers['/v1/colors/:colorID'] = (req) => {
+  handlers['/v2/colors/:colorID'] = (req) => {
     // Sanity check color ID
     const { colorID } = req.params;
     const { drawing: { colors } } = cncserver;

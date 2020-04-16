@@ -3,6 +3,12 @@
  */
 const crypto = require('crypto'); // Crypto library for hashing.
 const extend = require('util')._extend; // Util for cloning objects
+const merge = require('merge-deep');
+
+// File Utils.
+const { homedir } = require('os');
+const fs = require('fs');
+const path = require('path');
 
 const utils = { extend }; // Final Object to be exported.
 
@@ -23,21 +29,95 @@ module.exports = (cncserver) => {
   };
 
   /**
-   * Create has using passed data (and current time).
+   * Create a 16char hash using passed data (and a salt).
    *
    * @param  {mixed} data
    *   Data to be hashed, either an object or array.
+   * @param  {string} salt
+   *   Type of salt to adjust the hash with. Pass null to disable, otherwise:
+   *     "increment" (default): will increment each has salt by 1, providing
+   *       consecutive data similarty hash safety.
+   *     "date": Inserts the ISO date as a salt.
    *
    * @return {string}
    *   16 char hash of data and current time in ms.
    */
   let hashSequence = 0;
-  utils.getHash = (data) => {
+  utils.getHash = (data, saltMethod = 'increment') => {
     const md5sum = crypto.createHash('md5');
-    md5sum.update(JSON.stringify(data) + hashSequence);
-    hashSequence++;
+    let salt = '';
+
+    switch (saltMethod) {
+      case 'increment':
+        salt = hashSequence++;
+        break;
+
+      case 'date':
+        salt = new Date().toISOString();
+        break;
+
+      default:
+        break;
+    }
+
+    md5sum.update(`${JSON.stringify(data)}${salt}`);
     return md5sum.digest('hex').substr(0, 16);
   };
+
+  /**
+   * Get a named user content directory.
+   *
+   * @param {string} name
+   *   The arbitrary name of the dir.
+   *
+   * @return {string}
+   *   The full path of the writable path.
+   */
+  utils.getUserDir = (name) => {
+    // Ensure we have the base user folder.
+    const home = utils.getDir(path.resolve(homedir(), 'cncserver'));
+    const botHome = utils.getDir(path.resolve(home, cncserver.settings.gConf.get('botType')));
+
+    // Home base dir? or bot specific?
+    if (['projects'].includes(name)) {
+      return utils.getDir(path.resolve(botHome, name));
+    }
+    return utils.getDir(path.resolve(home, name));
+  };
+
+  utils.singleLineString = (strings, ...values) => {
+    // Interweave the strings with the
+    // substitution vars first.
+    let output = '';
+    for (let i = 0; i < values.length; i++) {
+      output += strings[i] + values[i];
+    }
+    output += strings[values.length];
+
+    // Split on newlines.
+    const lines = output.split(/(?:\r\n|\n|\r)/);
+
+    // Rip out the leading whitespace.
+    return lines.map(line => line.replace(/^\s+/gm, '')).join(' ').trim();
+  };
+
+  /**
+   * Validate that a directory at the given path exists.
+   *
+   * @param {string} dir
+   *   The full path of the dir.
+   *
+   * @return {string}
+   *   The full path dir, or an error is thrown if there's permission issues.
+   */
+  utils.getDir = (dir) => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    return dir;
+  };
+
+  // Externalize Merge Deep:
+  // @see https://github.com/jonschlinkert/merge-deep
+  utils.merge = merge;
 
   /**
    * Calculate the duration for a pen movement from the distance.
@@ -279,6 +359,21 @@ module.exports = (cncserver) => {
   };
 
   /**
+   * Convert any string into a machine name.
+   *
+   * @param {string} string
+   *   Object representing coordinate away from (0,0)
+   * @returns {number}
+   *   Length (in steps) of the given vector point
+   */
+  utils.getMachineName = (string = '', limit = 32) => string
+    .replace(/[^A-Za-z0-9 ]/g, '') // Remove unwanted characters.
+    .replace(/\s{2,}/g, ' ') // Replace multi spaces with a single space
+    .replace(/\s/g, '-') // Replace space with a '-' symbol
+    .toLowerCase() // Lowercase only.
+    .substr(0, limit); // Limit
+
+  /**
    * Get the distance/length of the given vector coordinate
    *
    * @param {{x: number, y: number}} vector
@@ -346,6 +441,30 @@ module.exports = (cncserver) => {
     return { height, state: normalizedState };
   };
 
+  utils.round = (number, precision) => {
+    const p = 10 ** precision;
+    return Math.round(number * p) / p;
+  };
+
+  utils.roundPoint = (point, precision = 2) => {
+    if (Array.isArray(point)) {
+      return [
+        utils.round(point[0], precision),
+        utils.round(point[1], precision),
+      ];
+    }
+
+    return {
+      x: utils.round(point.x, precision),
+      y: utils.round(point.y, precision),
+    };
+  };
+
+  // Wrap SVG string content with a header and footer.
+  utils.wrapSVG = (content) => {
+    const header = '<?xml version="1.0" encoding="utf-8"?><svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg">';
+    return `${header}${content}</svg>`;
+  };
 
   /**
    * Map a value in a given range to a new range.

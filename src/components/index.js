@@ -21,5 +21,7 @@ module.exports = {
   scratch: './components/third_party/scratch/cncserver.scratch',
   bots: './components/machine_support/',
   drawing: './components/core/drawing',
-  actions: './components/core/control/cncserver.actions',
+  projects: './components/core/control/cncserver.projects',
+  content: './components/core/control/cncserver.content',
+  schemas: './components/core/schemas/cncserver.schemas',
 };

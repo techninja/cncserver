@@ -4,7 +4,7 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/pen'] = function penMain(req, res) {
+  handlers['/v2/pen'] = function penMain(req, res) {
     if (req.route.method === 'put') {
       // Verify absolute measurement input.
       if (req.body.abs) {

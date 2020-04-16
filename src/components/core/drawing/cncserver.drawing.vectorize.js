@@ -1,35 +1,40 @@
 /**
  * @file Code for image vectorizor management.
  */
+const path = require('path');
 
 module.exports = (cncserver, drawing) => {
-  // TODO: get this somewhere real.
-  const settingDefaults = {
-    method: 'squiggle', // Vectorizer method application machine name.
-  };
+  const vectorize = (imagePath, hash, bounds, settings) => new Promise((success, error) => {
+    const { method } = settings.vectorize;
+    const script = path.resolve(
+      __dirname,
+      'vectorizers',
+      method,
+      `cncserver.drawing.vectorizers.${method}.js`
+    );
 
-  const vectorizer = (image, hash, bounds, requestSettings = {}) =>
-    new Promise((success, error) => {
-      const settings = { ...settingDefaults, ...requestSettings, bounds };
-      const { method } = settings;
-      const script = `${__dirname}/vectorizers/cncserver.drawing.vectorizers.${method}.js`;
+    // Use spawner to run vectorizer process.
+    drawing
+      .spawner({
+        type: 'vectorizer',
+        hash,
+        script,
+        settings: { ...settings.vectorize, bounds },
+        object: imagePath,
+      })
+      .then((result) => {
+        // Because some vectorizers produce filled shapes, we need to process
+        // these in the temp layer before moving them to render preview.
+        const group = drawing.temp.addJSON(result, hash);
 
-      // Use spawner to run vectorizer process.
-      drawing
-        .spawner({
-          type: 'vectorizer',
-          hash,
-          script,
-          settings,
-          object: image.exportJSON(),
-        })
-        .then(result => {
-          drawing.base.layers.preview.importJSON(result);
-          cncserver.sockets.sendPaperUpdate();
-          success();
-        })
-        .catch(error);
-    });
+        console.log('Returned items', group.children[0].children.length);
 
-  return vectorizer;
+        // We'll NEVER have occlusion if converting a raster to a vector.
+        cncserver.content.renderGroup(group, hash, settings, true);
+        success();
+      })
+      .catch(error);
+  });
+
+  return vectorize;
 };

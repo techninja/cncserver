@@ -97,13 +97,13 @@ module.exports = (cncserver, drawing) => {
     if (colors.set.length === 0) {
       colors.set.push(defaultColor);
     }
-    cncserver.sockets.sendPaperPreviewUpdate();
+    cncserver.sockets.sendPaperUpdate();
   };
 
   colors.add = ({ id, name, color }) => {
     if (colors.getIndex(id) === null) {
       colors.set.push({ id, name, color });
-      cncserver.sockets.sendPaperPreviewUpdate();
+      cncserver.sockets.sendPaperUpdate();
       return true;
     }
     return null;
@@ -112,7 +112,7 @@ module.exports = (cncserver, drawing) => {
   colors.update = (id, { name, color }) => {
     const index = colors.getIndex(id);
     colors.set[index] = { id, name, color };
-    cncserver.sockets.sendPaperPreviewUpdate();
+    cncserver.sockets.sendPaperUpdate();
     return colors.set[index];
   };
 
@@ -225,19 +225,21 @@ module.exports = (cncserver, drawing) => {
     });
 
     const nearestColor = nc.from(c);
-    layer.children.forEach((path) => {
-      if (path.strokeColor) {
-        // If we've never touched this path before, save the original color.
-        if (!path.data.originalColor) {
-          path.data.originalColor = path.strokeColor;
+    layer.children.forEach((group) => {
+      group.children.forEach((path) => {
+        if (path.strokeColor) {
+          // If we've never touched this path before, save the original color.
+          if (!path.data.originalColor) {
+            path.data.originalColor = path.strokeColor;
+          }
+
+          // Find nearest color.
+          const nearest = nearestColor(path.data.originalColor.toCSS(true));
+
+          path.data.colorID = nearest.name;
+          path.strokeColor = nearest.value;
         }
-
-        // Find nearest color.
-        const nearest = nearestColor(path.data.originalColor.toCSS(true));
-
-        path.data.colorID = nearest.name;
-        path.strokeColor = nearest.value;
-      }
+      });
     });
   };
 

@@ -177,7 +177,7 @@ module.exports = (cncserver) => {
       });
     },
 
-    height: data => {
+    height: (data) => {
       cncserver.pen.setPen({ state: data.state }, () => {
         if (data.returnData) io.emit('height', cncserver.pen.state);
       });

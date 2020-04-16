@@ -4,7 +4,7 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v1/tools'] = function toolsGet(req) {
+  handlers['/v2/tools'] = function toolsGet(req) {
     if (req.route.method === 'get') { // Get list of tools
       return {
         code: 200,
@@ -21,7 +21,7 @@ module.exports = (cncserver) => {
 
   // Standard toolchanges.
   // TODO: Prevent manual swap "wait" toolchanges on this endpoint?
-  handlers['/v1/tools/:tool'] = function toolsMain(req, res) {
+  handlers['/v2/tools/:tool'] = function toolsMain(req, res) {
     const toolName = req.params.tool;
     // TODO: Support other tool methods... (needs API design!)
     if (req.route.method === 'put') { // Set Tool
@@ -46,7 +46,7 @@ module.exports = (cncserver) => {
   };
 
   // "wait" manual swap toolchanges with index
-  handlers['/v1/tools/:tool/:index'] = function toolsMain(req, res) {
+  handlers['/v2/tools/:tool/:index'] = function toolsMain(req, res) {
     const toolName = req.params.tool;
     const toolIndex = req.params.index;
 
