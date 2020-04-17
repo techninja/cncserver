@@ -124,6 +124,7 @@ cncserver.api = {
      * TODO: Basic docs for these wrappers.
      */
     stat: () => _get('projects'),
+    open: hash => _patch('projects', { data: { current: hash } }),
     add: data => _post('projects', { data }),
 
     item: {
