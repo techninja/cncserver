@@ -38,7 +38,7 @@ module.exports = (cncserver, drawing) => {
     // Show bounds rects.
     stage.toggleRects(true);
 
-    return cncserver.utils.wrapSVG(svgContent);
+    return cncserver.utils.wrapSVG(svgContent, drawing.base.workspace);
   };
 
   // Toggle the visibility of the bound rects.
