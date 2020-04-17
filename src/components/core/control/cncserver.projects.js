@@ -60,12 +60,13 @@ module.exports = (cncserver) => {
   projects.getItems = () => {
     const items = [];
     projects.items.forEach(({
-      hash, title, description, name, ...project
+      modified, hash, title, description, name, ...project
     }) => {
       items.push({
         hash,
         title,
         description,
+        modified,
         name,
         preview: projects.getRelativePreview(project),
       });
