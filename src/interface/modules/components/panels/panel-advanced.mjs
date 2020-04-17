@@ -7,7 +7,9 @@ export default styles => ({
   render: () => html`
     ${styles}
 
-    <project-loader></project-loader>
+    <div class="box">
+      <height-settings></height-settings>
+    </div>
     <br>
   `,
 });

@@ -8,7 +8,7 @@ import HeightSettings from './height-settings.mjs';
 import HeightPresets from './height-presets.mjs';
 import ToolsBasic from './tools-basic.mjs';
 import ScratchControls from './scratch-controls.mjs';
-import ProjectLoader from './project-loader.mjs';
+import ProjectLoader from './project-loader/project-loader.mjs';
 import DrawPreview from './draw-preview/draw-preview.mjs';
 
 export default styles => ({

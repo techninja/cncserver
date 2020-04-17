@@ -6,9 +6,12 @@ import { html } from '/modules/hybrids.js';
 export default styles => ({
   render: () => html`
     ${styles}
+    <div class="box">
+      <draw-settings></draw-settings>
+    </div>
 
     <div class="box">
-      <height-settings></height-settings>
+      <project-loader></project-loader>
     </div>
   `,
 });

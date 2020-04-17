@@ -188,3 +188,29 @@ input.switch:checked:after {
 .colorset-item.card.active .card-header-title {
   color: white;
 }
+
+#projects .list {
+  height: 230px;
+  overflow-y: auto;
+  padding: 0;
+}
+
+#projects .list .card {
+  cursor: pointer;
+  height: 150px;
+  display: flex;
+  box-sizing: border-box;
+}
+
+#projects .list .card-image {
+  overflow: hidden;
+}
+
+#projects .list .card img {
+  height: 150px;
+  width: auto;
+}
+
+#projects .list .card.is-active {
+  border: 2px solid blueviolet;
+}
