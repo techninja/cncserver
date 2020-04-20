@@ -89,7 +89,9 @@ export default styles => ({
               title=${`Load Project: ${item.title}`}
               >
               <div class="card-image">
-                <figure class="image"><img src=${item.preview}></figure>
+                <figure class=${{ image: 1, empty: !item.preview }}>
+                  ${item.preview && html`<img src=${item.preview}>`}
+                </figure>
               </div>
               <div class="card-content">
                 <p class="title is-4">${item.title}</p>

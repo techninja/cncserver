@@ -35,7 +35,6 @@ function loadProjects() {
   const dirs = getDirectories(projects.homeDir);
   dirs.forEach((dir) => {
     const jsonPath = path.resolve(projects.homeDir, dir, PROJECT_JSON);
-    // TODO: is it performant to load the full content of the project JSON every time?
     if (fs.existsSync(jsonPath)) {
       // eslint-disable-next-line import/no-dynamic-require, global-require
       const item = require(jsonPath);
@@ -49,8 +48,13 @@ function loadProjects() {
 
 // Initialize with a "current" project.
 function initProject() {
-  // TODO: Create a temp project?
-  projects.open('29444626444a8221'); // [...projects.items.keys()][0]);
+  const now = new Date();
+  // Create a temp project or load last.
+  projects.addItem({
+    title: 'New Project',
+    description: `Automatic project created ${now.toLocaleDateString()}`,
+    open: true,
+  });
 }
 
 module.exports = (cncserver) => {
@@ -78,7 +82,7 @@ module.exports = (cncserver) => {
   projects.getRelativePreview = (project) => {
     const absPath = path.resolve(project.dir, PREVIEW_SVG);
     const cncserverHome = path.resolve(homedir(), 'cncserver');
-    return absPath.replace(cncserverHome, '/home');
+    return fs.existsSync(absPath) ? absPath.replace(cncserverHome, '/home') : null;
   };
 
   projects.getCurrentHash = () => projects.current;
@@ -101,7 +105,7 @@ module.exports = (cncserver) => {
     // Compute the entire new object.
     const item = {
       cncserverProject: 'v3',
-      hash: utils.getHash({ title, description, name }),
+      hash: utils.getHash({ title, description, name }, 'date'),
       title,
       description,
       name: utils.getMachineName(name || title, 15),

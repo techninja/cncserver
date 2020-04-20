@@ -189,6 +189,7 @@ input.switch:checked:after {
   color: white;
 }
 
+/* Project loader */
 #projects .list {
   height: 230px;
   overflow-y: auto;
@@ -200,6 +201,10 @@ input.switch:checked:after {
   height: 150px;
   display: flex;
   box-sizing: border-box;
+}
+
+#projects .list .card-image .empty {
+  width: 250px;
 }
 
 #projects .list .card-image {
