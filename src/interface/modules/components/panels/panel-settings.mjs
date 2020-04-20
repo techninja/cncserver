@@ -9,9 +9,5 @@ export default styles => ({
     <div class="box">
       <draw-settings></draw-settings>
     </div>
-
-    <div class="box">
-      <project-loader></project-loader>
-    </div>
   `,
 });

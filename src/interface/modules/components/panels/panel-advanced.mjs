@@ -11,5 +11,9 @@ export default styles => ({
       <height-settings></height-settings>
     </div>
     <br>
+
+    <div class="box">
+      <project-loader></project-loader>
+    </div>
   `,
 });
