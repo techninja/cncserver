@@ -15,6 +15,7 @@ module.exports = () => {
   const globalSchema = {
     render: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Render',
       description: 'Render vectorization',
       default: true,
@@ -28,8 +29,9 @@ module.exports = () => {
     },
     raster: {
       type: 'object',
-      title: 'Raster image Processing',
+      title: 'Image Processing',
       description: 'All settings relating to raster image pre-processing.',
+      options: { collapsed: true },
       properties: {
         brightness: {
           type: 'number',
@@ -49,6 +51,7 @@ module.exports = () => {
         },
         invert: {
           type: 'boolean',
+          format: 'checkbox',
           title: 'Invert',
           description: 'Invert the pixel color before processing.',
           default: false,
@@ -56,23 +59,27 @@ module.exports = () => {
         grayscale: {
           type: 'boolean',
           title: 'Grayscale',
+          format: 'checkbox',
           description: 'Convert the image to black and white grayscale.',
           default: false,
         },
         normalize: {
           type: 'boolean',
           title: 'Normalize',
+          format: 'checkbox',
           description: 'Normalize color channels to correct for exposure/color temperature.',
           default: false,
         },
         flatten: {
           type: 'boolean',
+          format: 'checkbox',
           title: 'Flatten transparency',
           description: 'Flatten alpha transparency in the image will to the flatten color.',
           default: false,
         },
         flattenColor: {
           type: 'string',
+          format: 'color',
           title: 'Flatten Color',
           description: 'The color to treat as transparent, or to replace transparency.',
           default: '#FFFFFF',
@@ -112,6 +119,7 @@ module.exports = () => {
         // Only add if vectorizer defines custom props.
         if (Object.entries(vectorizerSchemaObject.properties).length) {
           globalSchema[dir] = vectorizerSchemaObject;
+          globalSchema[dir].options = { dependencies: { method: dir } };
         }
       }
     }

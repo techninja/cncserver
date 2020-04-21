@@ -6,6 +6,8 @@
  */
 
 module.exports = {
-  // === Keys specific to offset fill method. =================================
-  // None for now.
+  type: 'object',
+  title: 'Offset method options',
+  options: { collapsed: true },
+  properties: {},
 };

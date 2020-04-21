@@ -11,6 +11,7 @@ module.exports = (cncserver) => {
   const properties = {
     render: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Render',
       description: 'Render text',
       default: true,
@@ -44,9 +45,11 @@ module.exports = (cncserver) => {
       type: 'object',
       title: 'Character settings',
       description: 'Options that effect individual characters',
+      options: { collapsed: true },
       properties: {
         rotation: {
           type: 'number',
+          format: 'range',
           default: 0,
           minimum: -360,
           maximum: 360,
@@ -55,6 +58,7 @@ module.exports = (cncserver) => {
         },
         spacing: {
           type: 'number',
+          format: 'range',
           minimum: -100,
           maximum: 100,
           default: 18,
@@ -67,6 +71,7 @@ module.exports = (cncserver) => {
       type: 'object',
       title: 'Text alignment',
       description: 'Options for aligning the text.',
+      options: { collapsed: true },
       properties: {
         paragraph: {
           type: 'string',
@@ -80,6 +85,7 @@ module.exports = (cncserver) => {
     },
     rotation: {
       type: 'number',
+      format: 'range',
       default: 0,
       minimum: -360,
       maximum: 360,
@@ -90,7 +96,7 @@ module.exports = (cncserver) => {
 
   // Add system font enum.
   fontList.getFonts().then((fonts) => {
-    properties.systemFont.enum = fonts.map(s => s.replace(/"/g, ''));
+    properties.systemFont.enum = ['', ...fonts.map(s => s.replace(/"/g, ''))];
   });
 
   return { type: 'object', title: 'Text', properties };

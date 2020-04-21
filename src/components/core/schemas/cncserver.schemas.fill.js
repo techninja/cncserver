@@ -6,6 +6,7 @@
  *
  * All supplied fill schemas are merged into this one.
  */
+/* eslint-disable max-len */
 const fs = require('fs');
 const path = require('path');
 
@@ -15,18 +16,21 @@ module.exports = () => {
   const globalSchema = {
     render: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Render',
       description: 'Whether fill should be rendered, set false to skip.',
       default: true,
     },
     cutoutOcclusion: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Cutout Occlusion',
       description: 'Whether fill spaces will be cut out depending on overlapping fills',
       default: true,
     },
     trace: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Trace Fill',
       description: 'Whether fill object will get a stroke of the fill color',
       default: false,
@@ -48,28 +52,32 @@ module.exports = () => {
     },
     rotation: {
       type: 'number',
+      format: 'range',
       title: 'Rotation',
       description: 'If applicable, the rotation for a fill method.',
       default: 28,
-      minimum: 0,
+      minimum: -360,
       maximum: 360,
+    },
+    randomizeRotation: {
+      type: 'boolean',
+      format: 'checkbox',
+      title: 'Randomize Rotation',
+      description: 'If set, the rotation setting will be ignored and a single random angle will be selected for each fill.',
+      default: false,
     },
     inset: {
       type: 'number',
+      format: 'range',
       title: 'Inset',
       description: 'The number of mm to negatively offset a fill path, allowing for space between outside stroke and internal size.',
       default: 0,
       minimum: -50,
       maximum: 50,
     },
-    randomizeRotation: {
-      type: 'boolean',
-      title: 'Randomize Rotation',
-      description: 'If set, the rotation setting will be ignored and a single random angle will be selected for each fill.',
-      default: false,
-    },
     spacing: {
       type: 'number',
+      format: 'range',
       title: 'Spacing',
       description: 'If applicable, the amount of space between items in MM, lower number is higher density.',
       default: 3,
@@ -92,10 +100,11 @@ module.exports = () => {
         // Only add if filler defines custom props.
         if (Object.entries(fillerSchemaObject.properties).length) {
           globalSchema[dir] = fillerSchemaObject;
+          globalSchema[dir].options = { dependencies: { method: dir } };
         }
       }
     }
   });
 
-  return { type: 'object', properties: globalSchema };
+  return { type: 'object', title: 'Fill', properties: globalSchema };
 };

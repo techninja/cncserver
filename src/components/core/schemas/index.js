@@ -6,10 +6,10 @@
 module.exports = (cncserver) => {
   // TODO: Schemas to finalize: stroke, vectorize, text
   const items = ['projects', 'content', 'fill', 'stroke', 'path', 'text', 'vectorize'];
-  const settingsKeys = ['fill', 'stroke', 'path', 'text', 'vectorize'];
+  const settingsKeys = ['fill', 'stroke', 'text', 'vectorize', 'path'];
 
   const schemas = {};
-  const settingsKeySchemas = { };
+  const settingsKeySchemas = {};
 
   items.forEach((name) => {
     schemas[name] = require(`./cncserver.schemas.${name}.js`)(cncserver);

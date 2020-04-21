@@ -23,6 +23,7 @@ module.exports = (cncserver) => {
     },
     autoRender: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Auto Render',
       description: 'Automatically re-render this content when updated.',
       default: true,
@@ -99,7 +100,7 @@ module.exports = (cncserver) => {
           title: 'Height',
           description: 'Height of the rectangle.',
           default: bounds.height,
-          minimum: 0,
+          minimum: 1,
           maximum: base.size.height,
         },
       },

@@ -42,6 +42,7 @@ module.exports = () => {
     },
     open: {
       type: 'boolean',
+      format: 'checkbox',
       title: 'Open After Creation',
       description: 'Will open new project by default. Set to false to create in the background.',
       default: true,

@@ -8,24 +8,28 @@
 const properties = {
   useColor: {
     type: 'boolean',
+    format: 'checkbox',
     title: 'Use Color',
     description: 'Parse color from the raster into the stipple points, otherwise just greyscale.',
     default: false,
   },
   noOverlap: {
     type: 'boolean',
+    format: 'checkbox',
     title: 'No Overlap',
     description: 'Prevent stipple points from overlapping each other.',
     default: false,
   },
   fixedRadius: {
     type: 'boolean',
+    format: 'checkbox',
     title: 'Fixed radius',
     description: 'Lock the radius of the stipple point circles to a single size.',
     default: false,
   },
   points: {
     type: 'integer',
+    format: 'range',
     title: 'Stipple points',
     description: 'Number of points to fit against the raster.',
     default: 500,
@@ -34,6 +38,7 @@ const properties = {
   },
   sizingFactor: {
     type: 'number',
+    format: 'range',
     title: 'Sizing Factor',
     description: 'Final stipple point circle radius multiplier.',
     default: 1,
@@ -42,6 +47,7 @@ const properties = {
   },
   subpixels: {
     type: 'integer',
+    format: 'range',
     title: 'Subpixels',
     description: 'Tile size of centroid computations.',
     default: 5,
@@ -50,4 +56,9 @@ const properties = {
   },
 };
 
-module.exports = { type: 'object', title: 'Stipple method', properties };
+module.exports = {
+  type: 'object',
+  title: 'Stipple method options',
+  options: { collapsed: true },
+  properties,
+};

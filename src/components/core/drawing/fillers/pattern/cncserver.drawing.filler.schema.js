@@ -4,6 +4,7 @@
  * This schema defines the fill method specific settings schema for the
  * application to import and use for settings validation and documentation.
  */
+/* eslint-disable max-len */
 const fs = require('fs');
 const path = require('path');
 
@@ -12,7 +13,7 @@ fs.readdirSync(path.resolve(__dirname, 'patterns')).map((file) => {
   svgPatterns.push(file.split('.')[0]);
 });
 
-module.exports = {
+const properties = {
   // === Pattern fill method keys, found @ settings.fill.pattern  ==============
   align: {
     type: 'string',
@@ -39,6 +40,7 @@ module.exports = {
   },
   density: {
     type: 'integer',
+    format: 'range',
     title: 'Density',
     description: 'Controls the number of rotation duplications of a fill. Line and Spiral only.',
     default: 1,
@@ -47,6 +49,7 @@ module.exports = {
   },
   scale: {
     type: 'number',
+    format: 'range',
     title: 'Scale',
     description: 'How much to scale the final result fill, useful for SVG patterns.',
     default: 1,
@@ -67,6 +70,7 @@ module.exports = {
       },
       wavelength: {
         type: 'number',
+        format: 'range',
         title: 'Wavelength',
         description: 'The length in mm between wave peaks.',
         default: 10,
@@ -75,6 +79,7 @@ module.exports = {
       },
       amplitude: {
         type: 'number',
+        format: 'range',
         title: 'Wave Amplitude',
         description: 'The height of the wave in mm.',
         default: 10,
@@ -83,4 +88,11 @@ module.exports = {
       },
     },
   },
+};
+
+module.exports = {
+  type: 'object',
+  title: 'Pattern method options',
+  options: { collapsed: true },
+  properties,
 };

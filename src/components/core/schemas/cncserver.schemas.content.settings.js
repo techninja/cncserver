@@ -6,6 +6,7 @@
 module.exports = properties => ({
   type: 'object',
   title: 'Settings',
+  format: 'categories',
   description: 'All render specific settings overrides',
   properties,
 });

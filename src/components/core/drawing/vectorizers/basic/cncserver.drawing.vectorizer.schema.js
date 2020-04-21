@@ -4,9 +4,10 @@
  * This schema defines the vectorizer method specific settings schema for the
  * application to import and use for settings validation and documentation.
  */
-module.exports = {
+const properties = {
   colors: {
     type: 'integer',
+    format: 'range',
     title: 'Colors',
     description: 'Number of colors to limit to.',
     default: 1,
@@ -15,6 +16,7 @@ module.exports = {
   },
   centerline: {
     type: 'boolean',
+    format: 'checkbox',
     title: 'Parse Centerline',
     description: 'If true will add a centerline to all filled areas.',
     default: false,
@@ -26,6 +28,7 @@ module.exports = {
     properties: {
       level: {
         type: 'integer',
+        format: 'range',
         default: 0,
         minimum: 0,
         maximum: 20,
@@ -34,6 +37,7 @@ module.exports = {
       },
       tightness: {
         type: 'number',
+        format: 'range',
         default: 2,
         minimum: 0,
         maximum: 8,
@@ -42,4 +46,11 @@ module.exports = {
       },
     },
   },
+};
+
+module.exports = {
+  type: 'object',
+  title: 'Basic method options',
+  options: { collapsed: true },
+  properties,
 };
