@@ -220,8 +220,21 @@ module.exports = (cncserver) => {
     });
   });
 
+  // Get a fully filled out merged settings object including project overrides.
+  projects.getFullSettings = (settings, projectHash = projects.current) => {
+    if (projectHash) {
+      const project = projects.items.get(projectHash);
+      return cncserver.schemas.getDataDefault(
+        'settings',
+        utils.merge(project.settings || {}, settings)
+      );
+    }
+
+    return cncserver.schemas.getDataDefault('settings', utils.merge(settings));
+  };
+
   // The only thing we actually allow editing of here is the Title, name and desc.
-  projects.editItem = ({ hash }, { name, title, description }) => new Promise((resolve, reject) => {
+  projects.editItem = ({ hash }, { name, title, description, settings }) => new Promise((resolve, reject) => {
     let changes = false;
     const project = projects.items.get(hash);
 
@@ -243,15 +256,22 @@ module.exports = (cncserver) => {
       project.description = description;
     }
 
+    // Change Settings.
+    if (settings) {
+      changes = true;
+      project.settings = utils.merge(project.settings, settings);
+    }
+
     if (changes) {
       projects.items.set(hash, project);
       projects.saveProjectFiles(hash);
       resolve(projects.getResponseItem(hash));
     } else {
-      reject(new Error('Edits to existing projects can only change title, name or description.'));
+      reject(new Error('Edits to existing projects can only change title, name, description, or settings.'));
     }
   });
 
+  // Remove a project.
   projects.removeItem = hash => new Promise((resolve, reject) => {
     const project = projects.items.get(hash);
     const trashDir = path.resolve(utils.getUserDir('trash'), `project-${project.name}-${hash}`);
@@ -290,7 +310,7 @@ module.exports = (cncserver) => {
         cncserver.drawing.temp.clearAll();
       });
     } else {
-    // TODO: Stop the render...somehow?
+      // TODO: Stop the render...somehow?
     }
     projects.rendering = newState;
   };
@@ -299,9 +319,9 @@ module.exports = (cncserver) => {
     if (projects.printing === newState) return;
 
     if (newState) {
-    // TODO:
+      // TODO:
     } else {
-    // TODO:
+      // TODO:
     }
     projects.printing = newState;
   };

@@ -47,6 +47,7 @@ module.exports = () => {
       description: 'Will open new project by default. Set to false to create in the background.',
       default: true,
     },
+    // settings: @see cncserver.schemas.content.settings.js
   };
 
   return {

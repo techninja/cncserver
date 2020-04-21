@@ -16,11 +16,14 @@ module.exports = (cncserver) => {
     if (settingsKeys.includes(name)) settingsKeySchemas[name] = schemas[name];
   });
 
-  // Build the "settings" schema, then add a a copy of it to the content schema.
+  // Build the content "settings" schema.
   schemas.settings = require(
     './cncserver.schemas.content.settings.js'
   )(settingsKeySchemas);
+
+  // Attach to content and projects schemas.
   schemas.content.properties.settings = schemas.settings;
+  schemas.projects.properties.settings = schemas.settings;
 
   return schemas;
 };

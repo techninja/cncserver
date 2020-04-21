@@ -84,7 +84,7 @@ module.exports = (cncserver) => {
               )
             );
 
-          // We should be good! Actually go get the file.
+            // We should be good! Actually go get the file.
           } else if (source.type === 'raster') {
             // Binary source content needs to be converted to data URI.
             // TODO: Handling this like this means a LOT of memory usage for larger files,
@@ -139,7 +139,7 @@ module.exports = (cncserver) => {
    */
   content.normalizeInput = payload => new Promise((success, err) => {
     const { drawing: { base: { layers } } } = cncserver;
-    const settings = cncserver.schemas.getDataDefault('settings', payload.settings);
+    const settings = projects.getFullSettings(payload.settings);
 
     // Validate the incoming request for correct project destination.
     if (!payload.project) {
@@ -396,7 +396,7 @@ module.exports = (cncserver) => {
         fill, trace, vectorize, text, preview,
       },
     } = cncserver;
-    const settings = cncserver.schemas.getDataDefault('settings', rawSettings);
+    const settings = projects.getFullSettings(rawSettings);
     const promiseQueue = [];
 
     console.log(`Rendering ${title} - ${hash}...`);
