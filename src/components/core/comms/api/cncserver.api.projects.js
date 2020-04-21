@@ -78,8 +78,12 @@ module.exports = (cncserver) => {
 
   // Individual project management.
   handlers['/v2/projects/:hash'] = (req, res) => {
-    const { hash } = req.params;
     const { projects } = cncserver;
+
+    // Shortcut "current" hash lookup.
+    const hash = req.params.hash === 'current'
+      ? projects.getCurrentHash()
+      : req.params.hash;
 
     // Sanity check hash lookup.
     if (!projects.items.has(hash)) {
