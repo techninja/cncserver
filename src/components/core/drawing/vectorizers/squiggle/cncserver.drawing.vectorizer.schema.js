@@ -5,7 +5,7 @@
  * application to import and use for settings validation and documentation.
  */
 /* eslint-disable max-len */
-module.exports = {
+const properties = {
   sampleWidth: {
     type: 'number',
     title: 'Sample Width',
@@ -91,3 +91,5 @@ module.exports = {
     },
   },
 };
+
+module.exports = { type: 'object', title: 'Squiggle method', properties };

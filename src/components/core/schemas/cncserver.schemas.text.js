@@ -93,5 +93,5 @@ module.exports = (cncserver) => {
     properties.systemFont.enum = fonts.map(s => s.replace(/"/g, ''));
   });
 
-  return { type: 'object', properties };
+  return { type: 'object', title: 'Text', properties };
 };

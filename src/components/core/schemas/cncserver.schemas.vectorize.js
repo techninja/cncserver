@@ -107,15 +107,15 @@ module.exports = () => {
         globalSchema.method.enum.push(dir);
 
         // eslint-disable-next-line
-        const properties = require(schemaPath);
+        const vectorizerSchemaObject = require(schemaPath);
 
         // Only add if vectorizer defines custom props.
-        if (Object.entries(properties).length) {
-          globalSchema[dir] = { type: 'object', properties };
+        if (Object.entries(vectorizerSchemaObject.properties).length) {
+          globalSchema[dir] = vectorizerSchemaObject;
         }
       }
     }
   });
 
-  return { type: 'object', properties: globalSchema };
+  return { type: 'object', title: 'Vectorization', properties: globalSchema };
 };

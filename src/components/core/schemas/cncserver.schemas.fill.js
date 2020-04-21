@@ -87,11 +87,11 @@ module.exports = () => {
       if (fs.existsSync(schemaPath)) {
         globalSchema.method.enum.push(dir);
         // eslint-disable-next-line
-        const properties = require(schemaPath);
+        const fillerSchemaObject = require(schemaPath);
 
         // Only add if filler defines custom props.
-        if (Object.entries(properties).length) {
-          globalSchema[dir] = { type: 'object', properties };
+        if (Object.entries(fillerSchemaObject.properties).length) {
+          globalSchema[dir] = fillerSchemaObject;
         }
       }
     }

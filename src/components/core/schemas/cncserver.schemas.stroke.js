@@ -21,4 +21,4 @@ const strokeSchema = {
   },
 };
 
-module.exports = () => ({ type: 'object', properties: strokeSchema });
+module.exports = () => ({ type: 'object', title: 'Stroke', properties: strokeSchema });

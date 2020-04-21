@@ -8,6 +8,7 @@
 /* eslint-disable max-len */
 module.exports = () => ({
   type: 'object',
+  title: 'Path',
   properties: {
     fillColor: {
       type: 'string',

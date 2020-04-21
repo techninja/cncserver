@@ -5,7 +5,7 @@
  * application to import and use for settings validation and documentation.
  */
 /* eslint-disable max-len */
-module.exports = {
+const properties = {
   useColor: {
     type: 'boolean',
     title: 'Use Color',
@@ -49,3 +49,5 @@ module.exports = {
     maximum: 20,
   },
 };
+
+module.exports = { type: 'object', title: 'Stipple method', properties };
