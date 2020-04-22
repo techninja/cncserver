@@ -75,7 +75,6 @@ function layerUpdate(host, layer) {
         contentItems.set(hash, { hash, title, bounds, settings });
       });
 
-      console.log('Item!', host.item);
       if (!host.item) host.item = 'project';
     });
   }
@@ -172,8 +171,6 @@ function itemChangeFactory(defaultItem = '') {
 
       // Does the item exist?
       if (item) {
-        console.log('Item exists! Set it.', value);
-
         // Reset and set values of form fields
         lastRenderSettings = null;
         lastBoundsSettings = null;
@@ -182,7 +179,6 @@ function itemChangeFactory(defaultItem = '') {
         return value;
       }
 
-      console.log('No item found.', value);
       // Not found.
       return null;
     },

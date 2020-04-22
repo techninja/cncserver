@@ -132,9 +132,16 @@ cncserver.api = {
       update: (hash, data) => _patch(`projects/${hash}`, { data }),
       delete: hash => _delete(`projects/${hash}`),
     },
+
+    current: {
+      stat: () => _get('projects/current'),
+      update: data => _patch('projects/current', { data }),
+      delete: () => _delete('projects/current'),
+    },
+
     renderStage: () => _patch('projects', { data: { rendering: true } }),
     drawPreview: () => _patch('projects', { data: { drawing: true } }),
-    options: () => _options('projects'),
+    schema: () => _options('projects'),
   },
   content: {
     stat: () => _get('content'),
@@ -154,7 +161,7 @@ cncserver.api = {
       delete: hash => _delete(`content/${hash}`),
     },
     delete: () => _delete('content'), // Remove all content from project.
-    options: () => _options('content'),
+    schema: () => _options('content'),
   },
   colors: {
     stat: () => _get('colors'),
