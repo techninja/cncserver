@@ -5,7 +5,7 @@
 /* eslint-disable global-require, import/no-dynamic-require */
 module.exports = (cncserver) => {
   // TODO: Schemas to finalize: stroke, vectorize, text
-  const items = ['projects', 'content', 'fill', 'stroke', 'path', 'text', 'vectorize'];
+  const items = ['projects', 'content', 'fill', 'stroke', 'text', 'vectorize', 'path'];
   const settingsKeys = ['fill', 'stroke', 'text', 'vectorize', 'path'];
 
   const schemas = {};

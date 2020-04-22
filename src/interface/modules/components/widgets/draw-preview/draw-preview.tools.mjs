@@ -317,10 +317,10 @@ export default function initTools(host) {
   tool.cursorOffset = '1 1'; // Position for cursor point
 
   // Catch layer changes, just deselect.
-  host.addEventListener('layerchange', () => {
+  /* host.addEventListener('layerchange', () => {
     deselect();
     dispatch(host, 'selectionchange', { detail: { selection: null } });
-  });
+  }); */
 
   // Catch layer updates: attempt to re-select.
   host.addEventListener('layerupdate', ({ detail: { layer } }) => {

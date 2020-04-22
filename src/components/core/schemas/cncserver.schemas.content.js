@@ -73,6 +73,7 @@ module.exports = (cncserver) => {
       properties: {
         x: {
           type: 'number',
+          format: 'number',
           title: 'X Point',
           description: 'X coordinate of top left position of the rectangle.',
           default: bounds.point.x,
@@ -81,6 +82,7 @@ module.exports = (cncserver) => {
         },
         y: {
           type: 'number',
+          format: 'number',
           title: 'Y Point',
           description: 'Y coordinate of top left position of the rectangle.',
           default: bounds.point.y,
@@ -89,6 +91,7 @@ module.exports = (cncserver) => {
         },
         width: {
           type: 'number',
+          format: 'number',
           title: 'Width',
           description: 'Width of the rectangle.',
           default: bounds.width,
@@ -97,6 +100,7 @@ module.exports = (cncserver) => {
         },
         height: {
           type: 'number',
+          format: 'number',
           title: 'Height',
           description: 'Height of the rectangle.',
           default: bounds.height,

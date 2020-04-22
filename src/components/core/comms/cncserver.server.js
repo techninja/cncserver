@@ -36,6 +36,8 @@ module.exports = (cncserver) => {
       underscore: path.join(nm, 'underscore'),
       bulma: path.join(nm, 'bulma', 'css'),
       select2: path.join(nm, 'select2', 'dist'),
+      jsoneditor: path.join(nm, '@json-editor', 'json-editor', 'dist'),
+      bootstrap: path.join(nm, 'bootstrap', 'dist'),
       'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
       webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
       modules: path.resolve(global.__basedir, '..', 'web_modules'),
