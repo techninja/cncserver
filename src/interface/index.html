@@ -1,93 +1,84 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <script src="/jquery/jquery.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/paper/paper-full.min.js"></script>
-    <script src="/axios/axios.min.js"></script>
-    <script src="/select2/js/select2.full.min.js"></script>
-    <link rel="stylesheet" href="/font-awesome/fontawesome.min.css" />
-    <link rel="stylesheet" href="/font-awesome/solid.min.css" />
-    <link rel="stylesheet" href="/font-awesome/brands.min.css" />
-    <link rel="stylesheet" href="/bulma/bulma.min.css" />
-    <link rel="stylesheet" href="/select2/css/select2.min.css" />
-    <link rel="stylesheet" href="/styles/interface.css" />
-    <script type="module" src="/modules/weightless.js"></script>
-    <script type="module" src="/modules/components/index.mjs"></script>
-  </head>
-  <title>CNC Server client</title>
-  <body>
-    <main-title></main-title>
 
-    <div class="section columns is-multiline">
-      <section class="column is-half" id="left-col-tabs">
-        <tab-group>
-          <tab-item name="Basic" icon="vial">
-            <panel-basic></panel-basic>
-          </tab-item>
-          <tab-item name="Advanced" icon="vials" active>
-            <panel-advanced></panel-advanced>
-          </tab-item>
-          <tab-item name="Settings" icon="cogs">
-            <panel-settings></panel-settings>
-          </tab-item>
-          <tab-item name="Colors" icon="palette">
-            <panel-colors></panel-colors>
-          </tab-item>
-          <tab-item name="Tests" icon="tasks">
-            <panel-diagnostics></panel-diagnostics>
-          </tab-item>
-        </tab-group>
-      </section>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <script src="/jquery/jquery.min.js"></script>
+  <script src="/underscore/underscore-min.js"></script>
+  <script src="/jsonform/jsonform.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/paper/paper-full.min.js"></script>
+  <script src="/axios/axios.min.js"></script>
+  <script src="/select2/js/select2.full.min.js"></script>
+  <script src="/jsoneditor/jsoneditor.js"></script>
 
-      <section class="column is-half" id="right-col-preview">
-        <div class="box">
-          <toolbar-top></toolbar-top>
-        </div>
-        <draw-preview></draw-preview>
-        <div class="box">
-          <toolbar-bottom></toolbar-bottom>
-        </div>
-      </section>
-    </div>
+  <link rel="stylesheet" href="/font-awesome/fontawesome.min.css" />
+  <link rel="stylesheet" href="/font-awesome/solid.min.css" />
+  <link rel="stylesheet" href="/font-awesome/brands.min.css" />
+  <link rel="stylesheet" href="/bulma/bulma.min.css" />
+  <link rel="stylesheet" href="/select2/css/select2.min.css" />
+  <link rel="stylesheet" href="/styles/interface.css" />
+  <script type="module" src="/modules/weightless.js"></script>
+  <script type="module" src="/modules/components/index.mjs"></script>
+</head>
+<title>CNC Server client</title>
 
-    <script>
-      // Establish base global GUI base state variable
-      window.cstate = {
-        runningTest: false,
-        pen: {},
-        lastPen: {},
-        buffer: {},
-        drawPoints: [], // Array of points from buffer to draw
-        stepsPerMM: { x: 1, y: 1 },
-        botName: '', // Placeholder for the name of the bot.
-        colorset: {}, // Placeholder for current colorset, keyed by ID.
-      };
-    </script>
+<body>
+  <main-title></main-title>
 
-    <script type="module">
-      import cncserver from '/lib/cncserver.client.api.js';
-      import preview from '/modules/preview.mjs';
-      import shapes from '/modules/shapes.mjs';
+  <div class="section columns is-multiline">
+    <section class="column is-half" id="left-col-tabs">
+      <tab-group>
+        <tab-item name="Basic" icon="vial">
+          <panel-basic></panel-basic>
+        </tab-item>
+        <tab-item name="Advanced" icon="vials">
+          <panel-advanced></panel-advanced>
+        </tab-item>
+        <tab-item name="Settings" icon="cogs" active>
+          <panel-settings></panel-settings>
+          <form></form>
+        </tab-item>
+        <tab-item name="Colors" icon="palette">
+          <panel-colors></panel-colors>
+        </tab-item>
+        <tab-item name="Tests" icon="tasks">
+          <panel-diagnostics></panel-diagnostics>
+        </tab-item>
+      </tab-group>
+    </section>
 
-      // Globalize various imports.
-      ['cncserver', 'preview', 'shapes'].forEach(name => {
-        window[name] = eval(name);
-      });
+    <section class="column is-half" id="right-col-preview">
+      <div class="box">
+        <toolbar-top></toolbar-top>
+      </div>
+      <draw-preview></draw-preview>
+      <div class="box">
+        <toolbar-bottom></toolbar-bottom>
+      </div>
+    </section>
+  </div>
 
-      // Initialize CNC Server connection details
-      cncserver.init({
-        domain: document.domain,
-        port: location.port ? location.port : 80,
-        protocol: 'http',
-        version: '2',
-        ax: axios,
-        socketio: io,
-      });
-    </script>
-  </body>
+  <script type="module">
+    import cncserver from '/lib/cncserver.client.api.js';
+    import preview from '/modules/preview.mjs';
+    import shapes from '/modules/shapes.mjs';
+
+    // Globalize various imports.
+    ['cncserver', 'preview', 'shapes'].forEach(name => {
+      window[name] = eval(name);
+    });
+
+    // Initialize CNC Server connection details
+    cncserver.init({
+      domain: document.domain,
+      port: location.port ? location.port : 80,
+      protocol: 'http',
+      version: '2',
+      ax: axios,
+      socketio: io,
+    });
+  </script>
+</body>
+
 </html>
