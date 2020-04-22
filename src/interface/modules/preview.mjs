@@ -46,22 +46,7 @@ preview.fonts = ({
 };
 
 preview.fill = () => {
-  const {
-    api: {
-      actions: {
-        stat, text, fillPath,
-      },
-    },
-  } = cncserver;
-
   const exampleRows = [];
-  const opt = {
-    titleHeight: 8,
-    labelHeight: 5,
-    boxHeight: 50,
-    rightMargin: 8,
-    bottomMargin: 8,
-  };
 
   // Offset fill examples
   exampleRows.push({
@@ -121,26 +106,27 @@ preview.fill = () => {
 
   // Hatch fill examples
   exampleRows.push({
-    title: 'Hatch / lines',
+    title: 'Line based pattern',
     examples: [
       {
         label: 'Default: 3mm space, 28°',
-        settings: { method: 'hatch', pattern: 'zigsmooth' },
+        settings: { method: 'pattern', pattern: 'line' },
       },
       {
         label: '2mm space, 45°',
         settings: {
-          method: 'hatch', spacing: 2, angle: 45, pattern: 'zigstraight',
+          method: 'pattern', spacing: 2, angle: 45, pattern: 'line',
         },
       },
       {
-        label: '5mm, hatch, random',
+        label: '5mm, hatch',
         settings: {
-          method: 'hatch',
+          method: 'pattern',
+          pattern: 'line',
           spacing: 5,
-          randomizeAngle: true,
-          hatch: true,
-          pattern: 'zigstraight',
+          lineOptions: {
+            density: 2,
+          },
         },
       },
       {
@@ -150,58 +136,11 @@ preview.fill = () => {
     ],
   });
 
-  stat().then(({ data: { options: { bounds } } }) => {
-    let pos = [bounds.point[0], bounds.point[1]];
-
-    exampleRows.forEach((row) => {
-      text(row.title, {
-        point: [pos[0], pos[1]],
-        size: [bounds.size[0], opt.titleHeight],
-      });
-
-      // Move base Y pos to bottom of row title
-      pos[1] += opt.titleHeight;
-
-      const boxWidth = Math.round(bounds.size[1] / (row.examples.length - 1));
-      row.examples.forEach((example) => {
-        const boxBounds = { point: [pos[0], pos[1]], size: [boxWidth, opt.boxHeight] };
-        fillPath(shapes.compound.fill, boxBounds, example.settings);
-
-        // Draw label.
-        text(example.label, {
-          point: [pos[0], pos[1] + opt.boxHeight],
-          size: [boxWidth, opt.labelHeight],
-        });
-
-        // Next position right >>
-        pos[0] = pos[0] + boxWidth + opt.rightMargin;
-      });
-
-      // Next position down.
-      pos = [
-        bounds.point[0],
-        pos[1] + opt.labelHeight + opt.boxHeight + opt.bottomMargin,
-      ];
-    });
-  });
+  preview.renderExamples(exampleRows);
 };
 
 preview.patternFillPreview = () => {
-  const {
-    api: {
-      actions: {
-        stat, text, strokePath, fillPath,
-      },
-    },
-  } = cncserver;
   const exampleRows = [];
-  const opt = {
-    titleHeight: 8,
-    labelHeight: 5,
-    boxHeight: 50,
-    rightMargin: 8,
-    bottomMargin: 8,
-  };
 
   exampleRows.push({
     title: 'Pattern Fill Types',
@@ -279,6 +218,192 @@ preview.patternFillPreview = () => {
     ],
   });
 
+  preview.renderExamples(exampleRows);
+};
+
+preview.lineFillPreview = () => {
+  const exampleRows = [];
+
+  exampleRows.push({
+    title: 'Pattern Fill Line examples',
+    examples: [
+      {
+        label: 'Basic Line, 10mm @ 0°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          lineOptions: { type: 'straight', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Basic Line, 10mm @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: { type: 'straight', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Basic Line, Density 2 @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: {
+            type: 'straight', wavelength: 10, amplitude: 8, density: 2,
+          },
+        },
+      },
+
+      {
+        label: 'Basic Line, Density 5',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          inset: 2,
+          lineOptions: {
+            type: 'straight', wavelength: 10, amplitude: 8, density: 5,
+          },
+        },
+      },
+    ],
+  });
+
+  exampleRows.push({
+    examples: [
+      {
+        label: 'Sine Line 10/10/8',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          lineOptions: { type: 'sine', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Sine Line @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: { type: 'sine', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Sine Line, Density 2 @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: {
+            type: 'sine', wavelength: 10, amplitude: 8, density: 2,
+          },
+        },
+      },
+
+      {
+        label: 'Sine Line, Density 5',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          lineOptions: {
+            type: 'sine', wavelength: 10, amplitude: 8, density: 5,
+          },
+        },
+      },
+    ],
+  });
+
+  exampleRows.push({
+    examples: [
+      {
+        label: 'Saw Line 10/10/8',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          lineOptions: { type: 'saw', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Saw Line @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: { type: 'saw', wavelength: 10, amplitude: 8 },
+        },
+      },
+
+      {
+        label: 'Saw Line, Density 2 @ 45°',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 45,
+          lineOptions: {
+            type: 'saw', wavelength: 10, amplitude: 8, density: 2,
+          },
+        },
+      },
+
+      {
+        label: 'Saw Line, Density 5',
+        settings: {
+          method: 'pattern',
+          pattern: 'line',
+          spacing: 10,
+          rotation: 0,
+          lineOptions: {
+            type: 'saw', wavelength: 10, amplitude: 8, density: 5,
+          },
+        },
+      },
+    ],
+  });
+
+  preview.renderExamples(exampleRows);
+};
+
+// Render an object/array of fill examples
+preview.renderExamples = (exampleRows, options) => {
+  const {
+    api: {
+      actions: {
+        stat, text, strokePath, fillPath,
+      },
+    },
+  } = cncserver;
+
+  const opt = {
+    fillObject: shapes.compound.fill,
+    titleHeight: 8,
+    labelHeight: 5,
+    boxHeight: 50,
+    rightMargin: 8,
+    bottomMargin: 8,
+    ...options,
+  };
 
   stat().then(({ data: { options: { bounds } } }) => {
     let pos = [bounds.point[0], bounds.point[1]];
@@ -296,10 +421,14 @@ preview.patternFillPreview = () => {
       const boxWidth = Math.round(bounds.size[1] / (row.examples.length - 1));
       row.examples.forEach((example) => {
         const boxBounds = { point: [pos[0], pos[1]], size: [boxWidth, opt.boxHeight] };
-        fillPath(shapes.compound.fill, boxBounds, example.settings);
+        fillPath(opt.fillObject, boxBounds, example.settings);
+        strokePath(opt.fillObject, boxBounds, example.settings);
 
         // Draw label.
-        text(example.label, { point: [pos[0], pos[1] + opt.boxHeight], size: [boxWidth, opt.labelHeight] });
+        text(example.label, {
+          point: [pos[0], pos[1] + opt.boxHeight],
+          size: [boxWidth, opt.labelHeight],
+        });
 
         // Next position right >>
         pos[0] = pos[0] + boxWidth + opt.rightMargin;
