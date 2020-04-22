@@ -33,11 +33,11 @@ export default styles => ({
     ${styles}
     <nav class="tabs is-boxed">
       <ul>
-      ${items.map(({ name, active, icon }) => html`
+      ${items.map(({ title, active, icon, name }) => html`
         <li class="${active ? 'is-active' : ''} ${active ? 'active' : ''}" onclick="${activate(name)}">
           <a>
             <span class="icon is-small"><i class="fas fa-${icon}" aria-hidden="true"></i></span>
-            <span>${name}</span>
+            <span>${title}</span>
           </a>
         </li>
       `.key(name))}
