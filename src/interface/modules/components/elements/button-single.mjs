@@ -15,12 +15,12 @@ export default styles => ({
   render: ({
     style, icon, title, desc, fullwidth, active, disabled,
   }) => {
-    const linkClasses = { button: true, 'is-fullwidth': fullwidth, 'is-active': active };
+    const linkClasses = { button: true, 'is-active': active };
     if (style) linkClasses[`is-${style}`] = true;
 
     return html`
     ${styles}
-    <a class="${linkClasses}" title="${desc}">
+    <a class="${linkClasses}" style=${{ display: fullwidth ? 'flex' : 'inline-block' }} title="${desc}">
       ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
       ${title && html`<span>${title}</span>`}
     </a>

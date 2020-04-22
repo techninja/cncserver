@@ -8,7 +8,6 @@ function click() {
     host.state = !host.state;
 
     // After change custom event is dispatched
-    // for the user of tab-group element
     dispatch(host, 'change');
   };
 }
