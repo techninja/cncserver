@@ -144,6 +144,9 @@ const exp = {
           initCallback(item, settings);
         }
       });
+
+      // Cancel/quit the process.
+      ipc.of[hostname].on('cancel', () => { process.exit(0); });
     });
   },
 

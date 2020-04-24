@@ -79,6 +79,9 @@ const exp = {
           }
         });
       });
+
+      // Cancel/quit the process.
+      ipc.of[hostname].on('cancel', () => { process.exit(0); });
     });
   },
 

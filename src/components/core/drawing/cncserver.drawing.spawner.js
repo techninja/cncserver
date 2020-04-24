@@ -29,7 +29,9 @@ module.exports = (cncserver, drawing) => {
     // Catch any non-matching spawn data. This shouldn't happen, but could.
     if (!workingQueueItem) {
       // TODO: If this happens, need to clear out process source SOMEHOW.
-      throw new Error(`Spawn data item mismatch: ${spawnKey}`);
+      // throw new Error(`Spawn data item mismatch: ${spawnKey}`);
+      console.error(`Spawn data item mismatch: ${spawnKey}, killing process`);
+      ipc.server.emit(socket, 'cancel');
     }
 
     const timeTaken = Math.round((new Date() - workingQueueItem.start) / 100) / 10;
