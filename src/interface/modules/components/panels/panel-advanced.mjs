@@ -7,13 +7,12 @@ export default styles => ({
   render: () => html`
     ${styles}
 
-    <div class="box">
-      <height-settings></height-settings>
-    </div>
+    <height-settings></height-settings>
     <br>
 
-    <div class="box">
-      <project-loader></project-loader>
-    </div>
+    <content-importer></content-importer>
+    <br>
+
+    <project-loader></project-loader>
   `,
 });

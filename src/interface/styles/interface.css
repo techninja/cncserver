@@ -237,8 +237,15 @@ input.switch:checked:after {
   border-width: 0;
 }
 
+#settings-forms > form > div div.card-body {
+  margin-bottom: 0 !important;
+}
+
 #settings-forms > form > div > div.card-body > div.card > div.card-body {
   padding: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #settings-forms > form > div > div.card-body.bg-light {
@@ -250,4 +257,26 @@ input.switch:checked:after {
 
 #settings-forms span.btn-group {
   display: none;
+}
+
+/* Content Importer */
+#content-importer {
+  position: relative;
+}
+
+#content-importer .modal {
+  position: absolute;
+}
+
+#content-importer .modal-content {
+  width: 80%;
+}
+
+#source-type-wrapper {
+  position: absolute;
+  right: 1em;
+}
+
+#source-type {
+  font-size: 1.2em;
 }
