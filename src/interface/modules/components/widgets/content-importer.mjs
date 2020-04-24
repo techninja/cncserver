@@ -113,18 +113,6 @@ function addContent(mode, type) {
     if (host.loading) return;
     host.showModal = true;
 
-    // TODO:
-    // - Sort out modal/message situation with a loader.
-    // - Show message, give OK button, modal click, or delete button
-    // - Test with bad data of all kinds, make sure message is clear.
-    // - Clear form fields on success.
-
-    // BIGGER TODOS:
-    // Get resolution size down workign for big images.
-    // Only send image PATH for local pplacement (rasters only)
-    // Prevent re-render with just selection and moving (just move rendered item).
-    // Save and load rendered content (through SVG??).
-
     const titleInput = host.shadowRoot.querySelector('input.title-text');
     const data = {
       title: titleInput.value.trim() || titleInput.placeholder,
