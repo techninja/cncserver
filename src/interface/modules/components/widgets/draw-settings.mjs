@@ -196,7 +196,7 @@ function itemChangeFactory(defaultItem = '') {
 
         // Only update render settings if there are differences.
         const diffSettings = settingsDiff(renderSettings.getValue(), lastRenderSettings);
-        if (Object.entries(diffSettings).length) {
+        if (Object.entries(diffSettings).length || value !== host.item) {
           lastRenderSettings = null;
           renderSettings.setValue(item.settings);
         }
