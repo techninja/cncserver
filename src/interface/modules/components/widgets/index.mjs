@@ -11,7 +11,7 @@ import ScratchControls from './scratch-controls.mjs';
 import ProjectLoader from './project-loader.mjs';
 import ContentImporter from './content-importer.mjs';
 import DrawPreview from './draw-preview/draw-preview.mjs';
-import DrawSettings from './draw-settings/draw-settings.mjs';
+import DrawSettings from './draw-settings.mjs';
 
 export default styles => ({
   'colorset-item': ColorsetItem,
