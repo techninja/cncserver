@@ -5,13 +5,18 @@
 import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
 
-let contentSchema = {}; // Globalize the content schema, to be filled on init.
-let renderSettings = {}; // Settings & bounds JSONEditor objects once initialized.
+// Globalize the content schema, to be filled on init.
+let contentSchema = {};
+
+// Settings & bounds JSONEditor objects once initialized.
+let renderSettings = {};
 let boundsSettings = {};
 
+// Hold last settings adjustments to figure out diff changes.
 let lastRenderSettings = null;
 let lastBoundsSettings = null;
 
+// Initial configuration object for JSONEditor.
 const globalJSONEditorSettings = {
   iconlib: 'fontawesome5',
   theme: 'bootstrap4',
@@ -23,16 +28,43 @@ const globalJSONEditorSettings = {
   no_additional_properties: true,
 };
 
+// Select the draw-preview DOM element so we can attach to its update events.
 const dp = document.querySelector('draw-preview');
 
-// Get only the parts that are different from a complete/deep settings object.
+/**
+ * Retrieve an item with a matching hash from the content items array.
+ *
+ * @param {object} { contentItems }
+ *   Host object containing the content items array.
+ * @param {string} hash
+ *   Hash to be found. Will correctly handle inappropriate input.
+ *
+ * @returns {object | undefined}
+ *   Either the full object found with that hash, or undefined.
+ */
+function getItem({ contentItems }, hash) {
+  return contentItems.filter(res => res.hash === hash)[0];
+}
+
+/**
+ * Get only the parts that are different from a complete/deep settings object.
+ *
+ * @param {object} inObject
+ *   Input object to check for diff against the base.
+ * @param {object} inBase
+ *   Base object to diff against the input.
+ *
+ * @returns {object}
+ *   Only the differences between the two objects in full tree form.
+ */
 function settingsDiff(inObject, inBase) {
   const changes = (object, base) => (
     _.pick(
       _.mapObject(object, (value, key) => (
-        (!_.isEqual(value, base[key])) ?
-          ((_.isObject(value) && _.isObject(base[key])) ? changes(value, base[key]) : value) :
-          null
+        // eslint-disable-next-line no-nested-ternary
+        (!_.isEqual(value, base[key]))
+          ? ((_.isObject(value) && _.isObject(base[key])) ? changes(value, base[key]) : value)
+          : null
       )),
       value => (value !== null)
     )
@@ -55,7 +87,15 @@ function settingsDiff(inObject, inBase) {
   return finalChanges;
 }
 
-// Event trigger on display preview layer update from socket.
+/**
+ * Event trigger on display preview layer update from socket.
+ * Used to update the list of available content items.
+ *
+ * @param {hybrids} host
+ *   Host object to operate on with.
+ * @param {string} layer
+ *   Which layer is being updated? We only care about stage here.
+ */
 function layerUpdate(host, layer) {
   if (layer === 'stage' && paper.project) {
     // Add all content items in current project, plus project info.
@@ -80,12 +120,25 @@ function layerUpdate(host, layer) {
   }
 }
 
-// Change selected item (content hash) on select change.
+/**
+ * Change selected item (content hash) on select change.
+ * Triggers itemFactoryChange.
+ *
+ * @param {hybrids} host
+ *   Host item to operate on.
+ * @param {Event} event
+ *   DOM Event for select change, used to get value.
+ */
 function contentSelectChange(host, event) {
   host.item = event.target.value;
 }
 
-// Callback for JSONEditor change callback.
+/**
+ * Callback for JSONEditor change on bounds settings.
+ *
+ * @param {hybrids} host
+ *   Host item to operate on.
+ */
 function boundsChange(host) {
   if (!lastBoundsSettings) {
     lastBoundsSettings = boundsSettings.getValue();
@@ -99,7 +152,12 @@ function boundsChange(host) {
   }
 }
 
-// Callback for JSONEditor change callback.
+/**
+ * Callback for JSONEditor change on draw settings.
+ *
+ * @param {hybrids} host
+ *   Host item to operate on.
+ */
 function settingsChange(host) {
   if (!lastRenderSettings) {
     lastRenderSettings = renderSettings.getValue();
@@ -117,8 +175,46 @@ function settingsChange(host) {
   }
 }
 
+/**
+ * Factory for managing host item change/value, takes hash, changes what's selected.
+ *
+ * @param {string} [defaultItem='']
+ *   Hash value from hybrids factory handler.
+ *
+ * @returns {hybrids factory}
+ */
+function itemChangeFactory(defaultItem = '') {
+  return {
+    set: (host, value) => {
+      const item = getItem(host, value);
 
-// Fully initialize the element.
+      // Does the item exist?
+      if (item) {
+        // Reset and set values of form fields
+        lastRenderSettings = null;
+        lastBoundsSettings = null;
+        renderSettings.setValue(item.settings);
+        boundsSettings.setValue(item.bounds);
+        return value;
+      }
+
+      // Not found.
+      return null;
+    },
+    connect: (host, key) => {
+      if (host[key] === undefined) {
+        host[key] = defaultItem;
+      }
+    },
+  };
+}
+
+/**
+ * Called on render, latch to fully initialize required variables.
+ *
+ * @param {hybrids} host
+ *   Host object to operate on.
+ */
 function init(host) {
   if (!host.initialized) {
     host.initialized = true;
@@ -163,49 +259,7 @@ function init(host) {
   }
 }
 
-/**
- * Retrieve an item with a matching hash from the content items array.
- *
- * @param {object} { contentItems }
- *   Host object containing the content items array.
- * @param {string} hash
- *   Hash to be found. Will correctly handle inappropriate input.
- *
- * @returns {object | undefined}
- *   Either the full object found with that hash, or undefined.
- */
-function getItem({ contentItems }, hash) {
-  return contentItems.filter(res => res.hash === hash)[0];
-}
-
-// Item change factory, takes a hash and changes what's selected.
-function itemChangeFactory(defaultItem = '') {
-  return {
-    set: (host, value) => {
-      const item = getItem(host, value);
-      console.log('Item for', value, item);
-
-      // Does the item exist?
-      if (item) {
-        // Reset and set values of form fields
-        lastRenderSettings = null;
-        lastBoundsSettings = null;
-        renderSettings.setValue(item.settings);
-        boundsSettings.setValue(item.bounds);
-        return value;
-      }
-
-      // Not found.
-      return null;
-    },
-    connect: (host, key) => {
-      if (host[key] === undefined) {
-        host[key] = defaultItem;
-      }
-    },
-  };
-}
-
+// Export the full widget definition.
 export default styles => ({
   item: itemChangeFactory(''),
   initialized: false,
