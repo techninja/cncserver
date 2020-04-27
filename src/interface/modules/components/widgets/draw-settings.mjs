@@ -9,9 +9,6 @@ let contentSchema = {}; // Globalize the content schema, to be filled on init.
 let renderSettings = {}; // Settings & bounds JSONEditor objects once initialized.
 let boundsSettings = {};
 
-// Map of objects keyed by hash to store all content in project.
-const contentItems = new Map();
-
 let lastRenderSettings = null;
 let lastBoundsSettings = null;
 
@@ -63,19 +60,22 @@ function layerUpdate(host, layer) {
   if (layer === 'stage' && paper.project) {
     // Add all content items in current project, plus project info.
     cncserver.api.projects.current.stat().then(({ data: project }) => {
-      contentItems.clear();
-      contentItems.set('project', {
-        title: 'Project',
-        hash: 'project',
-        bounds: {},
-        settings: project.settings || {},
-      });
-
+      const items = [];
       Object.entries(project.content).forEach(([hash, { title, bounds, settings }]) => {
-        contentItems.set(hash, { hash, title, bounds, settings });
+        items.push({ hash, title, bounds, settings });
       });
 
-      if (!host.item) host.item = 'project';
+      host.contentItems = [
+        {
+          title: 'Project',
+          hash: 'project',
+          bounds: {},
+          settings: project.settings || {},
+        },
+        ...items,
+      ];
+
+      host.item = host.item || 'project';
     });
   }
 }
@@ -163,11 +163,27 @@ function init(host) {
   }
 }
 
+/**
+ * Retrieve an item with a matching hash from the content items array.
+ *
+ * @param {object} { contentItems }
+ *   Host object containing the content items array.
+ * @param {string} hash
+ *   Hash to be found. Will correctly handle inappropriate input.
+ *
+ * @returns {object | undefined}
+ *   Either the full object found with that hash, or undefined.
+ */
+function getItem({ contentItems }, hash) {
+  return contentItems.filter(res => res.hash === hash)[0];
+}
+
 // Item change factory, takes a hash and changes what's selected.
 function itemChangeFactory(defaultItem = '') {
   return {
     set: (host, value) => {
-      const item = contentItems.get(value);
+      const item = getItem(host, value);
+      console.log('Item for', value, item);
 
       // Does the item exist?
       if (item) {
@@ -193,12 +209,13 @@ function itemChangeFactory(defaultItem = '') {
 export default styles => ({
   item: itemChangeFactory(''),
   initialized: false,
+  contentItems: [],
 
-  render: ({ item }) => html`
+  render: ({ item, contentItems }) => html`
     ${styles}
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <select id="content-select" onchange=${contentSelectChange}>
-      ${Array.from(contentItems).map(([hash, { title }]) => html`
+      ${contentItems.map(({ hash, title }) => html`
         <option value=${hash} selected=${item === hash}>${title}</option>
       `)}
     </select>
