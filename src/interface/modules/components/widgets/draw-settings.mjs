@@ -191,10 +191,16 @@ function itemChangeFactory(defaultItem = '') {
       // Does the item exist?
       if (item) {
         // Reset and set values of form fields
-        lastRenderSettings = null;
         lastBoundsSettings = null;
-        renderSettings.setValue(item.settings);
         boundsSettings.setValue(item.bounds);
+
+        // Only update render settings if there are differences.
+        const diffSettings = settingsDiff(renderSettings.getValue(), lastRenderSettings);
+        if (Object.entries(diffSettings).length) {
+          lastRenderSettings = null;
+          renderSettings.setValue(item.settings);
+        }
+
         return value;
       }
 
