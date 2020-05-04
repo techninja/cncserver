@@ -30,6 +30,15 @@ function currentProjectChangeFactory() {
   };
 }
 
+// Callback for change event on project info inputs.
+function infoChange(host) {
+  const inputs = host.shadowRoot.querySelectorAll('input');
+  cncserver.api.projects.item.update(host.current, {
+    title: inputs.item(0).value.trim() || inputs.item(0).placeholder,
+    description: inputs.item(1).value.trim() || inputs.item(1).placeholder,
+  }).catch(() => { });
+}
+
 function openProject(hash) {
   return (host) => {
     host.current = hash;
@@ -67,12 +76,16 @@ export default styles => ({
             class="input"
             type="text"
             id="title"
+            placeholder="New Project Title"
+            onchange=${infoChange}
             value=${project.title}
           >
           <input
             class="input"
             type="text"
-            id="title"
+            id="description"
+            placeholder="New Project Description"
+            onchange=${infoChange}
             value=${project.description}
           >
         </div>
