@@ -2,24 +2,15 @@ body {
   font-family: sans-serif;
 }
 
+#main-content {
+  display: block;
+  margin: 1em;
+}
+
 #buffer {
   width: 200px;
   height: 200px;
   float: right;
-}
-
-#simwrap {
-  position: relative;
-}
-
-#canvas-wrapper {
-
-}
-
-canvas.simcanvas {
-  transform-origin: top left;
-  border: 1px solid black;
-  display: block;
 }
 
 #bufferarea {
@@ -243,7 +234,7 @@ input.switch:checked:after {
 
 #settings-forms > form > div > div.card-body > div.card > div.card-body {
   padding: 0;
-  max-height: 400px;
+  max-height: 200px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -255,8 +246,10 @@ input.switch:checked:after {
   margin: 0 !important;
 }
 
-#settings-forms span.btn-group {
-  display: none;
+#settings-forms span.btn-group,
+#settings-forms #settings > div > h3,
+#settings-forms #settings > div > p {
+  display: none !important;
 }
 
 /* Content Importer */
@@ -275,6 +268,14 @@ input.switch:checked:after {
 #source-type-wrapper {
   position: absolute;
   right: 1em;
+}
+
+@media only screen and (max-width: 1230px) {
+  #source-type-wrapper {
+    position: relative;
+    right: auto;
+    margin-bottom: 1em;
+  }
 }
 
 #source-type {

@@ -28,8 +28,8 @@ const globalJSONEditorSettings = {
   no_additional_properties: true,
 };
 
-// Select the draw-preview DOM element so we can attach to its update events.
-const dp = document.querySelector('draw-preview');
+// Select the canvas-compose DOM element so we can attach to its update events.
+const canvasCompose = document.querySelector('canvas-compose');
 
 /**
  * Retrieve an item with a matching hash from the content items array.
@@ -97,7 +97,7 @@ function settingsDiff(inObject, inBase) {
  *   Which layer is being updated? We only care about stage here.
  */
 function layerUpdate(host, layer) {
-  if (layer === 'stage' && paper.project) {
+  if (layer === 'stage') {
     // Add all content items in current project, plus project info.
     cncserver.api.projects.current.stat().then(({ data: project }) => {
       const items = [];
@@ -253,12 +253,13 @@ function init(host) {
     });
 
     // Bind to display preview selection change to switch settings item.
-    dp.addEventListener('selectionchange', ({ detail: { selection } }) => {
+    canvasCompose.addEventListener('selectionchange', ({ detail: { selection } }) => {
+      console.log('Draw settings selection change', selection);
       host.item = selection || 'project';
     });
 
     // Bind to layer content update.
-    dp.addEventListener(
+    canvasCompose.addEventListener(
       'layerupdate',
       ({ detail: { layer } }) => layerUpdate(host, layer)
     );

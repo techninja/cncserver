@@ -33,6 +33,9 @@ export default styles => ({
 
           <h1 class="title">CNC Server client v3.0-beta1</h1>
           <p class="subtitle">${subtitle}</p>
+          <div class="children">
+            <slot></slot>
+          </div>
         </div>
       </div>
     </section>

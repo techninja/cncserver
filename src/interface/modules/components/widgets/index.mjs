@@ -10,7 +10,8 @@ import ToolsBasic from './tools-basic.mjs';
 import ScratchControls from './scratch-controls.mjs';
 import ProjectLoader from './project-loader.mjs';
 import ContentImporter from './content-importer.mjs';
-import DrawPreview from './draw-preview/draw-preview.mjs';
+import CanvasCompose from './canvas/canvas-compose.mjs';
+import CanvasPrint from './canvas/canvas-print.mjs';
 import DrawSettings from './draw-settings.mjs';
 
 export default styles => ({
@@ -21,7 +22,8 @@ export default styles => ({
   'scratch-controls': ScratchControls(styles),
   'height-presets': HeightPresets(styles),
   'project-loader': ProjectLoader(styles),
-  'draw-preview': DrawPreview(styles),
+  'canvas-compose': CanvasCompose(styles),
+  'canvas-print': CanvasPrint(styles),
   'draw-settings': DrawSettings(styles),
   'content-importer': ContentImporter(styles),
 });

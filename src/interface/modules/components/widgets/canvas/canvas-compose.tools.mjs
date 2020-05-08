@@ -4,8 +4,9 @@
 /* globals paper, cncserver */
 import { dispatch } from '/modules/hybrids.js';
 
-const { Path, Point, Rectangle } = paper;
+const { Path, Point, Rectangle, Tool } = paper;
 let selectRect;
+let host;
 
 const round = (number, precision = 2) => {
   const p = 10 ** precision;
@@ -63,7 +64,7 @@ function select(item) {
 
   const b = bounds.clone();
 
-  paper.project.layers.overlay.activate();
+  host.canvas.scope.project.layers.overlay.activate();
   selectRect = new Path.Rectangle(b);
   selectRect.pivot = selectRect.position;
 
@@ -95,7 +96,7 @@ function select(item) {
 
 // Set the overall paper cursor via style adjustment.
 function setCursor(name = '') {
-  paper.view.element.style.cursor = name;
+  host.canvas.scope.view.element.style.cursor = name;
 }
 
 /**
@@ -131,7 +132,7 @@ function testSelect(point, options = {}) {
     ...options,
   };
 
-  const hitResult = paper.project.layers[hitOptions.layer].hitTest(point, hitOptions);
+  const hitResult = host.canvas.scope.project.layers[hitOptions.layer].hitTest(point, hitOptions);
 
   // If we didn't hit anything with hitTest...
   if (!hitResult) {
@@ -283,33 +284,36 @@ function matchRectToBounds({ bounds }, dest) {
 }
 
 // Respect boundaries.
-function respectWorkArea(workArea) {
-  if (selectRect.bounds.left < workArea.left) {
+function respectWorkspace(workspace) {
+  if (selectRect.bounds.left < workspace.left) {
     selectRect.pivot = selectRect.bounds.topLeft;
-    selectRect.position.x = workArea.left;
+    selectRect.position.x = workspace.left;
   }
 
-  if (selectRect.bounds.top < workArea.top) {
+  if (selectRect.bounds.top < workspace.top) {
     selectRect.pivot = selectRect.bounds.topLeft;
-    selectRect.position.y = workArea.top;
+    selectRect.position.y = workspace.top;
   }
 
-  if (selectRect.bounds.right > workArea.right) {
+  if (selectRect.bounds.right > workspace.right) {
     selectRect.pivot = selectRect.bounds.bottomRight;
-    selectRect.position.x = workArea.right;
+    selectRect.position.x = workspace.right;
   }
 
-  if (selectRect.bounds.bottom > workArea.bottom) {
+  if (selectRect.bounds.bottom > workspace.bottom) {
     selectRect.pivot = selectRect.bounds.bottomRight;
-    selectRect.position.y = workArea.bottom;
+    selectRect.position.y = workspace.bottom;
   }
 
   selectRect.pivot = selectRect.bounds.center;
 }
 
 // Default export, initialize all tools.
-export default function initTools(host) {
-  const tool = new paper.Tool();
+export default function initTools(originalHost) {
+  host = originalHost;
+  host.canvas.scope.activate();
+
+  const tool = new Tool();
   let lockState = null;
 
   tool.name = 'tools.select';
@@ -323,10 +327,10 @@ export default function initTools(host) {
   }); */
 
   // Catch layer updates: attempt to re-select.
-  host.addEventListener('layerupdate', ({ detail: { layer } }) => {
+  host.canvas.addEventListener('layerupdate', ({ detail: { layer } }) => {
     if (selectRect && layer === 'stage') {
       const hash = selectRect.itemName;
-      select(host.layers.stage.children[hash]);
+      select(host.canvas.layers.stage.children[hash]);
     }
   });
 
@@ -336,8 +340,8 @@ export default function initTools(host) {
     // TODO: And update support on the API, then update this to match reqs.
     return cncserver.api.content.item.update(hash, {
       bounds: {
-        x: round(drawBounds.point.x - host.workArea.point.x),
-        y: round(drawBounds.point.y - host.workArea.point.y),
+        x: round(drawBounds.point.x - host.canvas.workspace.point.x),
+        y: round(drawBounds.point.y - host.canvas.workspace.point.y),
         width: round(drawBounds.size.width),
         height: round(drawBounds.size.height),
       },
@@ -346,8 +350,9 @@ export default function initTools(host) {
 
   // Click to select/deselect.
   tool.onMouseDown = (event) => {
-    const scaledPoint = event.point.multiply(1 / host.scale);
+    const scaledPoint = event.point.multiply(1 / host.canvas.scale);
     const hitResult = testSelect(scaledPoint);
+    // console.log('Result', hitResult);
 
     if (hitResult) {
       select(hitResult.layerParent);
@@ -365,7 +370,7 @@ export default function initTools(host) {
 
   // Hover state.
   tool.onMouseMove = (event) => {
-    const scaledPoint = event.point.multiply(1 / host.scale);
+    const scaledPoint = event.point.multiply(1 / host.canvas.scale);
 
     if (selectRect) {
       setCursor(getDynaboxState(selectRect.bounds, scaledPoint));
@@ -376,17 +381,16 @@ export default function initTools(host) {
 
   // Clicking and dragging with delta.
   tool.onMouseDrag = (event) => {
-    const scaledPoint = event.point.multiply(1 / host.scale);
-    const scaledDelta = event.delta.multiply(1 / host.scale);
-    // const scaledDownPoint = event.downPoint.multiply(1 / host.scale);
+    const scaledPoint = event.point.multiply(1 / host.canvas.scale);
+    const scaledDelta = event.delta.multiply(1 / host.canvas.scale);
+    // const scaledDownPoint = event.downPoint.multiply(1 / host.canvas.scale);
 
     // If we have a selection...
     if (selectRect && lockState) {
       setDynaboxAdjust(selectRect, lockState, scaledDelta);
 
       // TODO: Add support for moving existing selection without being on object.
-
-      respectWorkArea(host.workArea);
+      respectWorkspace(host.canvas.workspace);
 
       // Manage the contained object.
       if (lockState === 'move') {

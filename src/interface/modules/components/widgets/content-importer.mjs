@@ -240,7 +240,7 @@ export default styles => ({
     sourceTypes, type, mode, message, loading,
   }) => html`
     ${styles}
-    <section id="content-importer" class="box">
+    <section id="content-importer">
       <div class=${{ modal: 1, 'is-active': message }}>
         <div class="modal-background" onclick=${hideModal}></div>
         <div class="modal-content">

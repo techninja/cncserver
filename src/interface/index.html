@@ -25,39 +25,64 @@
 
 <body>
   <main-title></main-title>
+  <tab-group id="main-content">
+    <tab-item title="Composing" icon="pencil-ruler" name="compose" active>
+      <div class="columns">
+        <section class="column is-half">
+          <tab-group>
+            <tab-item title="Project" icon="project-diagram" name="basic">
+              <project-loader></project-loader>
+            </tab-item>
+            <tab-item title="Content" icon="vector-square" name="advanced" active>
+              <content-importer></content-importer>
+            </tab-item>
+            <tab-item title="Settings" icon="cogs" name="settings">
+              <draw-settings></draw-settings>
+            </tab-item>
+          </tab-group>
+        </section>
 
-  <div class="section columns is-multiline">
-    <section class="column is-half" id="left-col-tabs">
-      <tab-group>
-        <tab-item title="Basic" icon="vial" name="basic">
-          <panel-basic></panel-basic>
-        </tab-item>
-        <tab-item title="Advanced" icon="vials" name="advanced" active>
-          <panel-advanced></panel-advanced>
-        </tab-item>
-        <tab-item title="Settings" icon="cogs" name="settings">
-          <panel-settings></panel-settings>
-          <form></form>
-        </tab-item>
-        <tab-item title="Colors" icon="palette" name="colors">
-          <panel-colors></panel-colors>
-        </tab-item>
-        <tab-item title="Tests" icon="tasks" name="tests">
-          <panel-diagnostics></panel-diagnostics>
-        </tab-item>
-      </tab-group>
-    </section>
+        <section class="column is-half" id="right-col-preview">
+          <canvas-compose></canvas-compose>
+        </section>
+      </div>
+    </tab-item>
 
-    <section class="column is-half" id="right-col-preview">
-      <div class="box">
-        <toolbar-top></toolbar-top>
+    <tab-item title="Printing" icon="print" name="print">
+      <div class="columns">
+        <section class="column is-half">
+          <tab-group>
+            <tab-item title="Basic" icon="vial" name="basic">
+              <scratch-controls></scratch-controls>
+              <tools-basic></tools-basic>
+              <height-presets></height-presets>
+            </tab-item>
+            <tab-item title="Advanced" icon="vials" name="advanced" active>
+
+            </tab-item>
+            <tab-item title="Settings" icon="cogs" name="settings">
+              <height-settings></height-settings>
+            </tab-item>
+            <tab-item title="Tests" icon="tasks" name="tests">
+
+            </tab-item>
+          </tab-group>
+        </section>
+
+        <section class="column is-half" id="right-col-preview">
+          <div class="box">
+            <toolbar-top></toolbar-top>
+          </div>
+
+          <canvas-print></canvas-print>
+
+          <div class="box">
+            <toolbar-bottom></toolbar-bottom>
+          </div>
+        </section>
       </div>
-      <draw-preview></draw-preview>
-      <div class="box">
-        <toolbar-bottom></toolbar-bottom>
-      </div>
-    </section>
-  </div>
+    </tab-item>
+  </tab-group>
 
   <script type="module">
     import cncserver from '/lib/cncserver.client.api.js';

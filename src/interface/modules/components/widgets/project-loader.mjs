@@ -68,7 +68,7 @@ export default styles => ({
   items: [],
   render: ({ project, items, current }) => html`
     ${styles}
-    <section class="box" id="projects">
+    <div id="projects">
       <div class="field">
         <div class="control">
           <label-title icon="file-image">Project Details:</label-title>
@@ -117,7 +117,7 @@ export default styles => ({
           `)}
         </div>
       </div>
-    </section>
+    </div>
     ${init}
   `,
 });
