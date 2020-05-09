@@ -55,8 +55,22 @@ module.exports = (cncserver) => {
       return { code: 200, body: getSettings() };
     }
     if (req.route.method === 'put') {
-      for (const [key, value] of req.body) {
+      for (const [key, value] of Object.entries(req.body)) {
         conf.set(key, value);
+      }
+
+      console.log((req.body.debug != undefined || req.body.showSerial != undefined))
+
+      // Send updated setting to the runner when changed
+      if (setType === 'global' && (req.body.debug != undefined || req.body.showSerial != undefined)){
+        cncserver.ipc.sendMessage('runner.config', {
+          debug: req.body.debug,
+          showSerial: req.body.showSerial
+        });
+      }else if (setType === 'bot' && (req.body.controller != undefined )){
+        cncserver.ipc.sendMessage('runner.config', {
+          controller: req.body.controller,
+        });
       }
       return { code: 200, body: getSettings() };
     }
