@@ -24,15 +24,7 @@ module.exports = (cncserver) => {
         .then(body => content.normalizeInput(body))
         .then(content.addItem)
         .then((item) => { res.status(200).send(item); })
-        .catch((err) => {
-          const errBody = {
-            status: 'error',
-            message: err.message || err,
-          };
-
-          if (err.stack) errBody.stack = err.stack.split('\n');
-          res.status(406).send(errBody);
-        });
+        .catch(cncserver.rest.err(res));
 
       return true; // Tell endpoint wrapper we'll handle the response
     }
@@ -74,15 +66,7 @@ module.exports = (cncserver) => {
       cncserver.schemas.validateData('content', mergedItem)
         .then(() => content.editItem(item, req.body, mergedItem))
         .then((finalItem) => { res.status(200).send(finalItem); })
-        .catch((err) => {
-          const errBody = {
-            status: 'error',
-            message: err.message || err,
-          };
-
-          if (err.stack) errBody.stack = err.stack.split('\n');
-          res.status(406).send(errBody);
-        });
+        .catch(cncserver.rest.err(res));
 
       return true; // Tell endpoint wrapper we'll handle the response
     }

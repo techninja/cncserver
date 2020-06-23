@@ -26,16 +26,7 @@ module.exports = (cncserver) => {
       cncserver.schemas.validateData('projects', req.body, true)
         .then(body => projects.addItem(body))
         .then((item) => { res.status(200).send(item); })
-        .catch((err) => {
-          console.error('Error on Projects request:', err);
-          const errBody = {
-            status: 'error',
-            message: err,
-          };
-
-          if (err.stack) errBody.stack = err.stack;
-          res.status(406).send(errBody);
-        });
+        .catch(cncserver.rest.err(res));
 
       return true; // Tell endpoint wrapper we'll handle the response
     }
@@ -105,15 +96,7 @@ module.exports = (cncserver) => {
       cncserver.schemas.validateData('projects', mergedProject)
         .then(() => projects.editItem(project, req.body))
         .then((item) => { res.status(200).send(item); })
-        .catch((err) => {
-          const errBody = {
-            status: 'error',
-            message: err,
-          };
-
-          if (err.stack) errBody.stack = err.stack;
-          res.status(406).send(errBody);
-        });
+        .catch(cncserver.rest.err(res));
 
       return true; // Tell endpoint wrapper we'll handle the response
     }

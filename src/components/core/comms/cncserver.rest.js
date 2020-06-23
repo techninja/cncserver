@@ -101,6 +101,31 @@ module.exports = (cncserver) => {
     });
   };
 
+  /**
+   * Standardized response error handler (to be passed to promise catches).
+   *
+   * The intent is to handle all error objects and give something useful to the
+   * client in the message and associated objects. This is curried to hand the catch a
+   * new function once we get the local response object.
+   *
+   * @param {HTTP Response} res
+   *   Specific request response object.
+   * @param {number} code
+   *   Response code to use.
+   *
+   * @returns {function}
+   *   Catch callback that takes a single error object as arg.
+   */
+  rest.err = (res, code = 406) => (err) => {
+    const errBody = {
+      status: 'error',
+      message: err.message || err,
+    };
+
+    if (err.stack) errBody.stack = err.stack.split('\n');
+    res.status(code).send(errBody);
+  };
+
   // Exports.
   rest.exports = {
     createStaticEndpoint: rest.createStaticEndpoint,
