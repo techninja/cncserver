@@ -24,7 +24,7 @@ module.exports = (cncserver) => {
     if (req.route.method === 'post') {
       // Validate the request data against the schema before continuing.
       cncserver.schemas.validateData('projects', req.body, true)
-        .then(body => projects.addItem(body))
+        .then(projects.addItem)
         .then((item) => { res.status(200).send(item); })
         .catch(cncserver.rest.err(res));
 
