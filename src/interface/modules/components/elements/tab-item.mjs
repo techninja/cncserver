@@ -4,7 +4,7 @@
 import { html } from '/modules/hybrids.js';
 
 export default styles => ({
-  title: '',
+  text: '',
   name: '',
   icon: '',
   active: false,

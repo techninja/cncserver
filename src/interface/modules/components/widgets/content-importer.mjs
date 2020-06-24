@@ -269,7 +269,7 @@ export default styles => ({
         </select>
       </div>
       <tab-group onchange=${changeMode}>
-        <tab-item title="Upload/Remote" icon="cloud-upload-alt" name="remote" active>
+        <tab-item text="Upload/Remote" icon="cloud-upload-alt" name="remote" active>
           <div class="field">
             <div class="control">
               <label-title icon="file-image">Upload ${labelType(type)}:</label-title>
@@ -286,7 +286,7 @@ export default styles => ({
             </div>
           </div>
         </tab-item>
-        <tab-item title="Paste/Text" icon="keyboard" name="local">
+        <tab-item text="Paste/Text" icon="keyboard" name="local">
           <div class="field">
             <div class="control">
               <label-title icon="align-left">

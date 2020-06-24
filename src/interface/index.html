@@ -26,17 +26,20 @@
 <body>
   <main-title></main-title>
   <tab-group id="main-content">
-    <tab-item title="Composing" icon="pencil-ruler" name="compose" active>
+    <tab-item text="Composing" icon="pencil-ruler" name="compose" active>
       <div class="columns">
         <section class="column is-half">
           <tab-group>
-            <tab-item title="Project" icon="project-diagram" name="basic">
+            <tab-item text="Project" icon="project-diagram" name="basic">
               <project-loader></project-loader>
             </tab-item>
-            <tab-item title="Content" icon="vector-square" name="advanced" active>
+            <tab-item text="Content" icon="vector-square" name="advanced" active>
               <content-importer></content-importer>
             </tab-item>
-            <tab-item title="Settings" icon="cogs" name="settings">
+            <tab-item text="Settings" icon="cogs" name="settings">
+              <draw-settings></draw-settings>
+            </tab-item>
+            <tab-item text="Settings" icon="cogs" name="settings">
               <draw-settings></draw-settings>
             </tab-item>
           </tab-group>
@@ -48,22 +51,22 @@
       </div>
     </tab-item>
 
-    <tab-item title="Printing" icon="print" name="print">
+    <tab-item text="Printing" icon="print" name="print">
       <div class="columns">
         <section class="column is-half">
           <tab-group>
-            <tab-item title="Basic" icon="vial" name="basic">
+            <tab-item text="Basic" icon="vial" name="basic">
               <scratch-controls></scratch-controls>
               <tools-basic></tools-basic>
               <height-presets></height-presets>
             </tab-item>
-            <tab-item title="Advanced" icon="vials" name="advanced" active>
+            <tab-item text="Advanced" icon="vials" name="advanced" active>
 
             </tab-item>
-            <tab-item title="Settings" icon="cogs" name="settings">
+            <tab-item text="Settings" icon="cogs" name="settings">
               <height-settings></height-settings>
             </tab-item>
-            <tab-item title="Tests" icon="tasks" name="tests">
+            <tab-item text="Tests" icon="tasks" name="tests">
 
             </tab-item>
           </tab-group>
