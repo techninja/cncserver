@@ -55,7 +55,10 @@ module.exports = (cncserver) => {
         projects.setPrintingState(printing);
       } else {
         // Nothing sent right, let em know.
-        return [406, 'Patch either "current" hash to open, or new "rendering" or "printing" state.'];
+        return [
+          406,
+          'Patch either "current" hash to open, or new "rendering" or "printing" state.',
+        ];
       }
 
       // Return the full new projects return body.
@@ -104,7 +107,11 @@ module.exports = (cncserver) => {
     // Remove item.
     if (req.route.method === 'delete') {
       projects.removeItem(hash).then(() => {
-        res.status(200).send({ status: `Project identified by "${hash}" moved to trash directory` });
+        res
+          .status(200)
+          .send({
+            status: `Project identified by "${hash}" moved to trash directory`,
+          });
       }).catch((err) => {
         const errBody = {
           status: 'error',

@@ -50,6 +50,7 @@ function loadProjects() {
 function initProject() {
   const now = new Date();
   // Create a temp project or load last.
+  // TODO: When deleting an open project, default to this.
   projects.addItem({
     title: 'New Project',
     description: `Automatic project created ${now.toLocaleDateString()}`,
@@ -273,6 +274,7 @@ module.exports = (cncserver) => {
 
   // Remove a project.
   projects.removeItem = hash => new Promise((resolve, reject) => {
+    // TODO: When deleting an open project, default to this.
     const project = projects.items.get(hash);
     const trashDir = path.resolve(utils.getUserDir('trash'), `project-${project.name}-${hash}`);
     fs.rename(project.dir, trashDir, (err) => {
