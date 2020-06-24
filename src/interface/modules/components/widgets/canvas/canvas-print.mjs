@@ -13,24 +13,6 @@ let destinationPos = {};
 let stepsPerMM = null;
 let tempPosition = null;
 
-// TODO: Does this go here? Probably not.
-/*
-function getColorName(index) {
-  return document.querySelector('panel-colors').items.filter(({ name }) => name === index)[0].title;
-}
-
-// Catch when it's time to manually swap pen over.
-cncserver.socket.on('manualswap trigger', ({ index }) => {
-  const message = `We are now ready to draw with ${getColorName(index)}. When it's in and ready, click ok.`;
-
-  // eslint-disable-next-line no-alert
-  if (window.confirm(message)) {
-    cncserver.api.tools.change('manualresume');
-  }
-});
-
-*/
-
 /**
  * Util function to get x/y steps converted to MM.
  *
@@ -44,7 +26,12 @@ function stepsToPaper({ x, y }) {
   return [x / stepsPerMM.x, y / stepsPerMM.y];
 }
 
-// Initialize print specific canvas stuff.
+/**
+ * Initialize print specific canvas stuff, called from init() -> paperInit().
+ *
+ * @param {Hybrids} host
+ *   Host object to operate on.
+ */
 function initPrint(host) {
   host.canvas.scope.activate();
   host.canvas.layers.overlay.activate();
@@ -76,7 +63,12 @@ function initPrint(host) {
   }
 }
 
-// Bind socket to pen update positions.
+/**
+ * Bind socket to pen update positions, called from init()->apiInit().
+ *
+ * @param {Hybrids} host
+ *   Host object to operate on.
+ */
 function bindSocketPosition(host) {
   cncserver.socket.on('pen update', ({ x, y, lastDuration: dur }) => {
     if (stepsPerMM) {
@@ -87,8 +79,16 @@ function bindSocketPosition(host) {
   });
 }
 
-// What happens when position changes from sockets?
-export function positionChangeFactory(defaultPos = { pos: [0, 0], dur: 0 }) {
+/**
+ * Position change factory for updates from socket.
+ *
+ * @param {object} [defaultPos={ pos: [0, 0], dur: 0 }]
+ *   The new next position and duration for how long it should take to get there in ms.
+ *
+ * @returns
+ *   Hybrids factory for managing host method state.
+ */
+function positionChangeFactory(defaultPos = { pos: [0, 0], dur: 0 }) {
   return {
     set: (host, value) => {
       // Are we ready to set the value?
@@ -111,6 +111,14 @@ export function positionChangeFactory(defaultPos = { pos: [0, 0], dur: 0 }) {
   };
 }
 
+/**
+ * Paper canvas init event trigger.
+ *
+ * @param {Hybrids} host
+ *   Host object to operate on.
+ * @param {object} { detail }
+ *   Detail object containing reference to the paper-canvas host object.
+ */
 function init(host, { detail }) {
   // Set the canvas
   host.canvas = detail.host;
