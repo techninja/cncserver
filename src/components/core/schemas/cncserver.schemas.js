@@ -23,8 +23,7 @@ module.exports = (cncserver) => {
         acc[e.dataPath] = [e.message];
       }
       return acc;
-    },
-      {});
+    }, {});
 
     return { fields };
   }
@@ -35,10 +34,12 @@ module.exports = (cncserver) => {
     function processNode(schemaNode, dataNode) {
       switch (schemaNode.type) {
         case 'object':
-          return processObject(schemaNode, dataNode); // eslint-disable-line no-use-before-define
+          // eslint-disable-next-line no-use-before-define
+          return processObject(schemaNode, dataNode);
 
         case 'array':
-          return processArray(schemaNode, dataNode); // eslint-disable-line no-use-before-define
+          // eslint-disable-next-line no-use-before-define
+          return processArray(schemaNode, dataNode);
 
         default:
           if (dataNode !== undefined) return dataNode;
@@ -55,6 +56,7 @@ module.exports = (cncserver) => {
       const result = {};
       // If no properties, pick the first oneOf.
       if (!schemaNode.properties) {
+        // eslint-disable-next-line no-param-reassign
         schemaNode.properties = schemaNode.oneOf[0].properties;
       }
       forOwn(schemaNode.properties, (propertySchema, propertyName) => {

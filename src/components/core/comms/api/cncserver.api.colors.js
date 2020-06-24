@@ -4,49 +4,41 @@
 const handlers = {};
 
 module.exports = (cncserver) => {
-  handlers['/v2/colors'] = (req) => {
+  handlers['/v2/colors'] = (req, res) => {
     const { drawing: { colors } } = cncserver;
 
-    if (req.route.method === 'get') { // Get current colorset and
+    // Standard post resolve for colors requests.
+    function postResolve() {
+      res.status(200).send({ set: colors.getCurrentSet(), presets: colors.presets });
+    }
+
+    // Get current colorset and presets.
+    if (req.route.method === 'get') {
       return {
         code: 200,
         body: {
-          set: colors.set,
+          set: colors.getCurrentSet(),
           presets: colors.listPresets(req.t),
         },
       };
     }
 
-    if (req.route.method === 'post') { // Set color/preset
+    // Add color/set from preset.
+    if (req.route.method === 'post') {
+      // Adding preset, only err here is 404 preset not found.
       if (req.body.preset) {
-        if (!colors.applyPreset(req.body.preset)) {
-          return {
-            code: 404,
-            body: {
-              status: `Preset with id of '${req.body.preset}' not found in preset list.`,
-              validOptions: Object.keys(colors.presets),
-            },
-          };
-        }
-      } else if (!req.body.id || !req.body.name || !req.body.color) {
-        return [
-          406,
-          'Must include valid id, name and color, see color documentation API docs',
-        ];
-      } else if (!colors.add(req.body)) {
-        return [
-          406,
-          `Color with id ${req.body.id} already exists, update it directly or change id`,
-        ];
+        colors.applyPreset(req.body.preset, req.t)
+          .then(postResolve)
+          .catch(cncserver.rest.err(res, 404));
+      } else {
+        // Validate data and add color item, or error out.
+        cncserver.schemas.validateData('color', req.body, true)
+          .then(colors.add)
+          .then(postResolve)
+          .catch(cncserver.rest.err(res));
       }
 
-      return {
-        code: 200,
-        body: {
-          set: colors.set,
-          presets: colors.presets,
-        },
-      };
+      return true; // Tell endpoint wrapper we'll handle the POST response.
     }
 
     return false;
@@ -74,13 +66,13 @@ module.exports = (cncserver) => {
     }
 
     // Update color info
-    if (req.route.method === 'put') {
+    if (req.route.method === 'patch') {
       return { code: 200, body: colors.update(colorID, req.body) };
     }
 
     // Delete color
     if (req.route.method === 'delete') {
-      colors.delete(color);
+      colors.delete(colorID);
       return { code: 200, body: { set: colors.set, presets: colors.presets } };
     }
 

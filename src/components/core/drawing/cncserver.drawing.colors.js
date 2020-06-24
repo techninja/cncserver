@@ -1,34 +1,85 @@
 /**
- * @file Code for drawing color and "tool" change management.
- */
+* @file Code for drawing color and "tool" change management.
+*/
+
+// Paper.js is all about that parameter reassignment life.
+/* eslint-disable no-param-reassign */
+
 const glob = require('glob');
 const path = require('path');
 const nc = require('nearest-color');
 const { Color } = require('paper');
 
-const defaultColor = { id: 'color0', name: 'Black', color: '#000000' };
-const ignoreWhite = { id: 'ignore', name: 'White', color: '#FFFFFF' };
+// Default assumed color.
+const defaultColor = {
+  id: 'color0',
+  name: 'Black',
+  color: '#000000',
+  weight: 0,
+  implement: {
+    type: 'inherit',
+    width: 1,
+    length: 0,
+    stiffness: 1,
+  },
+};
+
+// Default ignored white.
+const ignoreWhite = {
+  id: 'ignore',
+  name: 'White',
+  color: '#FFFFFF',
+  weight: -0.5, // Let other colors select before this.
+  implement: {
+    type: 'inherit',
+    width: 0,
+    length: 0,
+    stiffness: 1,
+  },
+};
+
+// Default internal preset.
 const defaultPreset = {
   manufacturer: 'default',
   media: 'pen',
   machineName: 'default',
   weight: -10,
+  width: 1, // 1mm implement size.
   colors: { black: '#000000' },
 };
-const colors = { id: 'drawing.colors', presets: { default: defaultPreset }, set: [] };
+
+// Final export object.
+const colors = {
+  id: 'drawing.colors',
+  presets: { default: defaultPreset },
+  set: { // Set via initial preset or colorset loader.
+    name: '', // Machine name for loading/folder storage
+    title: '', // Clean name.
+    description: '', // Description of what it is beyond title.
+    implement: {
+      type: 'pen',
+      width: 1,
+      length: 0,
+      stiffness: 1,
+    },
+    items: new Map(), // Items mapped by id.
+  },
+};
+
+// Location of internal colorset presets.
 const presetDir = path.resolve(
   global.__basedir, 'components', 'core', 'drawing', 'colorsets'
 );
 
-module.exports = (cncserver, drawing) => {
+module.exports = (cncserver) => {
   // What is this and why?
   //
   // When we draw, we assume a color: color0. It's assumed this is "black", but
   // if there's only one color in use, no color switching will occur so this
   // definition is moot unless we have more than one color in our set.
   //
-  // A "colorset" is a set of colors that can be applied to the available colors
-  // in `cncserver.drawing.colors.set`
+  // A "colorset" is a set of colors/implements that can be applied to the available items
+  // in `cncserver.drawing.colors.set.items`
 
   // Load all color presets into the presets key.
   const files = glob.sync(path.join(presetDir, '*.json'));
@@ -72,54 +123,58 @@ module.exports = (cncserver, drawing) => {
     return out;
   };
 
-  colors.getIDs = () => {
-    const items = [];
-    colors.set.forEach(({ id }) => {
-      items.push(id);
-    });
-    return items;
-  };
+  /**
+  * Get a flat list of valid colorset key ids.
+  *
+  * @returns {array}
+  *   Array of colorset item keys, empty array if none.
+  */
+  colors.getIDs = () => Array.from(colors.set.items.keys());
 
-  colors.getIndex = (findID) => {
-    let findIndex = null;
-    colors.set.forEach(({ id }, index) => {
-      if (id === findID) {
-        findIndex = index;
-      }
-    });
-    return findIndex;
-  };
 
-  colors.delete = ({ id }) => {
-    const index = colors.getIndex(id);
-    colors.set.splice(index, 1);
+  // Delete a color by id.
+  colors.delete = (id) => {
+    colors.set.items.delete(id);
 
-    if (colors.set.length === 0) {
-      colors.set.push(defaultColor);
+    if (colors.set.items.size === 0) {
+      colors.set.items.set(defaultColor.id, defaultColor);
     }
     cncserver.sockets.sendPaperUpdate();
   };
 
-  colors.add = ({ id, name, color }) => {
-    if (colors.getIndex(id) === null) {
-      colors.set.push({ id, name, color });
+  // Add a color by all of its info, appended to the end.
+  colors.add = ({ id, ...item }) => new Promise((resolve, reject) => {
+    if (!colors.getColor(id)) {
+      colors.set.items.set(id, { id, ...item });
       cncserver.sockets.sendPaperUpdate();
-      return true;
+      resolve();
+    } else {
+      reject(
+        new Error(`Color with id "${id}" already exists, update it directly or change id`)
+      );
     }
-    return null;
-  };
+  });
 
-  colors.update = (id, { name, color }) => {
-    const index = colors.getIndex(id);
-    colors.set[index] = { id, name, color };
+  // Update a color by id with all its info.
+  colors.update = (id, { name, color, size }) => {
+    colors.set.items.set(id, {
+      id, name, color, size,
+    });
     cncserver.sockets.sendPaperUpdate();
-    return colors.set[index];
+    return colors.set.items.get(id);
   };
 
-  colors.getColor = (findID) => {
-    let color = colors.getIndex(findID);
-    if (color !== null) color = colors.set[color];
-    return color;
+  // Get non-reference copy of colorset item by id.
+  colors.getColor = (id, applyInheritance = false) => {
+    const item = { ...colors.set.items.get(id) };
+    item.implement = { ...colors.set.items.get(id).implement };
+
+    // If the implementor wants it, and the item wants inheritance...
+    if (applyInheritance && item.implement.type === 'inherit') {
+      item.implement = { ...colors.set.implement };
+    }
+
+    return item;
   };
 
   /**
@@ -130,15 +185,20 @@ module.exports = (cncserver, drawing) => {
    * @returns {boolean}
    *   Null for failure, true if success.
    */
-  colors.applyPreset = (presetName) => {
-    const preset = colors.setFromPreset(presetName);
+  colors.applyPreset = (presetName, t) => new Promise((resolve, reject) => {
+    const preset = colors.setFromPreset(presetName, t);
     if (preset) {
       colors.set = preset;
       cncserver.sockets.sendPaperUpdate();
-      return true;
+      resolve();
+    } else {
+      const validOptions = Object.keys(colors.presets).join(', ');
+      reject(new Error(
+        cncserver.utils.singleLineString`Preset with id of '${presetName}' not found
+        in preset list. Must be one of [${validOptions}]`
+      ));
     }
-    return null;
-  };
+  });
 
   /**
    * Get colorset array from a preset name.
@@ -148,34 +208,66 @@ module.exports = (cncserver, drawing) => {
    * @returns {array}
    *   Colorset style array with default toolnames
    */
-  colors.setFromPreset = (presetName) => {
-    if (colors.presets[presetName]) {
-      const set = [];
-      Object.entries(colors.presets[presetName].colors).forEach(([name, color]) => {
-        set.push({
-          id: `color${set.length}`,
-          name, // cncserver.i18n.t(`colorsets:colors.${name}`),
+  colors.setFromPreset = (presetName, t = s => s) => {
+    const preset = colors.presets[presetName];
+    const { schemas } = cncserver;
+    if (preset) {
+      const presetInfo = colors.listPresets(t)[presetName];
+      const colorset = schemas.getDataDefault('colors', {
+        name: presetName,
+        title: presetInfo.name,
+        description: presetInfo.description,
+        implement: {
+          type: preset.media === 'pen' ? 'pen' : 'brush',
+          width: preset.media === 'pen' ? 1 : 3, // Size 3 crayola brush.
+          length: preset.media === 'pen' ? 0 : 10.75, // Size 3 crayola brush.
+          stiffness: preset.media === 'pen' ? 1 : 0.25, // Soft brush!
+        },
+      });
+      colorset.items = new Map();
+
+      Object.entries(preset.colors).forEach(([name, color]) => {
+        const id = `color${colorset.items.size}`;
+        colorset.items.set(id, schemas.getDataDefault('color', {
+          id,
+          name: t(`colorsets:colors.${name}`),
           color,
-        });
+        }));
       });
 
       // TODO: Allow this to be set somewhere?
-      set.push({
-        ...ignoreWhite,
-        // name: cncserver.i18n.t('colorsets:colors.white'),
-      });
-      return set;
+      colorset.items.set(ignoreWhite.id, { ...ignoreWhite });
+      return colorset;
     }
 
     return null;
   };
 
+  // Get the current colorset as a JSON ready object.
+  colors.getCurrentSet = () => ({
+    ...colors.set, items: Array.from(colors.set.items.values()),
+  });
+
   /**
    * Run at setup, allows machine specific colorset defaults.
    */
   colors.setDefault = () => {
-    const defaultSet = cncserver.binder.trigger('colors.setDefault', [defaultColor, ignoreWhite]);
-    colors.set = defaultSet;
+    // Trigger on schema loaded for schema & validation defaults.
+    cncserver.binder.bindTo('schemas.loaded', colors.id, () => {
+      let defaultSet = cncserver.schemas.getDataDefault('colors', {
+        name: 'default',
+        title: 'Default Set',
+        description: '',
+        implement: {
+          type: 'pen',
+          width: defaultPreset.width,
+        },
+      });
+      defaultSet.items = new Map([['color0', defaultColor], ['ignore', ignoreWhite]]);
+
+      defaultSet = cncserver.binder.trigger('colors.setDefault', defaultSet);
+      colors.set = defaultSet;
+    });
   };
 
   // Bind to when bot/controller is configured and setup, set default.
@@ -195,7 +287,7 @@ module.exports = (cncserver, drawing) => {
   };
 
   // Get a luminosity sorted list of colors.
-  colors.getSortedSet = () => colors.set.sort(
+  colors.getSortedSet = () => Array.from(colors.set.items.values()).sort(
     (a, b) => new Color(b.color).gray - new Color(a.color).gray
   );
 
@@ -213,31 +305,49 @@ module.exports = (cncserver, drawing) => {
   };
 
   /**
-   * Snap all the paths in the given layer to a particular color.
+   * Snap all the paths in the given layer to a particular colorset item.
    *
-   * @param {*} layer
+   * @param {paper.Layer} layer
    */
   colors.snapPathColors = (layer) => {
     // Build Nearest Color matcher
     const c = {};
-    colors.set.forEach(({ id, color }) => {
+    colors.set.items.forEach(({ id, color }) => {
       c[id] = color;
     });
 
     const nearestColor = nc.from(c);
     layer.children.forEach((group) => {
-      group.children.forEach((path) => {
-        if (path.strokeColor) {
+      group.children.forEach((item) => {
+        if (item.strokeColor) {
           // If we've never touched this path before, save the original color.
-          if (!path.data.originalColor) {
-            path.data.originalColor = path.strokeColor;
+          if (!item.data.originalColor) {
+            item.data.originalColor = item.strokeColor;
           }
 
           // Find nearest color.
-          const nearest = nearestColor(path.data.originalColor.toCSS(true));
+          const nearest = nearestColor(item.data.originalColor.toCSS(true));
+          const colorsetItem = colors.getColor(nearest.name, true);
 
-          path.data.colorID = nearest.name;
-          path.strokeColor = nearest.value;
+          // If item matched to "ignore", hide it.
+          if (nearest.name === 'ignore') {
+            item.strokeWidth = 0;
+          } else {
+            // Match colorset item effective implement size.
+            item.strokeWidth = colorsetItem.implement.width;
+
+            // Save/set new color and matched ID.
+            // IMPORTANT: This is how tool set swaps are rendered.
+            item.data.colorID = nearest.name;
+            item.strokeColor = nearest.value;
+
+            // Assume less than full opacity with brush/watercolor paintings.
+            item.opacity = colorsetItem.implement.type === 'brush' ? 0.8 : 1;
+
+            // Prevent
+            item.strokeCap = 'round';
+            item.strokeJoin = 'round';
+          }
         }
       });
     });
