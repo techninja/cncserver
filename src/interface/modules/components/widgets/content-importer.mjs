@@ -252,7 +252,7 @@ export default styles => ({
             <div class="message-body">${message}</div>
             <button-single
               onclick=${hideModal}
-              title="Ok"
+              text="Ok"
               style="warning"
               fullwidth
             ></button-single>
@@ -310,7 +310,7 @@ export default styles => ({
       </div>
       <button-single
         onclick=${addContent(mode, type)}
-        title=${`Add ${labelType(type)}`}
+        text=${`Add ${labelType(type)}`}
         style="primary"
         loading=${loading}
         icon="plus"

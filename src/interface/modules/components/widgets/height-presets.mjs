@@ -40,14 +40,14 @@ export default styles => ({
     ${styles}
     <label-title icon="arrows-alt-v">Height presets:</label-title>
     ${presets.map(
-      name => html`
+    name => html`
         <button-single
           onclick="${setHeight(name)}"
-          title="${name}"
+          text="${name}"
           active="${currentHeight === name}"
         ></button-single>
       `
-    )}
+  )}
     ${init}
   `,
 });

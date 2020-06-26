@@ -27,14 +27,14 @@ export default styles => ({
     ${styles}
 
     <button-single
-      title="Park"
+      text="Park"
       icon="home"
       style="warning"
       onclick="cncserver.api.pen.park()"
     ></button-single>
 
     <button-single
-      title="Unlock & ⇱∅"
+      text="Unlock & ⇱∅"
       icon="unlock"
       style="secondary"
       onclick="cncserver.api.motors.unlock().then(cncserver.api.pen.zero());"
