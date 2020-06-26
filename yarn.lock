@@ -2678,10 +2678,10 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
-hybrids@^4.0.3:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/hybrids/-/hybrids-4.0.3.tgz#e256289e2b118bf8a3bd134e3e626b2005ec1128"
-  integrity sha512-rOQNUaUQu4NhbO0d/L0ga1BSqh63a7AWTpGxp5v2Wjd3p3k7JTgpGa/zKyUgSK17KywFKybdWUPe5t/pCPZk6g==
+hybrids@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/hybrids/-/hybrids-4.2.1.tgz#df690f9d2247c00859dfd0def4bf6e8b21eaf98c"
+  integrity sha512-FduPhvyKaEK1gKoMrecxM7aKXHvkPq3e8wKaINFliTZcuhttstTDpWFXUXIl/doxLAZeVtRm+ptBpgU7aKLfSA==
 
 i18next-express-middleware@^1.8.2:
   version "1.8.2"

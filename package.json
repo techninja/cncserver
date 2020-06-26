@@ -1,6 +1,6 @@
 {
   "name": "cncserver",
-  "version": "3.0.0-beta1",
+  "version": "3.0.0-beta.1",
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
@@ -21,7 +21,7 @@
     "font-list": "^1.2.9",
     "glob": "^7.1.6",
     "hersheytext": "1",
-    "hybrids": "^4.0.3",
+    "hybrids": "^4.2.1",
     "i18next": "^19.0.1",
     "i18next-express-middleware": "^1.8.2",
     "i18next-node-fs-backend": "^2.1.3",
