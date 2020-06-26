@@ -17,7 +17,7 @@ module.exports = (cncserver) => {
       return {
         code: 200,
         body: {
-          set: colors.getCurrentSet(),
+          set: colors.getCurrentSet(req.t),
           presets: colors.listPresets(req.t),
         },
       };

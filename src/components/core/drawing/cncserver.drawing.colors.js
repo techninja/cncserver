@@ -244,9 +244,23 @@ module.exports = (cncserver) => {
   };
 
   // Get the current colorset as a JSON ready object.
-  colors.getCurrentSet = () => ({
-    ...colors.set, items: Array.from(colors.set.items.values()),
-  });
+  colors.getCurrentSet = (t = s => s) => {
+    const set = {
+      ...colors.set,
+      title: t(colors.set.title),
+      description: t(colors.set.description),
+      items: [],
+    };
+
+    Array.from(colors.set.items.values()).forEach(item => {
+      set.items.push({
+        ...item,
+        name: t(item.name),
+      });
+    });
+
+    return set;
+  };
 
   /**
    * Run at setup, allows machine specific colorset defaults.
