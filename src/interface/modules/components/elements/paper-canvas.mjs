@@ -109,15 +109,25 @@ function paperInit(host, { size, layers = [], workspace }) {
       if (host.layers[layer]) host.layers[layer].importJSON(json);
     });
 
-    // Add workspace overlay.
     host.layers.overlay.activate();
-    Path.Rectangle({
-      point: workspace.point,
-      size: workspace.size,
-      strokeWidth: 2,
-      strokeColor: 'red',
-      name: 'workspace',
-    });
+
+    // Add workspace overlay.
+    if (!host.workspaceOnly) {
+      Path.Rectangle({
+        point: workspace.point,
+        size: workspace.size,
+        strokeWidth: 2,
+        strokeColor: 'red',
+        name: 'workspace',
+      });
+    } else {
+      // Resize the canvas to just the workspace.
+      scope.project.view.translate([-workspace.point.x, -workspace.point.y]);
+      scope.project.view.viewSize = [
+        (size.width - workspace.point.x) * viewScale,
+        (size.height - workspace.point.y) * viewScale,
+      ];
+    }
 
     // Draw underlay grid.
     drawGrid(host.layers.underlay, workspace);
@@ -172,6 +182,7 @@ export default () => ({
   initialized: false,
   viewScale: 3, // Scale to add to the given size, sets raster volume.
   workspace: {}, // Workspace area rectangle.
+  workspaceOnly: false, // If true, visible area is limited to workspace.
   scope: {}, // Final initialized PaperScope object.
   layers: {}, // Keyed object of all Paper.Layer objects.
   scale: 1, // How much to scale points, set by resizing algo.

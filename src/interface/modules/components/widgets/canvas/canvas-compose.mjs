@@ -122,6 +122,7 @@ export default styles => ({
       name="compose"
       onpaperinit=${init}
       onlayerupdate=${bubbleUpdate}
+      workspace-only
     ></paper-canvas>
   `,
 });
