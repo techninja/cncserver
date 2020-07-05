@@ -13,7 +13,7 @@
     "nconf": "0.8.4",
     "node-ipc": "8.9.2",
     "request": "*",
-    "serialport": "6.0.4",
+    "serialport": "8.0.5",
     "socket.io": "^1.4.8"
   },
   "devDependencies": {
