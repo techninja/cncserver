@@ -144,6 +144,11 @@
   var socket = io();
   var runningTest = false;
   var $draw = $('#drawarea');
+
+  // initially set "update" function to NOOP in case we're already getting websocket messages
+  // TODO: don't start listening to websocket until the update method is actually set
+  $draw.update = function() {}; 
+
   var pen = {};
   var lastPen = {};
   var resumePen = null;
