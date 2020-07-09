@@ -74,15 +74,15 @@ module.exports = (cncserver) => {
   // Run a full wash in all the waters.
   watercolorbot.fullWash = () => {
     // TODO: Fix water0 overreach
-    cncserver.control.setTool('water0dip');
-    cncserver.control.setTool('water1');
-    cncserver.control.setTool('water2');
+    cncserver.tools.set('water0dip');
+    cncserver.tools.set('water1');
+    cncserver.tools.set('water2');
   };
 
   // Reink with a water dip.
   watercolorbot.reink = (tool = cncserver.pen.state.tool) => {
-    cncserver.control.setTool('water0dip');
-    cncserver.control.setTool(tool);
+    cncserver.tools.set('water0dip');
+    cncserver.tools.set(tool);
   };
 
   // Bind the wiggle to the toolchange event.

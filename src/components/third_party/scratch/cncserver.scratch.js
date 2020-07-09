@@ -14,7 +14,7 @@ module.exports = (cncserver) => {
     const { arg2 } = req.params;
     let { arg } = req.params;
     if (arg2 && !arg) {
-      [,, arg] = url;
+      [, , arg] = url;
     }
 
     // Do nothing if sleeping
@@ -159,12 +159,12 @@ module.exports = (cncserver) => {
 
     // If reink initialized, check distance and initiate reink!
     if (turtle.reinkDistance > 0
-        && turtle.distanceCounter > turtle.reinkDistance) {
+      && turtle.distanceCounter > turtle.reinkDistance) {
       turtle.distanceCounter = 0;
 
       // Reink procedure!
-      cncserver.control.setTool('water0dip'); //  Dip in the water
-      cncserver.control.setTool(turtle.media); // Apply the last saved media
+      cncserver.tools.set('water0dip'); //  Dip in the water
+      cncserver.tools.set(turtle.media); // Apply the last saved media
       cncserver.control.movePenAbs(turtle); //    Move back to "current" position
       cncserver.pen.setHeight('draw'); //     Set the position back to draw
     }
@@ -214,9 +214,9 @@ module.exports = (cncserver) => {
 
     // Run simple wash
     if (op === 'wash') {
-      cncserver.control.setTool('water0');
-      cncserver.control.setTool('water1');
-      cncserver.control.setTool('water2');
+      cncserver.tools.set('water0');
+      cncserver.tools.set('water1');
+      cncserver.tools.set('water2');
     }
 
     // Turn off motors and zero to park pos
@@ -246,7 +246,7 @@ module.exports = (cncserver) => {
     // Set by ID (water/color)
     if (type) {
       const tool = type + parseInt(req.params.id, 10);
-      cncserver.control.setTool(tool);
+      cncserver.tools.set(tool);
       turtle.media = tool;
     }
 
