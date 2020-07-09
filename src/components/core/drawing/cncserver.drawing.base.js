@@ -24,9 +24,15 @@ module.exports = (cncserver) => {
 
     base.project = new Project(base.size);
 
-    // Setup layers: temp, working
+    // Setup layers:
     // Whatever the last layer added was, will be default.
-    const layers = ['import', 'temp', 'stage', 'preview'];
+    const layers = [
+      'import', // Raw content, cleared on each import.
+      'temp', // Temporary working space, cleared before each operation.
+      'stage', // Project imported groups of items.
+      'tools', // Helper visualization of tool positions.
+      'preview', // Final render, item groups of lines w/color data only (no fills).
+    ];
     layers.forEach((name) => {
       base.layers[name] = new Layer({ name });
     });

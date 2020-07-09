@@ -128,7 +128,7 @@ function init(host, { detail }) {
     bindSocketPosition(host);
 
     // Tell the canvas to keep the preview layer updated.
-    host.canvas.scope.watchUpdates(['preview']);
+    host.canvas.scope.watchUpdates(['preview', 'tools']);
 
     // Get the bot size details and initialize the canvas with it.
     cncserver.api.settings.bot().then(({ data: bot }) => {
@@ -148,7 +148,7 @@ function init(host, { detail }) {
       // Initialize the paper-canvas with bot size details.
       host.canvas.scope.paperInit({
         size: new paper.Size(bot.maxAreaMM),
-        layers: ['preview'],
+        layers: ['preview', 'tools'],
         workspace,
       }).then(() => {
         initPrint(host);

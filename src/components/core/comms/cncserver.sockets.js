@@ -113,6 +113,7 @@ module.exports = (cncserver) => {
     // Send this second.
     sockets.sendPaperUpdate('preview');
     sockets.sendPaperUpdate('stage');
+    sockets.sendPaperUpdate('tools');
   };
 
   /**
