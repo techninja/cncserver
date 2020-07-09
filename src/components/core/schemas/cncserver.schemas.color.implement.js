@@ -41,5 +41,23 @@ module.exports = allowInherit => ({
       maximum: 1,
       default: 1,
     },
+    drawLength: {
+      type: 'number',
+      title: 'Draw Length',
+      description: 'Distance in mm the implement can draw before it needs to be refreshed, 0 for pens.',
+      format: 'range',
+      minimum: 0,
+      maximum: 3000,
+      default: 0,
+    },
+    handleWidth: {
+      type: 'number',
+      title: 'Handle Width',
+      description: 'Measured width of the handle, to account for center draw position offset.',
+      format: 'range',
+      minimum: 2,
+      maximum: 20,
+      default: 10,
+    },
   },
 });
