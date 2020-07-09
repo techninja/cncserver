@@ -111,73 +111,11 @@ input.switch:checked:after {
 }
 
 /* Colorset editor */
-#color-editor .select2-selection--single {
-  height: 43px;
+slide-item {
+  overflow-x: hidden;
 }
-
-.select2-container span.preset-color,
-.preset .colors {
-  display: flex;
-  align-items: center;
-}
-
-.select2-container span.preset-color b,
-.preset .colors b {
-  content: " ";
-  display: block;
-  height: 2em;
-  width: 2em;
-  border-radius: 0.6em;
-  margin: 5px;
-}
-
-/* Colorset viewer */
-.colorset-item.card b {
-  content: " ";
-  display: block;
-  width: 5.5em;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 65%, rgba(255,255,255,1) 100%);
-  margin-right: -0.3em;
-  padding-top: 0.7em;
-  padding-left: 0.4em;
-  font-family: monospace;
-  color: white;
-  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-}
-
-.colorset-item.card {
-  cursor: pointer;
-}
-
-.colorset-item.card:hover {
-  background-color: rgba(240,240,240,1);
-}
-
-.colorset-item.card a {
-  color: rgba(255,0,0,0.5);
-  transition: all 0.25s;
-}
-
-.colorset-item.card a:hover {
-  color: rgba(255,0,0,1);
-  transform: scale(1.4);
-}
-
-.colorset-item.card.active {
-  background-color: #3273dc;
-}
-
-.colorset-item.card:hover b {
-  background: linear-gradient(90deg, rgba(240,240,240,0) 65%, rgba(240,240,240,1) 100%);
-}
-
-.colorset-item.card.active b,
-.colorset-item.card.active:hover b {
-  background: linear-gradient(90deg, rgba(50,115,220,0) 65%, rgba(50,115,220,1) 100%);
-}
-
-.colorset-item.card.active .card-header-title {
-  color: white;
+slide-item h1 {
+  font-size: 5em;
 }
 
 /* Project loader */
@@ -281,3 +219,4 @@ input.switch:checked:after {
 #source-type {
   font-size: 1.2em;
 }
+

@@ -3,6 +3,8 @@
  */
 import TabGroup from './tab-group.mjs';
 import TabItem from './tab-item.mjs';
+import SlideGroup from './slide-group.mjs';
+import SlideItem from './slide-item.mjs';
 import ButtonToggle from './button-toggle.mjs';
 import ButtonSingle from './button-single.mjs';
 import LabelTitle from './label-title.mjs';
@@ -12,6 +14,8 @@ import PaperCanvas from './paper-canvas.mjs';
 export default styles => ({
   'tab-item': TabItem(styles),
   'tab-group': TabGroup(styles),
+  'slide-item': SlideItem(styles),
+  'slide-group': SlideGroup(styles),
   'button-toggle': ButtonToggle(styles),
   'button-single': ButtonSingle(styles),
   'label-title': LabelTitle(styles),
