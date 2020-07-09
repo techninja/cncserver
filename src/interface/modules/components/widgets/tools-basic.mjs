@@ -7,16 +7,13 @@ import apiInit from '/modules/utils/api-init.mjs';
 
 // Load and group all tools from the API.
 function loadTools(host) {
-  cncserver.api.tools.list().then(response => {
-    if (response.data) {
+  cncserver.api.tools.list().then(({ data: { tools: toolArray } }) => {
+    if (toolArray.length) {
       const toolGroups = {};
-      response.data.tools.forEach(tool => {
-        const td = response.data.toolData[tool];
-        const group = td.group || 'Default';
+      toolArray.forEach((tool) => {
+        const group = tool.group || 'Default';
 
-        if (!toolGroups[group]) {
-          toolGroups[group] = [];
-        }
+        if (!toolGroups[group]) toolGroups[group] = [];
 
         toolGroups[group].push(tool);
       });
@@ -62,30 +59,25 @@ export default styles => ({
     <label-title icon="toolbox">Tools:</label-title>
     <div class="field">
       ${toolGroups.map(
-        ({ name, tools }) => html`
+    ({ name, tools }) => html`
           <div>
             <h3>${name}</h3>
             <div class="tools">
-              ${tools.map(toolName => {
-                if (toolName === currentTool) {
-                  return html`
-                    <wl-button>${toolName}</wl-button>
-                  `;
-                }
-                return html`
-                  <wl-button
-                    flat
-                    inverted
-                    outlined
-                    onclick="${switchTool(toolName)}"
-                    >${toolName}</wl-button
+              ${tools.map((tool) => {
+      if (tool.id === currentTool) {
+        return html`<wl-button>${tool.id}</wl-button>`;
+      }
+      return html`
+                  <wl-button flat inverted outlined onclick="${switchTool(tool.id)}">
+                    ${tool.id}
+                  </wl-button
                   >
                 `;
-              })}
+    })}
             </div>
           </div>
         `
-      )}
+  )}
     </div>
     ${init}
   `,
