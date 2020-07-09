@@ -16,6 +16,7 @@ module.exports = {
   pen: './components/core/control/cncserver.pen',
   actualPen: './components/core/control/cncserver.actualpen',
   control: './components/core/control/cncserver.control',
+  tools: './components/core/control/cncserver.tools',
   buffer: './components/core/utils/cncserver.buffer',
   run: './components/core/utils/cncserver.run',
   scratch: './components/third_party/scratch/cncserver.scratch',

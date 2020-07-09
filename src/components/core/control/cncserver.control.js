@@ -6,69 +6,6 @@ const control = {}; // Exposed export.
 
 module.exports = (cncserver) => {
   /**
-   * Run the operation to set the current tool (and any aggregate operations
-   * required) into the buffer
-   *
-   * @param name
-   *   The machine name of the tool (as defined in the bot config file).
-   * @param index
-   *   Index for notifying user of what the manual tool change is for.
-   * @param callback
-   *   Triggered when the full tool change is to have been completed, or on
-   *   failure.
-   * @param waitForCompletion
-   *   Pass false to call callback immediately after calculation, true to
-   *   callback only after physical movement is complete.
-   *
-   * @returns {boolean}
-   *   True if success, false on failure.
-   */
-  control.setTool = (name, index = null, callback = () => {}, waitForCompletion = false) => {
-    // Get the matching tool object from the bot configuration.
-    const tool = cncserver.settings.botConf.get(`tools:${name}`);
-
-    // No tool found with that name? Augh! Run AWAY!
-    if (!tool) {
-      cncserver.run('callback', callback);
-      return false;
-    }
-
-    // For wait=false/"resume" tools, we really just resume the buffer.
-    // It should be noted, this is obviously NOT a queable toolchange.
-    // This should ONLY be called to restart the queue after a swap.
-    if (tool.wait !== undefined && tool.wait === false) {
-      cncserver.buffer.resume();
-      callback(1);
-      return true;
-    }
-
-    // Pen Up
-    cncserver.pen.setHeight('up');
-
-    // Move to the tool
-    cncserver.control.movePenAbs(tool);
-
-    // Set the tip of state pen to the tool now that the change is done.
-    cncserver.pen.forceState({ tool: name });
-
-    // Trigger the binder event.
-    cncserver.binder.trigger('tool.change', {
-      ...tool,
-      index,
-      name,
-    });
-
-    // Finish up.
-    if (waitForCompletion) { // Run inside the buffer
-      cncserver.run('callback', callback);
-    } else { // Run as soon as items have been buffered
-      callback(1);
-    }
-
-    return true;
-  };
-
-  /**
    * "Move" the pen (tip of the buffer) to an absolute point inside the maximum
    * available bot area. Includes cutoffs and sanity checks.
    *
@@ -191,8 +128,8 @@ module.exports = (cncserver) => {
       // Adjust the distance counter based on movement amount, not if we're off
       // the canvas though.
       if (cncserver.utils.penDown()
-          && !cncserver.pen.state.offCanvas
-          && cncserver.settings.bot.inWorkArea(point)) {
+        && !cncserver.pen.state.offCanvas
+        && cncserver.settings.bot.inWorkArea(point)) {
         cncserver.pen.forceState({
           distanceCounter: parseFloat(
             Number(distance) + Number(cncserver.pen.state.distanceCounter)
@@ -434,7 +371,7 @@ module.exports = (cncserver) => {
           // Do we have a tool for this colorID? If not, use manualswap.
           if (colors.doColorParsing()) {
             const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
-            control.setTool(changeTool, colorID);
+            tools.set(changeTool, colorID);
           }
 
           let pathIndex = 0;
@@ -535,7 +472,6 @@ module.exports = (cncserver) => {
 
   // Exports...
   control.exports = {
-    setTool: control.setTool,
     movePenAbs: control.movePenAbs,
   };
 
