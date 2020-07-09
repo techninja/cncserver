@@ -8,11 +8,11 @@ const accell = { id: 'drawing.accell', state: 'idle' };
 
 // Path planning Settings
 const s = {
-  accelRate: 10, // Percentage increase over distance.
-  speedMultiplyer: 0.55, // Conversion of moment length to velocity.
-  minSpeed: 5,
+  accelRate: 25, // 10, // Percentage increase over distance.
+  speedMultiplyer: 0.75, // 0.55 // Conversion of moment length to velocity.
+  minSpeed: 15, // 5,
   resolution: 0.5, // Steps to check along path by
-  maxDeflection: 5,
+  maxDeflection: 10, // 5,
   // Time before work is sent to the callback for long operations.
   splitTimeout: 2500,
 };
