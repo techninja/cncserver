@@ -10,6 +10,7 @@ import ButtonSingle from './button-single.mjs';
 import LabelTitle from './label-title.mjs';
 import MainTitle from './main-title.mjs';
 import PaperCanvas from './paper-canvas.mjs';
+import SchemaForm from './schema-form.mjs';
 
 export default styles => ({
   'tab-item': TabItem(styles),
@@ -21,4 +22,5 @@ export default styles => ({
   'label-title': LabelTitle(styles),
   'main-title': MainTitle(styles),
   'paper-canvas': PaperCanvas(),
+  'schema-form': SchemaForm(styles),
 });
