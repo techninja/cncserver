@@ -27,8 +27,10 @@ const globalJSONEditorSettings = {
  *   Host item to operate on.
  */
 function customizeForm(host) {
+  const form = host.shadowRoot.querySelector('form');
+
   // Customize the range sliders.
-  const inputs = host.shadowRoot.querySelectorAll('input[type=range]');
+  const inputs = form.querySelectorAll('input[type=range]');
   inputs.forEach((item) => {
     // Initial build setup value pulled from initial output.
     const out = item.parentNode.querySelector('output');
@@ -59,6 +61,17 @@ function customizeForm(host) {
     // Insert it above the slider.
     item.parentNode.insertBefore(num, item);
   });
+
+  // Hide items if the host requests it.
+  if (host.hidePaths) {
+    const paths = host.hidePaths.split(',');
+    const pathItems = form.querySelectorAll('[data-schemapath]');
+    pathItems.forEach((item) => {
+      if (paths.includes(item.getAttribute('data-schemapath'))) {
+        item.style.display = 'none';
+      }
+    });
+  }
 }
 
 /**
@@ -338,6 +351,9 @@ export default styles => ({
 
   // Whether setting data will append to existing data. False will apply to default data.
   appendData: false,
+
+  // Comma separated list of schema paths to hide.
+  hidePaths: '',
 
   // Style selector and pixel height of "content area".
   contentSelector: '',
