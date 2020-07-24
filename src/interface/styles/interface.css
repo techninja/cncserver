@@ -149,47 +149,6 @@ slide-item h1 {
   border: 2px solid blueviolet;
 }
 
-/* Render Settings */
-#content-select {
-  font-size: 1.5em;
-  font-weight: bold;
-  width: 100%;
-  margin-bottom: 1em;
-}
-
-#settings-forms .tab-pane > div > div > h3.card-title {
-  display: none !important;
-}
-
-#settings-forms > form > div > div.card-body {
-  padding: 0;
-  border-width: 0;
-}
-
-#settings-forms > form > div div.card-body {
-  margin-bottom: 0 !important;
-}
-
-#settings-forms > form > div > div.card-body > div.card > div.card-body {
-  padding: 0;
-  max-height: 200px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-#settings-forms > form > div > div.card-body.bg-light {
-  background-color: transparent !important;
-  border: 0 none;
-  box-shadow: none;
-  margin: 0 !important;
-}
-
-#settings-forms span.btn-group,
-#settings-forms #settings > div > h3,
-#settings-forms #settings > div > p {
-  display: none !important;
-}
-
 /* Content Importer */
 #content-importer {
   position: relative;
