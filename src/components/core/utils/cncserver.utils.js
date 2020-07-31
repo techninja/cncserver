@@ -16,15 +16,16 @@ module.exports = (cncserver) => {
   /**
    * Sanity check a given coordinate within the absolute area.
    * @param  {object} point
-   *   The point to be checked and operated on by reference.
-   *    // TODO: It's an antipattern to operate by ref, refactor.
-   * @return {null}
+   *   The point in absolute steps to be checked and operated on by reference.
+   *
+   * @return {object}
+   *   The final sanitized coordinate.
    */
   utils.sanityCheckAbsoluteCoord = ({ x, y }) => {
     const { maxArea } = cncserver.settings.bot;
     return {
-      x: Math.max(0, x > maxArea.width ? maxArea.width : x),
-      y: Math.max(0, y > maxArea.height ? maxArea.height : y),
+      x: Math.round(Math.max(0, x > maxArea.width ? maxArea.width : x)),
+      y: Math.round(Math.max(0, y > maxArea.height ? maxArea.height : y)),
     };
   };
 
@@ -79,7 +80,7 @@ module.exports = (cncserver) => {
     const botHome = utils.getDir(path.resolve(home, cncserver.settings.gConf.get('botType')));
 
     // Home base dir? or bot specific?
-    if (['projects'].includes(name)) {
+    if (['projects', 'colorsets'].includes(name)) {
       return utils.getDir(path.resolve(botHome, name));
     }
     return utils.getDir(path.resolve(home, name));

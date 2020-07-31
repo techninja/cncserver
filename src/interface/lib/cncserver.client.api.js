@@ -169,6 +169,7 @@ cncserver.api = {
     add: data => _post('colors', { data }),
     save: data => _put(`colors/${data.id}`, { data }),
     delete: id => _delete(`colors/${id}`),
+    schema: () => _options('colors'),
   },
   pen: {
     /**

@@ -15,6 +15,7 @@ module.exports = (cncserver) => {
     'path',
     'color',
     'colors',
+    'tools',
   ];
   const settingsKeys = ['fill', 'stroke', 'text', 'vectorize', 'path'];
 

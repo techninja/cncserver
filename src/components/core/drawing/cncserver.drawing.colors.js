@@ -5,12 +5,13 @@
 // Paper.js is all about that parameter reassignment life.
 /* eslint-disable no-param-reassign */
 
+const fs = require('fs');
 const glob = require('glob');
 const path = require('path');
 const nc = require('nearest-color');
 const { Color } = require('paper');
 
-// Default assumed color.
+// Default assumed color (pen).
 const defaultColor = {
   id: 'color0',
   name: 'Black',
@@ -21,6 +22,7 @@ const defaultColor = {
     width: 1,
     length: 0,
     stiffness: 1,
+    drawLength: 0,
   },
 };
 
@@ -35,8 +37,24 @@ const ignoreWhite = {
     width: 0,
     length: 0,
     stiffness: 1,
+    drawLength: 0,
   },
 };
+
+// Colorset Tool positions for Crayola default set.
+const crayolaPositions = [14.5, 41.5, 66, 91, 116.5, 143, 169, 194];
+const crayolaDefaultTools = crayolaPositions.map((y, index) => ({
+  id: `color${index}`,
+  title: `Color pan position ${index + 1}`,
+  x: 18.5,
+  y,
+  width: 27,
+  height: 19,
+  radius: 15,
+  parent: 'pan',
+  group: 'Colors',
+  position: 'center',
+}));
 
 // Default internal preset.
 const defaultPreset = {
@@ -61,8 +79,11 @@ const colors = {
       width: 1,
       length: 0,
       stiffness: 1,
+      drawLength: 0,
+      handleWidth: 10,
     },
     items: new Map(), // Items mapped by id.
+    tools: [], // Tools that get added with parentage.
   },
 };
 
@@ -155,6 +176,13 @@ module.exports = (cncserver) => {
     }
   });
 
+
+  // Get a renderable color from a tool name. 'transparent' if no match.
+  colors.getToolColor = (name) => {
+    const item = colors.set.items.get(name);
+    return item ? item.color : 'transparent';
+  };
+
   // Update a color by id with all its info.
   colors.update = (id, { name, color, size }) => {
     colors.set.items.set(id, {
@@ -190,6 +218,9 @@ module.exports = (cncserver) => {
     if (preset) {
       colors.set = preset;
       cncserver.sockets.sendPaperUpdate();
+
+      // Trigger tools.update as colorset based tools update the list.
+      cncserver.binder.trigger('tools.update');
       resolve();
     } else {
       const validOptions = Object.keys(colors.presets).join(', ');
@@ -212,20 +243,29 @@ module.exports = (cncserver) => {
     const preset = colors.presets[presetName];
     const { schemas } = cncserver;
     if (preset) {
+      const isPen = preset.media === 'pen';
       const presetInfo = colors.listPresets(t)[presetName];
       const colorset = schemas.getDataDefault('colors', {
         name: presetName,
         title: presetInfo.name,
         description: presetInfo.description,
         implement: {
-          type: preset.media === 'pen' ? 'pen' : 'brush',
-          width: preset.media === 'pen' ? 1 : 3, // Size 3 crayola brush.
-          length: preset.media === 'pen' ? 0 : 10.75, // Size 3 crayola brush.
-          stiffness: preset.media === 'pen' ? 1 : 0.25, // Soft brush!
+          type: isPen ? 'pen' : 'brush',
+          width: isPen ? 1 : 3, // Size 3 crayola brush.
+          length: isPen ? 0 : 10.75, // Size 3 crayola brush.
+          stiffness: isPen ? 1 : 0.25, // Soft brush!
+          drawLength: isPen ? 0 : 482, // 48.2cm medium brush distance.
+          handleWidth: isPen ? 10 : 4.5, // Size 3 crayola brush handle.
         },
       });
-      colorset.items = new Map();
 
+      // Load in the default expected tools for watercolors if not a pen.
+      if (!isPen) {
+        colorset.tools = [...crayolaDefaultTools];
+      }
+
+      // Build colorset item map. No implement overrides needed.
+      colorset.items = new Map();
       Object.entries(preset.colors).forEach(([name, color]) => {
         const id = `color${colorset.items.size}`;
         colorset.items.set(id, schemas.getDataDefault('color', {
@@ -241,6 +281,24 @@ module.exports = (cncserver) => {
     }
 
     return null;
+  };
+
+  // Load custom from given machine name.
+  colors.loadCustom = (name) => {
+
+  };
+
+  // Get the path to the json file for a given custom colorset.
+  colors.getCustomSetPath = (name) => {
+    const sets = cncserver.utils.getUserDir('colorsets');
+    return path.join(sets, `${name}.json`);
+  };
+
+  // Save custom from set
+  colors.saveCustom = () => {
+    const dest = colors.getCustomSetPath(colors.set.name);
+    // We should really have a version number in here.
+    fs.writeFileSync(dest, JSON.stringify(colors.getCurrentSet(), null, 2));
   };
 
   // Get the current colorset as a JSON ready object.
@@ -281,6 +339,7 @@ module.exports = (cncserver) => {
 
       defaultSet = cncserver.binder.trigger('colors.setDefault', defaultSet);
       colors.set = defaultSet;
+      cncserver.binder.trigger('tools.update');
     });
   };
 

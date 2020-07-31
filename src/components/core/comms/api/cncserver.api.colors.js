@@ -23,9 +23,9 @@ module.exports = (cncserver) => {
       };
     }
 
-    // Add color/set from preset.
+    // Add color, or replace set from preset or custom set.
     if (req.route.method === 'post') {
-      // Adding preset, only err here is 404 preset not found.
+      // Set via preset, only err here is 404 preset not found.
       if (req.body.preset) {
         colors.applyPreset(req.body.preset, req.t)
           .then(postResolve)
@@ -39,6 +39,37 @@ module.exports = (cncserver) => {
       }
 
       return true; // Tell endpoint wrapper we'll handle the POST response.
+    }
+
+    // Change set options directly.
+    if (req.route.method === 'patch') {
+      // If item data is attempted to be changed here, give a specific message for it.
+      if (req.body.items) {
+        cncserver.rest.err(res, 406)(
+          new Error('Patching the colors endpoint can only edit the current set details, not individual color items. Patch to /v2/colors/[ID].')
+        );
+      }
+
+      // TODO:
+      // - Colorsets need to be able to define size and relative position of tools
+      // - Provide templates for position and size based off crayola.
+      // - Colorsets items should allow for default selection criteria, and selectable
+      // options like: Color proximity (with weight), Transparency range
+      // - Re-ink distance for each implement
+      // - Machine defines a place for a holder to go relative to movable area.
+      // - Probably don't have to remove tools, but they make less sense here.
+      // - Edit below to update the set only
+      // - Get all of it to save to JSON
+      // - Load from JSON based on name (with reference in project)
+      // - As long as you save everything, you can take stuff away from users.
+
+      // Validate data then edit.
+      cncserver.schemas.validateData('colors', req.body, true)
+        .then(colors.updateSet)
+        .then(postResolve)
+        .catch(cncserver.rest.err(res));
+
+      return true; // Tell endpoint wrapper we'll handle the PATCH response.
     }
 
     return false;
