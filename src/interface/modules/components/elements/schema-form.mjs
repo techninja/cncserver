@@ -159,7 +159,7 @@ function dataChange(host) {
     // Are there any actual changes?
     if (Object.keys(diffObject).length) {
       // Dispatch change with changed values.
-      dispatch(host, 'change', { detail: { diffObject } });
+      dispatch(host, 'change', { detail: { diffObject, data: host.editor.data.current } });
       if (host.debug) console.log('Diff', diffObject);
       host.editor.data.last = { ...host.editor.data.current };
     } else if (host.debug) {
