@@ -33,14 +33,49 @@
             <tab-item text="Project" icon="project-diagram" name="basic">
               <project-loader></project-loader>
             </tab-item>
-            <tab-item text="Content" icon="vector-square" name="advanced" active>
+            <tab-item text="Content" icon="vector-square" name="advanced">
               <content-importer></content-importer>
             </tab-item>
             <tab-item text="Settings" icon="cogs" name="settings">
               <draw-settings></draw-settings>
             </tab-item>
-            <tab-item text="Settings" icon="cogs" name="settings">
-              <draw-settings></draw-settings>
+            <tab-item text="Color Set" icon="palette" name="colorset" active>
+              <tool-implement
+                type="brush"
+                handle-width="4.9"
+                width="3.6"
+                length="11.8"
+                stiffness="0.75"
+                color="#FF0000"
+              ></tool-implement>
+              <tool-implement
+                type="pen"
+                handle-width="12.32"
+                width="1"
+                length="7.6"
+                stiffness="1"
+                handle-colors="#eee"
+                color="#000000"
+              ></tool-implement>
+              <tool-implement
+                type="brush"
+                handle-width="5.7"
+                width="4.36"
+                length="15.2"
+                stiffness="0.6"
+                handle-colors="#f5e900,#120b8c"
+                color="#0000EE"
+              ></tool-implement>
+              <tool-implement
+                type="brush"
+                handle-width="9.5"
+                width="11"
+                length="23.4"
+                stiffness="0.3"
+                handle-colors="#000000,#eeeeee"
+                color="#0000EE"
+              ></tool-implement>
+              <colorset-editor></colorset-editor>
             </tab-item>
           </tab-group>
         </section>
@@ -60,8 +95,8 @@
               <tools-basic></tools-basic>
               <height-presets></height-presets>
             </tab-item>
-            <tab-item text="Advanced" icon="vials" name="advanced" active>
-
+            <tab-item text="Advanced" icon="vials" name="advanced">
+              <h2>TODO</h2>
             </tab-item>
             <tab-item text="Settings" icon="cogs" name="settings">
               <height-settings></height-settings>

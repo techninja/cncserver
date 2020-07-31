@@ -11,6 +11,7 @@ import LabelTitle from './label-title.mjs';
 import MainTitle from './main-title.mjs';
 import PaperCanvas from './paper-canvas.mjs';
 import SchemaForm from './schema-form.mjs';
+import ToolImplement from './tool-implement.mjs';
 
 export default styles => ({
   'tab-item': TabItem(styles),
@@ -23,4 +24,5 @@ export default styles => ({
   'main-title': MainTitle(styles),
   'paper-canvas': PaperCanvas(),
   'schema-form': SchemaForm(styles),
+  'tool-implement': ToolImplement(styles),
 });
