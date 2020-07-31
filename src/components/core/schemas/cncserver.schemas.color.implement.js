@@ -6,6 +6,7 @@
 module.exports = allowInherit => ({
   type: 'object',
   title: 'Implement Details',
+  required: ['type'],
   properties: {
     type: {
       type: 'string',
@@ -58,6 +59,16 @@ module.exports = allowInherit => ({
       minimum: 2,
       maximum: 20,
       default: 10,
+    },
+    handleColors: {
+      type: 'array',
+      title: 'Handle Color(s)',
+      description: 'Color of the handle for the implement, helps with physical user selection.',
+      items: {
+        type: 'string',
+        format: 'color',
+        title: 'Color',
+      },
     },
   },
 });
