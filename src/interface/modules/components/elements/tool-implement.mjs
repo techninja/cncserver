@@ -3,211 +3,7 @@
  */
 import { html, svg } from '/modules/hybrids.js';
 
-function renderImplement(host) {
-  if (!host || !host.shadowRoot) return;
-  const canvas = host.shadowRoot.querySelector('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const {
-    scale,
-    handleHeight,
-    bracketSize,
-    bracketNotch,
-    bracketPadding,
-
-    // Implement specifics.
-    handleWidth,
-    width,
-    length,
-    type,
-    stiffness,
-    color,
-  } = host;
-
-  const handleColors = host.handleColors.split(',');
-
-  let x;
-  let y;
-
-  const handle = {
-    left: 40,
-    top: 30,
-    width: handleWidth * scale,
-    height: handleHeight,
-  };
-
-  const brush = {
-    width: width * scale,
-    height: length * scale,
-  };
-
-  brush.top = handle.top + handle.height;
-  brush.left = (handle.left + (handle.width / 2)) - brush.width / 2;
-
-  // Draw Handle: |
-  if (handleColors.length > 0) {
-    const height = handle.height / handleColors.length;
-    handleColors.forEach((cColor, index) => {
-      ctx.fillStyle = cColor;
-      ctx.fillRect(handle.left, handle.top + height * index, handle.width, height);
-    });
-  } else {
-    ctx.fillStyle = color;
-    ctx.fillRect(handle.left, handle.top, handle.width, handle.height);
-  }
-
-  // Round and specular highlight.
-  const penColor = ctx.createLinearGradient(handle.left, 0, handle.left + handle.width, 0);
-  penColor.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-  penColor.addColorStop(0.6, 'rgba(0, 0, 0, 0.3)');
-  penColor.addColorStop(0.7, 'rgba(255, 255, 255, 1)');
-  penColor.addColorStop(0.8, 'rgba(0, 0, 0, 0.1)');
-  penColor.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = penColor;
-  ctx.fillRect(handle.left, handle.top, handle.width, handle.height);
-
-  // Pen or brush.
-  const center = brush.left + brush.width / 2;
-  const largerWidth = brush.width > handle.width ? brush.width / 2 : handle.width / 2;
-  const minLength = type === 'pen' ? 5 : 2;
-  const drawLength = length < minLength ? minLength * scale : length * scale;
-  if (type === 'pen') {
-    // Draw a trapezoidal representation of the pen.
-    y = handle.top + handle.height;
-    ctx.beginPath();
-    ctx.moveTo(handle.left, y);
-    ctx.lineTo(handle.left + handle.width, y);
-    ctx.lineTo(center + ((width * scale) / 2), y + drawLength);
-    ctx.lineTo(center - ((width * scale) / 2), y + drawLength);
-    ctx.fillStyle = color;
-    ctx.fill();
-  } else {
-    // Draw Brush: /
-    // - We know where it starts (center bottom of handle)
-    // - It should end the curve in a ratio from handle left less the brush width
-    const curve = 1 - stiffness;
-    const bendMax = 20;
-    brush.height = drawLength - (curve * bendMax);
-    //brush.height -= curve * bendMax;
-    const maxDeflection = center - (handle.left - (width * scale));
-    const deflectionLength = maxDeflection * curve;
-    const curveEnd = center - deflectionLength;
-
-    ctx.beginPath();
-    ctx.moveTo(center, brush.top);
-    ctx.bezierCurveTo(
-      center, brush.top + (maxDeflection - deflectionLength), // First Control (Start)
-      curveEnd + deflectionLength, brush.top + brush.height - (stiffness * bendMax), // Second Control (End)
-      curveEnd, brush.top + brush.height // End Point.
-    );
-    ctx.lineWidth = width * scale;
-
-    const brushColor = ctx.createLinearGradient(center, brush.top, curveEnd, brush.top + brush.height);
-    brushColor.addColorStop('0', 'gray');
-    brushColor.addColorStop('1', color);
-    ctx.strokeStyle = brushColor;
-    ctx.stroke();
-  }
-
-  // Draw Measures (1px black)
-  ctx.fillStyle = 'black';
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'black';
-
-  // Only draw left and right measures with brush/other.
-  if (type !== 'pen') {
-    // Draw left measure: [
-    x = center - largerWidth - bracketPadding;
-    ctx.beginPath();
-    ctx.moveTo(x, brush.top);
-    ctx.lineTo(x - bracketSize, brush.top);
-    ctx.lineTo(x - bracketSize, brush.top + brush.height);
-    ctx.lineTo(x, brush.top + brush.height);
-
-    // Notch.
-    ctx.moveTo(x - bracketSize, brush.top + (brush.height / 2));
-    ctx.lineTo(x - bracketSize - bracketNotch, brush.top + (brush.height / 2));
-    ctx.textAlign = 'right';
-    ctx.fillText(
-      `${Math.round(stiffness * 100)}%`,
-      x - bracketSize - bracketNotch - 2, brush.top + (brush.height / 2) + 3.5
-    );
-    ctx.stroke();
-
-    // Draw right measure: ]
-    x = center + largerWidth + bracketPadding;
-    ctx.beginPath();
-    ctx.moveTo(x, brush.top);
-    ctx.lineTo(x + bracketSize, brush.top);
-    ctx.lineTo(x + bracketSize, brush.top + brush.height);
-    ctx.lineTo(x, brush.top + brush.height);
-
-    // Notch.
-    ctx.moveTo(x + bracketSize, brush.top + (brush.height / 2));
-    ctx.lineTo(x + bracketSize + bracketNotch, brush.top + (brush.height / 2));
-    ctx.textAlign = 'left';
-    ctx.fillText(
-      `${length}mm`,
-      x + bracketSize + bracketNotch + 2, brush.top + (brush.height / 2) + 3.5
-    );
-
-    ctx.stroke();
-  }
-
-  // Draw top measure bracket:
-  y = handle.top - bracketPadding;
-  ctx.beginPath();
-  ctx.moveTo(handle.left, y);
-  ctx.lineTo(handle.left, y - bracketSize);
-  ctx.lineTo(handle.left + handle.width, y - bracketSize);
-  ctx.lineTo(handle.left + handle.width, y);
-
-  // Notch.
-  ctx.moveTo(handle.left + (handle.width / 2), y - bracketSize);
-  ctx.lineTo(handle.left + (handle.width / 2), y - bracketSize - bracketNotch);
-  ctx.textAlign = 'center';
-  ctx.fillText(
-    `${handleWidth}mm`,
-    handle.left + (handle.width / 2), y - bracketSize - bracketNotch - 3.5
-  );
-  ctx.stroke();
-
-  // Draw bottom measure bracket:
-  y = brush.top + drawLength + bracketPadding;
-  ctx.beginPath();
-  ctx.moveTo(brush.left, y);
-  ctx.lineTo(brush.left, y + bracketSize);
-  ctx.lineTo(brush.left + brush.width, y + bracketSize);
-  ctx.lineTo(brush.left + brush.width, y);
-
-  // Notch.
-  ctx.moveTo(brush.left + (brush.width / 2), y + bracketSize);
-  ctx.lineTo(brush.left + (brush.width / 2), y + bracketSize + bracketNotch);
-  ctx.textAlign = 'center';
-  ctx.fillText(
-    `${width}mm`,
-    brush.left + (brush.width / 2), y + bracketSize + bracketNotch + 9
-  );
-  ctx.stroke();
-}
-
-function valueObserveFactory(defValue) {
-  return {
-    set: (host, value) => {
-      // console.log('Value set...', value);
-      renderImplement(host);
-      return value;
-    },
-    connect: (host, key) => {
-      if (host[key] === undefined) {
-        host[key] = defValue;
-      }
-    },
-  };
-}
-
-export default styles => ({
+export default () => ({
   // UI configuration specifics.
   scale: 4.5,
   handleHeight: 40,
@@ -241,7 +37,7 @@ export default styles => ({
     color,
   }) => {
     const handle = {
-      left: 40,
+      left: 50,
       top: 30,
       width: handleWidth * scale,
       height: handleHeight,
@@ -250,6 +46,8 @@ export default styles => ({
     const brush = {
       width: width * scale,
       height: length * scale,
+      top: handle.top + handle.height,
+      left: handle.left + handle.width / 2 - (width * scale) / 2,
     };
 
     const center = brush.left + brush.width / 2;
@@ -257,16 +55,54 @@ export default styles => ({
     const minLength = type === 'pen' ? 5 : 2;
     const drawLength = length < minLength ? minLength * scale : length * scale;
 
+
+    const curve = 1 - stiffness;
+    const bendMax = 20;
+    const maxDeflection = handle.left - (width * scale);
+    const deflectionLength = maxDeflection * curve;
+    const curveEnd = center - deflectionLength;
+
+    let brushShape = '';
+    let y;
+    let x;
+
+    if (type === 'pen') {
+      // Draw a trapezoidal representation of the pen.
+      brushShape = `
+        M0,0
+        l${handle.width},0
+        l${-handle.width / 2 + (width * scale) / 2},${drawLength}
+        l${-width * scale},0
+      `;
+    } else {
+      brush.height = drawLength - (curve * bendMax);
+
+      // Draw a brush shape.
+      brushShape = `
+        M${handle.width / 2},0
+        c
+          0, ${maxDeflection - deflectionLength}
+          ${deflectionLength}, ${brush.height - (stiffness * bendMax)}
+          ${-handle.width / 2 + deflectionLength}, ${brush.height}
+      `;
+    }
+
     return html`
-    ${styles}
-    <style> :host { display: inline-block; } </style>
-    <svg width="130" height="180">${svg`
+      <style>
+        :host {
+          display: inline-block;
+        }
+      </style>
+      <svg width="160" height="220">
+        ${svg`
       <style>
         .bracket { stroke:black; fill:none; }
         .label { font: 10px sans-serif; }
         .center { text-anchor: middle; }
         .left { text-anchor: end; }
         .right { text-anchor: start; }
+        .other, .brush { stroke: ${color}; stroke-width: ${width * scale}; fill:none;}
+        .pen { stroke: none; fill: ${color} }
       </style>
       <defs>
         <linearGradient id="handle" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -277,8 +113,15 @@ export default styles => ({
           <stop offset="100%" style="stop-color:rgba(0, 0, 0, 0)" />
         </linearGradient>
       </defs>
-      <g name="handle-width-bracket" transform="translate(${handle.left}, ${handle.top - bracketPadding})">
-        <text class="label center" x="${handle.width / 2}" y="${-bracketSize - bracketPadding * 2}">${handleWidth}mm</text>
+      <g name="handle-width-bracket"
+        transform="translate(${handle.left}, ${handle.top - bracketPadding})
+      ">
+        <text class="label center"
+          x="${handle.width / 2}"
+          y="${-bracketSize - bracketPadding * 2}"
+        >
+          ${handleWidth}mm
+        </text>
         <path class="bracket" d="
           M0,0
           l0,${-bracketSize}
@@ -289,27 +132,77 @@ export default styles => ({
         "/>
       </g>
       <g name="handle" transform="translate(${handle.left}, ${handle.top})">
-        <rect name="handle-color" width="${handleWidth * scale}" height="${handleHeight}" style="fill:${color}" />
-        <rect name="handle-overlay" width="${handleWidth * scale}" height="${handleHeight}" style="fill:url(#handle)" />
+        <rect name="handle-color"
+          width=${handleWidth * scale}
+          height=${handleHeight}
+          style="fill:${color}"
+        />
+        <rect name="handle-overlay"
+          width=${handleWidth * scale}
+          height=${handleHeight}
+          style="fill:url(#handle)"
+        />
       </g>
+      <path name="brush" class=${type} d=${brushShape}
+        transform="translate(${handle.left}, ${brush.top})"
+      />
       ${type !== 'pen' && svg`
-      <g name="brush-stiffness-bracket" transform="translate(${handle.left}, ${handle.top})">
+      <g name="brush-stiffness-bracket"
+        transform="translate(
+          ${center - largerWidth - bracketPadding}, ${brush.top}
+        )">
+        <text class="label left"
+          x="${-bracketPadding * 2 - bracketNotch}"
+          y="${brush.height / 2 + 4}">
+            ${Math.round(stiffness * 100)}%
+        </text>
         <path class="bracket" d="
           M0,0
+          l${-bracketSize},0
+          l0,${brush.height}
+          l${bracketSize},0
+          m${-bracketSize},${-brush.height / 2}
+          l${-bracketNotch},0
         "/>
       </g>
-      <g name="brush-length-bracket" transform="translate(${handle.left}, ${handle.top})">
+      <g name="brush-length-bracket"
+        transform="translate(
+          ${center + largerWidth + bracketPadding}, ${brush.top}
+        )"
+      >
+        <text class="label right"
+          x="${bracketSize + bracketNotch * 2}"
+          y="${brush.height / 2 + 3}"
+        >
+          ${length}mm
+        </text>
         <path class="bracket" d="
-          M
+          M0,0
+          l${bracketSize},0
+          l0,${brush.height}
+          l${-bracketSize},0
+          m${bracketSize},${-brush.height / 2}
+          l${bracketNotch},0
         "/>
-      </g>
-      `}
-      <g name="brush-width-bracket" transform="translate(${handle.left}, ${handle.top})">
+      </g>`}
+      <g name="brush-width-bracket" transform="translate(${brush.left}, ${brush.top + brush.height + bracketPadding})">
+        <text class="label center"
+          x="${brush.width / 2}"
+          y="${bracketSize + bracketPadding * 3}"
+        >
+          ${width}mm
+        </text>
         <path class="bracket" d="
-          M
+          M0,0
+          l0,${bracketSize}
+          l${brush.width},0
+          l0,${-bracketSize}
+          m${-brush.width / 2},${bracketSize}
+          l0,${bracketNotch}
         "/>
       </g>
-    `}</svg>
-  `;
+    `}
+      </svg>
+    `;
   },
 });
