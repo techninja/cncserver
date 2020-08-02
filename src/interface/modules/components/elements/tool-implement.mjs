@@ -83,7 +83,7 @@ export default () => ({
 
       // Relative position of tip from top/center.
       const tip = {
-        x: -(handle.width / 2) * curve,
+        x: -(handle.width / 2) * curve - 0.1,
         y: brush.height,
       };
 
