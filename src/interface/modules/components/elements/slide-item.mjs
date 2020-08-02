@@ -13,6 +13,10 @@ export default styles => ({
   render: ({ active }) => html`
     ${styles}
     <style>
+      :host {
+        overflow-x: hidden;
+        padding: 0.75em;
+      }
       h1 {
         font-size: 5em;
       }
