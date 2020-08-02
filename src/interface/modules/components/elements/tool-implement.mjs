@@ -54,17 +54,12 @@ export default () => ({
     const largerWidth = brush.width > handle.width ? brush.width / 2 : handle.width / 2;
     const minLength = type === 'pen' ? 5 : 2;
     const drawLength = length < minLength ? minLength * scale : length * scale;
-
+    handleColors = handleColors.split(',');
 
     const curve = 1 - stiffness;
-    const bendMax = 20;
-    const maxDeflection = handle.left - (width * scale);
-    const deflectionLength = maxDeflection * curve;
-    const curveEnd = center - deflectionLength;
+    const bendMax = 15;
 
     let brushShape = '';
-    let y;
-    let x;
 
     if (type === 'pen') {
       // Draw a trapezoidal representation of the pen.
@@ -77,15 +72,79 @@ export default () => ({
     } else {
       brush.height = drawLength - (curve * bendMax);
 
+      // Position of start control point.
+      const startBend = {
+        // No x offset ensures straight down bristles.
+        x: 0,
+
+        // Pushes bristles down by this amount.
+        y: ((length * scale) / 2) * curve,
+      };
+
+      // Relative position of tip from top/center.
+      const tip = {
+        x: -(handle.width / 2) * curve,
+        y: brush.height,
+      };
+
+      // Position of end control point that controls bezier bend.
+      const bend = {
+        // Position of tip, bent to the right depending on stiffness.
+        x: tip.x + ((length * scale) / 2) * curve,
+
+        // Position of tip, less proportional to the curve to angle properly.
+        y: tip.y - (((length * scale) / 4) * stiffness),
+      };
+
       // Draw a brush shape.
       brushShape = `
         M${handle.width / 2},0
         c
-          0, ${maxDeflection - deflectionLength}
-          ${deflectionLength}, ${brush.height - (stiffness * bendMax)}
-          ${-handle.width / 2 + deflectionLength}, ${brush.height}
+          ${startBend.x}, ${startBend.y}
+          ${bend.x}, ${bend.y}
+          ${tip.x}, ${tip.y}
       `;
     }
+
+    // Setup the bracket attribute values.
+    const brackets = {
+      top: {
+        transform: `translate(${handle.left}, ${handle.top - bracketPadding})`,
+        d: `M0,0
+            l0,${-bracketSize}
+            l${handle.width},0
+            l0,${bracketSize}
+            m${-handle.width / 2},${-bracketSize}
+            l0,${-bracketNotch}`,
+      },
+      left: {
+        transform: `translate(${center - largerWidth - bracketPadding}, ${brush.top})`,
+        d: `M0,0
+            l${-bracketSize},0
+            l0,${brush.height}
+            l${bracketSize},0
+            m${-bracketSize},${-brush.height / 2}
+            l${-bracketNotch},0`,
+      },
+      right: {
+        transform: `translate(${center + largerWidth + bracketPadding}, ${brush.top})`,
+        d: `M0,0
+            l${bracketSize},0
+            l0,${brush.height}
+            l${-bracketSize},0
+            m${bracketSize},${-brush.height / 2}
+            l${bracketNotch},0`,
+      },
+      bottom: {
+        transform: `translate(${brush.left}, ${brush.top + drawLength + bracketPadding})`,
+        d: `M0,0
+            l0,${bracketSize}
+            l${brush.width},0
+            l0,${-bracketSize}
+            m${-brush.width / 2},${bracketSize}
+            l0,${bracketNotch}`,
+      },
+    };
 
     return html`
       <style>
@@ -101,7 +160,7 @@ export default () => ({
         .center { text-anchor: middle; }
         .left { text-anchor: end; }
         .right { text-anchor: start; }
-        .other, .brush { stroke: ${color}; stroke-width: ${width * scale}; fill:none;}
+        .other, .brush { stroke: url(#brush); stroke-width: ${width * scale}; fill:none;}
         .pen { stroke: none; fill: ${color} }
       </style>
       <defs>
@@ -112,31 +171,29 @@ export default () => ({
           <stop offset="80%" style="stop-color:rgba(0, 0, 0, 0.1)" />
           <stop offset="100%" style="stop-color:rgba(0, 0, 0, 0)" />
         </linearGradient>
+        <linearGradient id="brush" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0" style="stop-color:gray" />
+          <stop offset="100%" style="stop-color:${color}" />
+        </linearGradient>
       </defs>
-      <g name="handle-width-bracket"
-        transform="translate(${handle.left}, ${handle.top - bracketPadding})
-      ">
+      <g name="handle-width-bracket" transform="${brackets.top.transform}">
         <text class="label center"
           x="${handle.width / 2}"
-          y="${-bracketSize - bracketPadding * 2}"
+          y="${-bracketSize - bracketPadding - 2}"
         >
           ${handleWidth}mm
         </text>
-        <path class="bracket" d="
-          M0,0
-          l0,${-bracketSize}
-          l${handle.width},0
-          l0,${bracketSize}
-          m${-handle.width / 2},${-bracketSize}
-          l0,${-bracketNotch}
-        "/>
+        <path class="bracket" d="${brackets.top.d}"/>
       </g>
       <g name="handle" transform="translate(${handle.left}, ${handle.top})">
+        ${handleColors.map((handleColor, index) => svg`
         <rect name="handle-color"
           width=${handleWidth * scale}
-          height=${handleHeight}
-          style="fill:${color}"
+          height=${handle.height / handleColors.length}
+          y=${(handle.height / handleColors.length) * index}
+          style="fill:${handleColor}"
         />
+        `)}
         <rect name="handle-overlay"
           width=${handleWidth * scale}
           height=${handleHeight}
@@ -147,59 +204,31 @@ export default () => ({
         transform="translate(${handle.left}, ${brush.top})"
       />
       ${type !== 'pen' && svg`
-      <g name="brush-stiffness-bracket"
-        transform="translate(
-          ${center - largerWidth - bracketPadding}, ${brush.top}
-        )">
+      <g name="brush-stiffness-bracket" transform="${brackets.left.transform}">
         <text class="label left"
           x="${-bracketPadding * 2 - bracketNotch}"
           y="${brush.height / 2 + 4}">
             ${Math.round(stiffness * 100)}%
         </text>
-        <path class="bracket" d="
-          M0,0
-          l${-bracketSize},0
-          l0,${brush.height}
-          l${bracketSize},0
-          m${-bracketSize},${-brush.height / 2}
-          l${-bracketNotch},0
-        "/>
+        <path class="bracket" d="${brackets.left.d}"/>
       </g>
-      <g name="brush-length-bracket"
-        transform="translate(
-          ${center + largerWidth + bracketPadding}, ${brush.top}
-        )"
-      >
+      <g name="brush-length-bracket" transform="${brackets.right.transform}">
         <text class="label right"
           x="${bracketSize + bracketNotch * 2}"
           y="${brush.height / 2 + 3}"
         >
           ${length}mm
         </text>
-        <path class="bracket" d="
-          M0,0
-          l${bracketSize},0
-          l0,${brush.height}
-          l${-bracketSize},0
-          m${bracketSize},${-brush.height / 2}
-          l${bracketNotch},0
-        "/>
+        <path class="bracket" d="${brackets.right.d}"/>
       </g>`}
-      <g name="brush-width-bracket" transform="translate(${brush.left}, ${brush.top + brush.height + bracketPadding})">
+      <g name="brush-width-bracket" transform="${brackets.bottom.transform}">
         <text class="label center"
           x="${brush.width / 2}"
           y="${bracketSize + bracketPadding * 3}"
         >
           ${width}mm
         </text>
-        <path class="bracket" d="
-          M0,0
-          l0,${bracketSize}
-          l${brush.width},0
-          l0,${-bracketSize}
-          m${-brush.width / 2},${bracketSize}
-          l0,${bracketNotch}
-        "/>
+        <path class="bracket" d="${brackets.bottom.d}"/>
       </g>
     `}
       </svg>
