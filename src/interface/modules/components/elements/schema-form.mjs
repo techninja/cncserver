@@ -159,7 +159,9 @@ function dataChange(host) {
     // Are there any actual changes?
     if (Object.keys(diffObject).length) {
       // Dispatch change with changed values.
-      dispatch(host, 'change', { detail: { diffObject, data: host.editor.data.current } });
+      dispatch(host, 'change', {
+        detail: { diffObject, data: host.editor.data.current } }
+      );
       if (host.debug) console.log('Diff', diffObject);
       host.editor.data.last = { ...host.editor.data.current };
     } else if (host.debug) {
@@ -255,6 +257,12 @@ function schemaChangeFactory(defaultSchema = {}) {
           object_layout: host.layout,
           schema: value,
         };
+
+        // Enable array editing.
+        if (host.arrays) {
+          editorSettings.disable_array_add = false;
+          editorSettings.disable_array_delete = false;
+        }
 
         // Actually render the editor based on the schema.
         const form = host.shadowRoot.querySelector('form');
@@ -352,6 +360,9 @@ export default styles => ({
   // Whether setting data will append to existing data. False will apply to default data.
   appendData: false,
 
+  // Whether to enable JSONEditor array add/delete.
+  arrays: false,
+
   // Comma separated list of schema paths to hide.
   hidePaths: '',
 
@@ -375,7 +386,7 @@ export default styles => ({
     ${styles}
     <style>
       /* Cancel Culture */
-      form span.btn-group, form > div > h3,
+      form > div > span.btn-group, form > div > h3,
       form > div > p, .tab-pane > div > div > h3.card-title {
         display: none !important;
       }
