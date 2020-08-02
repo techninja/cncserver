@@ -110,14 +110,6 @@ input.switch:checked:after {
   border-width: 2px;
 }
 
-/* Colorset editor */
-slide-item {
-  overflow-x: hidden;
-}
-slide-item h1 {
-  font-size: 5em;
-}
-
 /* Project loader */
 #projects .list {
   height: 230px;
