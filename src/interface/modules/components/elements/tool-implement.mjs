@@ -36,6 +36,17 @@ export default () => ({
     stiffness,
     color,
   }) => {
+    // Sanity check inputs.
+    // TODO: This is a mess.
+    if (!handleColors) handleColors = 'yellow';
+    if (!handleWidth) handleWidth = 10;
+    if (!width) width = 1;
+    if (!type) type = 'pen';
+    if (!length) length = 0;
+    if (!stiffness) stiffness = 0;
+    if (!color) color = '#000000';
+
+    // Setup basic layout.
     const handle = {
       left: 50,
       top: 30,

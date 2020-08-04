@@ -308,8 +308,9 @@ function schemaChangeFactory(defaultSchema = {}) {
  */
 function dataChangeFactory() {
   return {
-    get: host => host.editor.data.current,
+    get: host => (host.editor ? host.editor.data.current : {}),
     set: (host, value, lastValue) => {
+      if (!host.editor) return {};
       if (host.debug) console.log('EXTERNAL DATA SET', value, host.id);
       const setData = host.appendData ? { ...host.editor.data.current, ...value } : value;
 
