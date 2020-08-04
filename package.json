@@ -46,7 +46,6 @@
     "socket.io": "^2.3.0",
     "underscore": "^1.9.2",
     "vectorize-text": "^3.2.1",
-    "weightless": "^0.0.37",
     "zodiac-ts": "^1.0.3"
   },
   "devDependencies": {
