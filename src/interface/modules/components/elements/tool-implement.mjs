@@ -61,6 +61,8 @@ export default () => ({
       left: handle.left + handle.width / 2 - (width * scale) / 2,
     };
 
+    // TODO: Support larger scales without hard coded values.
+    const textHeight = 2.2 * scale;
     const center = brush.left + brush.width / 2;
     const largerWidth = brush.width > handle.width ? brush.width / 2 : handle.width / 2;
     const minLength = type === 'pen' ? 5 : 2;
@@ -157,17 +159,25 @@ export default () => ({
       },
     };
 
+    // Set SVG viewbox.
+    const viewBox = [
+      0, 0,
+      160, // Width.
+      handle.top + handle.height + brush.height + bracketSize * 2
+        + bracketNotch * 2 + bracketPadding + textHeight * 2, // Height.
+    ];
+
     return html`
       <style>
         :host {
           display: inline-block;
         }
       </style>
-      <svg width="160" height="220">
+      <svg width=${viewBox[2]} height=${viewBox[3]} viewBox=${viewBox.join(' ')}>
         ${svg`
       <style>
         .bracket { stroke:black; fill:none; }
-        .label { font: 10px sans-serif; }
+        .label { font: ${textHeight}px sans-serif; }
         .center { text-anchor: middle; }
         .left { text-anchor: end; }
         .right { text-anchor: start; }
