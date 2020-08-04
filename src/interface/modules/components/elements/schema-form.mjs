@@ -160,8 +160,8 @@ function dataChange(host) {
     if (Object.keys(diffObject).length) {
       // Dispatch change with changed values.
       dispatch(host, 'change', {
-        detail: { diffObject, data: host.editor.data.current } }
-      );
+        detail: { diffObject, data: host.editor.data.current }
+      });
       if (host.debug) console.log('Diff', diffObject);
       host.editor.data.last = { ...host.editor.data.current };
     } else if (host.debug) {
@@ -364,6 +364,12 @@ export default styles => ({
   // Whether to enable JSONEditor array add/delete.
   arrays: false,
 
+  // Dynamic minimalization of forms for taking up less space.
+  minimal: false,
+
+  // Remove immediate box styles.
+  plain: false,
+
   // Comma separated list of schema paths to hide.
   hidePaths: '',
 
@@ -382,7 +388,7 @@ export default styles => ({
   jsonPath: '',
 
   render: ({
-    loading, contentSelector, contentHeight, extraStyles,
+    loading, contentSelector, contentHeight, extraStyles, minimal, plain,
   }) => html`
     ${styles}
     <style>
@@ -415,6 +421,42 @@ export default styles => ({
         overflow-y: auto;
         overflow-x: hidden;
       }`}
+
+      /* Minimal mode styles */
+      ${minimal && html`
+        .form-group .form-text {
+          display: none;
+        }
+
+        .form-group:focus-within .form-text {
+          display: block;
+          position: absolute;
+          z-index: 1;
+          background-color: aliceblue;
+          border: 2px solid blueviolet;
+          border-top: none;
+          border-radius: 0 0 1em 1em;
+          padding: 0.5em;
+          margin-right: 1em;
+          box-shadow: 0px 10px 15px 4px rgba(0,0,0,0.75);
+        }
+
+        h3.card-title > label {
+          font-size: 16px;
+        }
+
+        h3.card-title > button,
+        div.row > [data-schematype=array] > p {
+          display: none;
+        }
+      `}
+
+      /* Plain mode styles */
+      ${plain && html`
+        form > div > div.card-body {
+          background-color: transparent !important; box-shadow: none;
+        }
+      `}
 
       ${extraStyles}
     </style>

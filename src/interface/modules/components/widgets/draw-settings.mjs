@@ -194,10 +194,8 @@ export default styles => ({
       api="content"
       json-path="$.properties.bounds"
       layout="grid"
-      extra-styles="form > div > div.card-body {
-        background-color: transparent !important; box-shadow: none;
-      }"
       onchange=${boundsChange}
+      plain
     ></schema-form>
 
     <schema-form
