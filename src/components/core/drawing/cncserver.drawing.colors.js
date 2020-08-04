@@ -23,6 +23,7 @@ const defaultColor = {
     length: 0,
     stiffness: 1,
     drawLength: 0,
+    handleColors: ['#000080'],
   },
 };
 
@@ -38,6 +39,7 @@ const ignoreWhite = {
     length: 0,
     stiffness: 1,
     drawLength: 0,
+    handleColors: ['#000080'],
   },
 };
 
@@ -81,6 +83,7 @@ const colors = {
       stiffness: 1,
       drawLength: 0,
       handleWidth: 10,
+      handleColors: ['#000080'],
     },
     items: new Map(), // Items mapped by id.
     tools: [], // Tools that get added with parentage.
@@ -256,6 +259,7 @@ module.exports = (cncserver) => {
           stiffness: isPen ? 1 : 0.25, // Soft brush!
           drawLength: isPen ? 0 : 482, // 48.2cm medium brush distance.
           handleWidth: isPen ? 10 : 4.5, // Size 3 crayola brush handle.
+          handleColors: isPen ? ['#000080'] : ['#ffff00'], // Yellow brush.
         },
       });
 
