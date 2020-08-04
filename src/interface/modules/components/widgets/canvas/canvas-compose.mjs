@@ -19,11 +19,7 @@ function layerChangeFactory(defaultLayer = '') {
     set: (host, value) => {
       // If set externally (no through tabs), update the tabs.
       if (host.shadowRoot) {
-        const tg = host.shadowRoot.querySelector('wl-tab-group');
-        if (tg) {
-          // Update the indicator AFTER this runs.
-          setTimeout(() => { tg.updateIndicatorPosition(); }, 1);
-        }
+        host.shadowRoot.querySelector('tab-group').activeItem = value;
       }
 
       // If we have layers setup, update visibility.
@@ -99,24 +95,26 @@ function bubbleUpdate(host, { detail: { layer } }) {
 }
 
 // Change visible layer based on tab input.
-function tabChange(host, event) {
-  const { name } = event.path[0];
+function tabChange(host, { detail: { name } }) {
   host.layer = name;
 }
 
 // Final component export.
-export default styles => ({
+export default (styles) => ({
   layer: layerChangeFactory('stage'),
   socketPayloads: {},
   canvas: {}, // Reference to initialized paper-canvas object.
 
   render: ({ layer }) => html`
     ${styles}
-    <wl-tab-group onchange=${tabChange}>
-      <wl-tab name="draw" checked=${layer === 'draw'}>Draw</wl-tab>
-      <wl-tab name="stage" checked=${layer === 'stage'}>Stage</wl-tab>
-      <wl-tab name="preview" checked=${layer === 'preview'}>Preview</wl-tab>
-    </wl-tab-group>
+    <tab-group onchange=${tabChange}>
+      <tab-item text="Draw" icon="draw-polygon" name="draw" active=${layer === 'draw'}>
+      </tab-item>
+      <tab-item text="Stage" icon="object-group" name="stage" active=${layer === 'stage'}>
+      </tab-item>
+      <tab-item text="Preview" icon="eye" name="preview" active=${layer === 'preview'}>
+      </tab-item>
+    </tab-group>
 
     <paper-canvas
       name="compose"

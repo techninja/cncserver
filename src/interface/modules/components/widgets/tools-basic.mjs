@@ -50,7 +50,7 @@ function init(host) {
 }
 
 // Export the widget definition.
-export default styles => ({
+export default (styles) => ({
   initialized: false,
   currentTool: 'color0',
   toolGroups: [],
@@ -58,26 +58,19 @@ export default styles => ({
     ${styles}
     <label-title icon="toolbox">Tools:</label-title>
     <div class="field">
-      ${toolGroups.map(
-    ({ name, tools }) => html`
-          <div>
-            <h3>${name}</h3>
-            <div class="tools">
-              ${tools.map((tool) => {
-      if (tool.id === currentTool) {
-        return html`<wl-button>${tool.id}</wl-button>`;
-      }
-      return html`
-                  <wl-button flat inverted outlined onclick="${switchTool(tool.id)}">
-                    ${tool.id}
-                  </wl-button
-                  >
-                `;
-    })}
-            </div>
+      ${toolGroups.map(({ name, tools }) => html`
+        <div>
+          <h3>${name}</h3>
+          <div class="tools">
+            ${tools.map((tool) => html`
+              <button-single
+                text=${tool.id}
+                onclick=${switchTool(tool.id)}>
+              ></button-single>
+            `)}
           </div>
-        `
-  )}
+        </div>
+      `)}
     </div>
     ${init}
   `,

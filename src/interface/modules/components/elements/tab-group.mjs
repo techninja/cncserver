@@ -14,11 +14,11 @@ function activate(name) {
 
     // After change custom event is dispatched
     // for the user of tab-group element
-    dispatch(host, 'change');
+    dispatch(host, 'change', { detail: { name } });
   };
 }
 
-export default styles => ({
+export default (styles) => ({
   // Children defined in 'tab-item.js'
   items: children(TabItem),
 
@@ -26,7 +26,7 @@ export default styles => ({
   // used by the user of tab-group element
   activeItem: {
     set: ({ items }, name) => items
-      .filter(item => (item.active = item.name === name))
+      .filter((item) => (item.active = item.name === name))
       .map(({ name }) => name)[0],
   },
   render: ({ items }) => html`
@@ -36,7 +36,9 @@ export default styles => ({
       ${items.map(({ text, active, icon, name }) => html`
         <li class="${active ? 'is-active' : ''} ${active ? 'active' : ''}" onclick="${activate(name)}">
           <a>
-            <span class="icon is-small"><i class="fas fa-${icon}" aria-hidden="true"></i></span>
+            <span class="icon is-small">
+              <i class="fas fa-${icon}" aria-hidden="true"></i>
+            </span>
             <span>${text}</span>
           </a>
         </li>

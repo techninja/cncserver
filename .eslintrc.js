@@ -20,6 +20,7 @@ module.exports = {
         objects: 'always-multiline',
       },
     ],
+    'object-property-newline': 'allowAllPropertiesOnSameLine',
     'class-methods-use-this': 'off',
     'no-console': 'off',
     'no-multi-str': 'off',
