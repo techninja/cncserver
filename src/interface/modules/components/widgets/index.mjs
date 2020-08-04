@@ -16,7 +16,6 @@ import DrawSettings from './draw-settings.mjs';
 // Colorset Editor and associated components.
 import ColorsetEditor from './colorsets/colorset-editor.mjs';
 import ColorsetColors from './colorsets/colorset-colors.mjs';
-import ColorsetColorItem from './colorsets/colorset-color-item.mjs';
 import ColorsetEditColor from './colorsets/colorset-edit-color.mjs';
 import ColorsetEditImplement from './colorsets/colorset-edit-implement.mjs';
 import ColorsetEditSet from './colorsets/colorset-edit-set.mjs';
@@ -36,7 +35,6 @@ export default styles => ({
   // Colorset editor components.
   'colorset-editor': ColorsetEditor(styles),
   'colorset-colors': ColorsetColors(styles),
-  'colorset-color-item': ColorsetColorItem,
   'colorset-edit-color': ColorsetEditColor(styles),
   'colorset-edit-implement': ColorsetEditImplement(styles),
   'colorset-edit-set': ColorsetEditSet(styles),

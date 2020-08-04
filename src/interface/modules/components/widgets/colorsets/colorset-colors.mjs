@@ -1,9 +1,8 @@
 /**
  * @file Colorset Editor: view colors element definition.
  */
-import ColorsetColorItem from './colorset-color-item.mjs';
 import { handleSwitch } from './pane-utils.mjs';
-import { html, children } from '/modules/hybrids.js';
+import { html } from '/modules/hybrids.js';
 
 // TODO:
 // - Use Schema form to build out the rest of the controls here.
@@ -15,11 +14,15 @@ import { html, children } from '/modules/hybrids.js';
 // - Finish building the custom colorset saver.
 // - Fix the incredibly ugly padding issue. General styles?
 export default styles => ({
-  items: children(ColorsetColorItem),
+  colors: [],
+  implement: {}, // Parent level implement.
+  set: {},
   name: '',
   description: '',
 
-  render: ({ items, name, description }) => html`
+  render: ({
+    colors, name, description, implement, set,
+  }) => html`
     ${styles}
     <style>
       .item {
@@ -51,7 +54,7 @@ export default styles => ({
     <button-single
       text="Edit Set"
       icon="edit"
-      onclick=${handleSwitch('edit-set')}
+      onclick=${handleSwitch('edit-set', { destProps: { data: set } })}
     ></button-single>
     <button-single
       text="Load Preset"
@@ -61,18 +64,18 @@ export default styles => ({
     <h2>${name}</h2>
     <h3>${description}</h3>
     <div>
-      ${items.map(({ id, name, color, type }) => html`
+      ${colors.map(color => html`
         <div class="item">
-          <span class="icon" style=${{ color }}>
-            <i class="fas fa-${type === 'pen' ? 'pen' : 'splotch'}" aria-hidden="true"></i>
+          <span class="icon" style=${{ color: color.color }}>
+            <i class="fas fa-${color.type === 'pen' ? 'pen' : 'splotch'}" aria-hidden="true"></i>
           </span>
           <div class="options">
-            <h3>${name}</h3>
+            <h3>${color.name}</h3>
             <button-single
               title="Edit"
               icon="edit"
               style="secondary"
-              onclick=${handleSwitch('edit-color', { id })}
+              onclick=${handleSwitch('edit-color', { destProps: { data: color, implement } })}
             ></button-single>
             <button-single
               title="Delete"
@@ -91,6 +94,3 @@ export default styles => ({
     ></button-single>
   `,
 });
-
-//name=${colorset.title}
-//description = ${ colorset.description }

@@ -5,7 +5,7 @@
 
 import apiInit from '/modules/utils/api-init.mjs';
 import { html, dispatch } from '/modules/hybrids.js';
-
+import { applyProps } from './pane-utils.mjs';
 
 // Catch the first render of a host element, and dispatch refresh.
 function init(host) {
@@ -15,10 +15,12 @@ function init(host) {
       dispatch(host, 'init');
 
       cncserver.api.colors.stat().then(({ data }) => {
+        host.set = data.set;
         host.setTitle = data.set.title;
         host.setDescription = data.set.description;
 
         host.colors = [...data.set.items];
+        host.implement = data.set.implement;
 
         host.colors.forEach((item) => {
           item.type = item.implement.type === 'inherit'
@@ -32,26 +34,34 @@ function init(host) {
 
 // TODO:
 // - Implement paged editor interface
-// - Slide Grid under window.
-// - Colorset title/desc/default implement editor
 // - Colorset item viewer, with bot tool matched positions.
 // - Colorset item editor for all fields except...
 // - Implement editor from colorset level/item level
 // - Implement preset loader for both internal and custom presets.
 
 function switchPane(host, { detail: { destination, options } }) {
+  // Actually switch to the detination slide.
   host.slide = destination;
-  console.log('Switch to', destination, options);
+
+  // Find the first child of the destination to set its data.
+  const dest = host.shadowRoot.querySelector(`[name=${destination}] > *`);
+
+  // Apply and destination props set in switch options.
+  if (options.destProps) applyProps(dest, options.destProps);
 }
 
 export default styles => ({
   colors: [],
+  implement: {},
+  set: {},
   setTitle: '',
   setDescription: '',
   initialized: false,
   slide: 'colors',
 
-  render: ({ setTitle, setDescription, colors, slide }) => html`
+  render: ({
+    setTitle, setDescription, colors, slide, implement, set,
+  }) => html`
     ${styles}
 
     <slide-group height="600" width="200" home="colors" activeItem=${slide}>
@@ -69,17 +79,11 @@ export default styles => ({
         <colorset-colors
           name=${setTitle}
           description=${setDescription}
+          set=${set}
           onswitchpane=${switchPane}
+          colors=${colors}
+          implement=${implement}
         >
-          ${colors.map(({ id, name, color, type }) => html`
-            <colorset-color-item
-              id=${id}
-              name=${name}
-              color=${color}
-              type=${type}
-            >
-            </colorset-color-item>
-          `)}
         </colorset-colors>
       </slide-item>
       <slide-item name="edit-color">

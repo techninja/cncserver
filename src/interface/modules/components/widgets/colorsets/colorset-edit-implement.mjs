@@ -6,31 +6,39 @@ import { handleSwitch } from './pane-utils.mjs';
 
 
 function implementChange(host, { detail: { data } }) {
-  const item = document.querySelector('tool-implement');
-
   // Assign all data to the object.
-  item.width = data.width;
-  item.type = data.type;
-  item.length = data.length;
-  item.stiffness = data.stiffness;
-  item.type = data.type;
-  item.type = data.type;
-  item.handleWidth = data.handleWidth;
+  const { color } = host.data;
+  host.data = data;
+  host.data.color = color;
 }
 
-export default styles => ({
+export default (styles) => ({
   initialized: false,
+  data: {},
 
-  render: () => html`
+  render: ({ data = {} }) => html`
     ${styles}
     <button-single
       text="Back"
       onclick=${handleSwitch('colors')}
     ></button-single>
+    <tool-implement
+      type=${data.type}
+      handleWidth=${data.handleWidth}
+      handleColors=${data.handleColors && data.handleColors.join(',')}
+      width=${data.width}
+      length=${data.length}
+      stiffness=${data.stiffness}
+      color=${data.color}
+    ></tool-implement>
     <schema-form
       api="colors"
       json-path="$.properties.implement"
       onchange=${implementChange}
+      data=${data}
+      arrays
+      minimal
+      plain
     ></schema-form>
   `,
 });
