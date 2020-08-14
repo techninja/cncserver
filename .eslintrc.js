@@ -21,6 +21,7 @@ module.exports = {
       },
     ],
     'object-property-newline': 'allowAllPropertiesOnSameLine',
+    'arrow-parens': 'as-needed',
     'class-methods-use-this': 'off',
     'no-console': 'off',
     'no-multi-str': 'off',
