@@ -11,20 +11,38 @@ const path = require('path');
 const nc = require('nearest-color');
 const { Color } = require('paper');
 
+// TODO: Store this in presets...
+const defaultPenImplement = {
+  type: 'pen',
+  manufacturer: 'Sharpie',
+  name: 'Fine Ultra Fine Point #37000',
+  width: 0.5,
+  length: 6.1,
+  stiffness: 1,
+  drawLength: 0,
+  handleWidth: 11,
+  handleColors: ['#b7b9b8'],
+};
+
+const defaultBrushImplement = {
+  type: 'brush',
+  manufacturer: 'Crayola',
+  name: 'Size 3 #1127',
+  width: 3,
+  length: 10.75,
+  stiffness: 0.25,
+  drawLength: 482,
+  handleWidth: 11,
+  handleColors: ['#ffff00'],
+};
+
 // Default assumed color (pen).
 const defaultColor = {
   id: 'color0',
   name: 'Black',
   color: '#000000',
   weight: 0,
-  implement: {
-    type: 'inherit',
-    width: 1,
-    length: 0,
-    stiffness: 1,
-    drawLength: 0,
-    handleColors: ['#000080'],
-  },
+  implement: { ...defaultPenImplement, type: 'inherit' },
 };
 
 // Default ignored white.
@@ -86,7 +104,7 @@ const colors = {
       handleColors: ['#000080'],
     },
     items: new Map(), // Items mapped by id.
-    tools: [], // Tools that get added with parentage.
+    tools: new Map(), // Tools mapped by id.
   },
 };
 
@@ -148,13 +166,29 @@ module.exports = (cncserver) => {
   };
 
   /**
-  * Get a flat list of valid colorset key ids.
-  *
-  * @returns {array}
-  *   Array of colorset item keys, empty array if none.
-  */
+   * Get a flat list of valid colorset key ids.
+   *
+   * @returns {array}
+   *   Array of colorset item keys, empty array if none.
+   */
   colors.getIDs = () => Array.from(colors.set.items.keys());
 
+  colors.editSet = (set) => new Promise((resolve, reject) => {
+    delete set.items;
+    delete set.tools;
+
+    colors.set = cncserver.utils.merge(colors.set, set);
+    colors.saveCustom();
+    resolve();
+  });
+
+  colors.edit = (item) => new Promise((resolve, reject) => {
+    const { id } = item;
+    colors.set.items.set(id, item);
+    cncserver.sockets.sendPaperUpdate();
+    colors.saveCustom();
+    resolve(colors.set.items.get(id));
+  });
 
   // Delete a color by id.
   colors.delete = (id) => {
@@ -164,6 +198,7 @@ module.exports = (cncserver) => {
       colors.set.items.set(defaultColor.id, defaultColor);
     }
     cncserver.sockets.sendPaperUpdate();
+    colors.saveCustom();
   };
 
   // Add a color by all of its info, appended to the end.
@@ -171,6 +206,7 @@ module.exports = (cncserver) => {
     if (!colors.getColor(id)) {
       colors.set.items.set(id, { id, ...item });
       cncserver.sockets.sendPaperUpdate();
+      colors.saveCustom();
       resolve();
     } else {
       reject(
@@ -186,23 +222,19 @@ module.exports = (cncserver) => {
     return item ? item.color : 'transparent';
   };
 
-  // Update a color by id with all its info.
-  colors.update = (id, { name, color, size }) => {
-    colors.set.items.set(id, {
-      id, name, color, size,
-    });
-    cncserver.sockets.sendPaperUpdate();
-    return colors.set.items.get(id);
-  };
-
   // Get non-reference copy of colorset item by id.
   colors.getColor = (id, applyInheritance = false) => {
-    const item = { ...colors.set.items.get(id) };
-    item.implement = { ...colors.set.items.get(id).implement };
+    const rawItem = colors.set.items.get(id);
+    let item = null;
 
-    // If the implementor wants it, and the item wants inheritance...
-    if (applyInheritance && item.implement.type === 'inherit') {
-      item.implement = { ...colors.set.implement };
+    if (rawItem) {
+      item = { ...rawItem };
+      item.implement = { ...rawItem.implement };
+
+      // If the implementor wants it, and the item wants inheritance...
+      if (applyInheritance && item.implement.type === 'inherit') {
+        item.implement = { ...colors.set.implement };
+      }
     }
 
     return item;
@@ -220,10 +252,7 @@ module.exports = (cncserver) => {
     const preset = colors.setFromPreset(presetName, t);
     if (preset) {
       colors.set = preset;
-      cncserver.sockets.sendPaperUpdate();
-
-      // Trigger tools.update as colorset based tools update the list.
-      cncserver.binder.trigger('tools.update');
+      cncserver.tools.sendUpdate();
       resolve();
     } else {
       const validOptions = Object.keys(colors.presets).join(', ');
@@ -252,20 +281,15 @@ module.exports = (cncserver) => {
         name: presetName,
         title: presetInfo.name,
         description: presetInfo.description,
-        implement: {
-          type: isPen ? 'pen' : 'brush',
-          width: isPen ? 1 : 3, // Size 3 crayola brush.
-          length: isPen ? 0 : 10.75, // Size 3 crayola brush.
-          stiffness: isPen ? 1 : 0.25, // Soft brush!
-          drawLength: isPen ? 0 : 482, // 48.2cm medium brush distance.
-          handleWidth: isPen ? 10 : 4.5, // Size 3 crayola brush handle.
-          handleColors: isPen ? ['#000080'] : ['#ffff00'], // Yellow brush.
-        },
+        implement: { ...isPen ? defaultPenImplement : defaultBrushImplement },
       });
 
       // Load in the default expected tools for watercolors if not a pen.
+      colorset.tools = new Map();
       if (!isPen) {
-        colorset.tools = [...crayolaDefaultTools];
+        crayolaDefaultTools.forEach((tool) => {
+          colorset.tools.set(tool.id, tool);
+        });
       }
 
       // Build colorset item map. No implement overrides needed.
@@ -298,11 +322,15 @@ module.exports = (cncserver) => {
     return path.join(sets, `${name}.json`);
   };
 
-  // Save custom from set
+  // Save custom from set.
   colors.saveCustom = () => {
     const dest = colors.getCustomSetPath(colors.set.name);
-    // We should really have a version number in here.
-    fs.writeFileSync(dest, JSON.stringify(colors.getCurrentSet(), null, 2));
+
+    // Write the file with version header.
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({ cncserverColorset: 'v3', ...colors.getCurrentSet() }, null, 2)
+    );
   };
 
   // Get the current colorset as a JSON ready object.
@@ -312,13 +340,17 @@ module.exports = (cncserver) => {
       title: t(colors.set.title),
       description: t(colors.set.description),
       items: [],
+      tools: [],
     };
 
+    // Convert items map to array.
     Array.from(colors.set.items.values()).forEach(item => {
-      set.items.push({
-        ...item,
-        name: t(item.name),
-      });
+      set.items.push({ ...item, name: t(item.name) });
+    });
+
+    // Convert tools map to array.
+    Array.from(colors.set.tools.values()).forEach(tool => {
+      set.tools.push({ ...tool });
     });
 
     return set;

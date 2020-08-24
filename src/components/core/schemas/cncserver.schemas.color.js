@@ -12,7 +12,7 @@ const properties = {
   name: {
     type: 'string',
     title: 'Name of colorset item',
-    description: 'Description of this color & implement',
+    description: 'Description of this colorset item',
   },
   color: {
     type: 'string',
@@ -78,7 +78,7 @@ const properties = {
     options: { dependencies: { selectionMethod: 'strokeWidth' } },
   },
   // eslint-disable-next-line global-require
-  implement: require('./cncserver.schemas.color.implement')(true),
+  implement: require('./cncserver.schemas.implement')(true),
 };
 
 module.exports = () => ({

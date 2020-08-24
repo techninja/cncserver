@@ -20,7 +20,7 @@ const properties = {
     description: 'Extra information about this colorset',
     default: '',
   },
-  implement: require('./cncserver.schemas.color.implement')(false),
+  implement: require('./cncserver.schemas.implement')(false),
   items: {
     type: 'array',
     title: 'Items',

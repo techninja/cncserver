@@ -12,8 +12,56 @@ module.exports = (cncserver) => {
   // Get a flat array of tools.
   tools.items = () => [
     ...tools.getBotTools(),
-    ...cncserver.drawing.colors.set.tools,
+    ...Array.from(cncserver.drawing.colors.set.tools.values()),
   ];
+
+  // Can we edit the given tool id?
+  tools.canEdit = (id) => {
+    const editableList = Array.from(cncserver.drawing.colors.set.tools.keys());
+    if (id) {
+      return editableList.includes(id);
+    }
+
+    return editableList;
+  };
+
+  // Function to run after the tools have been changed (add, delete, edit).
+  tools.sendUpdate = () => {
+    cncserver.drawing.colors.saveCustom();
+    cncserver.sockets.sendPaperUpdate();
+    cncserver.binder.trigger('tools.update');
+  };
+
+  // Function for editing tools (from the colorset only).
+  tools.edit = (tool) => new Promise((resolve, reject) => {
+    const { colors } = cncserver.drawing;
+    colors.set.tools.set(tool.id, tool);
+    tools.sendUpdate();
+    resolve(colors.set.tools.get(tool.id));
+  });
+
+  // Delete the a verified ID.
+  tools.delete = (id) => {
+    const { colors } = cncserver.drawing;
+    colors.set.tools.delete(id);
+    tools.sendUpdate();
+  };
+
+  // Add a validated tool.
+  tools.add = (tool) => new Promise((resolve, reject) => {
+    const { colors } = cncserver.drawing;
+    if (!colors.set.tools.get(tool.id)) {
+      colors.set.tools.set(tool.id, tool);
+      tools.sendUpdate();
+      resolve(colors.set.tools.get(tool.id));
+    } else {
+      reject(
+        new Error(cncserver.utils.singleLineString`Custom colorset tool with id
+          "${tool.id}" already exists, update it directly or choose a different id.`
+        )
+      );
+    }
+  });
 
   tools.getNames = () => tools.items().map(({ id }) => id);
 

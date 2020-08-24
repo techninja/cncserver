@@ -15,6 +15,17 @@ module.exports = allowInherit => ({
       enum: allowInherit ? ['inherit', 'brush', 'pen', 'other'] : ['brush', 'pen', 'other'],
       default: allowInherit ? 'inherit' : 'pen',
     },
+    manufacturer: {
+      type: 'string',
+      title: 'Manufacturer',
+      description: 'Creator of this implement.',
+      default: 'generic',
+    },
+    name: {
+      type: 'string',
+      title: 'Name',
+      description: 'Human readable name of the implement.',
+    },
     handleWidth: {
       type: 'number',
       title: 'Handle Width',
