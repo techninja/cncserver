@@ -159,6 +159,7 @@ module.exports = (cncserver) => {
 
     content.items.clear();
     cncserver.drawing.stage.clearAll();
+    cncserver.drawing.preview.clearAll();
 
     // Get all the info loaded into the content items, and get the file data.
     Object.entries(project.content).forEach(([, item]) => {
