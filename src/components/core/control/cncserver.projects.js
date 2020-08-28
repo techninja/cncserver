@@ -24,8 +24,8 @@ const getDirectories = source => fs.readdirSync(source, { withFileTypes: true })
   .filter(dirent => dirent.isDirectory())
   .map(dirent => dirent.name);
 
-function getProjectDirName(item) {
-  return path.resolve(projects.homeDir, `${item.name}-${item.hash}`);
+function getProjectDirName({ name, hash }) {
+  return path.resolve(projects.homeDir, `${name}-${hash}`);
 }
 
 // Load all projects by file from given paths.
@@ -239,10 +239,23 @@ module.exports = (cncserver) => {
     let changes = false;
     const project = projects.items.get(hash);
 
-    // Change name.
+    // Change name (must rename folder).
     if (name) {
       changes = true;
-      project.name = utils.getMachineName(name || title, 15);
+      const newName = utils.getMachineName(name || title, 15);
+
+      // Name change? Rename the dest folder.
+      if (newName !== project.name) {
+        const oldPath = getProjectDirName({ hash: project.hash, name: project.name });
+        const newPath = getProjectDirName({ hash: project.hash, name: newName });
+
+        // If the old dir exists, rename it.
+        if (fs.existsSync(oldPath)) {
+          fs.renameSync(oldPath, newPath);
+        }
+      }
+
+      project.name = newName;
     }
 
     // Change title
