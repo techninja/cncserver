@@ -3,17 +3,17 @@
  *
  */
 /* eslint-disable max-len */
-module.exports = allowInherit => ({
+module.exports = () => ({
   type: 'object',
   title: 'Implement Details',
-  required: ['type'],
+  required: ['type', 'name'],
   properties: {
     type: {
       type: 'string',
       title: 'Type',
       description: 'Type of implement',
-      enum: allowInherit ? ['inherit', 'brush', 'pen', 'other'] : ['brush', 'pen', 'other'],
-      default: allowInherit ? 'inherit' : 'pen',
+      enum: ['brush', 'pen', 'other'],
+      default: 'pen',
     },
     manufacturer: {
       type: 'string',
@@ -24,7 +24,21 @@ module.exports = allowInherit => ({
     name: {
       type: 'string',
       title: 'Name',
+      description: 'Machine readable name of the implement.',
+    },
+    title: {
+      type: 'string',
+      title: 'Title',
       description: 'Human readable name of the implement.',
+    },
+    sortWeight: {
+      type: 'integer',
+      title: 'Sort Weighting',
+      description: 'Sets display order for each implement in the UI. Higher values sink, lower values rise.',
+      format: 'range',
+      minimum: -100,
+      maximum: 100,
+      default: 0,
     },
     handleWidth: {
       type: 'number',
@@ -44,6 +58,7 @@ module.exports = allowInherit => ({
         format: 'color',
         title: 'Color',
       },
+      default: ['#000000'],
     },
     width: {
       type: 'number',
