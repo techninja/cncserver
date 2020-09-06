@@ -3,6 +3,7 @@
  */
 const crypto = require('crypto'); // Crypto library for hashing.
 const extend = require('util')._extend; // Util for cloning objects
+const glob = require('glob');
 const merge = require('merge-deep');
 
 // File Utils.
@@ -80,12 +81,153 @@ module.exports = (cncserver) => {
     const botHome = utils.getDir(path.resolve(home, cncserver.settings.gConf.get('botType')));
 
     // Home base dir? or bot specific?
-    if (['projects', 'colorsets'].includes(name)) {
+    if (['projects', 'colorsets', 'implements', 'toolsets'].includes(name)) {
       return utils.getDir(path.resolve(botHome, name));
     }
     return utils.getDir(path.resolve(home, name));
   };
 
+  /**
+   * Get an object of all JSON data in a given folder.
+   *
+   * @param {string} dir
+   *   The full path of the directory to search in.
+   *
+   * @return {object}
+   *   Object keyed on "name" of all items in dir. Empty object if invalid or no files.
+   */
+  utils.getJSONList = (dir) => {
+    const out = {};
+
+    if (fs.existsSync(dir)) {
+      const files = glob.sync(path.join(dir, '*.json'));
+      files.forEach((jsonPath) => {
+        const data = utils.getJSONFile(jsonPath);
+        if (data && data.name) {
+          out[data.name] = data;
+        }
+      });
+    }
+
+    return out;
+  };
+
+  /**
+   * Get JSON data from a file in a given folder. Null if problem.
+   *
+   * @param {string} file
+   *   The full file path of the JSON file.
+   *
+   * @return {object}
+   *   Data in file, null if not found or bad JSON.
+   */
+  utils.getJSONFile = (file) => {
+    let data = null;
+
+    if (fs.existsSync(file)) {
+      try {
+        // eslint-disable-next-line global-require, import/no-dynamic-require
+        data = require(file);
+
+        // Clean out metadata header here.
+        // TODO: Validate header somehow?
+        delete data._meta;
+      } catch (error) {
+        console.error(`Problem loading JSON file: '${file}'`, error);
+      }
+    }
+
+    return data;
+  };
+
+  /**
+   * Get an object of all JSON data in a given preset/custom folders.
+   *
+   * @param {string} name
+   *   The name of the preset type.
+   * @param {boolean} customOnly
+   *   If true will only return custom presets.
+   *
+   * @return {object}
+   *   Object keyed on "name" of all items.
+   */
+  utils.getPresets = (name, customOnly) => {
+    const presetDir = path.join(__basedir, 'presets', name);
+    const customDir = cncserver.utils.getUserDir(name);
+
+    if (customOnly) {
+      return utils.getJSONList(customDir);
+    }
+    return { ...utils.getJSONList(presetDir), ...utils.getJSONList(customDir) };
+  };
+
+  /**
+   * Get the direct data of a preset/custom by type and machine name.
+   *
+   * @param {string} type
+   *   The type of preset (folder).
+   * @param {string} name
+   *   The machine name of the preset (filename).
+   * @param {boolean} customOnly
+   *   If true, will not failover to read-only presets.
+   *
+   * @return {object}
+   *   Raw data from the JSON file, null if there's a problem.
+   */
+  utils.getPreset = (type, name, customOnly) => {
+    const presetPath = path.join(__basedir, 'presets', type, `${name}.json`);
+    const customPath = path.join(cncserver.utils.getUserDir(type), `${name}.json`);
+
+    if (customOnly) {
+      return utils.getJSONFile(customPath);
+    } else {
+      if (fs.existsSync(customPath)) {
+        return utils.getJSONFile(customPath);
+      }
+      return utils.getJSONFile(presetPath);
+    }
+  };
+
+  /**
+   * Save the data of a preset/custom by type and data.
+   *
+   * @param {string} type
+   *   The type of preset (folder).
+   * @param {string} data
+   *   The data to save, with a required key "name" used as machine name.
+   *
+   * @return {object}
+   *   Raw data from the JSON file, null if there's a problem.
+   */
+  utils.savePreset = (type, data) => {
+    const customPath = path.join(cncserver.utils.getUserDir(type), `${data.name}.json`);
+    // TODO: Pull version dynamically.
+    const _meta = { cncserverVersion: '3.0.0-beta1', fileType: type };
+    fs.writeFileSync(customPath, JSON.stringify({ _meta, ...data }, null, 2));
+  };
+
+  /**
+   * Delete custom by type and name.
+   *
+   * @param {string} type
+   *   The type of preset (folder).
+   * @param {string} name
+   *   The machine name of the preset.
+   */
+  utils.deletePreset = (type, name) => {
+    const customPath = path.join(cncserver.utils.getUserDir(type), `${name}.json`);
+    const trashPath = path.resolve(utils.getUserDir('trash'), `${type}-${name}.json`);
+    // Try to rename to trash. If there's one existing, delete.
+    try {
+      if (fs.existsSync(trashPath)) fs.unlinkSync(trashPath);
+      fs.renameSync(customPath, trashPath);
+    } catch (error) {
+      // Basically ignore errors for now.
+      console.error(error);
+    }
+  };
+
+  // String literal translation function to keep code line lengths down.
   utils.singleLineString = (strings, ...values) => {
     // Interweave the strings with the
     // substitution vars first.
@@ -486,6 +628,24 @@ module.exports = (cncserver) => {
    *   The output number after mapping.
    */
   utils.map = (x, inMin, inMax, outMin, outMax) => (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+
+
+  /**
+   * Perform conversion from array structure to a map based on ID.
+   *
+   * @param {array} data
+   *
+   * @returns {Map}
+   *   Map of array data keyed by "id" in array data.
+   */
+  utils.arrayToIDMap = (data) => {
+    const m = new Map();
+    data.forEach(d => {
+      m.set(d.id, d);
+    });
+
+    return m;
+  };
 
   return utils;
 };
