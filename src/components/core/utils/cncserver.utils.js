@@ -510,7 +510,7 @@ module.exports = (cncserver) => {
    *   Length (in steps) of the given vector point
    */
   utils.getMachineName = (string = '', limit = 32) => string
-    .replace(/[^A-Za-z0-9 ]/g, '') // Remove unwanted characters.
+    .replace(/[^A-Za-z0-9- ]/g, '') // Remove unwanted characters.
     .replace(/\s{2,}/g, ' ') // Replace multi spaces with a single space
     .replace(/\s/g, '-') // Replace space with a '-' symbol
     .toLowerCase() // Lowercase only.
