@@ -122,7 +122,8 @@ module.exports = (cncserver) => {
       message: err.message || err,
     };
 
-    if (err.stack) errBody.stack = err.stack.split('\n');
+    if (err.allowedValues) errBody.allowedValues = err.allowedValues;
+    if (!err.allowedValues && err.stack) errBody.stack = err.stack.split('\n');
     res.status(code).send(errBody);
   };
 
