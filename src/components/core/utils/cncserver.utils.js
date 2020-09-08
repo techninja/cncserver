@@ -162,6 +162,32 @@ module.exports = (cncserver) => {
   };
 
   /**
+   * Curried promise to validate an existing key in set of type presets.
+   *
+   * @param {string} key
+   *   Key off of source object to check for valid machine name.
+   * @param {boolean} allowInherit
+   *   When true, allows '[inherit]' machine name.
+   * @param {string} type
+   *   The type of preset, defaults to pluralized keyname "[key]s".
+   *
+   * @return {Function > Promise}
+   *   Curried function, to promise that resolves if the value is valid, rejects
+   *   with error and allowed value list if invalid.
+   */
+  utils.isValidPreset = (key, allowInherit = false, type = `${key}s`) =>
+    (source) => new Promise((resolve, reject) => {
+      const keys = Object.keys(utils.getPresets(type));
+      if (allowInherit) keys.unshift('[inherit]');
+      if (!keys.includes(source[key])) {
+        const err = new Error(`Invalid ${key}, must be one of allowed values`)
+        err.allowedValues = keys;
+        reject(err);
+      }
+      resolve(source);
+    });
+
+  /**
    * Get the direct data of a preset/custom by type and machine name.
    *
    * @param {string} type
