@@ -126,8 +126,7 @@ module.exports = (cncserver) => {
 
     if (fs.existsSync(file)) {
       try {
-        // eslint-disable-next-line global-require, import/no-dynamic-require
-        data = require(file);
+        data = JSON.parse(fs.readFileSync(file));
 
         // Clean out metadata header here.
         // TODO: Validate header somehow?
@@ -141,25 +140,40 @@ module.exports = (cncserver) => {
   };
 
   /**
-   * Get an object of all JSON data in a given preset/custom folders.
+   * Get an object of all JSON data in a given custom folder.
    *
    * @param {string} name
    *   The name of the preset type.
-   * @param {boolean} customOnly
-   *   If true will only return custom presets.
    *
    * @return {object}
    *   Object keyed on "name" of all items.
    */
-  utils.getPresets = (name, customOnly) => {
-    const presetDir = path.join(__basedir, 'presets', name);
-    const customDir = cncserver.utils.getUserDir(name);
+  utils.getCustomPresets = name => utils.getJSONList(cncserver.utils.getUserDir(name));
 
-    if (customOnly) {
-      return utils.getJSONList(customDir);
-    }
-    return { ...utils.getJSONList(presetDir), ...utils.getJSONList(customDir) };
-  };
+  /**
+   * Get an object of all JSON data in a given internal preset folder.
+   *
+   * @param {string} name
+   *   The name of the preset type.
+   *
+   * @return {object}
+   *   Object keyed on "name" of all items.
+   */
+  utils.getInternalPresets = name =>
+    utils.getJSONList(path.join(__basedir, 'presets', name));
+
+  /**
+   * Get an object of all JSON data in a given preset/custom folders.
+   *
+   * @param {string} name
+   *   The name of the preset type.
+   *
+   * @return {object}
+   *   Object keyed on "name" of all items.
+   */
+  utils.getPresets = (name) => ({
+    ...utils.getInternalPresets(name), ...utils.getCustomPresets(name)
+  });
 
   /**
    * Curried promise to validate an existing key in set of type presets.
@@ -672,6 +686,16 @@ module.exports = (cncserver) => {
 
     return m;
   };
+
+  /**
+   * Reverse conversion from map flat array.
+   *
+   * @param {Map} data
+   *
+   * @returns {array}
+   *   Flat array of data.
+   */
+  utils.mapToArray = data => Array.from(data.values());
 
   return utils;
 };
