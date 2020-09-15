@@ -20,6 +20,15 @@ const properties = {
     title: 'Color',
     description: 'Color that this item represents. Will be used to select areas to be printed with it.',
   },
+  printWeight: {
+    type: 'integer',
+    title: 'Print Weighting',
+    description: 'Sets printing order for each colorset item work grouping. Lower goes first, higher goes last.',
+    format: 'range',
+    minimum: -30,
+    maximum: 30,
+    default: 0,
+  },
   selectionMethod: {
     type: 'string',
     title: 'Selection Method',
@@ -77,8 +86,12 @@ const properties = {
     default: 2,
     options: { dependencies: { selectionMethod: 'strokeWidth' } },
   },
-  // eslint-disable-next-line global-require
-  implement: require('./cncserver.schemas.implement')(true),
+  implement: {
+    type: 'string',
+    title: 'Implement',
+    description: 'Machine name of valid implement to draw with, or "[inherit]" to use colorset parent implement.',
+    default: '[inherit]',
+  },
 };
 
 module.exports = () => ({

@@ -17,6 +17,7 @@ module.exports = (cncserver) => {
     'colors',
     'tools',
     'implements',
+    'toolsets'
   ];
   const settingsKeys = ['fill', 'stroke', 'text', 'vectorize', 'path'];
 
@@ -35,6 +36,9 @@ module.exports = (cncserver) => {
 
   // Add the color schema to the colors.items schema.
   schemas.colors.properties.items.items = schemas.color;
+
+  // Add the tool schema to the toolset.items schema.
+  schemas.toolsets.properties.items.items = schemas.tools;
 
   // Attach to content and projects schemas.
   schemas.content.properties.settings = schemas.settings;
