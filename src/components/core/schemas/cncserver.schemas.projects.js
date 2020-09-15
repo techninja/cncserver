@@ -39,6 +39,7 @@ module.exports = () => {
       type: 'string',
       title: 'Description',
       description: 'Full text describing the project.',
+      format: 'textarea',
     },
     open: {
       type: 'boolean',

@@ -10,7 +10,9 @@ module.exports = (cncserver) => {
   const ajv = Ajv({
     allErrors: true,
     removeAdditional: true,
-    unknownFormats: ['checkbox', 'color', 'range', 'tabs', 'categories', 'number'],
+    unknownFormats: [
+      'checkbox', 'color', 'range', 'tabs', 'categories', 'number', 'textarea'
+    ],
   });
 
   // Format the AJV field error messages.

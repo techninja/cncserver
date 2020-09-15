@@ -18,6 +18,7 @@ const properties = {
     type: 'string',
     title: 'Description',
     description: 'Extra information about this colorset',
+    format: 'textarea',
     default: '',
   },
   implement: require('./cncserver.schemas.implement')(false),
