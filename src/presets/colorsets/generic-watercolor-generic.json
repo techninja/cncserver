@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "colorsets"
+  },
+  "name": "generic-watercolor-generic",
+  "title": "colorsets:generic.generic.name",
+  "manufacturer": "colorsets:generic.generic.manufacturer",
+  "description": "colorsets:generic.generic.description",
+  "sortWeight": -60,
+  "implement": "crayola-size-3-brush",
+  "items": [
+    {
+      "id": "color0",
+      "name": "colorsets:colors.black",
+      "color": "#000000",
+      "printWeight": 12,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color1",
+      "name": "colorsets:colors.red",
+      "color": "#FF0000",
+      "printWeight": 0,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color2",
+      "name": "colorsets:colors.orange",
+      "color": "#FFA500",
+      "printWeight": -6,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color3",
+      "name": "colorsets:colors.yellow",
+      "color": "#FFFF00",
+      "printWeight": -9,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color4",
+      "name": "colorsets:colors.green",
+      "color": "#008000",
+      "printWeight": 3,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color5",
+      "name": "colorsets:colors.blue",
+      "color": "#0000FF",
+      "printWeight": 9,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color6",
+      "name": "colorsets:colors.purple",
+      "color": "#800080",
+      "printWeight": 6,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "color7",
+      "name": "colorsets:colors.brown",
+      "color": "#8B4513",
+      "printWeight": -3,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "ignore",
+      "name": "White",
+      "color": "#FFFFFF",
+      "printWeight": -12,
+      "weight": -0.5,
+      "implement": "[inherit]"
+    }
+  ],
+  "toolset": "crayola-default-pans"
+}

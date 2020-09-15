@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "toolsets"
+  },
+  "name": "standard-full-pans-half",
+  "manufacturer": "Generic",
+  "title": "Standard full/half pan watercolor",
+  "description": "12 standard full pans, with 2 half pans on the bottom",
+  "items": [
+    {
+      "id": "color0",
+      "title": "Color pan position 1",
+      "x": "0.8",
+      "y": "1.9",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color1",
+      "title": "Color pan position 2",
+      "x": "19.6",
+      "y": "1.9",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color2",
+      "title": "Color pan position 3",
+      "x": "0.8",
+      "y": "32.9",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color3",
+      "title": "Color pan position 4",
+      "x": "19.6",
+      "y": "32.9",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color4",
+      "title": "Color pan position 5",
+      "x": "0.8",
+      "y": "64",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color5",
+      "title": "Color pan position 6",
+      "x": "19.6",
+      "y": "64",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color6",
+      "title": "Color pan position 7",
+      "x": "0.8",
+      "y": "95",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color7",
+      "title": "Color pan position 8",
+      "x": "19.6",
+      "y": "95",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color8",
+      "title": "Color pan position 9",
+      "x": "0.8",
+      "y": "126.1",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color9",
+      "title": "Color pan position 10",
+      "x": "19.6",
+      "y": "126.1",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color10",
+      "title": "Color pan position 11",
+      "x": "0.8",
+      "y": "157.1",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color11",
+      "title": "Color pan position 12",
+      "x": "19.6",
+      "y": "157.1",
+      "width": "18",
+      "height": "30",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color12",
+      "title": "Color pan position 13",
+      "x": "0.9",
+      "y": "189.9",
+      "width": "18",
+      "height": "20.3",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    },
+    {
+      "id": "color13",
+      "title": "Color pan position 14",
+      "x": "19.6",
+      "y": "189.9",
+      "width": "18",
+      "height": "20.3",
+      "radius": 0,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "topleft"
+    }
+  ]
+}

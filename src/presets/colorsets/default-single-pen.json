@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "colorsets"
+  },
+  "name": "default-single-pen",
+  "title": "colorsets:default.default.name",
+  "manufacturer": "colorsets:generic.generic.manufacturer",
+  "description": "colorsets:default.default.description",
+  "sortWeight": -75,
+  "implement": "sharpie-ultra-fine-marker",
+  "items": [
+    {
+      "id": "color0",
+      "name": "colorsets:colors.black",
+      "color": "#000000",
+      "printWeight": -9,
+      "selectionMethod": "color",
+      "colorWeight": 0,
+      "opacityMin": 0,
+      "opacityMax": 0.75,
+      "strokeWidthMin": 0,
+      "strokeWidthMax": 2,
+      "implement": "[inherit]"
+    },
+    {
+      "id": "ignore",
+      "name": "White",
+      "color": "#FFFFFF",
+      "printWeight": -12,
+      "weight": -0.5,
+      "implement": "[inherit]"
+    }
+  ],
+  "toolset": "default"
+}
