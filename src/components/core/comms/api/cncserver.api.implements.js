@@ -12,6 +12,8 @@ module.exports = (cncserver) => {
     function postResolve() {
       res.status(200).send({
         presets: implements.listPresets(req.t),
+        customs: implements.customKeys(), // List of custom preset machine names.
+        internals: implements.internalKeys(), // List of internal preset machine names.
       });
     }
 

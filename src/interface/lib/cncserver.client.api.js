@@ -140,7 +140,7 @@ cncserver.api = {
     },
 
     renderStage: () => _patch('projects', { data: { rendering: true } }),
-    drawPreview: () => _patch('projects', { data: { drawing: true } }),
+    startPrinting: () => _patch('projects', { data: { printing: true } }),
     schema: () => _options('projects'),
   },
   content: {
@@ -166,10 +166,21 @@ cncserver.api = {
   colors: {
     stat: () => _get('colors'),
     preset: preset => _post('colors', { data: { preset } }),
+    deletePreset: preset => _delete('colors', { data: { preset } }),
     add: data => _post('colors', { data }),
+    edit: data => _patch('colors', { data }),
     save: data => _put(`colors/${data.id}`, { data }),
-    delete: id => _delete(`colors/${id}`),
+    delete: id => _delete(`colors/${id}/`),
     schema: () => _options('colors'),
+  },
+  implements: {
+    stat: () => _get('implements'),
+    get: preset => _get(`implements/${preset}`),
+    add: data => _post('implements', { data }),
+    edit: data => _patch('implements', { data }),
+    save: data => _put(`implements/${data.name}/`, { data }),
+    delete: name => _delete(`implements/${name}/`),
+    schema: () => _options('implements'),
   },
   pen: {
     /**
