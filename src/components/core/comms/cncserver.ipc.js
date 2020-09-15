@@ -5,6 +5,7 @@
  */
 const { spawn } = require('child_process'); // Process spawner.
 const nodeIPC = require('node-ipc'); // Inter Process Comms for runner.
+const path = require('path');
 
 // Export object.
 const ipc = {};
@@ -199,10 +200,9 @@ module.exports = (cncserver) => {
      * Start up & init the Runner process via node
      */
     init: () => {
-      // TODO: Use FS path to join instead of fixed slashes.
       ipc.runner.process = spawn(
         'node',
-        [`${__dirname}/../runner/cncserver.runner`]
+        [path.join(__dirname, '..', 'runner', 'cncserver.runner')]
       );
 
       ipc.runner.process.stdout.on('data', (rawData) => {
