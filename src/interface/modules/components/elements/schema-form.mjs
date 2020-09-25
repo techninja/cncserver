@@ -7,6 +7,7 @@
 import { html, dispatch } from '/modules/hybrids.js';
 import jsonPath from '/modules/jsonpath.js';
 import apiInit from '/modules/utils/api-init.mjs';
+import dataDiff from '/modules/utils/data-diff.mjs';
 
 // Initial configuration object for JSONEditor.
 const globalJSONEditorSettings = {
@@ -62,13 +63,85 @@ function customizeForm(host) {
     item.parentNode.insertBefore(num, item);
   });
 
+  // Insert forms inside preset keys.
+  matchingItems(host, host.presetPaths, item => {
+    if (item.getAttribute('data-schemapath') === 'root.implement') {
+      addPresetSelect(host, item, 'implement');
+    }
+
+    if (item.getAttribute('data-schemapath') === 'root.toolset') {
+      addPresetSelect(host, item, 'toolset');
+    }
+  });
+
   // Hide items if the host requests it.
-  if (host.hidePaths) {
-    const paths = host.hidePaths.split(',');
+  matchingItems(host, host.hidePaths, item => { item.style.display = 'none'; });
+
+  // Disable items if the host requests it.
+  matchingItems(host, host.disablePaths, item => {
+    item.querySelector('.form-control').disabled = true;
+  });
+}
+
+/**
+ * Fold in a replacement form item to select a preset based on type.
+ *
+ * @param {*} host
+ * @param {*} item
+ * @param {*} type
+ */
+function addPresetSelect(host, item, type) {
+  // Create selector based on type.
+  const input = item.querySelector('input');
+  const select = document.createElement(`preset-select-${type}`);
+  item.appendChild(select);
+
+  select.classList.add('preset-selector');
+  select.selected = input.value;
+
+  // Switch for allow inherit.
+  if (type === 'implement') {
+    console.log('Implement preset...', host.editor.schema.properties?.implement?.default);
+    if (host.editor.schema.properties?.implement?.default === '[inherit]') {
+      select.allowInherit = true;
+    }
+  }
+
+  // Bind change to insert value.
+  select.addEventListener('change', () => {
+    input.value = select.selected
+    input.dispatchEvent(new Event('change'));
+  });
+
+  // Bind to changes from content.
+  input.addEventListener('input', () => {
+    console.log('Change From Input', input.value);
+    select.selected = input.value;
+  });
+
+  // Hide elements.
+  item.querySelector('input').style.display = 'none';
+  item.querySelector('small').style.display = 'none';
+}
+
+/**
+ * Callback runner for modifying forms.
+ *
+ * @param {Element} host
+ *   The parent host element.
+ * @param {string} pathStrings
+ *   Comma separated string from host property, to be parsed as schemapath matches.
+ * @param {function} [cb=(item) => item]
+ *   Callback called on each matching form element wrapper.
+ */
+function matchingItems(host, pathStrings, cb = (item) => item) {
+  const form = host.shadowRoot.querySelector('form');
+  if (pathStrings) {
+    const paths = pathStrings.split(',');
     const pathItems = form.querySelectorAll('[data-schemapath]');
     pathItems.forEach((item) => {
       if (paths.includes(item.getAttribute('data-schemapath'))) {
-        item.style.display = 'none';
+        cb(item);
       }
     });
   }
@@ -86,41 +159,11 @@ function externalUpdateForm(host) {
   inputs.forEach((item) => {
     item.previousSibling.value = item.value;
   });
-}
 
-/**
- * Get only the parts that are different from a complete/deep JSON object.
- *
- * @param {object} object
- *   Input object to check for diff against the base.
- * @param {object} base
- *   Base object to diff against the input.
- *
- * @returns {object}
- *   Only the differences between the two objects in full tree form.
- */
-function dataDiff(object, base) {
-  const result = _.pick(
-    _.mapObject(object, (value, key) => (
-      // eslint-disable-next-line no-nested-ternary
-      (!_.isEqual(value, base[key]))
-        // eslint-disable-next-line max-len
-        ? ((_.isObject(value) && _.isObject(base[key])) ? dataDiff(value, base[key]) : value)
-        : null
-    )),
-    value => (value !== null)
-  );
-
-  // Trim out empty keys
-  const entries = Object.entries(result);
-  entries.forEach(([key, val]) => {
-    if (typeof val === 'object' && Object.keys(val).length === 0) {
-      delete result[key];
-    }
+  // Ensure presets have correct selections.
+  matchingItems(host, host.presetPaths, item => {
+    item.querySelector('.preset-selector').selected = item.querySelector('input').value;
   });
-
-  // TODO: Trim deeper changed objects.
-  return result;
 }
 
 /**
@@ -308,6 +351,7 @@ function schemaChangeFactory(defaultSchema = {}) {
  */
 function dataChangeFactory() {
   return {
+    // TODO: This seems to be caching and can be behind, even though it shouldn't.
     get: host => (host.editor ? host.editor.data.current : {}),
     set: (host, value, lastValue) => {
       if (!host.editor) return {};
@@ -318,6 +362,8 @@ function dataChangeFactory() {
       const completeNew = { ...host.editor.data.current, ...value };
       const setDiff = dataDiff(completeNew, host.editor.data.current);
       if (Object.entries(setDiff).length) {
+        // TODO: This fails as dependent keys are set to undefined!
+        // @see https://github.com/json-editor/json-editor/issues/819
         if (host.debug) console.log('External Set diff is', setDiff);
         host.editor.data.setExternally = true;
         if (host.editor.setValue(setData)) {
@@ -370,8 +416,10 @@ export default styles => ({
   // Remove immediate box styles.
   plain: false,
 
-  // Comma separated list of schema paths to hide.
-  hidePaths: '',
+  // Comma separated list of schema paths to modify.
+  hidePaths: '', // Entirely hide input.
+  disablePaths: '', // Lock & Disable (but display).
+  presetPaths: '', // Replace with preset selector.
 
   // Style selector and pixel height of "content area".
   contentSelector: '',
