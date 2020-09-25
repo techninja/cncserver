@@ -392,6 +392,10 @@ export default styles => ({
   }) => html`
     ${styles}
     <style>
+      :host {
+        display: block;
+      }
+
       /* Cancel Culture */
       form > div > span.btn-group, form > div > h3,
       form > div > p, .tab-pane > div > div > h3.card-title {
@@ -423,47 +427,43 @@ export default styles => ({
       }`}
 
       /* Minimal mode styles */
-      ${minimal && html`
-        .form-group .form-text {
-          display: none;
-        }
+      form.minimal .form-group .form-text {
+        display: none;
+      }
 
-        .form-group:focus-within .form-text {
-          display: block;
-          position: absolute;
-          z-index: 1;
-          background-color: aliceblue;
-          border: 2px solid blueviolet;
-          border-top: none;
-          border-radius: 0 0 1em 1em;
-          padding: 0.5em;
-          margin-right: 1em;
-          box-shadow: 0px 10px 15px 4px rgba(0,0,0,0.75);
-        }
+      form.minimal .form-group:focus-within .form-text {
+        display: block;
+        position: absolute;
+        z-index: 1;
+        background-color: aliceblue;
+        border: 2px solid blueviolet;
+        border-top: none;
+        border-radius: 0 0 1em 1em;
+        padding: 0.5em;
+        margin-right: 1em;
+        box-shadow: 0px 10px 15px 4px rgba(0,0,0,0.75);
+      }
 
-        h3.card-title > label {
-          font-size: 16px;
-        }
+      form.minimal h3.card-title > label {
+        font-size: 16px;
+      }
 
-        h3.card-title > button,
-        div.row > [data-schematype=array] > p {
-          display: none;
-        }
-      `}
+      form.minimal h3.card-title > button,
+      form.minimal div.row > [data-schematype=array] > p {
+        display: none;
+      }
 
       /* Plain mode styles */
-      ${plain && html`
-        form > div > div.card-body {
-          background-color: transparent !important; box-shadow: none;
-        }
-      `}
+      form.plain > div > div.card-body {
+        background-color: transparent !important; box-shadow: none;
+      }
 
       ${extraStyles}
     </style>
 
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     ${loading && html`<div>LOADING...</div>`}
-    <form></form>
+    <form class=${{ minimal, plain }}></form>
     ${init}
   `,
 });
