@@ -56,7 +56,7 @@ function init(host, { detail }) {
 
   apiInit(() => {
     // Tell the paper canvas to watch for updates on these layers.
-    host.canvas.scope.watchUpdates(['stage', 'preview']);
+    host.canvas.scope.watchUpdates(['stage', 'preview', 'print']);
 
     // Get the bot size to apply to the canvas.
     cncserver.api.settings.bot().then(({ data: bot }) => {
@@ -76,7 +76,7 @@ function init(host, { detail }) {
       // Initialize the paper-canvas with bot size details.
       host.canvas.scope.paperInit({
         size: new paper.Size(bot.maxAreaMM),
-        layers: ['draw', 'stage', 'preview'],
+        layers: ['draw', 'stage', 'preview', 'print'],
         workspace,
       }).then(() => {
         // Bind the tools for the canvas.
@@ -113,6 +113,8 @@ export default (styles) => ({
       <tab-item text="Stage" icon="object-group" name="stage" active=${layer === 'stage'}>
       </tab-item>
       <tab-item text="Preview" icon="eye" name="preview" active=${layer === 'preview'}>
+      </tab-item>
+      <tab-item text="Print" icon="print" name="print" active=${layer === 'print'}>
       </tab-item>
     </tab-group>
 

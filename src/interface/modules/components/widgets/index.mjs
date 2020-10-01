@@ -21,6 +21,10 @@ import ColorsetEditImplement from './colorsets/colorset-edit-implement.mjs';
 import ColorsetEditSet from './colorsets/colorset-edit-set.mjs';
 import ColorsetPresets from './colorsets/colorset-presets.mjs';
 
+// Preset selection interfaces and associated components.
+import PresetSelectImplement from './preset-select/preset-select-implement.mjs';
+import PresetSelectToolset from './preset-select/preset-select-toolset.mjs';
+
 export default styles => ({
   'height-settings': HeightSettings(styles),
   'tools-basic': ToolsBasic(styles),
@@ -39,4 +43,8 @@ export default styles => ({
   'colorset-edit-implement': ColorsetEditImplement(styles),
   'colorset-edit-set': ColorsetEditSet(styles),
   'colorset-presets': ColorsetPresets(styles),
+
+  // Preset Selection widgets.
+  'preset-select-implement': PresetSelectImplement(styles),
+  'preset-select-toolset': PresetSelectToolset(styles),
 });

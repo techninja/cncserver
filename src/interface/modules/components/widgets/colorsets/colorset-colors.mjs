@@ -4,24 +4,15 @@
 import { handleSwitch } from './pane-utils.mjs';
 import { html } from '/modules/hybrids.js';
 
-// TODO:
-// - Use Schema form to build out the rest of the controls here.
-// - Figure out some way to manage what the back button does based on how it was switched to.
-// - Figure out some way to get data into the forms when you land there
-// - Build a new slide for tool management
-// - Build a preset loader (including getting back to custom ones).
-// - Customize the implement form and add a display for brush/pen visualization.
-// - Finish building the custom colorset saver.
-// - Fix the incredibly ugly padding issue. General styles?
 export default styles => ({
-  colors: [],
-  implement: {}, // Parent level implement.
   set: {},
+  items: [],
+  parentImplement: '', // Default parent level implement.
   name: '',
   description: '',
 
   render: ({
-    colors, name, description, implement, set,
+    items, name, description, parentImplement, set,
   }) => html`
     ${styles}
     <style>
@@ -61,36 +52,40 @@ export default styles => ({
       icon="palette"
       onclick=${handleSwitch('presets')}
     ></button-single>
-    <h2>${name}</h2>
+    <strong>${name}</strong>
     <h3>${description}</h3>
     <div>
-      ${colors.map(color => html`
-        <div class="item">
-          <span class="icon" style=${{ color: color.color }}>
-            <i class="fas fa-${color.type === 'pen' ? 'pen' : 'splotch'}" aria-hidden="true"></i>
-          </span>
-          <div class="options">
-            <h3>${color.name}</h3>
-            <button-single
-              title="Edit"
-              icon="edit"
-              style="secondary"
-              onclick=${handleSwitch('edit-color', { destProps: { data: color, implement } })}
-            ></button-single>
-            <button-single
-              title="Delete"
-              icon="trash-alt"
-              style="warning"
-            ></button-single>
-          </div>
+    ${items.map(item => html`
+      <div class="item">
+        <tool-implement
+          preset=${item.implement === '[inherit]' ? parentImplement : item.implement}
+          scale="3",
+          color=${item.color}
+          plain
+        ></tool-implement>
+        <div class="options">
+          <h3>${item.name}</h3>
+          <button-single
+            title="Edit"
+            icon="edit"
+            style="secondary"
+            onclick=${handleSwitch('edit-color', { destProps: { data: item, parentImplement } })}
+          ></button-single>
+          <button-single
+            title="Delete"
+            icon="trash-alt"
+            style="warning"
+          ></button-single>
         </div>
-      `)}
+      </div>
+    `)}
     </div>
-    <button-single
+
+    <!--TODO: Add support for adding new colors. <button-single
       text="Add"
       icon="plus-circle"
       style="success"
-      onclick=${handleSwitch('edit-color')}
-    ></button-single>
+      onclick=${handleSwitch('edit-color', { destProps: { data: {}, parentImplement } })}
+    ></button-single>-->
   `,
 });

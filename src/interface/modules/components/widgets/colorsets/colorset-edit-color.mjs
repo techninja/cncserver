@@ -1,68 +1,51 @@
 /**
  * @file Colorset Editor: edit single color element definition.
  */
+/* globals cncserver */
 import { html } from '/modules/hybrids.js';
 import { handleSwitch } from './pane-utils.mjs';
-/* globals document */
+import dataDiff from '/modules/utils/data-diff.mjs';
 
-function customizeForm(host, { detail: { form } }) {
-
-  /*
-  const button = document.createElement('button-single');
-  button.text = 'Override Implement';
-  button.icon = 'pencil-alt';
-  button.desc = 'Override the colorset implement';
-  button.onclick = () => { (host); };
-
-  implement.parentNode.insertBefore(button, implement);
-  */
+function saveDone(host) {
+  cncserver.api.colors.save(dataDiff(host.form.editor.data.current)).then(() => {
+    handleSwitch(host.returnTo, { reload: true })(host);
+  });
 }
 
 export default (styles) => ({
   initialized: false,
-  implement: {},
+  returnTo: 'colors',
+  parentImplement: '',
   data: {},
+  form: ({ render }) => render().querySelector('schema-form'),
 
-  render: ({ data, implement }) => {
-    let implementInherit = true;
-    let implementData = {};
-    if (data && data.implement) {
-      implementInherit = data.implement.type === 'inherit';
-      implementData = implementInherit ? implement : data.implement;
-      implementData.color = data.color;
-    }
+  render: ({ data, returnTo }) => {
+    // TODO: Allow Edit of implement.
 
     return html`
     ${styles}
     <button-single
-      text="Back"
-      onclick=${handleSwitch('colors')}
+      text="Save"
+      icon="save"
+      style="success"
+      onclick=${saveDone}
+    ></button-single>
+    <button-single
+      text="Cancel"
+      icon="ban"
+      style="warning"
+      onclick=${handleSwitch(returnTo)}
     ></button-single>
 
     <schema-form
       api="colors"
       json-path="$.properties.items.items"
-      onbuild=${customizeForm}
-      hide-paths="root.implement"
+      preset-paths="root.implement"
       data=${data}
+      disable-paths="root.id"
       plain
+      minimal
     ></schema-form>
-
-    <tool-implement
-      type=${implementData.type}
-      handleWidth=${implementData.handleWidth}
-      handleColors=${implementData.handleColors && implementData.handleColors.join(',')}
-      width=${implementData.width}
-      length=${implementData.length}
-      stiffness=${implementData.stiffness}
-      color=${implementData.color}
-    ></tool-implement>
-    <button-single
-      text=${implementInherit ? 'Override Implement' : 'Edit Implement'}
-      icon="pencil-alt"
-      desc="Edit the implement associated with this colorset item"
-      onclick=${handleSwitch('edit-implement', { destProps: { data: implementData } })}
-    ></button-single>
   `;
   },
 });

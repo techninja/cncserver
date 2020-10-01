@@ -12,14 +12,14 @@ export default styles => ({
         text="Render Stage"
         icon="hammer"
         style="secondary"
-        onclick="cncserver.api.projects.renderStage(); document.querySelector('draw-preview').layer = 'preview'"
+        onclick="cncserver.api.projects.renderStage()"
       ></button-single>
 
       <button-single
         text="Draw Preview"
         icon="star-half-alt"
         style="primary"
-        onclick="cncserver.api.projects.drawPreview()"
+        onclick="cncserver.api.projects.startPrinting()"
       ></button-single>
 
       <button-toggle

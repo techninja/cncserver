@@ -1,7 +1,27 @@
 /**
  * @file Implement display element definition.
  */
+/* globals cncserver */
 import { html, svg } from '/modules/hybrids.js';
+import apiInit from '/modules/utils/api-init.mjs';
+
+
+function setHostFromPreset(host, preset) {
+  apiInit(() => {
+    cncserver.api.implements.get(preset).then(({ data }) => {
+      data.title = `${data.manufacturer} ${data.title}`;
+      delete data.sortWeight;
+      delete data.manufacturer;
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === 'handleColors') data[key] = data[key].join(',');
+        host[key] = data[key];
+      });
+    }).catch((err) => {
+      // Reset the preset if there was any error.
+      host.preset = '';
+    });
+  });
+}
 
 export default () => ({
   // UI configuration specifics.
@@ -10,6 +30,13 @@ export default () => ({
   bracketSize: 8,
   bracketNotch: 5,
   bracketPadding: 5,
+  initialized: false,
+
+  // Switch to true for no labels/brackets.
+  plain: false,
+
+  // Text name of preset to load dynamically.
+  preset: { observe: setHostFromPreset },
 
   // Implement specifics.
   handleColors: 'yellow',
@@ -26,6 +53,7 @@ export default () => ({
     bracketSize,
     bracketNotch,
     bracketPadding,
+    plain,
 
     // Implement specifics.
     handleColors,
@@ -48,8 +76,8 @@ export default () => ({
 
     // Setup basic layout.
     const handle = {
-      left: 50,
-      top: 30,
+      left: plain ? 10 : 50,
+      top: plain ? 10 : 30,
       width: handleWidth * scale,
       height: handleHeight,
     };
@@ -62,7 +90,7 @@ export default () => ({
     };
 
     // TODO: Support larger scales without hard coded values.
-    const textHeight = 2.2 * scale;
+    const textHeight = plain ? 0 : 2.2 * scale;
     const center = brush.left + brush.width / 2;
     const largerWidth = brush.width > handle.width ? brush.width / 2 : handle.width / 2;
     const minLength = type === 'pen' ? 5 : 2;
@@ -160,11 +188,13 @@ export default () => ({
     };
 
     // Set SVG viewbox.
+    // TODO: Do a better job at figuring out how much space is being used up.
+    const extraWidth = plain ? 0 : 50;
     const viewBox = [
       0, 0,
-      160, // Width.
+      handle.left + largerWidth + extraWidth + bracketSize * 2, // Width.
       handle.top + handle.height + brush.height + bracketSize * 2
-        + bracketNotch * 2 + bracketPadding + textHeight * 2, // Height.
+      + bracketNotch * 2 + bracketPadding + textHeight * 2, // Height.
     ];
 
     return html`
@@ -197,6 +227,7 @@ export default () => ({
           <stop offset="100%" style="stop-color:${color}" />
         </linearGradient>
       </defs>
+      ${!plain && svg`
       <g name="handle-width-bracket" transform="${brackets.top.transform}">
         <text class="label center"
           x="${handle.width / 2}"
@@ -206,6 +237,7 @@ export default () => ({
         </text>
         <path class="bracket" d="${brackets.top.d}"/>
       </g>
+      `}
       <g name="handle" transform="translate(${handle.left}, ${handle.top})">
         ${handleColors.map((handleColor, index) => svg`
         <rect name="handle-color"
@@ -224,7 +256,7 @@ export default () => ({
       <path name="brush" class=${type} d=${brushShape}
         transform="translate(${handle.left}, ${brush.top})"
       />
-      ${type !== 'pen' && svg`
+      ${type !== 'pen' && !plain && svg`
       <g name="brush-stiffness-bracket" transform="${brackets.left.transform}">
         <text class="label left"
           x="${-bracketPadding * 2 - bracketNotch}"
@@ -242,6 +274,7 @@ export default () => ({
         </text>
         <path class="bracket" d="${brackets.right.d}"/>
       </g>`}
+      ${!plain && svg`
       <g name="brush-width-bracket" transform="${brackets.bottom.transform}">
         <text class="label center"
           x="${brush.width / 2}"
@@ -251,6 +284,7 @@ export default () => ({
         </text>
         <path class="bracket" d="${brackets.bottom.d}"/>
       </g>
+      `}
     `}
       </svg>
     `;

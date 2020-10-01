@@ -7,38 +7,35 @@ import apiInit from '/modules/utils/api-init.mjs';
 import { html, dispatch } from '/modules/hybrids.js';
 import { applyProps } from './pane-utils.mjs';
 
+function loadColors(host) {
+  cncserver.api.colors.stat().then(({ data }) => {
+    host.set = data.set;
+    host.setTitle = data.set.title;
+    host.setDescription = data.set.description;
+    host.parentImplement = data.set.implement;
+    host.items = [...data.set.items];
+  });
+}
+
 // Catch the first render of a host element, and dispatch refresh.
 function init(host) {
   apiInit(() => {
     if (!host.initialized) {
       host.initialized = true;
       dispatch(host, 'init');
-
-      cncserver.api.colors.stat().then(({ data }) => {
-        host.set = data.set;
-        host.setTitle = data.set.title;
-        host.setDescription = data.set.description;
-
-        host.colors = [...data.set.items];
-        host.implement = data.set.implement;
-
-        host.colors.forEach((item) => {
-          item.type = item.implement.type === 'inherit'
-            ? data.set.implement.type : item.implement.type;
-        });
-
-      });
+      loadColors(host);
     }
   });
 }
 
-// TODO:
-// - Implement paged editor interface
-// - Colorset item viewer, with bot tool matched positions.
-// - Colorset item editor for all fields except...
-// - Implement editor from colorset level/item level
-// - Implement preset loader for both internal and custom presets.
-
+/**
+ * Individual sub-element host onSwitchPane event callback.
+ *
+ * @param {Hybrids} host
+ *   This host element.
+ * @param {Event} { detail: { destination, options } }
+ *   DOM Event object including "event.target" of source element.
+ */
 function switchPane(host, { detail: { destination, options } }) {
   // Actually switch to the detination slide.
   host.slide = destination;
@@ -46,21 +43,27 @@ function switchPane(host, { detail: { destination, options } }) {
   // Find the first child of the destination to set its data.
   const dest = host.shadowRoot.querySelector(`[name=${destination}] > *`);
 
+  // Reload colors?
+  if (destination === 'colors' && options.reload) {
+    loadColors(host);
+  }
+
+  console.log('Switch', options);
   // Apply and destination props set in switch options.
   if (options.destProps) applyProps(dest, options.destProps);
 }
 
 export default styles => ({
-  colors: [],
-  implement: {},
   set: {},
+  parentImplement: '',
+  items: [],
   setTitle: '',
   setDescription: '',
   initialized: false,
   slide: 'colors',
 
   render: ({
-    setTitle, setDescription, colors, slide, implement, set,
+    setTitle, setDescription, items, slide, parentImplement, set,
   }) => html`
     ${styles}
 
@@ -77,12 +80,12 @@ export default styles => ({
       </slide-item>
       <slide-item name="colors">
         <colorset-colors
+          set=${set}
           name=${setTitle}
           description=${setDescription}
-          set=${set}
+          items=${items}
+          parentImplement=${parentImplement}
           onswitchpane=${switchPane}
-          colors=${colors}
-          implement=${implement}
         >
         </colorset-colors>
       </slide-item>

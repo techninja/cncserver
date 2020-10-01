@@ -5,6 +5,17 @@
 import { html } from '/modules/hybrids.js';
 import { handleSwitch } from './pane-utils.mjs';
 
+function saveDone(host) {
+  const form = host.shadowRoot.querySelector('schema-form');
+  const data = { ...form.editor.data.current };
+  delete data.items;
+
+  // TODO: Block input on save wait...
+  cncserver.api.colors.editSet(data).then(() => {
+    handleSwitch('colors', { reload: true })(host);
+  })
+}
+
 export default (styles) => ({
   initialized: false,
   data: {},
@@ -17,36 +28,28 @@ export default (styles) => ({
       }
     </style>
     <button-single
-      text="Back to Colors"
+      text="Save"
+      icon="save"
+      style="success"
+      onclick=${saveDone}
+    ></button-single>
+    <button-single
+      text="Cancel"
+      icon="ban"
+      style="warning"
       onclick=${handleSwitch('colors')}
     ></button-single>
     <schema-form
       api="colors"
-      hide-paths="root.items,root.tools,root.implement"
+      hide-paths="root.items"
+      preset-paths="root.implement,root.toolset"
       data=${data}
       plain
     ></schema-form>
-    <div class="control">
-      <label-title icon="file-image">Default Implement:</label-title>
-      <tool-implement
-        type=${data?.implement?.type}
-        handleWidth=${data?.implement?.handleWidth}
-        handleColors=
-          ${data?.implement?.handleColors && data.implement.handleColors.join(',')}
-        width=${data?.implement?.width}
-        length=${data?.implement?.length}
-        stiffness=${data?.implement?.stiffness}
-        color=${data?.implement?.color}
-      ></tool-implement>
-      <button-single
-        text="Edit Implement"
-        icon="pencil-alt"
-        desc="Change attributes of the base colorset implement"
-        onclick=
-          ${handleSwitch('edit-implement', { destProps: { data: { ...data?.implement || {}, color: '#000000' } } })}
-      ></button-single>
-      <button-single text="Load Preset" onclick=${handleSwitch('presets')}>
-      </button-single>
-    </div>
+    <button-single
+      icon="palette"
+      text="Load Preset"
+      onclick=${handleSwitch('presets')}>
+    </button-single>
   `,
 });

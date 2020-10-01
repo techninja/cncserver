@@ -162,7 +162,14 @@ function externalUpdateForm(host) {
 
   // Ensure presets have correct selections.
   matchingItems(host, host.presetPaths, item => {
-    item.querySelector('.preset-selector').selected = item.querySelector('input').value;
+    const selector = item.querySelector('.preset-selector')
+    selector.selected = item.querySelector('input').value;
+
+    // Try to get parent preset option (currently only for implements).
+    if (selector.allowInherit) {
+      selector.parentPreset = host.parentNode.host.parentImplement || '';
+      selector.color = host.parentNode.host?.data?.color || '#000000';
+    }
   });
 }
 

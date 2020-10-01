@@ -5,6 +5,11 @@ import { html } from '/modules/hybrids.js';
 import { handleSwitch } from './pane-utils.mjs';
 
 
+// TODO:
+// - Update on inputs
+// - Make it simpler/smaller.
+// - Add lines that point from inputs to SVG positions.
+
 function implementChange(host, { detail: { data } }) {
   // Assign all data to the object.
   const { color } = host.data;
@@ -14,13 +19,14 @@ function implementChange(host, { detail: { data } }) {
 
 export default (styles) => ({
   initialized: false,
+  returnTo: 'edit-color',
   data: {},
 
-  render: ({ data = {} }) => html`
+  render: ({ data = {}, returnTo }) => html`
     ${styles}
     <button-single
       text="Back"
-      onclick=${handleSwitch('colors')}
+      onclick=${handleSwitch(returnTo)}
     ></button-single>
     <tool-implement
       type=${data.type}
