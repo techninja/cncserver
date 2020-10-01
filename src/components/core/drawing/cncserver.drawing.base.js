@@ -31,7 +31,8 @@ module.exports = (cncserver) => {
       'temp', // Temporary working space, cleared before each operation.
       'stage', // Project imported groups of items.
       'tools', // Helper visualization of tool positions.
-      'preview', // Final render, item groups of lines w/color data only (no fills).
+      'preview', // Render destination, item groups of lines w/color data only (no fills).
+      'print', // Final print source, grouped by colorset work groupings.
     ];
     layers.forEach((name) => {
       base.layers[name] = new Layer({ name });
@@ -53,7 +54,7 @@ module.exports = (cncserver) => {
 
   // Get a list of all simple paths from all children as an array.
   base.getPaths = (parent = base.layers.preview, items = []) => {
-    if (parent.children && parent.children.length && !(parent instanceof CompoundPath)) {
+    if (parent.children) {
       let moreItems = [];
       parent.children.forEach((child) => {
         moreItems = base.getPaths(child, moreItems);
@@ -169,6 +170,20 @@ module.exports = (cncserver) => {
         }
       });
     }
+  };
+
+  // SVG content can have paths with NO fill or strokes, they're assumed to be black fill.
+  base.validateFills = (item) => {
+    item.children.forEach(child => {
+      if (!child.fillColor && !child.strokeColor) {
+        if (child.children && child.children.length) {
+          base.validateFills(child);
+        } else {
+          // TODO: This likely needs more rules for cleanup.
+          child.fillColor = 'black';
+        }
+      }
+    })
   };
 
   // Standardize path names to ensure everything has one.

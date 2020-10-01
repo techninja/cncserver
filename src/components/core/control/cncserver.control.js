@@ -4,6 +4,8 @@
  */
 const control = {}; // Exposed export.
 
+const { Group, Path, CompoundPath } = require('paper');
+
 module.exports = (cncserver) => {
   /**
    * "Move" the pen (tip of the buffer) to an absolute point inside the maximum
@@ -330,8 +332,9 @@ module.exports = (cncserver) => {
    * @param {object} source
    *   Source paper object containing the children, defaults to preview layer.
    */
-  control.renderPathsToMoves = (source = cncserver.drawing.base.layers.preview, reqSettings = {}) => {
-    const { settings: { botConf }, drawing: { colors } } = cncserver;
+  control.renderPathsToMoves = (reqSettings = {}) => {
+    const { settings: { botConf }, drawing: { base, colors }, tools } = cncserver;
+    const source = cncserver.drawing.base.layers.print;
     const settings = {
       parkAfter: true,
       ...reqSettings,
@@ -345,16 +348,9 @@ module.exports = (cncserver) => {
     // Store work for all paths grouped by color
     const workGroups = colors.getWorkGroups();
     const validColors = Object.keys(workGroups);
-    const allPaths = cncserver.drawing.base.getPaths(source);
-    allPaths.forEach((path) => {
-      const colorID = cncserver.drawing.base.getColorID(path);
-
-      if (path.length && colorID && validColors.includes(colorID)) {
-        workGroups[colorID].push(path);
-        // Allow implementing triggers to modify current list of paths.
-        workGroups[colorID] = cncserver.binder.trigger('control.render.path.select', workGroups[colorID]);
-      } else if (colorID !== 'ignore') {
-        console.log(`DEBUG: Invalid Draw path ${colorID} ${path.name} ==================`);
+    source.children.forEach((colorGroup) => {
+      if (workGroups[colorGroup.name]) {
+        workGroups[colorGroup.name] = base.getPaths(colorGroup);
       }
     });
 
@@ -371,14 +367,14 @@ module.exports = (cncserver) => {
           // Do we have a tool for this colorID? If not, use manualswap.
           if (colors.doColorParsing()) {
             const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
-            tools.set(changeTool, colorID);
+            tools.changeTo(changeTool, colorID);
           }
 
           let pathIndex = 0;
           const nextPath = () => {
             if (paths[pathIndex]) {
               control.accelMoveOnPath(paths[pathIndex]).then(() => {
-                // Trigger implementors for plath render complete.
+                // Trigger implementors for path render complete.
                 cncserver.binder.trigger('control.render.path.finish', paths[pathIndex]);
 
                 // Path in this group done, move to the next.

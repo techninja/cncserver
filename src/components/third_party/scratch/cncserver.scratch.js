@@ -163,8 +163,8 @@ module.exports = (cncserver) => {
       turtle.distanceCounter = 0;
 
       // Reink procedure!
-      cncserver.tools.set('water0dip'); //  Dip in the water
-      cncserver.tools.set(turtle.media); // Apply the last saved media
+      cncserver.tools.changeTo('water0dip'); //  Dip in the water
+      cncserver.tools.changeTo(turtle.media); // Apply the last saved media
       cncserver.control.movePenAbs(turtle); //    Move back to "current" position
       cncserver.pen.setHeight('draw'); //     Set the position back to draw
     }
@@ -214,9 +214,9 @@ module.exports = (cncserver) => {
 
     // Run simple wash
     if (op === 'wash') {
-      cncserver.tools.set('water0');
-      cncserver.tools.set('water1');
-      cncserver.tools.set('water2');
+      cncserver.tools.changeTo('water0');
+      cncserver.tools.changeTo('water1');
+      cncserver.tools.changeTo('water2');
     }
 
     // Turn off motors and zero to park pos
@@ -246,7 +246,7 @@ module.exports = (cncserver) => {
     // Set by ID (water/color)
     if (type) {
       const tool = type + parseInt(req.params.id, 10);
-      cncserver.tools.set(tool);
+      cncserver.tools.changeTo(tool);
       turtle.media = tool;
     }
 

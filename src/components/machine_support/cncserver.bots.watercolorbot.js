@@ -74,15 +74,15 @@ module.exports = (cncserver) => {
   // Run a full wash in all the waters.
   watercolorbot.fullWash = () => {
     // TODO: Fix water0 overreach
-    cncserver.tools.set('water0dip');
-    cncserver.tools.set('water1');
-    cncserver.tools.set('water2');
+    cncserver.tools.changeTo('water0dip');
+    cncserver.tools.changeTo('water1');
+    cncserver.tools.changeTo('water2');
   };
 
   // Reink with a water dip.
   watercolorbot.reink = (tool = cncserver.pen.state.tool) => {
-    cncserver.tools.set('water0dip');
-    cncserver.tools.set(tool);
+    cncserver.tools.changeTo('water0dip');
+    cncserver.tools.changeTo(tool);
   };
 
   // Bind the wiggle to the toolchange event.
@@ -166,7 +166,11 @@ module.exports = (cncserver) => {
   });
 
   // Bind to color setdefault to set watercolors
-  cncserver.binder.bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (watercolorbot.inUse ? cncserver.drawing.colors.setFromPreset('generic-watercolor-generic') : passthroughSet));
+  cncserver.binder.bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (
+    watercolorbot.inUse
+      ? cncserver.utils.getPreset('colorsets', 'generic-watercolor-generic')
+      : passthroughSet
+  ));
 
 
   return watercolorbot;

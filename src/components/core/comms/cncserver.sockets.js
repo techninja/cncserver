@@ -161,6 +161,7 @@ module.exports = (cncserver) => {
       cncserver.drawing.colors.snapPathColors(
         cncserver.drawing.base.layers.preview
       );
+      sockets.sendPaperUpdate('print');
     }
 
     io.emit('paper layer', {

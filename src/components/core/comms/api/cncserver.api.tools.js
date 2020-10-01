@@ -13,17 +13,27 @@ module.exports = (cncserver) => {
         status: 'error',
         message: `Tool: '${name}' not found.`,
         validOptions: cncserver.tools.getNames(),
-      }
+      },
     };
   }
 
   // Primary tools endpoint handler. List, create.
-  handlers['/v2/tools'] = function toolsGet(req, res) {
-    const { tools, schemas } = cncserver;
+  handlers['/v2/tools'] = function toolsMain(req, res) {
+    const { tools, schemas, utils, rest } = cncserver;
 
     // Get list of tools
     if (req.route.method === 'get') {
-      return { code: 200, body: { tools: tools.items() } };
+      return {
+        code: 200,
+        body: {
+          set: tools.getResponseSet(res.t),
+          tools: tools.items(),
+          presets: tools.listPresets(),
+          customs: tools.customKeys(), // List of custom preset machine names.
+          internals: tools.internalKeys(), // List of internal preset machine names.
+          invalidSets: tools.invalidPresets(),
+        }
+      };
     }
 
     // Add new custom tool.
@@ -32,9 +42,33 @@ module.exports = (cncserver) => {
       schemas.validateData('tools', req.body, true)
         .then(tools.add)
         .then((tool) => { res.status(200).send(tool); })
-        .catch(cncserver.rest.err(res));
+        .catch(rest.err(res));
 
       return true; // Tell endpoint wrapper we'll handle the POST response.
+    }
+
+    // Change toolset options directly.
+    if (req.route.method === 'patch') {
+      // If item data is attempted to be changed here, give a specific message for it.
+      if (req.body.items) {
+        rest.err(res, 406)(
+          new Error(utils.singleLineString`Patching the tools endpoint can only edit the
+            current toolset details, not individual tool items.
+            Patch to /v2/tools/[ID] to edit a custom toolset item.`
+          )
+        );
+      }
+
+      // Merge with current set, validate data, then edit.
+      const set = { ...tools.set };
+      delete set.items;
+      const mergedItem = utils.merge(set, req.body);
+      schemas.validateData('toolsets', mergedItem, true)
+        .then(tools.editSet)
+        .then((set) => { res.status(200).send(set); })
+        .catch(rest.err(res));
+
+      return true; // Tell endpoint wrapper we'll handle the PATCH response.
     }
 
     // Error to client for unsupported request types.
@@ -42,7 +76,7 @@ module.exports = (cncserver) => {
   };
 
   // Tool specific enpoint.
-  handlers['/v2/tools/:toolID'] = function toolsMain(req, res) {
+  handlers['/v2/tools/:toolID'] = function toolsItemMain(req, res) {
     const { toolID } = req.params;
     const { tools, utils } = cncserver;
     const tool = tools.getItem(toolID);
@@ -52,7 +86,7 @@ module.exports = (cncserver) => {
 
     // Set current end of buffer tool to ID.
     if (req.route.method === 'put') {
-      cncserver.tools.set(tool.id, null, () => {
+      cncserver.tools.changeTo(tool.id, null, () => {
         res.status(200).send(JSON.stringify({
           status: `Tool changed to ${tool.id}`,
         }));
@@ -84,7 +118,7 @@ module.exports = (cncserver) => {
           body: {
             status: 'error',
             message: 'This is a bot level tool, you can only edit colorset level tools via the API.',
-            validOptions: tools.canEdit(),
+            allowedValues: tools.canEdit(),
           },
         };
       }
@@ -134,7 +168,7 @@ module.exports = (cncserver) => {
 
 
     if (req.route.method === 'put') { // Set Tool
-      tools.set(tool.id, toolIndex, () => {
+      tools.changeTo(tool.id, toolIndex, () => {
         // TODO: Is this force state needed?
         cncserver.pen.forceState({ tool: tool.id });
         res.status(200).send(JSON.stringify({

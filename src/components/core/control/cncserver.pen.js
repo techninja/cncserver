@@ -18,6 +18,7 @@ module.exports = (cncserver) => {
     power: 0,
     busy: false,
     tool: 'color0', // TODO: This seems wrong and assuming.
+    implement: '', // Implement string.
     offCanvas: false,
     bufferHash: '', // Holds the last pen buffer hash.
     lastDuration: 0, // Holds the last movement timing in milliseconds
@@ -38,7 +39,7 @@ module.exports = (cncserver) => {
    * @param {number} speedOverride
    *   Percent of speed to set for this movement only.
    */
-  pen.setPen = (inPenState, callback = () => {}, speedOverride = null) => {
+  pen.setPen = (inPenState, callback = () => { }, speedOverride = null) => {
     // What can happen here?
     // We're changing state, and what we need is the ability to find all the
     // passed, changed state from either the actual pen state, OR the tip of
@@ -280,7 +281,7 @@ module.exports = (cncserver) => {
    * @param {function} callback
    *   Ya know.
    */
-  pen.park = (direct = false, callback = () => {}) => {
+  pen.park = (direct = false, callback = () => { }) => {
     pen.setHeight('up', () => {
       pen.setPen({
         x: cncserver.settings.bot.park.x,

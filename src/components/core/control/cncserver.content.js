@@ -179,6 +179,7 @@ module.exports = (cncserver) => {
                 source content and try again.`
               ));
             } else {
+              cncserver.drawing.base.validateFills(item);
               success({ ...payload, source, item });
             }
           } catch (error) {

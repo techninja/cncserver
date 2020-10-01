@@ -6,105 +6,23 @@
 /* eslint-disable no-param-reassign */
 
 const fs = require('fs');
-const glob = require('glob');
 const path = require('path');
 const nc = require('nearest-color');
-const { Color } = require('paper');
+const { Color, Group } = require('paper');
 
-// TODO: Store this in presets...
-const defaultPenImplement = {
-  type: 'pen',
-  manufacturer: 'Sharpie',
-  name: 'Fine Ultra Fine Point #37000',
-  width: 0.5,
-  length: 6.1,
-  stiffness: 1,
-  drawLength: 0,
-  handleWidth: 11,
-  handleColors: ['#b7b9b8'],
-};
-
-const defaultBrushImplement = {
-  type: 'brush',
-  manufacturer: 'Crayola',
-  name: 'Size 3 #1127',
-  width: 3,
-  length: 10.75,
-  stiffness: 0.25,
-  drawLength: 482,
-  handleWidth: 11,
-  handleColors: ['#ffff00'],
-};
-
-// Default assumed color (pen).
-const defaultColor = {
-  id: 'color0',
-  name: 'Black',
-  color: '#000000',
-  weight: 0,
-  implement: { ...defaultPenImplement, type: 'inherit' },
-};
-
-// Default ignored white.
-const ignoreWhite = {
-  id: 'ignore',
-  name: 'White',
-  color: '#FFFFFF',
-  weight: -0.5, // Let other colors select before this.
-  implement: {
-    type: 'inherit',
-    width: 0,
-    length: 0,
-    stiffness: 1,
-    drawLength: 0,
-    handleColors: ['#000080'],
-  },
-};
-
-// Colorset Tool positions for Crayola default set.
-const crayolaPositions = [14.5, 41.5, 66, 91, 116.5, 143, 169, 194];
-const crayolaDefaultTools = crayolaPositions.map((y, index) => ({
-  id: `color${index}`,
-  title: `Color pan position ${index + 1}`,
-  x: 18.5,
-  y,
-  width: 27,
-  height: 19,
-  radius: 15,
-  parent: 'pan',
-  group: 'Colors',
-  position: 'center',
-}));
-
-// Default internal preset.
-const defaultPreset = {
-  manufacturer: 'default',
-  media: 'pen',
-  machineName: 'default',
-  weight: -10,
-  width: 1, // 1mm implement size.
-  colors: { black: '#000000' },
-};
+const DEFAULT_PRESET = 'default-single-pen';
+const IMPLEMENT_PARENT = '[inherit]';
 
 // Final export object.
 const colors = {
   id: 'drawing.colors',
-  presets: { default: defaultPreset },
   set: { // Set via initial preset or colorset loader.
     name: '', // Machine name for loading/folder storage
     title: '', // Clean name.
     description: '', // Description of what it is beyond title.
-    implement: {
-      type: 'pen',
-      width: 1,
-      length: 0,
-      stiffness: 1,
-      drawLength: 0,
-      handleWidth: 10,
-      handleColors: ['#000080'],
-    },
+    implement: '', // Implement preset string.
     items: new Map(), // Items mapped by id.
-    tools: new Map(), // Tools mapped by id.
+    toolset: '', // Extra Toolset by machine name.
   },
 };
 
@@ -114,55 +32,57 @@ const presetDir = path.resolve(
 );
 
 module.exports = (cncserver) => {
-  // What is this and why?
-  //
-  // When we draw, we assume a color: color0. It's assumed this is "black", but
-  // if there's only one color in use, no color switching will occur so this
-  // definition is moot unless we have more than one color in our set.
-  //
-  // A "colorset" is a set of colors/implements that can be applied to the available items
-  // in `cncserver.drawing.colors.set.items`
-
-  // Load all color presets into the presets key.
-  const files = glob.sync(path.join(presetDir, '*.json'));
-  files.forEach((setPath) => {
-    try {
-      // eslint-disable-next-line global-require, import/no-dynamic-require
-      const sets = require(setPath);
-      sets.forEach((set) => {
-        const key = `${set.manufacturer}-${set.media}-${set.machineName}`;
-        colors.presets[key] = set;
-      });
-    } catch (error) {
-      console.error(`Problem loading color preset: '${setPath}'`);
-    }
-  });
-
-  // Function to render presets for the API, translating human readable strings.
+  // Render presets for the API, translating human readable strings.
   colors.listPresets = (t) => {
+    const sets = Object.values(cncserver.utils.getPresets('colorsets'));
+    const sorted = sets.sort((a, b) => a.sortWeight > b.sortWeight ? 1 : -1);
     const out = {};
-    Object.entries(colors.presets).forEach(([key, p]) => {
-      const basekey = `colorsets:${p.manufacturer}.${p.machineName}`;
-      out[key] = {
-        manufacturer: p.manufacturer,
-        media: p.media,
-        machineName: p.machineName,
-        manufacturerName: t(`${basekey}.manufacturer`),
-        name: t(`${basekey}.name`),
-        description: t(`${basekey}.description`),
-        mediaName: t(`colorsets:media.${p.media}`),
-        colors: {},
-      };
 
-      Object.entries(p.colors).forEach(([id, color]) => {
-        out[key].colors[id] = {
-          color,
-          name: t(`colorsets:colors.${id}`),
-        };
-      });
+    // Translate strings.
+    sorted.forEach((set) => {
+      out[set.name] = colors.translateSet(set, t);
     });
 
     return out;
+  };
+
+  // List custom/overridden machine names.
+  colors.customKeys = () =>
+    Object.keys(cncserver.utils.getCustomPresets('colorsets'));
+
+  // List internal machine names.
+  colors.internalKeys = () =>
+    Object.keys(cncserver.utils.getInternalPresets('colorsets'));
+
+  // Object of preset keys with colorset toolset tool parents unavailable to this bot.
+  colors.invalidPresets = () => {
+    const out = {};
+    const sets = colors.listPresets();
+    const invalidToolsets = cncserver.tools.invalidPresets();
+
+    // Move through all sets, report invalid toolsets
+    Object.entries(sets).forEach(([name, { toolset }]) => {
+      if (toolset in invalidToolsets) {
+        out[name] = invalidToolsets[toolset];
+      }
+    });
+
+    return out;
+  };
+
+  // Fully translate a given non-map based colorset.
+  colors.translateSet = (set, t = t => t) => {
+    if (set) {
+      set.title = t(set.title);
+      set.description = t(set.description);
+      set.manufacturer = t(set.manufacturer);
+
+      set.items.forEach((item) => {
+        item.name = t(item.name);
+      });
+    }
+
+    return set;
   };
 
   /**
@@ -173,15 +93,39 @@ module.exports = (cncserver) => {
    */
   colors.getIDs = () => Array.from(colors.set.items.keys());
 
+  // Make changes to the colorset object.
   colors.editSet = (set) => new Promise((resolve, reject) => {
     delete set.items;
-    delete set.tools;
+
+    // Enforce clean machine name.
+    set.name = cncserver.utils.getMachineName(set.name, 64);
 
     colors.set = cncserver.utils.merge(colors.set, set);
     colors.saveCustom();
     resolve();
   });
 
+  // Take in a colorset and convert the items/tools to a map
+  colors.setAsMap = (set = {}) => ({
+    ...set,
+    items: cncserver.utils.arrayToIDMap(set.items),
+  });
+
+  // Return a flat array version of the set.
+  colors.setAsArray = (set = colors.set) => ({
+    ...set,
+    items: Array.from(set.items.values()),
+  });
+
+  // Load and return a correctly mapped colorset from a preset name.
+  // Pass translate function to rewrite translatable fields.
+  colors.getPreset = (presetName, t) => {
+    const { utils } = cncserver;
+    const set = colors.translateSet(utils.getPreset('colorsets', presetName), t);
+    return set ? colors.setAsMap(set) : set;
+  };
+
+  // Edit an item.
   colors.edit = (item) => new Promise((resolve, reject) => {
     const { id } = item;
     colors.set.items.set(id, item);
@@ -195,7 +139,9 @@ module.exports = (cncserver) => {
     colors.set.items.delete(id);
 
     if (colors.set.items.size === 0) {
-      colors.set.items.set(defaultColor.id, defaultColor);
+      // Load in the default 1 color preset.
+      const color = colors.getPreset(DEFAULT_PRESET).items.get('color0');
+      colors.set.items.set(color.id, color);
     }
     cncserver.sockets.sendPaperUpdate();
     colors.saveCustom();
@@ -203,6 +149,7 @@ module.exports = (cncserver) => {
 
   // Add a color by all of its info, appended to the end.
   colors.add = ({ id, ...item }) => new Promise((resolve, reject) => {
+    id = cncserver.utils.getMachineName(id, 64);
     if (!colors.getColor(id)) {
       colors.set.items.set(id, { id, ...item });
       cncserver.sockets.sendPaperUpdate();
@@ -215,25 +162,36 @@ module.exports = (cncserver) => {
     }
   });
 
-
   // Get a renderable color from a tool name. 'transparent' if no match.
   colors.getToolColor = (name) => {
     const item = colors.set.items.get(name);
     return item ? item.color : 'transparent';
   };
 
+  // Get the full implement object for a given colorset item id.
+  colors.getItemImplement = (id) => {
+    const item = colors.set.items.get(id);
+    const preset = item.implement === IMPLEMENT_PARENT
+      ? colors.set.implement : item.implement;
+    return cncserver.drawing.implements.get(preset);
+  };
+
   // Get non-reference copy of colorset item by id.
-  colors.getColor = (id, applyInheritance = false) => {
+  colors.getColor = (id, applyInheritance = false, withImplement = false) => {
+    const { implements } = cncserver.drawing;
     const rawItem = colors.set.items.get(id);
     let item = null;
 
     if (rawItem) {
       item = { ...rawItem };
-      item.implement = { ...rawItem.implement };
 
       // If the implementor wants it, and the item wants inheritance...
-      if (applyInheritance && item.implement.type === 'inherit') {
-        item.implement = { ...colors.set.implement };
+      if (item.implement === IMPLEMENT_PARENT) {
+        if (applyInheritance) {
+          item.implement = withImplement ? implements.get(colors.set.implement) : colors.set.implement;
+        }
+      } else if (withImplement) {
+        item.implement = implements.get(item.implement);
       }
     }
 
@@ -241,7 +199,7 @@ module.exports = (cncserver) => {
   };
 
   /**
-   * Mutate the set array to match a preset by machine name.
+   * Mutate the set object to match a preset by machine name.
    *
    * @param {string} presetName
    *
@@ -249,132 +207,40 @@ module.exports = (cncserver) => {
    *   Null for failure, true if success.
    */
   colors.applyPreset = (presetName, t) => new Promise((resolve, reject) => {
-    const preset = colors.setFromPreset(presetName, t);
-    if (preset) {
-      colors.set = preset;
+    const { utils } = cncserver;
+    const set = colors.getPreset(presetName);
+    if (set) {
+      colors.set = set;
       cncserver.tools.sendUpdate();
       resolve();
     } else {
-      const validOptions = Object.keys(colors.presets).join(', ');
-      reject(new Error(
-        cncserver.utils.singleLineString`Preset with id of '${presetName}' not found
-        in preset list. Must be one of [${validOptions}]`
-      ));
+      const err = new Error(
+        cncserver.utils.singleLineString`Preset with machine name ID '${presetName}' not
+        found or failed to load.`
+      );
+      err.allowedValues = Object.keys(utils.getPresets('colorsets'));
+      reject(err);
     }
   });
 
-  /**
-   * Get colorset array from a preset name.
-   *
-   * @param {string} presetName
-   *
-   * @returns {array}
-   *   Colorset style array with default toolnames
-   */
-  colors.setFromPreset = (presetName, t = s => s) => {
-    const preset = colors.presets[presetName];
-    const { schemas } = cncserver;
-    if (preset) {
-      const isPen = preset.media === 'pen';
-      const presetInfo = colors.listPresets(t)[presetName];
-      const colorset = schemas.getDataDefault('colors', {
-        name: presetName,
-        title: presetInfo.name,
-        description: presetInfo.description,
-        implement: { ...isPen ? defaultPenImplement : defaultBrushImplement },
-      });
-
-      // Load in the default expected tools for watercolors if not a pen.
-      colorset.tools = new Map();
-      if (!isPen) {
-        crayolaDefaultTools.forEach((tool) => {
-          colorset.tools.set(tool.id, tool);
-        });
-      }
-
-      // Build colorset item map. No implement overrides needed.
-      colorset.items = new Map();
-      Object.entries(preset.colors).forEach(([name, color]) => {
-        const id = `color${colorset.items.size}`;
-        colorset.items.set(id, schemas.getDataDefault('color', {
-          id,
-          name: t(`colorsets:colors.${name}`),
-          color,
-        }));
-      });
-
-      // TODO: Allow this to be set somewhere?
-      colorset.items.set(ignoreWhite.id, { ...ignoreWhite });
-      return colorset;
-    }
-
-    return null;
-  };
-
-  // Load custom from given machine name.
-  colors.loadCustom = (name) => {
-
-  };
-
-  // Get the path to the json file for a given custom colorset.
-  colors.getCustomSetPath = (name) => {
-    const sets = cncserver.utils.getUserDir('colorsets');
-    return path.join(sets, `${name}.json`);
-  };
-
   // Save custom from set.
   colors.saveCustom = () => {
-    const dest = colors.getCustomSetPath(colors.set.name);
-
-    // Write the file with version header.
-    fs.writeFileSync(
-      dest,
-      JSON.stringify({ cncserverColorset: 'v3', ...colors.getCurrentSet() }, null, 2)
-    );
+    cncserver.utils.savePreset('colorsets', colors.setAsArray());
   };
 
   // Get the current colorset as a JSON ready object.
-  colors.getCurrentSet = (t = s => s) => {
-    const set = {
-      ...colors.set,
-      title: t(colors.set.title),
-      description: t(colors.set.description),
-      items: [],
-      tools: [],
-    };
-
-    // Convert items map to array.
-    Array.from(colors.set.items.values()).forEach(item => {
-      set.items.push({ ...item, name: t(item.name) });
-    });
-
-    // Convert tools map to array.
-    Array.from(colors.set.tools.values()).forEach(tool => {
-      set.tools.push({ ...tool });
-    });
-
-    return set;
-  };
+  colors.getCurrentSet = t => colors.translateSet(colors.setAsArray(), t);
 
   /**
    * Run at setup, allows machine specific colorset defaults.
    */
   colors.setDefault = () => {
+    const { utils, binder } = cncserver;
     // Trigger on schema loaded for schema & validation defaults.
-    cncserver.binder.bindTo('schemas.loaded', colors.id, () => {
-      let defaultSet = cncserver.schemas.getDataDefault('colors', {
-        name: 'default',
-        title: 'Default Set',
-        description: '',
-        implement: {
-          type: 'pen',
-          width: defaultPreset.width,
-        },
-      });
-      defaultSet.items = new Map([['color0', defaultColor], ['ignore', ignoreWhite]]);
-
-      defaultSet = cncserver.binder.trigger('colors.setDefault', defaultSet);
-      colors.set = defaultSet;
+    binder.bindTo('schemas.loaded', colors.id, () => {
+      let defaultSet = utils.getPreset('colorsets', 'default-single-pen');
+      defaultSet = binder.trigger('colors.setDefault', defaultSet);
+      colors.set = colors.setAsMap(defaultSet);
       cncserver.binder.trigger('tools.update');
     });
   };
@@ -385,9 +251,10 @@ module.exports = (cncserver) => {
   });
 
   // Figure out if we should even parse color work
+  // TODO: this kinda sucks.
   colors.doColorParsing = () => {
     const items = {};
-    colors.set.forEach((item) => {
+    colors.set.items.forEach((item) => {
       if (item.id !== 'ignore') {
         items[item.id] = true;
       }
@@ -395,19 +262,32 @@ module.exports = (cncserver) => {
     return Object.keys(items).length > 1;
   };
 
-  // Get a luminosity sorted list of colors.
-  colors.getSortedSet = () => Array.from(colors.set.items.values()).sort(
-    (a, b) => new Color(b.color).gray - new Color(a.color).gray
+  // Apply luminosity sorting (for presets without weighting info).
+  colors.applyDefaultPrintSorting = (set) => {
+    const luminositySorted = Array.from(set.items.values()).sort((a, b) =>
+      new Color(b.color).gray - new Color(a.color).gray
+    );
+
+    let weight = -15;
+    luminositySorted.forEach(({ id }) => {
+      weight = weight + 3;
+      set.items.get(id).printWeight = weight;
+    });
+  };
+
+  // Get the print weight sorted list of colors.
+  colors.getSortedSet = (set = colors.set) => Array.from(set.items.values()).sort(
+    (a, b) => b.printWeight - a.printWeight
   );
 
-  // Get an object keyed by color work ID, ordered by luminosity light->dark.
+  // Get an object keyed by color work ID, ordered by print weight of empty arrays.
   colors.getWorkGroups = () => {
     const groups = {};
-    const sorted = colors.getSortedSet();
+    const sorted = colors.getSortedSet().reverse();
 
-    sorted.forEach((color) => {
-      if (color.id !== 'ignore') {
-        groups[color.id] = [];
+    sorted.forEach(({ id }) => {
+      if (id !== 'ignore') {
+        groups[id] = [];
       }
     });
     return groups;
@@ -424,10 +304,26 @@ module.exports = (cncserver) => {
     colors.set.items.forEach(({ id, color }) => {
       c[id] = color;
     });
-
+    const { layers } = cncserver.drawing.base;
     const nearestColor = nc.from(c);
+
+    // Remove everything on print, rebuild it from here.
+    layers.print.removeChildren();
+
+    // Setup all the destination groups within layers.
+    const sorted = colors.getSortedSet().reverse();
+    const printGroups = {}; // ID keyed set of Paper Groups.
+    const colorsetItems = {}; // Static cache of items in groups.
+    sorted.forEach(({ id }) => {
+      printGroups[id] = new Group({ name: id });
+      layers.print.addChild(printGroups[id]);
+      colorsetItems[id] = colors.getColor(id, true, true);
+    });
+
+    // Move through all preview groups, then all items within them.
     layer.children.forEach((group) => {
       group.children.forEach((item) => {
+
         if (item.strokeColor) {
           // If we've never touched this path before, save the original color.
           if (!item.data.originalColor) {
@@ -436,30 +332,35 @@ module.exports = (cncserver) => {
 
           // Find nearest color.
           const nearest = nearestColor(item.data.originalColor.toCSS(true));
-          const colorsetItem = colors.getColor(nearest.name, true);
-
-          // If item matched to "ignore", hide it.
-          if (nearest.name === 'ignore') {
-            item.strokeWidth = 0;
-          } else {
-            // Match colorset item effective implement size.
-            item.strokeWidth = colorsetItem.implement.width;
-
-            // Save/set new color and matched ID.
-            // IMPORTANT: This is how tool set swaps are rendered.
-            item.data.colorID = nearest.name;
-            item.strokeColor = nearest.value;
-
-            // Assume less than full opacity with brush/watercolor paintings.
-            item.opacity = colorsetItem.implement.type === 'brush' ? 0.8 : 1;
-
-            // Prevent
-            item.strokeCap = 'round';
-            item.strokeJoin = 'round';
-          }
+          colors.applyPreview(item, colorsetItems[nearest.name]);
+          printGroups[nearest.name].addChild(item.clone());
         }
       });
     });
+  };
+
+  // Apply preview styles to an item.
+  colors.applyPreview = (item, color) => {
+    // If item matched to "ignore", hide it.
+    if (color.id === 'ignore') {
+      item.strokeWidth = 0;
+    } else {
+      // Match colorset item effective implement size.
+      item.strokeWidth = color.implement.width;
+
+      // Save/set new color and matched ID.
+      // IMPORTANT: This is how tool set swaps are rendered.
+      // TODO: Set swaps from print groupings.
+      //item.data.colorID = colorID;
+      item.strokeColor = color.color;
+
+      // Assume less than full opacity with brush/watercolor paintings.
+      item.opacity = color.implement.type === 'brush' ? 0.8 : 1;
+
+      // Prevent sharp corners messing up render.
+      item.strokeCap = 'round';
+      item.strokeJoin = 'round';
+    }
   };
 
   return colors;

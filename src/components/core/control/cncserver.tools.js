@@ -5,6 +5,7 @@ const { Path, Group, PointText } = require('paper');
 
 const tools = {
   id: 'tools',
+  set: {}, // Set as part of colorset tool update.
 };
 
 module.exports = (cncserver) => {
@@ -12,48 +13,107 @@ module.exports = (cncserver) => {
   // Get a flat array of tools.
   tools.items = () => [
     ...tools.getBotTools(),
-    ...Array.from(cncserver.drawing.colors.set.tools.values()),
+    ...tools.colorsetTools(),
   ];
+
+  // List all tool presets and their data.
+  tools.listPresets = (t, customOnly) => {
+    const { utils } = cncserver;
+    // TODO: Translate title/description.
+    return customOnly
+      ? utils.getCustomPresets('toolsets')
+      : utils.getPresets('toolsets');
+  };
+
+  // List custom/overridden machine names.
+  tools.customKeys = () =>
+    Object.keys(cncserver.utils.getCustomPresets('toolsets'));
+
+  // List internal machine names.
+  tools.internalKeys = () =>
+    Object.keys(cncserver.utils.getInternalPresets('toolsets'));
+
+  // Object of preset keys with set tools parents unavailable to this bot.
+  tools.invalidPresets = () => {
+    const out = {};
+    const sets = tools.listPresets();
+    const botTools = cncserver.settings.botConf.get('tools');
+    const botName = cncserver.settings.botConf.get('name');
+
+    // Move through all sets, check the toolset for missing parents
+    Object.entries(sets).forEach(([name, { items }]) => {
+      items.forEach(item => {
+        if (item.parent && !(item.parent in botTools)) {
+          if (!(name in out)) out[name] = {};
+          out[name][item.parent] = `'${botName}' does not supply required parent tool '${item.parent}'`;
+        }
+      });
+    });
+
+    return out;
+  };
+
+  // Get the current toolset as a translated, array based object.
+  tools.getResponseSet = (t) => {
+    const { utils } = cncserver;
+    // TODO: Translate title/description.
+    return {
+      ...tools.set,
+      items: utils.mapToArray(tools.set.items),
+    };
+  }
+
+  // Convert a colorset toolset to a flat array
+  tools.colorsetTools = (asMap = false) => {
+    const { utils } = cncserver;
+    return asMap ? tools.set.items : utils.mapToArray(tools.set.items);
+  }
 
   // Can we edit the given tool id?
   tools.canEdit = (id) => {
-    const editableList = Array.from(cncserver.drawing.colors.set.tools.keys());
-    if (id) {
-      return editableList.includes(id);
-    }
-
-    return editableList;
+    const editableList = Array.from(tools.set.items.keys());
+    return id ? editableList.includes(id) : editableList;
   };
 
   // Function to run after the tools have been changed (add, delete, edit).
   tools.sendUpdate = () => {
-    cncserver.drawing.colors.saveCustom();
+    tools.saveCustom();
     cncserver.sockets.sendPaperUpdate();
     cncserver.binder.trigger('tools.update');
   };
 
-  // Function for editing tools (from the colorset only).
+  // Function for editing tools (from the toolset only).
   tools.edit = (tool) => new Promise((resolve, reject) => {
-    const { colors } = cncserver.drawing;
-    colors.set.tools.set(tool.id, tool);
+    tools.set.items.set(tool.id, tool);
     tools.sendUpdate();
-    resolve(colors.set.tools.get(tool.id));
+    resolve(tools.set.items.get(tool.id));
+  });
+
+  // Function for editing toolset base properties (name, manufacturer, title, desc).
+  tools.editSet = (toolset) => new Promise((resolve, reject) => {
+    toolset.name = cncserver.utils.getMachineName(toolset.name, 64);
+    // Name change: Update in colorset.
+    if (tools.set.name != toolset.name) {
+      cncserver.drawing.colors.set.toolset = toolset.name;
+      cncserver.drawing.colors.saveCustom();
+    }
+    tools.set = { ...toolset, items: tools.set.items };
+    tools.sendUpdate();
+    resolve(tools.getResponseSet());
   });
 
   // Delete the a verified ID.
   tools.delete = (id) => {
-    const { colors } = cncserver.drawing;
-    colors.set.tools.delete(id);
+    tools.set.items.delete(id);
     tools.sendUpdate();
   };
 
   // Add a validated tool.
   tools.add = (tool) => new Promise((resolve, reject) => {
-    const { colors } = cncserver.drawing;
-    if (!colors.set.tools.get(tool.id)) {
-      colors.set.tools.set(tool.id, tool);
+    if (!tools.set.items.get(tool.id)) {
+      tools.set.items.set(tool.id, tool);
       tools.sendUpdate();
-      resolve(colors.set.tools.get(tool.id));
+      resolve(tools.set.items.get(tool));
     } else {
       reject(
         new Error(cncserver.utils.singleLineString`Custom colorset tool with id
@@ -87,8 +147,36 @@ module.exports = (cncserver) => {
   // Get a single item, undefined if invalid.
   tools.getItem = name => tools.items().find(({ id }) => id === name);
 
+  // Automatically set the internal "tools.set" from "colors.set.toolset".
+  tools.setFromColors = () => {
+    const { utils } = cncserver;
+    const set = utils.getPreset('toolsets', cncserver.drawing.colors.set.toolset);
+
+    tools.set = {
+      ...set,
+      items: cncserver.utils.arrayToIDMap(set.items),
+    };
+  };
+
+  // Save changes to the current toolset
+  tools.saveCustom = () => {
+    const { drawing: { colors }, utils } = cncserver;
+
+    // Special failover to prevent squashing empty "default".
+    if (tools.set.name === 'default') {
+      tools.set.name = 'default-custom';
+      colors.set.toolset = tools.set.name;
+      colors.saveCustom();
+    }
+
+    utils.savePreset('toolsets', {
+      ...tools.set,
+      items: utils.mapToArray(tools.set.items),
+    })
+  };
+
   /**
-   * Run the operation to set the current tool (and any aggregate operations
+   * Run the operation to change the current tool (and any aggregate operations
    * required) into the buffer
    *
    * @param name
@@ -105,7 +193,7 @@ module.exports = (cncserver) => {
    * @returns {boolean}
    *   True if success, false on failure.
    */
-  tools.set = (name, index = null, callback = () => { }, waitForCompletion = false) => {
+  tools.changeTo = (name, index = null, callback = () => { }, waitForCompletion = false) => {
     // Get the matching tool object from the bot configuration.
     const tool = tools.getItem(name);
 
@@ -170,6 +258,9 @@ module.exports = (cncserver) => {
   cncserver.binder.bindTo('tools.update', tools.id, () => {
     const { layers } = cncserver.drawing.base;
     const toolGroup = new Group();
+
+    tools.setFromColors();
+
     const items = tools.items();
 
     layers.tools.removeChildren();
