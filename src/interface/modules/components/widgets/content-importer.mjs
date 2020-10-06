@@ -240,6 +240,14 @@ export default styles => ({
     sourceTypes, type, mode, message, loading,
   }) => html`
     ${styles}
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
+    </style>
+    <notify-loading debug active=${loading} text="Loading..."></notify-loading>
     <section id="content-importer">
       <div class=${{ modal: 1, 'is-active': message }}>
         <div class="modal-background" onclick=${hideModal}></div>

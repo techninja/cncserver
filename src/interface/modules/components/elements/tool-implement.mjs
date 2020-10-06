@@ -8,6 +8,7 @@ import apiInit from '/modules/utils/api-init.mjs';
 
 function setHostFromPreset(host, preset) {
   apiInit(() => {
+    host.loading = true;
     cncserver.api.implements.get(preset).then(({ data }) => {
       data.title = `${data.manufacturer} ${data.title}`;
       delete data.sortWeight;
@@ -16,9 +17,11 @@ function setHostFromPreset(host, preset) {
         if (key === 'handleColors') data[key] = data[key].join(',');
         host[key] = data[key];
       });
+      host.loading = false;
     }).catch((err) => {
       // Reset the preset if there was any error.
       host.preset = '';
+      host.loading = false;
     });
   });
 }
@@ -30,7 +33,7 @@ export default () => ({
   bracketSize: 8,
   bracketNotch: 5,
   bracketPadding: 5,
-  initialized: false,
+  loading: false,
 
   // Switch to true for no labels/brackets.
   plain: false,
@@ -54,6 +57,7 @@ export default () => ({
     bracketNotch,
     bracketPadding,
     plain,
+    loading,
 
     // Implement specifics.
     handleColors,
@@ -201,8 +205,11 @@ export default () => ({
       <style>
         :host {
           display: inline-block;
+          position: relative;
+          overflow: hidden;
         }
       </style>
+      <notify-loading active=${loading}></notify-loading>
       <svg width=${viewBox[2]} height=${viewBox[3]} viewBox=${viewBox.join(' ')}>
         ${svg`
       <style>
