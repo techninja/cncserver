@@ -18,6 +18,7 @@ let axios = {}; // Placeholder.
 
 // Initialize wrapper object is this library is being used elsewhere
 const cncserver = {
+  contentTimeout: 20000,
   init: ({
     domain = 'localhost',
     port = 4242,
@@ -146,12 +147,14 @@ cncserver.api = {
   content: {
     stat: () => _get('content'),
     add: {
-      direct: data => _post('content', { data }),
+      direct: data => _post('content', { data, timeout: cncserver.contentTimeout }),
       local: (type, content, options = {}) => _post('content', {
         data: { ...options, source: { type, content } },
+        timeout: cncserver.contentTimeout,
       }),
       remote: (type, url, options = {}) => _post('content', {
         data: { ...options, source: { type, url } },
+        timeout: cncserver.contentTimeout,
       }),
     },
 
