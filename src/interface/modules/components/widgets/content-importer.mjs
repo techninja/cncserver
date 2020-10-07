@@ -246,28 +246,46 @@ export default styles => ({
         position: relative;
         overflow: hidden;
       }
+
+      section {
+        position: relative;
+      }
+
+      #source-type-wrapper {
+        position: absolute;
+        right: 1em;
+      }
+
+      @media only screen and (max-width: 1230px) {
+        #source-type-wrapper {
+          position: relative;
+          right: auto;
+          margin-bottom: 1em;
+        }
+      }
+
+      #source-type {
+        font-size: 1.2em;
+      }
+
     </style>
     <notify-loading debug active=${loading} text="Loading..."></notify-loading>
-    <section id="content-importer">
-      <div class=${{ modal: 1, 'is-active': message }}>
-        <div class="modal-background" onclick=${hideModal}></div>
-        <div class="modal-content">
-          <article class="message is-danger">
-            <div class="message-header">
-              <p>Error Adding Content:</p>
-              <button class="delete" aria-label="delete" onclick=${hideModal}></button>
-            </div>
-            <div class="message-body">${message}</div>
-            <button-single
-              onclick=${hideModal}
-              text="Ok"
-              style="warning"
-              fullwidth
-            ></button-single>
-          </article>
-        </div>
-      </div>
-
+    <notify-modal
+      header="Error Adding Content:"
+      message=${message}
+      style="danger"
+      onclose=${hideModal}
+      active=${!!message}
+      limit
+    >
+      <button-single
+        onclick=${hideModal}
+        text="Ok"
+        style="warning"
+        fullwidth
+      ></button-single>
+    </notify-modal>
+    <section>
       <div id="source-type-wrapper">
         <label for="source-type">Source Type:</label>
         <select id="source-type" onchange=${changeType}>

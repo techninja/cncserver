@@ -14,6 +14,7 @@ import SchemaForm from './schema-form.mjs';
 import ToolImplement from './tool-implement.mjs';
 import ColorSet from './color-set.mjs';
 import NotifyLoading from './notify-loading.mjs';
+import NotifyModal from './notify-modal.mjs';
 
 export default styles => ({
   'tab-item': TabItem(styles),
@@ -29,4 +30,5 @@ export default styles => ({
   'tool-implement': ToolImplement(styles),
   'color-set': ColorSet(styles),
   'notify-loading': NotifyLoading(styles),
+  'notify-modal': NotifyModal(styles),
 });

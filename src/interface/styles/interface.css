@@ -141,33 +141,3 @@ input.switch:checked:after {
   border: 2px solid blueviolet;
 }
 
-/* Content Importer */
-#content-importer {
-  position: relative;
-}
-
-#content-importer .modal {
-  position: absolute;
-}
-
-#content-importer .modal-content {
-  width: 80%;
-}
-
-#source-type-wrapper {
-  position: absolute;
-  right: 1em;
-}
-
-@media only screen and (max-width: 1230px) {
-  #source-type-wrapper {
-    position: relative;
-    right: auto;
-    margin-bottom: 1em;
-  }
-}
-
-#source-type {
-  font-size: 1.2em;
-}
-
