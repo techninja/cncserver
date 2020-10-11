@@ -254,6 +254,8 @@ module.exports = (cncserver) => {
         if (fs.existsSync(oldPath)) {
           fs.renameSync(oldPath, newPath);
         }
+
+        project.dir = newPath;
       }
 
       project.name = newName;
