@@ -1,8 +1,18 @@
 /**
  * @file Code for drawing fill management.
  */
+const path = require('path');
+
 module.exports = (cncserver, drawing) => {
-  const fill = (path, hash, bounds = null, settings, subIndex) => new Promise((success, error) => {
+  const fill = (fillPath, hash, bounds = null, settings, subIndex) => new Promise((success, error) => {
+    const { method } = settings;
+    const script = path.resolve(
+      __dirname,
+      'fillers',
+      method,
+      `cncserver.drawing.fillers.${method}.js`
+    );
+
     // Add in computed settings values here.
     if (settings.randomizeRotation) {
       settings.rotation = Math.round(Math.random() * 360);
@@ -10,11 +20,8 @@ module.exports = (cncserver, drawing) => {
 
     // TODO: Should we fitbounds here? Or earlier?
     if (bounds) {
-      drawing.base.fitBounds(path, bounds);
+      drawing.base.fitBounds(fillPath, bounds);
     }
-
-    const { method } = settings;
-    const script = `${__dirname}/fillers/${method}/cncserver.drawing.fillers.${method}.js`;
 
     // Use spawner to run fill process.
     drawing
@@ -23,14 +30,14 @@ module.exports = (cncserver, drawing) => {
         hash,
         script,
         settings,
-        object: path.exportJSON(),
+        object: fillPath.exportJSON(),
         subIndex,
       })
       .then((result) => {
         drawing.preview.addRenderJSON(result, hash, {
           fillColor: null,
           strokeWidth: 1,
-          strokeColor: path.fillColor,
+          strokeColor: fillPath.fillColor,
         });
         success();
       })
