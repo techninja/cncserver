@@ -12,6 +12,7 @@ import ContentImporter from './content-importer.mjs';
 import CanvasCompose from './canvas/canvas-compose.mjs';
 import CanvasPrint from './canvas/canvas-print.mjs';
 import DrawSettings from './draw-settings.mjs';
+import ImplementStatus from './implement-status.mjs';
 
 // Colorset Editor and associated components.
 import ColorsetEditor from './colorsets/colorset-editor.mjs';
@@ -35,6 +36,7 @@ export default styles => ({
   'canvas-print': CanvasPrint(styles),
   'draw-settings': DrawSettings(styles),
   'content-importer': ContentImporter(styles),
+  'implement-status': ImplementStatus(styles),
 
   // Colorset editor components.
   'colorset-editor': ColorsetEditor(styles),
