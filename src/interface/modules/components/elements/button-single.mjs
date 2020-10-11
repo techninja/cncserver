@@ -21,6 +21,11 @@ export default styles => ({
 
     return html`
     ${styles}
+    <style>
+      :host {
+        display: inline;
+      }
+    </style>
     <a class="${linkClasses}" disabled=${disabled} style=${{ display: fullwidth ? 'flex' : 'inline-block' }} title="${desc}">
       ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
       ${text && html`<span>${text}</span>`}
