@@ -24,6 +24,7 @@ export default styles => ({
         z-index: ${active ? 10 : -10};
         cursor: ${active ? 'wait' : 'inherit'};
       }
+
       .wrapper {
         width: 100%;
         height: 100%;
@@ -47,7 +48,7 @@ export default styles => ({
     </style>
 
     <div class=${{ wrapper: 1, active }} title="${desc}">
-      <label >
+      <label>
         ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
         ${text}
       </label>

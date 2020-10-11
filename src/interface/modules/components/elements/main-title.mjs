@@ -24,6 +24,12 @@ export default styles => ({
 
   render: ({ subtitle }) => html`
     ${styles}
+    <style>
+      /* TODO: This should fallback to something better for mobile */
+      .hero-body {
+        display: flex;
+      }
+    </style>
     <section class="hero is-dark is-bold">
       <div class="hero-body">
         <div class="container">
@@ -33,9 +39,9 @@ export default styles => ({
 
           <h1 class="title">CNC Server client v3.0-beta1</h1>
           <p class="subtitle">${subtitle}</p>
-          <div class="children">
-            <slot></slot>
-          </div>
+        </div>
+        <div class="children">
+          <slot></slot>
         </div>
       </div>
     </section>
