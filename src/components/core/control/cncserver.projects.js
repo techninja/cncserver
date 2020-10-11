@@ -338,8 +338,11 @@ module.exports = (cncserver) => {
 
     if (newState) {
       // TODO:
+      console.log('Start printing!');
+      cncserver.control.renderPathsToMoves();
     } else {
       // TODO:
+      console.log('Stop printing!');
     }
     projects.printing = newState;
   };

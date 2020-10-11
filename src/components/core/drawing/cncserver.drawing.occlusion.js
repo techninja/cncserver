@@ -32,6 +32,10 @@ module.exports = (cncserver, drawing) => {
           // same index.
           // console.log('Source subtract from:', srcPath.name, destPath.name);
           srcPath = layer.insertChild(srcIndex, srcPath.subtract(destPath));
+
+          // TODO: This might not be correct. But we need something liek it or all
+          // combined open paths end up closed.
+          srcPath.closed = tmpPath.closed;
           srcPath.name = tmpPath.name ? tmpPath.name : `auto_path_${srcPath.id}`;
           srcPath.data = { ...tmpPath.data };
           tmpPath.remove(); // Remove the old srcPath
