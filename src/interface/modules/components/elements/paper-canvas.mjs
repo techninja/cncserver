@@ -4,7 +4,7 @@
 /* globals paper, window, Event, cncserver */
 import { html, dispatch } from '/modules/hybrids.js';
 
-const { Layer, Path } = paper;
+const { Layer, Path, PointText } = paper;
 const tempContent = {};
 
 /**
@@ -46,6 +46,31 @@ function drawGrid(layer, workspace, rawOptions = {}) {
       }));
     }
   }
+
+  // Add paper presets.
+  const presets = [
+    {
+      name: 'Letter 8.5" x 11"',
+      size: [279.4, 215.9],
+    },
+  ];
+
+  presets.forEach(({ name, size }) => {
+    layer.addChild(new Path.Rectangle({
+      size,
+      point: [workspace.left, workspace.top],
+      strokeColor: 'red',
+      strokeWidth: 1,
+    }))
+
+    const label = new PointText({
+      content: name,
+    });
+    label.rotation = -90;
+    label.position = [size[0], size[1] / 2];
+
+    layer.addChild(label);
+  });
 }
 
 /**
