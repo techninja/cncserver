@@ -59,6 +59,7 @@ module.exports = (cncserver, drawing) => {
         workingQueueItem.success(data.result);
 
         // End the process, we're done with it now.
+        ipc.server.emit(socket, 'cancel');
         workingQueueItem.process.kill('SIGHUP');
         console.log(`SPAWN ${spawnKey}: Completed in ${timeTaken} secs`);
 
