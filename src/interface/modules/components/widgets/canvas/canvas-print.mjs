@@ -146,27 +146,15 @@ function init(host, { detail }) {
       });
 
       // Initialize the paper-canvas with bot size details.
-      host.canvas.scope.paperInit({
-        size: new paper.Size(bot.maxAreaMM),
-        layers: ['print', 'tools'],
-        workspace,
-      }).then(() => {
-        initPrint(host);
-      });
-
-      // TODO: Find out where this lives.
-      // Catch when it's time to manually swap pen over.
-      cncserver.socket.on('manualswap trigger', ({ index }) => {
-
-        cncserver.api.colors.get(index).then(({ data: { name } }) => {
-          const message = `We are now ready to draw with ${name}. When it's in and ready, click ok.`;
-
-          // eslint-disable-next-line no-alert
-          if (window.confirm(message)) {
-            cncserver.api.tools.change('manualresume');
-          }
+      host.canvas.scope
+        .paperInit({
+          size: new paper.Size(bot.maxAreaMM),
+          layers: ['print', 'tools'],
+          workspace,
+        })
+        .then(() => {
+          initPrint(host);
         });
-      });
     });
   });
 }
