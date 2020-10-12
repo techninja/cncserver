@@ -333,7 +333,10 @@ module.exports = (cncserver) => {
    *   Source paper object containing the children, defaults to preview layer.
    */
   control.renderPathsToMoves = (reqSettings = {}) => {
-    const { settings: { botConf }, drawing: { base, colors }, tools } = cncserver;
+    const {
+      drawing: { base, colors },
+      tools,
+    } = cncserver;
     const source = cncserver.drawing.base.layers.print;
     const settings = {
       parkAfter: true,
@@ -366,7 +369,7 @@ module.exports = (cncserver) => {
 
           // Do we have a tool for this colorID? If not, use manualswap.
           if (colors.doColorParsing()) {
-            const changeTool = botConf.get(`tools:${colorID}`) ? colorID : 'manualswap';
+            const changeTool = tools.has(colorID) ? colorID : 'manualswap';
             tools.changeTo(changeTool, colorID);
           }
 

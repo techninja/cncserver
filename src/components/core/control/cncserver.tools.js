@@ -16,6 +16,10 @@ module.exports = (cncserver) => {
     ...tools.colorsetTools(),
   ];
 
+  // Check for an ID.
+  tools.has = (checkID) =>
+    !!tools.items.filter(({ id }) => item.id === checkID).length;
+
   // List all tool presets and their data.
   tools.listPresets = (t, customOnly) => {
     const { utils } = cncserver;
