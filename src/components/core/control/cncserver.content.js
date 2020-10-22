@@ -242,7 +242,8 @@ module.exports = (cncserver) => {
         case 'text':
           item = new PointText({
             point: cncserver.drawing.base.validateBounds(payload.bounds),
-            content: source.content,
+            content: cncserver.drawing.text.format(source.content),
+            data: { originalText: source.content },
           });
           success({ ...payload, source, item });
           break;
@@ -436,7 +437,7 @@ module.exports = (cncserver) => {
         // Text render to bounds, etc.
         // Full settings are passed here as fills can be sub-rendered on system fonts.
         if (settings.text.render) {
-          promiseQueue.push(text.draw(item.content, hash, bounds, settings));
+          promiseQueue.push(text.draw(item.data.originalText, hash, bounds, settings));
         }
         break;
 

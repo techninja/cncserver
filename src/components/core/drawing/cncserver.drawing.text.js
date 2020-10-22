@@ -14,17 +14,36 @@ const text = {};
 module.exports = (cncserver, drawing) => {
   text.fonts = hershey.svgFonts;
 
+  // Add any custom fonts.
+  cncserver.utils.getUserDirFiles('fonts', '*.svg', hershey.addSVGFont);
+
+  // Problem: With really long strings, they never break on their own, so if by
+  // default we wrap strings, lets format the text that goes in the stage
+  // preview to have manual breaks in it.
+  text.format = (text) => {
+    const words = text.split(' ');
+    let out = [];
+    let lineLength = 0;
+    words.forEach((word) => {
+      lineLength += word.length;
+      if (lineLength > 60) {
+        lineLength = 0;
+        out.push(`${word}\n`);
+      } else {
+        out.push(word);
+      }
+    });
+    return out.join(' ');
+  };
+
   /**
-   * Returns a group of lines and characters rendered in single line hersheyfont
+   * Returns a group of lines and characters rendered in single line hershey/SVG font.
+   *
+   * All raw values are in the font's number system before import scaling.
    */
   function renderHersheyPaths(textContent, bounds, settings) {
     // Render the text array.
-    const textArray = hershey.renderTextArray(textContent, {
-      // TODO: Find out differences in what this takes vs our settings object
-      // and make it EXPLICIT.
-      ...settings,
-      pos: { x: 0, y: 0 },
-    });
+    const textArray = hershey.renderTextArray(textContent, settings);
 
     const { view } = drawing.base.project;
 
@@ -35,16 +54,23 @@ module.exports = (cncserver, drawing) => {
 
     let cLine = 0;
     textArray.forEach((char, index) => {
-      if (char.type === 'space' || char.type === 'newline') {
-        caretPos.x += settings.spaceWidth;
+      if (char.name === 'space' || char.name === 'newline') {
+        caretPos.x += settings.spaceWidth + char.width;
 
-        // Allow line wrap on space
-        if (caretPos.x > settings.wrapWidth || char.type === 'newline') {
+        // Allow for wrapping based on wrapChars setting.
+        let passedWrapWidth = false;
+        if (char.name === 'space' && settings.wrapLines) {
+          passedWrapWidth = caretPos.x > settings.wrapChars * char.width;
+        }
+
+        // Allow line wrap on space, or forced via newline.
+        if (passedWrapWidth || char.name === 'newline') {
           // Before wrapping, reverse the order of the chars.
           lines[cLine].reverseChildren();
 
           caretPos.x = 0;
-          caretPos.y += settings.lineHeight;
+          // TODO: Get the actual base line height from the font.
+          caretPos.y += 1000 + settings.lineHeight;
 
           cLine++;
           lines.push(new Group({ name: `line-${cLine}` }));
@@ -65,13 +91,15 @@ module.exports = (cncserver, drawing) => {
         // Rotate chararcters.
         if (settings.character.rotation) c.rotate(settings.character.rotation);
 
-        // Align to the top left as expected by the font system
-        const b = c.bounds;
+        // Align to the top left as expected by the font system.
         c.pivot = new Point(0, 0);
-        c.position = caretPos;
+        c.position = [caretPos.x, caretPos.y];
 
-        // Move the caret to the next position based on width and char spacing
-        caretPos.x += b.width + settings.character.spacing;
+        // Move the caret to the next position based on width and char spacing.
+        caretPos.x += char.width + settings.character.spacing;
+
+        // Flip the glyph over vertically.
+        c.scale([1, -1]);
       }
     });
 

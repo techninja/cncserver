@@ -20,7 +20,7 @@
     "express": "~3.0.0",
     "font-list": "^1.2.9",
     "glob": "^7.1.6",
-    "hersheytext": "1",
+    "hersheytext": "2",
     "hybrids": "^4.2.1",
     "i18next": "^19.0.1",
     "i18next-express-middleware": "^1.8.2",

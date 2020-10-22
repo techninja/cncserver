@@ -78,13 +78,44 @@ module.exports = (cncserver) => {
   utils.getUserDir = (name) => {
     // Ensure we have the base user folder.
     const home = utils.getDir(path.resolve(homedir(), 'cncserver'));
-    const botHome = utils.getDir(path.resolve(home, cncserver.settings.gConf.get('botType')));
+    const botType = cncserver.settings.gConf.get('botType');
 
-    // Home base dir? or bot specific?
-    if (['projects', 'colorsets', 'implements', 'toolsets'].includes(name)) {
-      return utils.getDir(path.resolve(botHome, name));
+    // Only if we have a bot type, use its specific home dir.
+    // This happens when this function is used before settings are available.
+    if (botType) {
+      const botHome = utils.getDir(path.resolve(home, botType));
+
+      // Home base dir? or bot specific?
+      if (['projects', 'colorsets', 'implements', 'toolsets'].includes(name)) {
+        return utils.getDir(path.resolve(botHome, name));
+      }
     }
     return utils.getDir(path.resolve(home, name));
+  };
+
+  /**
+   * Get list of files from a named user content directory.
+   *
+   * @param {string} name
+   *   The arbitrary name of the dir.
+   * @param {string} pattern
+   *   The file pattern to filter to, defaults to all files.
+   * @param {function} mapFunc
+   *   The function to map over the array of files.
+   *
+   * @return {array}
+   *   List of file paths matching the pattern, after running through the map.
+   */
+  utils.getUserDirFiles = (name, pattern = '*.*', mapFunc = x => x) => {
+    let files = [];
+    try {
+      const dir = utils.getUserDir(name);
+      files = glob.sync(path.join(dir, pattern));
+    } catch (error) {
+      console.error(error);
+    }
+
+    return files.map(mapFunc);
   };
 
   /**
