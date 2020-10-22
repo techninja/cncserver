@@ -36,6 +36,7 @@ module.exports = () => ({
       title: 'Position Type',
       description: 'Height of the usable tool area in mm.',
       enum: ['center', 'topleft'],
+      options: { enum_titles: ['Center (default)', 'Top Left'] },
       default: 'center',
     },
     width: {

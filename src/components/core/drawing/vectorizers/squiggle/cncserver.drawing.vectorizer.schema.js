@@ -134,7 +134,7 @@ const properties = {
 
 module.exports = {
   type: 'object',
-  title: 'Squiggle method options',
+  title: 'Squiggle Density Vectorization',
   options: { collapsed: true },
   properties,
 };

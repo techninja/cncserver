@@ -34,6 +34,7 @@ const properties = {
     title: 'Selection Method',
     description: 'When parsing the drawing, how should this be selected?',
     enum: ['color', 'opacity', 'strokeWidth'],
+    options: { enum_titles: ['Color', 'Opacity', 'Stroke Width'] },
     default: 'color',
   },
   colorWeight: {

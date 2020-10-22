@@ -41,6 +41,7 @@ module.exports = () => {
       description: 'The method used to turn a fill into paths.',
       default: 'offset',
       enum: [], // Filled below from available filler schemas.
+      options: { enum_titles: [] },
     },
     flattenResolution: {
       type: 'number',
@@ -94,13 +95,15 @@ module.exports = () => {
       const schemaPath = path.resolve(fullPath, fillerSchema);
       if (fs.existsSync(schemaPath)) {
         globalSchema.method.enum.push(dir);
+
         // eslint-disable-next-line
         const fillerSchemaObject = require(schemaPath);
+        globalSchema.method.options.enum_titles.push(fillerSchemaObject.title);
 
         // Only add if filler defines custom props.
         if (Object.entries(fillerSchemaObject.properties).length) {
           globalSchema[dir] = fillerSchemaObject;
-          globalSchema[dir].options = { dependencies: { method: dir } };
+          globalSchema[dir].options = {dependencies: { method: dir } };
         }
       }
     }

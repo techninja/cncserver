@@ -28,6 +28,9 @@ module.exports = (cncserver) => {
       enum: Object.keys(cncserver.drawing.text.fonts),
       title: 'Stroke Font',
       description: 'Which EMS/SVG stroke font to use to render the text.',
+      options: {
+        enum_titles: Object.values(cncserver.drawing.text.fonts).map(font => font.name),
+      },
     },
     systemFont: {
       type: 'string',
@@ -76,6 +79,7 @@ module.exports = (cncserver) => {
         paragraph: {
           type: 'string',
           enum: ['left', 'right', 'center'],
+          options: { enum_titles: ['Left', 'Center', 'Right'] },
           default: 'left',
           title: 'Paragraph',
           description: 'When more than one line of text exists, how to align the text within the bounds.',

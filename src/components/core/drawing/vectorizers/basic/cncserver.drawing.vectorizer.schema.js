@@ -50,7 +50,7 @@ const properties = {
 
 module.exports = {
   type: 'object',
-  title: 'Basic method options',
+  title: 'Basic Autotrace Vectorization',
   options: { collapsed: true },
   properties,
 };

@@ -7,7 +7,7 @@
 
 module.exports = {
   type: 'object',
-  title: 'Offset method options',
+  title: 'Offset Shape Fill',
   options: { collapsed: true },
   properties: {},
 };

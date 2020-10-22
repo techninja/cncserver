@@ -38,6 +38,15 @@ module.exports = (cncserver) => {
           title: 'Content type',
           description: 'The type of content',
           enum: ['svg', 'path', 'paper', 'raster', 'text'],
+          options: {
+            enum_titles: [
+              'SVG XML',
+              'SVG Path Data',
+              'Paper.js JSON',
+              'Raster Image',
+              'Plain Text',
+            ],
+          },
         },
         url: {
           type: 'string',

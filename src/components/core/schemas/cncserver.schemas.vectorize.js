@@ -26,6 +26,7 @@ module.exports = () => {
       description: 'The method used to turn a raster into paths.',
       default: 'basic',
       enum: [], // Filled below from available vectorizer method schemas.
+      options: { enum_titles: [] },
     },
     raster: {
       type: 'object',
@@ -115,6 +116,7 @@ module.exports = () => {
 
         // eslint-disable-next-line
         const vectorizerSchemaObject = require(schemaPath);
+        globalSchema.method.options.enum_titles.push(vectorizerSchemaObject.title);
 
         // Only add if vectorizer defines custom props.
         if (Object.entries(vectorizerSchemaObject.properties).length) {

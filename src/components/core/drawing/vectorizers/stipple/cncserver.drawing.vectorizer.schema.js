@@ -58,7 +58,7 @@ const properties = {
 
 module.exports = {
   type: 'object',
-  title: 'Stipple method options',
+  title: 'Stipple Dot Vectorization',
   options: { collapsed: true },
   properties,
 };

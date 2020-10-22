@@ -92,7 +92,7 @@ const properties = {
 
 module.exports = {
   type: 'object',
-  title: 'Pattern method options',
+  title: 'Pattern Fill',
   options: { collapsed: true },
   properties,
 };
