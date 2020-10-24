@@ -425,7 +425,7 @@ export default function initTools(originalHost) {
       // Nudge selected objects.
       if (['up', 'down', 'left', 'right'].indexOf(event.key) !== -1) {
         const adjust = [0, 0];
-        const amount = event.modifiers.shift ? 50 : 10;
+        const amount = event.modifiers.shift ? 50 : event.modifiers.alt ? 1 : 10;
         switch (event.key) {
           case 'up':
             adjust[1] = -amount;
