@@ -203,15 +203,16 @@ module.exports = (cncserver) => {
    *
    * @param {string} presetName
    *
-   * @returns {boolean}
-   *   Null for failure, true if success.
+   * @returns {Promise}
+   *   Rejects on failure, resolves on success (no return value).
    */
   colors.applyPreset = (presetName, t) => new Promise((resolve, reject) => {
-    const { utils } = cncserver;
+    const { utils, projects } = cncserver;
     const set = colors.getPreset(presetName);
     if (set) {
       colors.set = set;
       cncserver.tools.sendUpdate();
+      projects.setColorset(presetName);
       resolve();
     } else {
       const err = new Error(

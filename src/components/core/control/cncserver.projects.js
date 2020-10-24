@@ -55,6 +55,7 @@ function initProject() {
     title: 'New Project',
     description: `Automatic project created ${now.toLocaleDateString()}`,
     open: true,
+    colorset: 'default',
   });
 }
 
@@ -112,6 +113,7 @@ module.exports = (cncserver) => {
       name: utils.getMachineName(name || title, 15),
       created: cDate.toISOString(),
       modified: cDate.toISOString(),
+      colorset: cncserver.drawing.colors.set.name,
       content: {},
     };
     item.dir = getProjectDirName(item);
@@ -130,6 +132,16 @@ module.exports = (cncserver) => {
   projects.getContentFilePath = (name, projectHash) => {
     const project = projects.items.get(projectHash);
     return path.resolve(project.dir, name);
+  };
+
+  // Set the colorset for a project.
+  // Currently only happens when a colorset preset is loaded.
+  projects.setColorset = (colorset, hash = projects.current) => {
+    const item = projects.items.get(hash);
+    if (item.colorset !== colorset) {
+      item.colorset = colorset;
+      projects.saveProjectFiles(hash);
+    }
   };
 
   // Actually save the files out for a project.
@@ -160,6 +172,13 @@ module.exports = (cncserver) => {
     content.items.clear();
     cncserver.drawing.stage.clearAll();
     cncserver.drawing.preview.clearAll();
+
+    // Apply the colorset preset in the project, if we can.
+    if (project.colorset) {
+      cncserver.drawing.colors.applyPreset(project.colorset).catch(e => {
+        console.error(e);
+      });
+    }
 
     // Get all the info loaded into the content items, and get the file data.
     Object.entries(project.content).forEach(([, item]) => {
