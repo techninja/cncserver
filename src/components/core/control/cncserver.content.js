@@ -384,6 +384,7 @@ module.exports = (cncserver) => {
     cncserver.drawing.stage.remove(hash);
     content.items.delete(hash);
     projects.removeContentData(hash, project);
+    cncserver.drawing.preview.remove(hash, true);
     cncserver.sockets.sendPaperUpdate('stage');
     // TODO: Delete file, update project.
   };

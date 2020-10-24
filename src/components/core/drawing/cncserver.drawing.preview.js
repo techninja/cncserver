@@ -15,7 +15,7 @@ module.exports = (cncserver, drawing) => {
     cncserver.sockets.sendPaperUpdate('preview');
   };
 
-  // Remove an item from the stage, returns true if it worked.
+  // Remove an item from the preview layer, returns true if it worked.
   preview.remove = (hash, sendUpdate = false) => {
     if (layers.preview.children[hash]) {
       layers.preview.children[hash].remove();
@@ -25,7 +25,7 @@ module.exports = (cncserver, drawing) => {
     return false;
   };
 
-  // Get a full preview SVG of the stage layer content.
+  // Get a full preview SVG of the preview layer content.
   preview.getPreviewSVG = () => {
     const svgContent = layers.stage.exportSVG({ asString: true });
     return cncserver.utils.wrapSVG(svgContent);
