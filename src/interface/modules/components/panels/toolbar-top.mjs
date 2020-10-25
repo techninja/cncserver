@@ -29,14 +29,14 @@ export default styles => ({
     <button-single
       text="Park"
       icon="home"
-      style="warning"
+      type="warning"
       onclick="cncserver.api.pen.park()"
     ></button-single>
 
     <button-single
       text="Unlock & ⇱∅"
       icon="unlock"
-      style="secondary"
+      type="secondary"
       onclick="cncserver.api.motors.unlock().then(cncserver.api.pen.zero());"
     ></button-single>
 
@@ -44,10 +44,10 @@ export default styles => ({
       onchange="cncserver.api.pen.height(this.state ? 0 : 1)"
       on-title="Down ⭳"
       on-icon="pen"
-      on-style="success"
+      on-type="success"
       off-title="Up ↥"
       off-icon="pen"
-      off-style="warning"
+      off-type="warning"
       state=${penState === 'up' || penState === 0}
     ></button-toggle>
 

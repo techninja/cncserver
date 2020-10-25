@@ -30,13 +30,13 @@ export default (styles) => ({
     <button-single
       text="Save"
       icon="save"
-      style="success"
+      type="success"
       onclick=${saveDone}
     ></button-single>
     <button-single
       text="Cancel"
       icon="ban"
-      style="warning"
+      type="warning"
       onclick=${handleSwitch('colors')}
     ></button-single>
     <schema-form

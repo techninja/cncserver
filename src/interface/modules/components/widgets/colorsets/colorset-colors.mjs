@@ -68,13 +68,13 @@ export default styles => ({
           <button-single
             title="Edit"
             icon="edit"
-            style="secondary"
+            type="secondary"
             onclick=${handleSwitch('edit-color', { destProps: { data: item, parentImplement } })}
           ></button-single>
           <button-single
             title="Delete"
             icon="trash-alt"
-            style="warning"
+            type="warning"
           ></button-single>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default styles => ({
     <!--TODO: Add support for adding new colors. <button-single
       text="Add"
       icon="plus-circle"
-      style="success"
+      type="success"
       onclick=${handleSwitch('edit-color', { destProps: { data: {}, parentImplement } })}
     ></button-single>-->
   `,

@@ -11,14 +11,14 @@ export default styles => ({
       <button-single
         text="Render Stage"
         icon="hammer"
-        style="secondary"
+        type="secondary"
         onclick="cncserver.api.projects.renderStage()"
       ></button-single>
 
       <button-single
         text="Draw Preview"
         icon="star-half-alt"
-        style="primary"
+        type="primary"
         onclick="cncserver.api.projects.startPrinting()"
       ></button-single>
 
@@ -26,17 +26,17 @@ export default styles => ({
         onchange="cncserver.api.buffer.toggle(this.state)"
         on-title="Pause"
         on-icon="pause"
-        on-style="warning"
+        on-type="warning"
         off-title="Resume"
         off-icon="play"
-        off-style="success"
+        off-type="success"
         state
       ></button-toggle>
 
       <button-single
         text="Cancel"
         icon="trash-alt"
-        style="danger"
+        type="danger"
         onclick="cncserver.api.buffer.clear()"
       ></button-single>
     </div>

@@ -9,17 +9,17 @@ function dispatchClose(host) {
 
 export default styles => ({
   icon: '',
-  style: 'primary',
+  type: 'primary',
   message: '',
   header: 'Alert',
   active: false,
   limit: false,
 
-  render: ({ style, icon, header, desc, active, message, limit }) => {
+  render: ({ type, icon, header, desc, active, message, limit }) => {
     const messageClasses = {
       message: true,
     };
-    messageClasses[`is-${style}`] = true;
+    messageClasses[`is-${type}`] = true;
 
     const modalClasses = {
       modal: true,
