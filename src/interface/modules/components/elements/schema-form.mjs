@@ -171,6 +171,29 @@ function externalUpdateForm(host) {
       selector.color = host.parentNode.host?.data?.color || '#000000';
     }
   });
+
+  // Disable items if the host requests it.
+  mapFormItemsMatching(host, '.form-control[disabled]', item => item.disabled = false);
+  matchingItems(host, host.disablePaths, item => {
+    item.querySelector('.form-control').disabled = true;
+  });
+}
+
+/**
+ * Run a map function on a result set of a query within the form.
+ *
+ * @param {hybrids} host
+ *   Host element.
+ * @param {string} query
+ *   Query string to find items within the form.
+ * @param {function} mapFunc
+ *   Function to use within map.
+ *
+ * @returns {array}
+ *   Array of returns from map function.
+ */
+function mapFormItemsMatching(host, query, mapFunc) {
+  return Array.from(host.shadowRoot.querySelector('form').querySelectorAll(query)).map(mapFunc);
 }
 
 /**
