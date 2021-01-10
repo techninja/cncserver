@@ -35,6 +35,7 @@ module.exports = (cncserver) => {
       jsonform: path.join(nm, 'jsonform', 'lib'),
       underscore: path.join(nm, 'underscore'),
       bulma: path.join(nm, 'bulma', 'css'),
+      chroma: path.join(nm, 'chroma-js'),
       select2: path.join(nm, 'select2', 'dist'),
       jsoneditor: path.join(nm, '@json-editor', 'json-editor', 'dist'),
       bootstrap: path.join(nm, 'bootstrap', 'dist'),
