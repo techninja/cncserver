@@ -37,7 +37,7 @@ function loadProjects() {
     const jsonPath = path.resolve(projects.homeDir, dir, PROJECT_JSON);
     if (fs.existsSync(jsonPath)) {
       // eslint-disable-next-line import/no-dynamic-require, global-require
-      const item = require(jsonPath);
+      const item = projects.fitShape(require(jsonPath));
       projects.items.set(item.hash, {
         ...item,
         dir: path.resolve(projects.homeDir, dir),
@@ -96,24 +96,33 @@ module.exports = (cncserver) => {
     return project;
   };
 
+  // Fit a "simple" or complete object into the full schema object shape.
+  projects.fitShape = data => cncserver.schemas.getDataDefault('projects', data);
+
   // Assume schema has been checked by the time we get here.
   // TODO: add support for adding content on creation.
   // TODO: When does creating a project not set it as current?
   projects.addItem = ({
-    title, description = '', name, open,
+    title, description = '', name, open, options = {}
   }) => {
     const cDate = new Date();
+
+    const optionsWithDefaults = projects.fitShape({
+      title,
+      description,
+      name: utils.getMachineName(name || title, 15),
+      open,
+      colorset: cncserver.drawing.colors.set.name,
+      options,
+    });
 
     // Compute the entire new object.
     const item = {
       cncserverProject: 'v3',
       hash: utils.getHash({ title, description, name }, 'date'),
-      title,
-      description,
-      name: utils.getMachineName(name || title, 15),
       created: cDate.toISOString(),
       modified: cDate.toISOString(),
-      colorset: cncserver.drawing.colors.set.name,
+      ...optionsWithDefaults,
       content: {},
     };
     item.dir = getProjectDirName(item);
@@ -240,6 +249,9 @@ module.exports = (cncserver) => {
       if (err) { reject(err); } else { resolve(fileName); }
     });
   });
+
+  // Get a copy of the raw internal item for the current project.
+  projects.getCurrent = () => ({ ...projects.items.get(projects.current) });
 
   // Get a fully filled out merged settings object including project overrides.
   projects.getFullSettings = (settings, projectHash = projects.current) => {
