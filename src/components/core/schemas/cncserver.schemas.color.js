@@ -37,6 +37,17 @@ const properties = {
     options: { enum_titles: ['Color', 'Opacity', 'Stroke Width'] },
     default: 'color',
   },
+  selectionOverrides: {
+    type: 'array',
+    title: 'Selection Overrides',
+    description: 'Set of colors that will override all other selection methods.',
+    items: {
+      type: 'string',
+      format: 'color',
+      title: 'Path Color',
+    },
+    default: [],
+  },
   colorWeight: {
     type: 'number',
     title: 'Color Weighting',
