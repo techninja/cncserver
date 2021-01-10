@@ -14,12 +14,11 @@ module.exports = (cncserver, drawing) => {
     } else {
       // Take normalized path and add it to the preview layer.
       drawing.preview.addRender(inputPath.clone(), hash, {
-        strokeWidth: 1,
+        strokeWidth: inputPath.strokeWidth || 1,
         strokeColor: inputPath.strokeColor,
         fillColor: null,
       });
     }
-
 
     resolve();
   });
