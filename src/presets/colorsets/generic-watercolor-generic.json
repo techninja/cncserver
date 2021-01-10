@@ -113,14 +113,6 @@
       "strokeWidthMin": 0,
       "strokeWidthMax": 2,
       "implement": "[inherit]"
-    },
-    {
-      "id": "ignore",
-      "name": "White",
-      "color": "#FFFFFF",
-      "printWeight": -12,
-      "weight": -0.5,
-      "implement": "[inherit]"
     }
   ],
   "toolset": "crayola-default-pans"
