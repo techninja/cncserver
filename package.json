@@ -14,7 +14,7 @@
     "node-ipc": "8.9.2",
     "request": "*",
     "serialport": "8.0.5",
-    "socket.io": "^1.4.8"
+    "socket.io": "^2.4.0"
   },
   "devDependencies": {
     "mocha": "*",
