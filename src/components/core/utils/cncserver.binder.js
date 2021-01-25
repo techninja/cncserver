@@ -1,10 +1,8 @@
 /**
  * @file Util helper for binding to arbitrary events.
  */
-
-//import { gConf } from 'cs/settings';
-
 const hooks = { };
+const lateTrigger = {};
 
 /**
   * Binder binder! Registers a callback for an arbitrary event.
@@ -22,6 +20,11 @@ export function bindTo(event, caller, callback) {
   }
 
   hooks[event][caller] = callback;
+
+  // Immediately trigger binding if there's a late binding trigger.
+  if (lateTrigger[event]) {
+    callback(lateTrigger[event]);
+  }
 }
 
 /**
@@ -31,20 +34,27 @@ export function bindTo(event, caller, callback) {
   *   Event name being triggered.
   * @param {object} payload
   *   Optional data payload to hand to bound callbacks.
+  * @param {bool} allowLateTrigger
+  *   If true, late bindings will trigger with last payload.
   */
-export function trigger(event, payload = {}) {
+export function trigger(event, payload = {}, allowLateTrigger = false) {
   let runningPayload = payload;
+
+  // Allow late triggering for lazy binders?
+  if (allowLateTrigger) {
+    lateTrigger[event] = payload;
+  }
 
   if (typeof hooks[event] === 'object') {
     // Debug for unbound triggers.
-    //if (gConf.get('debug') && !Object.keys(hooks[event]).length) {
+    // if (gConf.get('debug') && !Object.keys(hooks[event]).length) {
     //  console.log(`Event "${event}" triggered with NO BOUND IMPLEMENTORS`);
-   // }
+    // }
     for (const [caller, callback] of Object.entries(hooks[event])) {
       if (typeof callback === 'function') {
-       // if (gConf.get('debug')) {
-       //   console.log(`Event "${event}" triggered for "${caller}" with`, payload);
-       // }
+        // if (gConf.get('debug')) {
+        //   console.log(`Event "${event}" triggered for "${caller}" with`, payload);
+        // }
         runningPayload = callback(runningPayload);
 
         // If a binder implementation doesn't return, reset the payload.
