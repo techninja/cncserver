@@ -1,23 +1,17 @@
 /**
  * @file Index for all high level drawing components.
  */
-/* eslint-disable global-require */
-const drawing = {}; // Conglomerated drawing export.
 
-module.exports = (cncserver) => {
-  // TODO: build with an array loop
-  drawing.base = require('./cncserver.drawing.base.js')(cncserver);
-  drawing.occlusion = require('./cncserver.drawing.occlusion.js')(cncserver, drawing);
-  drawing.trace = require('./cncserver.drawing.trace.js')(cncserver, drawing);
-  drawing.spawner = require('./cncserver.drawing.spawner.js')(cncserver, drawing);
-  drawing.fill = require('./cncserver.drawing.fill.js')(cncserver, drawing);
-  drawing.vectorize = require('./cncserver.drawing.vectorize.js')(cncserver, drawing);
-  drawing.text = require('./cncserver.drawing.text.js')(cncserver, drawing);
-  drawing.accell = require('./cncserver.drawing.accell.js')(cncserver, drawing);
-  drawing.colors = require('./cncserver.drawing.colors.js')(cncserver, drawing);
-  drawing.implements = require('./cncserver.drawing.implements.js')(cncserver, drawing);
-  drawing.stage = require('./cncserver.drawing.stage.js')(cncserver, drawing);
-  drawing.preview = require('./cncserver.drawing.preview.js')(cncserver, drawing);
-  drawing.temp = require('./cncserver.drawing.temp.js')(cncserver, drawing);
-  return drawing;
-};
+export * as base from 'cs/drawing/base';
+export * as occlusion from 'cs/drawing/occlusion';
+export * as trace from 'cs/drawing/trace';
+export * as spawner from 'cs/drawing/spawner';
+export * as fill from 'cs/drawing/fill';
+export * as vectorize from 'cs/drawing/vectorize';
+export * as text from 'cs/drawing/text';
+export * as accell from 'cs/drawing/accell';
+export * as colors from 'cs/drawing/colors';
+export * as implements from 'cs/drawing/implements';
+export * as stage from 'cs/drawing/stage';
+export * as preview from 'cs/drawing/preview';
+export * as temp from 'cs/drawing/temp';

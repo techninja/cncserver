@@ -5,7 +5,6 @@
 // Base serialport module globals.
 const SerialPort = require('serialport');
 
-
 // State vars.
 let port;
 let simulation = true;

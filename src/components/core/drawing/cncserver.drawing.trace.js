@@ -1,11 +1,14 @@
 /**
  * @file Trace code for drawing base, pretty much just imports it into Paper!
  */
-module.exports = (cncserver, drawing) => {
-  const trace = (inputPath, hash, bounds = null, settings = {}) => new Promise((resolve, reject) => {
+import { fitBounds } from 'cs/drawing/base';
+import { addRender } from 'cs/drawing/preview';
+
+export default function trace(inputPath, hash, bounds = null, settings = {}) {
+  return new Promise(resolve => {
     // If bounds set, resize the path.
     if (bounds) {
-      drawing.base.fitBounds(inputPath, bounds);
+      fitBounds(inputPath, bounds);
     }
 
     // TODO: Actually render if we have dash or other options.
@@ -13,7 +16,7 @@ module.exports = (cncserver, drawing) => {
       // TODO: This.
     } else {
       // Take normalized path and add it to the preview layer.
-      drawing.preview.addRender(inputPath.clone(), hash, {
+      addRender(inputPath.clone(), hash, {
         strokeWidth: inputPath.strokeWidth || 1,
         strokeColor: inputPath.strokeColor,
         fillColor: null,
@@ -22,6 +25,4 @@ module.exports = (cncserver, drawing) => {
 
     resolve();
   });
-
-  return trace;
-};
+}

@@ -1,17 +1,23 @@
 /**
  * @file Abstraction module for watercolorbot specific stuff.
  */
+import { bindTo } from 'cs/binder';
 
 // Exposed export.
 const watercolorbot = {
-  id: 'watercolorbot',
   paintDistance: 0,
   maxPaintDistance: 150, // 48.2 * 10,
 };
 
-module.exports = (cncserver) => {
+
+/**
+ * Initialize bot specific code.
+ *
+ * @export
+ */
+export default function initBot() {
   // Bot support in use parent callback.
-  watercolorbot.checkInUse = (botConf) => {
+  watercolorbot.checkInUse = botConf => {
     watercolorbot.inUse = botConf.name === 'WaterColorBot';
   };
 
@@ -86,7 +92,7 @@ module.exports = (cncserver) => {
   };
 
   // Bind the wiggle to the toolchange event.
-  cncserver.binder.bindTo('tool.change', watercolorbot.id, (tool) => {
+  bindTo('tool.change', 'watercolorbot', (tool) => {
     // Only trigger this when the current tool isn't a wait.
     if (typeof tool.wait === 'undefined') {
       // Set the height based on what kind of tool it is.
@@ -111,17 +117,17 @@ module.exports = (cncserver) => {
   });
 
   // Bind to begin of rendering path color group.
-  cncserver.binder.bindTo('control.render.group.begin', watercolorbot.id, (colorID) => {
+  bindTo('control.render.group.begin', watercolorbot.id, (colorID) => {
     watercolorbot.fullWash();
   });
 
   // Bind to end of rendering everything, wash that brush.
-  cncserver.binder.bindTo('control.render.finish', watercolorbot.id, () => {
+  bindTo('control.render.finish', watercolorbot.id, () => {
     watercolorbot.fullWash();
   });
 
   // Bind to path parsing for printing, allows for splitting paths to reink.
-  cncserver.binder.bindTo('control.render.path.select', watercolorbot.id, (paths) => {
+  bindTo('control.render.path.select', watercolorbot.id, (paths) => {
     // Only trigger this when WCB is in use.
     // TODO: don't trigger this for non reinking implements 😬
     if (watercolorbot.inUse) {
@@ -158,7 +164,7 @@ module.exports = (cncserver) => {
   });
 
   // Bind to render path complete, to trigger reinking as needed
-  cncserver.binder.bindTo('control.render.path.finish', watercolorbot.id, (path) => {
+  bindTo('control.render.path.finish', watercolorbot.id, (path) => {
     watercolorbot.paintDistance += path.length;
     if (watercolorbot.paintDistance >= watercolorbot.maxPaintDistance - 1) {
       watercolorbot.reink(cncserver.drawing.base.getColorID(path));
@@ -166,7 +172,7 @@ module.exports = (cncserver) => {
   });
 
   // Bind to color setdefault to set watercolors
-  cncserver.binder.bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (
+  bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (
     watercolorbot.inUse
       ? cncserver.utils.getPreset('colorsets', 'generic-watercolor-generic')
       : passthroughSet

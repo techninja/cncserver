@@ -3,7 +3,7 @@
  *
  */
 /* eslint-disable max-len */
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Implement Details',
   required: ['type', 'name'],
@@ -99,4 +99,6 @@ module.exports = () => ({
       options: { dependencies: { type: 'brush' } },
     },
   },
-});
+};
+
+export default schema;

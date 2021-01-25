@@ -2,20 +2,27 @@
  * @file Abstraction module for EiBotBoard specific support.
  * @see http://evil-mad.github.io/EggBot/ebb.html
  */
-const semver = require('semver');
+import semver from 'semver';
+import { bindTo } from 'cs/binder';
+import run from 'cs/run';
 
 const ebb = { id: 'ebb', version: {} }; // Exposed export.
 const minVersion = '>=2.2.7';
 let controller = {}; // Placeholder for machine config export.
 
-module.exports = (cncserver) => {
+/**
+ * Initialize bot specific code.
+ *
+ * @export
+ */
+export default function initBot() {
   // Bot support in use parent callback.
-  ebb.checkInUse = (botConf) => {
+  ebb.checkInUse = botConf => {
     ebb.inUse = botConf.controller.name === 'EiBotBoard';
   };
 
   // Bind EBB support on controller setup -before- serial connection.
-  cncserver.binder.bindTo('controller.setup', ebb.id, (controller) => {
+  bindTo('controller.setup', ebb.id, (controller) => {
     if (controller.name === 'EiBotBoard') {
       cncserver.serial.setSetupCommands([
         // Set motor precision.
@@ -28,7 +35,7 @@ module.exports = (cncserver) => {
   });
 
   // Bind to serial connection.
-  cncserver.binder.bindTo('serial.connected', ebb.id, () => {
+  bindTo('serial.connected', ebb.id, () => {
     // Exit early if we've already done this (happens on reconnects).
     if (ebb.version.value) {
       return;
@@ -118,8 +125,8 @@ module.exports = (cncserver) => {
    */
   // TODO: Find/replace all instances of "serial.sendEBBSetup"
   ebb.sendSetup = (id, value) => {
-    cncserver.run('custom', `SC,${id},${value}`);
+    run('custom', `SC,${id},${value}`);
   };
 
   return ebb;
-};
+}

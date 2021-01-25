@@ -106,9 +106,11 @@ const properties = {
   },
 };
 
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Colorset Item',
   required: ['color', 'name', 'id', 'selectionMethod'],
   properties,
-});
+};
+
+export default schema;

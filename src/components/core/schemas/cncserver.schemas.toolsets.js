@@ -2,8 +2,7 @@
  * @file Toolset tool holder.
  *
  */
-/* eslint-disable max-len */
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Toolset',
   description: 'A set of tools saved as a preset.',
@@ -35,6 +34,8 @@ module.exports = () => ({
       title: 'Tool Items',
       description: 'Custom additional tools in the set.',
       items: {}, // Set in indexer as tools schema.
-    }
+    },
   },
-});
+};
+
+export default schema;

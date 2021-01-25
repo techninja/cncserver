@@ -3,7 +3,7 @@
  *
  */
 /* eslint-disable max-len */
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Tool',
   description: 'A tool defines a specific location (and optionally area) outside of the workspace to change a property of the current drawing implement.',
@@ -73,4 +73,6 @@ module.exports = () => ({
       default: '',
     },
   },
-});
+};
+
+export default schema;
