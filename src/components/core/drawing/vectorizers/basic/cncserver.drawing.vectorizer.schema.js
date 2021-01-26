@@ -48,9 +48,11 @@ const properties = {
   },
 };
 
-module.exports = {
+const schema = {
   type: 'object',
   title: 'Basic Autotrace Vectorization',
   options: { collapsed: true },
   properties,
 };
+
+export default schema;
