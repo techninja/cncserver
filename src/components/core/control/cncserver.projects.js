@@ -9,7 +9,7 @@ import { homedir } from 'os';
 import * as utils from 'cs/utils';
 import { getDataDefault } from 'cs/schemas';
 import { colors, stage, preview, temp } from 'cs/drawing';
-import { bindTo } from 'cs/binder';
+import { bindTo, trigger } from 'cs/binder';
 import { renderPathsToMoves } from 'cs/control';
 import * as content from 'cs/content';
 
@@ -17,8 +17,7 @@ const PROJECT_JSON = 'cncserver.project.json';
 const PREVIEW_SVG = 'cncserver.project.preview.svg';
 
 // Exposed export to be attached as cncserver.projects
-const projects = {
-  id: 'projects',
+export const state = {
   homeDir: '',
   current: '',
   rendering: false,
@@ -27,30 +26,69 @@ const projects = {
 
 export const items = new Map();
 
+// Fit a "simple" or complete object into the full schema object shape.
+export const fitShape = data => getDataDefault('projects', data);
+
 const getDirectories = source => fs.readdirSync(source, { withFileTypes: true })
   .filter(dirent => dirent.isDirectory())
   .map(dirent => dirent.name);
 
 function getProjectDirName({ name, hash }) {
-  return path.resolve(projects.homeDir, `${name}-${hash}`);
+  return path.resolve(state.homeDir, `${name}-${hash}`);
 }
 
 // Load all projects by file from given paths.
 function loadProjects() {
   items.clear();
 
-  const dirs = getDirectories(projects.homeDir);
+  const dirs = getDirectories(state.homeDir);
   dirs.forEach(dir => {
-    const jsonPath = path.resolve(projects.homeDir, dir, PROJECT_JSON);
+    const jsonPath = path.resolve(state.homeDir, dir, PROJECT_JSON);
     if (fs.existsSync(jsonPath)) {
-      // eslint-disable-next-line import/no-dynamic-require, global-require
-      const item = projects.fitShape(require(jsonPath));
-      projects.items.set(item.hash, {
+      const item = fitShape(utils.getJSONFile(jsonPath));
+      items.set(item.hash, {
         ...item,
-        dir: path.resolve(projects.homeDir, dir),
+        dir: path.resolve(state.homeDir, dir),
       });
     }
   });
+}
+
+// Load a project from a file. Assume hash is validated.
+export function openProject(hash) {
+  const project = items.get(hash);
+  state.current = hash;
+
+  content.items.clear();
+  stage.clearAll();
+  preview.clearAll();
+
+  // Apply the colorset preset in the project, if we can.
+  if (project.colorset) {
+    colors.applyPreset(project.colorset).catch(e => {
+      console.error(e);
+    });
+  }
+
+  // Get all the info loaded into the content items, and get the file data.
+  Object.entries(project.content).forEach(([, item]) => {
+    const filePath = getContentFilePath(item.source.content, hash);
+    let data = '';
+
+    // TODO: What if a file isn't there?
+    if (item.source.type === 'raster') {
+      const datauri = new DataURI(filePath);
+      data = datauri.content;
+    } else {
+      data = fs.readFileSync(filePath).toString();
+    }
+
+    content.loadFromFile(item, data);
+  });
+
+  trigger('projects.update', project);
+
+  return getResponseItem(hash);
 }
 
 // Initialize with a "current" project.
@@ -58,7 +96,7 @@ function initProject() {
   const now = new Date();
   // Create a temp project or load last.
   // TODO: When deleting an open project, default to this.
-  projects.addItem({
+  addItem({
     title: 'New Project',
     description: `Automatic project created ${now.toLocaleDateString()}`,
     open: true,
@@ -91,17 +129,14 @@ export function getItems() {
   return newItems;
 }
 
-export const getCurrentHash = () => projects.current;
+export const getCurrentHash = () => state.current;
 
 // Customize the stored object to be more appropriate for responses.
 export function getResponseItem(hash) {
-  const project = { ...projects.items.get(hash) };
+  const project = { ...items.get(hash) };
   delete project.dir;
   return project;
 }
-
-// Fit a "simple" or complete object into the full schema object shape.
-export const fitShape = data => getDataDefault('projects', data);
 
 // Assume schema has been checked by the time we get here.
 // TODO: add support for adding content on creation.
@@ -135,7 +170,7 @@ export function addItem({
 
   // If we're opening by default.
   if (open) {
-    open(item.hash);
+    openProject(item.hash);
   }
 
   return getResponseItem(item.hash);
@@ -143,25 +178,25 @@ export function addItem({
 
 // Convert a relative file path and project hash into a full file path.
 export function getContentFilePath(name, projectHash) {
-  const project = projects.items.get(projectHash);
+  const project = items.get(projectHash);
   return path.resolve(project.dir, name);
 }
 
 // Set the colorset for a project.
 // Currently only happens when a colorset preset is loaded.
-export function setColorset(colorset, hash = projects.current) {
-  const item = projects.items.get(hash);
+export function setColorset(colorset, hash = state.current) {
+  const item = items.get(hash);
   if (item.colorset !== colorset) {
     item.colorset = colorset;
-    projects.saveProjectFiles(hash);
+    saveProjectFiles(hash);
   }
 }
 
 // Actually save the files out for a project.
-export function saveProjectFiles(hash = projects.current) {
-  const item = projects.items.get(hash);
+export function saveProjectFiles(hash = state.current) {
+  const item = items.get(hash);
   item.modified = new Date().toISOString();
-  projects.items.set(hash, item);
+  items.set(hash, item);
 
   const dir = utils.getDir(getProjectDirName(item));
 
@@ -176,45 +211,10 @@ export function saveProjectFiles(hash = projects.current) {
   fs.writeFileSync(path.resolve(dir, PROJECT_JSON), JSON.stringify(saveItem, null, 2));
 }
 
-// Load a project from a file. Assume hash is validated.
-export function open(hash) {
-  const project = projects.items.get(hash);
-  projects.current = hash;
-
-  content.items.clear();
-  stage.clearAll();
-  preview.clearAll();
-
-  // Apply the colorset preset in the project, if we can.
-  if (project.colorset) {
-    colors.applyPreset(project.colorset).catch(e => {
-      console.error(e);
-    });
-  }
-
-  // Get all the info loaded into the content items, and get the file data.
-  Object.entries(project.content).forEach(([, item]) => {
-    const filePath = projects.getContentFilePath(item.source.content, hash);
-    let data = '';
-
-    // TODO: What if a file isn't there?
-    if (item.source.type === 'raster') {
-      const datauri = new DataURI(filePath);
-      data = datauri.content;
-    } else {
-      data = fs.readFileSync(filePath).toString();
-    }
-
-    content.loadFromFile(item, data);
-  });
-
-  return projects.getResponseItem(hash);
-}
-
 // Add (or update) a content instance entry for a project.
 // Assume project hash validation.
 export function saveContentData(item, projectHash) {
-  const project = projects.items.get(projectHash);
+  const project = items.get(projectHash);
   if (!project.content) project.content = {};
   project.content[item.hash] = item;
   items.set(projectHash, project);
@@ -237,9 +237,9 @@ export function saveContentFile(source, projectHash) {
 
     // If this is the first time content is being added to a project, we need to
     // create the destination dir first and save all the parts.
-    const project = projects.items.get(projectHash);
+    const project = items.get(projectHash);
     if (!fs.existsSync(project.dir)) {
-      projects.saveProjectFiles(projectHash);
+      saveProjectFiles(projectHash);
     }
 
     // Use a buffer for Data URI raster, or a string for the rest.
@@ -249,19 +249,19 @@ export function saveContentFile(source, projectHash) {
 
     // TODO: Don't bother writing the file if it's the same.
     // EDGECASE: file bytes don't match and it needs a rewrite.
-    fs.writeFile(projects.getContentFilePath(fileName, projectHash), data, err => {
+    fs.writeFile(getContentFilePath(fileName, projectHash), data, err => {
       if (err) { reject(err); } else { resolve(fileName); }
     });
   });
 }
 
 // Get a copy of the raw internal item for the current project.
-export const getCurrent = () => ({ ...projects.items.get(projects.current) });
+export const getCurrent = () => ({ ...items.get(state.current) });
 
 // Get a fully filled out merged settings object including project overrides.
-export function getFullSettings(settings, projectHash = projects.current) {
+export function getFullSettings(settings, projectHash = state.current) {
   if (projectHash) {
-    const project = projects.items.get(projectHash);
+    const project = items.get(projectHash);
     return getDataDefault(
       'settings',
       utils.merge(project.settings || {}, settings)
@@ -277,7 +277,7 @@ export function editItem({ hash }, {
 }) {
   return new Promise((resolve, reject) => {
     let changes = false;
-    const project = projects.items.get(hash);
+    const project = items.get(hash);
 
     // Change name (must rename folder).
     if (name) {
@@ -319,9 +319,9 @@ export function editItem({ hash }, {
     }
 
     if (changes) {
-      projects.items.set(hash, project);
-      projects.saveProjectFiles(hash);
-      resolve(projects.getResponseItem(hash));
+      items.set(hash, project);
+      saveProjectFiles(hash);
+      resolve(getResponseItem(hash));
     } else {
       reject(new Error(utils.singleLineString`Edits to existing projects can only
         change title, name, description, or settings.`));
@@ -332,7 +332,7 @@ export function editItem({ hash }, {
 // Remove a project.
 export const removeItem = hash => new Promise((resolve, reject) => {
   // TODO: When deleting an open project, default to this.
-  const project = projects.items.get(hash);
+  const project = items.get(hash);
   const trashDir = path.resolve(
     utils.getUserDir('trash'), `project-${project.name}-${hash}`
   );
@@ -340,36 +340,36 @@ export const removeItem = hash => new Promise((resolve, reject) => {
     if (err) {
       reject(err);
     } else {
-      projects.items.delete(hash);
+      items.delete(hash);
       resolve();
     }
   });
 });
 
 // Wait till after Paper.js and schemas are loaded and get home folder, load projects.
-bindTo('schemas.loaded', projects.id, () => {
-  projects.homeDir = utils.getUserDir('projects');
+bindTo('schemas.loaded', 'projects', () => {
+  state.homeDir = utils.getUserDir('projects');
   loadProjects();
   initProject();
 
   // Load last. DEBUG
   setTimeout(() => {
-    projects.open('6a1253d8aaefb233');
+    openProject('6a1253d8aaefb233');
   }, 1);
 });
 
 // Rendering and print state management.
-export const getPrintingState = () => projects.printing;
-export const getRenderingState = () => projects.rendering;
+export const getPrintingState = () => state.printing;
+export const getRenderingState = () => state.rendering;
 
 export function setRenderingState(newState, specificHash = null) {
-  if (projects.rendering === newState) return;
+  if (state.rendering === newState) return;
 
   if (newState) {
-    projects.renderCurrentContent(specificHash).then(() => {
+    renderCurrentContent(specificHash).then(() => {
       // TODO: Send async stream update for render completion.
       // ...and render start?
-      projects.rendering = false;
+      state.rendering = false;
 
       // Clear out the temp layer to free memory.
       // TODO: Move this to a binder event?
@@ -378,11 +378,11 @@ export function setRenderingState(newState, specificHash = null) {
   } else {
     // TODO: Stop the render...somehow?
   }
-  projects.rendering = newState;
+  state.rendering = newState;
 }
 
 export function setPrintingState(newState) {
-  if (projects.printing === newState) return;
+  if (state.printing === newState) return;
 
   if (newState) {
     // TODO:
@@ -392,7 +392,7 @@ export function setPrintingState(newState) {
     // TODO:
     console.log('Stop printing!');
   }
-  projects.printing = newState;
+  state.printing = newState;
 }
 
 // Render all loaded items to preview, or just one.

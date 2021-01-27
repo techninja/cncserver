@@ -96,14 +96,15 @@ fs.readdirSync(fillerPath).map(dir => {
     if (fs.existsSync(schemaPath)) {
       globalSchema.method.enum.push(dir);
 
-      const fillerSchemaObject = require(schemaPath);
-      globalSchema.method.options.enum_titles.push(fillerSchemaObject.title);
+      import(schemaPath).then(({ default: fillerSchemaObject }) => {
+        globalSchema.method.options.enum_titles.push(fillerSchemaObject.title);
 
-      // Only add if filler defines custom props.
-      if (Object.entries(fillerSchemaObject.properties).length) {
-        globalSchema[dir] = fillerSchemaObject;
-        globalSchema[dir].options = { dependencies: { method: dir } };
-      }
+        // Only add if filler defines custom props.
+        if (Object.entries(fillerSchemaObject.properties).length) {
+          globalSchema[dir] = fillerSchemaObject;
+          globalSchema[dir].options = { dependencies: { method: dir } };
+        }
+      });
     }
   }
 });

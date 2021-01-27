@@ -9,6 +9,7 @@ import Canvas from 'canvas';
 import { getUserDirFiles } from 'cs/utils';
 import { layers, fitBounds } from 'cs/drawing/base';
 import { trace, fill } from 'cs/drawing';
+import { trigger } from 'cs/binder';
 
 const { CompoundPath, Point, Group } = Paper;
 const { createCanvas } = Canvas;
@@ -17,6 +18,10 @@ export const fonts = hershey.svgFonts;
 
 // Add any custom fonts.
 getUserDirFiles('fonts', '*.svg', hershey.addSVGFont);
+
+// Trigger font load complete.
+// TODO: This might need to move.
+trigger('drawing.text.setup', fonts, true);
 
 // Problem: With really long strings, they never break on their own, so if by
 // default we wrap strings, lets format the text that goes in the stage

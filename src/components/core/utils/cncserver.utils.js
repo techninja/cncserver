@@ -24,11 +24,21 @@ export { default as merge } from 'merge-deep';
  *   Source single level object with key/values to set from.
  * @param {object} dest
  *   Destination single level object to be modified.
+ * @param {bool} strict
+ *   If true, only keys existing on the destination will be set.
  */
-export function applyObjectTo(source, dest) {
+export function applyObjectTo(source, dest, strict = false) {
   Object.entries(source).forEach(([key, value]) => {
     // eslint-disable-next-line no-param-reassign
-    dest[key] = value;
+    if (strict) {
+      if (key in dest) {
+        // eslint-disable-next-line no-param-reassign
+        dest[key] = value;
+      }
+    } else {
+      // eslint-disable-next-line no-param-reassign
+      dest[key] = value;
+    }
   });
 }
 
@@ -359,110 +369,6 @@ export function getUserDir(name) {
 }
 
 /**
-  * Helper abstraction for checking if the tip of buffer pen is "down" or not.
-  *
-  * @param {object} inPen
-  *   The pen object to check for down status, defaults to buffer tip.
-  * @returns {Boolean}
-  *   False if pen is considered up, true if pen is considered down.
-  */
-export function penDown(inPen) {
-  // TODO: Refactor to ensure no modification by reference/intent.
-  if (!inPen || !inPen.state) inPen = cncserver.pen.state;
-
-  if (inPen.state === 'up' || inPen.state < 0.5) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
-  * Calculate the duration for a pen movement from the distance.
-  * Takes into account whether pen is up or down
-  *
-  * @param {float} distance
-  *   Distance in steps that we'll be moving
-  * @param {int} min
-  *   Optional minimum value for output duration, defaults to 1.
-  * @param {object} inPen
-  *   Incoming pen object to check (buffer tip or bot current).
-  * @param {number} speedOverride
-  *   Optional speed override, overrides calculated speed percent.
-  *
-  * @returns {number}
-  *   Millisecond duration of how long the move should take
-  */
-export function getDurationFromDistance(distance, min = 1, inPen, speedOverride = null) {
-  const minSpeed = parseFloat(botConf.get('speed:min'));
-  const maxSpeed = parseFloat(botConf.get('speed:max'));
-  const drawingSpeed = botConf.get('speed:drawing');
-  const movingSpeed = botConf.get('speed:moving');
-
-  // Use given speed over distance to calculate duration
-  let speed = (penDown(inPen)) ? drawingSpeed : movingSpeed;
-  if (speedOverride != null) {
-    speed = speedOverride;
-  }
-
-  speed = parseFloat(speed) / 100;
-
-  // Convert to steps from percentage
-  speed = (speed * (maxSpeed - minSpeed)) + minSpeed;
-
-  // Sanity check speed value
-  speed = speed > maxSpeed ? maxSpeed : speed;
-  speed = speed < minSpeed ? minSpeed : speed;
-
-  // How many steps a second?
-  return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
-}
-
-/**
-  * Given two points, find the difference and duration at current speed
-  *
-  * @param {{x: number, y: number}} src
-  *   Source position coordinate (in steps).
-  * @param {{x: number, y: number}} dest
-  *   Destination position coordinate (in steps).
-  * @param {number} speed
-  *   Speed override for this movement in percent.
-  *
-  * @returns {{d: number, x: number, y: number}}
-  *   Object containing the change amount in steps for x & y, along with the
-  *   duration in milliseconds.
-  */
-export function getPosChangeData(src, dest, speed = null) {
-  let change = {
-    x: Math.round(dest.x - src.x),
-    y: Math.round(dest.y - src.y),
-  };
-
-  // Calculate distance
-  const duration = getDurationFromDistance(getVectorLength(change), 1, src, speed);
-
-  // Adjust change direction/inversion
-  if (botConf.get('controller').position === 'relative') {
-    // Invert X or Y to match stepper direction
-    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
-    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
-  } else { // Absolute! Just use the "new" absolute X & Y locations
-    change.x = pen.state.x;
-    change.y = pen.state.y;
-  }
-
-  // Swap motor positions
-  if (gConf.get('swapMotors')) {
-    change = {
-      x: change.y,
-      y: change.x,
-    };
-  }
-
-  return { d: duration, x: change.x, y: change.y };
-}
-
-/**
   * Given two height positions, find the difference and pro-rate duration.
   *
   * @param {integer} src
@@ -758,5 +664,5 @@ export function arrayToIDMap(data) {
   *   Flat array of data.
   */
 export function mapToArray(data) {
-  return Array.from(data.values());
+  return data ? Array.from(data.values()) : [];
 }

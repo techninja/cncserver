@@ -15,7 +15,10 @@ import { resume } from 'cs/buffer';
 const { Path, Group, PointText } = Paper;
 
 // Set as part of colorset tool update.
-export const set = {};
+export const set = {
+  name: '',
+  items: new Map(),
+};
 
 // List all tool presets and their data.
 export function listPresets(t, customOnly) {
@@ -43,7 +46,7 @@ export function invalidPresets() {
   const botName = botConf.get('name');
 
   // Move through all sets, check the toolset for missing parents
-  Object.entries(sets).forEach(([name, { setItems }]) => {
+  Object.entries(sets).forEach(([name, { items: setItems }]) => {
     setItems.forEach(item => {
       if (item.parent && !(item.parent in botTools)) {
         if (!(name in out)) out[name] = {};

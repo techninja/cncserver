@@ -243,8 +243,9 @@ export function getColor(id, applyInheritance = false, withImplement = false) {
 export const applyPreset = (presetName, t) => new Promise((resolve, reject) => {
   const newSet = getPreset(presetName);
   if (newSet) {
-    utils.applyObject(newSet, set);
+    utils.applyObjectTo(newSet, set);
     tools.sendUpdate();
+    trigger('colors.update', setAsArray());
     projects.setColorset(presetName);
     resolve();
   } else {

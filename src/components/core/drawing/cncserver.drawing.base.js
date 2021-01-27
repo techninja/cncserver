@@ -51,7 +51,7 @@ bindTo('controller.setup', bindID, () => {
   });
 
   // Trigger paper ready.
-  trigger('paper.ready');
+  trigger('paper.ready', null, true);
 });
 
 // Clear preview canvas on cancel/clear.

@@ -3,7 +3,6 @@
  */
 import fs from 'fs';
 import request from 'request';
-import _ from 'underscore';
 import querystring from 'querystring';
 import pathToRegexp from 'path-to-regexp';
 import { createServerEndpoint } from 'cs/rest';
@@ -18,6 +17,9 @@ export const batchState = { batchRunning: false };
 // We hold all of these in handlers to be able to call them
 // directly from the batch API endpoint. These are actually only turned into
 // endpoints at the end via createServerEndpoint().
+Object.entries(handlers).forEach(([path, callback]) => {
+  createServerEndpoint(path, callback);
+});
 
 /**
   * Return a dummy 'request' or 'response' object for faking express requests.
@@ -100,7 +102,7 @@ function processBatchData(commands, callback, index, goodCount) {
     let handlerKey = '';
 
     // Attempt to match the path to a requstHandler by express path match.
-    _.each(Object.keys(handlers), pattern => {
+    Object.keys(handlers).forEach(pattern => {
       const keys = [];
       const match = pathToRegexp(pattern, keys).exec(path);
       if (match) {
@@ -108,7 +110,7 @@ function processBatchData(commands, callback, index, goodCount) {
 
         // If there's keyed url params, inject them.
         if (keys.length) {
-          _.each(keys, (p, id) => {
+          keys.forEach((p, id) => {
             params[p.name] = match[id + 1];
           });
         }

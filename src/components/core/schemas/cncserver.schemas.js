@@ -105,7 +105,7 @@ bindTo('controller.setup', 'schemas', () => {
     ajv.addSchema(schema, key);
   });
 
-  trigger('schemas.loaded');
+  trigger('schemas.loaded', null, true);
 });
 
 // Get a completely filled out default data object, with passed modifier object.

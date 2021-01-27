@@ -16,7 +16,16 @@ import implementSchema from 'cs/schemas/implements';
 import toolsets from 'cs/schemas/toolsets';
 
 // TODO: Schemas to finalize: stroke, vectorize, text
-const settingsSchemas = [fill, stroke, text, vectorize, path];
+
+// All schemas that define content specific settings.
+const settingsSchemas = {
+  fill,
+  stroke,
+  text,
+  vectorize,
+  path,
+};
+
 const schemas = {
   projects,
   content,

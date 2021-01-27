@@ -6,9 +6,9 @@ import nconf from 'nconf'; // Configuration and INI file.
 import fs from 'fs'; // File System management.
 import path from 'path'; // Path management and normalization.
 import ini from 'ini'; // Reading INI files.
+
 import { trigger } from 'cs/binder';
-import { centToSteps, __basedir } from 'cs/utils';
-import { forceState } from 'cs/pen';
+import { __basedir } from 'cs/utils';
 
 // Export base constants.
 export const gConf = new nconf.Provider();
@@ -49,7 +49,7 @@ gConf.env().argv();
   */
 export function loadGlobalConfig(cb) {
   // Pull conf from file
-  const configPath = path.resolve(global.__basedir, '..', 'config.ini');
+  const configPath = path.resolve(__basedir, 'config.ini');
   gConf.reset();
   gConf.use('file', {
     file: configPath,
@@ -90,12 +90,7 @@ export function loadGlobalConfig(cb) {
   *   globally configured bot type.
   */
 export function loadBotConfig(cb, botType = gConf.get('botType')) {
-  const botFile = path.resolve(
-    global.__basedir,
-    '..',
-    'machine_types',
-    `${botType}.ini`
-  );
+  const botFile = path.resolve(__basedir, 'machine_types', `${botType}.ini`);
 
   if (!fs.existsSync(botFile)) {
     console.error(
@@ -187,14 +182,6 @@ export function loadBotConfig(cb, botType = gConf.get('botType')) {
           bot.maxAreaMM = false;
         }
 
-        // Set initial pen position at park position
-        // TODO: Add set park position helper in control.
-        const park = centToSteps(bot.park, true);
-        forceState({
-          x: park.x,
-          y: park.y,
-        });
-
         // Set global override for swapMotors if set by bot config
         const swapMotors = botConf.get('controller:swapMotors');
         if (typeof swapMotors !== 'undefined') {
@@ -202,7 +189,7 @@ export function loadBotConfig(cb, botType = gConf.get('botType')) {
         }
 
         // Trigger any bot/board specific setup.
-        trigger('controller.setup', botConf.get('controller'));
+        trigger('controller.setup', botConf.get('controller'), true);
 
         console.log(
           `Successfully loaded config for ${botConf.get(

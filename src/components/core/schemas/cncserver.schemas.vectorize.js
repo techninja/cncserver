@@ -106,7 +106,7 @@ const globalSchema = {
 };
 
 // Compile list of all other filler modules and their schemas and merge them.
-const vectorizerPath = path.resolve(__basedir, 'src', 'core', 'components', 'drawing', 'vectorizers');
+const vectorizerPath = path.resolve(__basedir, 'src', 'components', 'core', 'drawing', 'vectorizers');
 fs.readdirSync(vectorizerPath).map(dir => {
   const fullPath = path.resolve(vectorizerPath, dir);
   if (fs.lstatSync(fullPath).isDirectory()) {
@@ -115,14 +115,15 @@ fs.readdirSync(vectorizerPath).map(dir => {
       globalSchema.method.enum.push(dir);
 
       // eslint-disable-next-line
-      const vectorizerSchemaObject = require(schemaPath);
-      globalSchema.method.options.enum_titles.push(vectorizerSchemaObject.title);
+      import(schemaPath).then(({ default: vectorizerSchemaObject }) => {
+        globalSchema.method.options.enum_titles.push(vectorizerSchemaObject.title);
 
-      // Only add if vectorizer defines custom props.
-      if (Object.entries(vectorizerSchemaObject.properties).length) {
-        globalSchema[dir] = vectorizerSchemaObject;
-        globalSchema[dir].options = { dependencies: { method: dir } };
-      }
+        // Only add if vectorizer defines custom props.
+        if (Object.entries(vectorizerSchemaObject.properties).length) {
+          globalSchema[dir] = vectorizerSchemaObject;
+          globalSchema[dir].options = { dependencies: { method: dir } };
+        }
+      });
     }
   }
 });

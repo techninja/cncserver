@@ -2,16 +2,11 @@
  * @file Abstraction module for the run/queue utilities for CNC Server!
  */
 
-import {
-  getHash,
-  extend,
-  getPosChangeData,
-  getHeightChangeData
-} from 'cs/utils';
+import { getHash, extend, getHeightChangeData } from 'cs/utils';
 import { trigger as binderTrigger } from 'cs/binder';
 import { sendMessage } from 'cs/ipc';
 import { bot, gConf } from 'cs/settings';
-import { resetState } from 'cs/pen';
+import { resetState, getPosChangeData } from 'cs/pen';
 import { state as actualPenState, updateState as updateActualPen } from 'cs/actualPen';
 import { setBatchRunningState } from 'cs/api';
 import {

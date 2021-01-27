@@ -7,8 +7,6 @@ import base from 'cs/bots/base';
 import ebb from 'cs/bots/ebb';
 import watercolorbot from 'cs/bots/watercolorbot';
 
-console.log('Bots module run...');
-
 // Conglomerated bot support export.
 export const bots = {
   base: base(),

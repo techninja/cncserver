@@ -7,8 +7,7 @@
 /* eslint-disable max-len */
 
 import { base } from 'cs/drawing';
-
-const bounds = base.defaultBounds();
+import { bindTo } from 'cs/binder';
 
 const properties = {
   project: {
@@ -86,40 +85,54 @@ const properties = {
         format: 'number',
         title: 'X Point',
         description: 'X coordinate of top left position of the rectangle.',
-        default: bounds.point.x,
+        default: 0, // Set in bindTo below.
         minimum: 0,
-        maximum: base.size.width - 1,
+        maximum: 1, // Set in bindTo below.
       },
       y: {
         type: 'number',
         format: 'number',
         title: 'Y Point',
         description: 'Y coordinate of top left position of the rectangle.',
-        default: bounds.point.y,
+        default: 0, // Set in bindTo below.
         minimum: 0,
-        maximum: base.size.height - 1,
+        maximum: 1, // Set in bindTo below.
       },
       width: {
         type: 'number',
         format: 'number',
         title: 'Width',
         description: 'Width of the rectangle.',
-        default: bounds.width,
+        default: 1, // Set in bindTo below.
         minimum: 1,
-        maximum: base.size.width,
+        maximum: 2, // Set in bindTo below.
       },
       height: {
         type: 'number',
         format: 'number',
         title: 'Height',
         description: 'Height of the rectangle.',
-        default: bounds.height,
+        default: 1, // Set in bindTo below.
         minimum: 1,
-        maximum: base.size.height,
+        maximum: 2, // Set in bindTo below.
       },
     },
   },
 };
+
+// Set the schema level content boundaries after they've been defined.
+bindTo('paper.ready', () => {
+  const bounds = base.defaultBounds();
+  properties.bounds.properties.x.default = bounds.point.x;
+  properties.bounds.properties.y.default = bounds.point.y;
+  properties.bounds.properties.width.default = bounds.width;
+  properties.bounds.properties.height.default = bounds.height;
+
+  properties.bounds.properties.x.maximum = base.size.width - 1;
+  properties.bounds.properties.y.maximum = base.size.height - 1;
+  properties.bounds.properties.width.maximum = base.size.width;
+  properties.bounds.properties.height.maximum = base.size.height;
+});
 
 const schema = {
   type: 'object',

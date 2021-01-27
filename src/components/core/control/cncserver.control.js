@@ -31,7 +31,7 @@ export function offCanvasChange(newValue) {
   if (pen.state.offCanvas !== newValue) {
     pen.forceState({ offCanvas: newValue });
     if (pen.state.offCanvas) { // Pen is now off screen/out of bounds
-      if (utils.penDown()) {
+      if (pen.isDown()) {
         // Don't draw stuff while out of bounds (also, don't change the
         // current known state so we can come back to it when we return to
         // bounds),but DO change the buffer tip height so that is reflected on
@@ -70,7 +70,7 @@ export function offCanvasChange(newValue) {
 export function actuallyMove(destination, callback, speedOverride = null) {
   // Get the amount of change/duration from difference between actualPen and
   // absolute position in given destination
-  const change = utils.getPosChangeData(
+  const change = pen.getPosChangeData(
     actualPen.state,
     destination,
     speedOverride
@@ -275,7 +275,7 @@ export function movePenAbs(
     @see executeNext - for more details on how this is handled.
   */
   const distance = utils.getVectorLength(change);
-  const duration = utils.getDurationFromDistance(distance, 1, null, speedOverride);
+  const duration = pen.getDurationFromDistance(distance, 1, null, speedOverride);
 
   // Only if we actually moved anywhere should we queue a movement
   if (distance !== 0) {
@@ -287,7 +287,7 @@ export function movePenAbs(
 
     // Adjust the distance counter based on movement amount, not if we're off
     // the canvas though.
-    if (utils.penDown()
+    if (pen.isDown()
       && !pen.state.offCanvas
       && bot.inWorkArea(point)) {
       pen.forceState({

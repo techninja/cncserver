@@ -6,6 +6,7 @@
  */
 /* eslint-disable max-len */
 import fontList from 'font-list';
+import { bindTo } from 'cs/binder';
 
 const properties = {
   render: {
@@ -43,11 +44,11 @@ const properties = {
   font: {
     type: 'string',
     default: 'hershey_sans_1',
-    enum: Object.keys(cncserver.drawing.text.fonts),
+    enum: ['temp'], // Set below after fonts have loaded.
     title: 'Stroke Font',
     description: 'Which EMS/SVG stroke font to use to render the text.',
     options: {
-      enum_titles: Object.values(cncserver.drawing.text.fonts).map(font => font.name),
+      enum_titles: ['temp'],
     },
   },
   systemFont: {
@@ -122,6 +123,12 @@ const properties = {
 // Add system font enum.
 fontList.getFonts().then(fonts => {
   properties.systemFont.enum = ['', ...fonts.map(s => s.replace(/"/g, ''))];
+});
+
+// Add SVG font enum.
+bindTo('drawing.text.setup', fonts => {
+  properties.font.enum = Object.keys(fonts);
+  properties.font.options.enum_titles = Object.values(fonts).map(font => font.name);
 });
 
 const schema = {

@@ -2,6 +2,10 @@
  * @file Abstraction module for the cncserver run utility
  */
 
+import * as pen from 'cs/pen';
+import { cmdstr, addItem } from 'cs/buffer';
+import { bot } from 'cs/settings';
+
 /**
   * Add a command to the command runner buffer.
   *
@@ -46,7 +50,7 @@ export default function run(command, data, rawDuration) {
         type: 'absheight',
         z: data.z,
         source: data.source,
-        state: cncserver.pen.state.state,
+        state: pen.state.state,
       };
       break;
 
@@ -62,8 +66,8 @@ export default function run(command, data, rawDuration) {
 
     case 'wait':
       // Send wait, blocking buffer
-      if (!cncserver.settings.bot.commands.wait) return false;
-      c = cncserver.buffer.cmdstr('wait', { d: duration });
+      if (!bot.commands.wait) return false;
+      c = cmdstr('wait', { d: duration });
       break;
 
     case 'custom':
@@ -84,11 +88,11 @@ export default function run(command, data, rawDuration) {
 
   // Add final command and duration to end of queue, along with a copy of the
   // pen state at this point in time to be copied to actualPen after execution
-  cncserver.pen.forceState({ lastDuration: duration });
-  cncserver.buffer.addItem({
+  pen.forceState({ lastDuration: duration });
+  addItem({
     command: c,
     duration,
-    pen: cncserver.utils.extend({}, cncserver.pen.state),
+    pen: { ...pen.state },
   });
 
   return true;

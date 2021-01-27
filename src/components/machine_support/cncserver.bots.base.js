@@ -26,4 +26,6 @@ export default function initBot() {
       }
     }
   });
+
+  return { id: 'bots.base' };
 }

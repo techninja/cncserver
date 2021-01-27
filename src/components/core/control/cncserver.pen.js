@@ -2,13 +2,9 @@
  * @file Abstraction module for pen state and setter/helper methods.
  */
 import { gConf, bot, botConf } from 'cs/settings';
-import {
-  inPenToSteps,
-  centToSteps,
-  stateToHeight,
-  applyObjectTo
-} from 'cs/utils';
+import * as utils from 'cs/utils';
 import { connect, localTrigger } from 'cs/serial';
+import { bindTo, trigger } from 'cs/binder';
 import { movePenAbs, actuallyMoveHeight } from 'cs/control';
 import { cmdstr } from 'cs/buffer';
 import run from 'cs/run';
@@ -37,16 +33,16 @@ export const state = {
 };
 
 /**
-  * General logic sorting function for most "pen" requests.
-  *
-  * @param {object} inPenState
-  *   Raw object containing data from /v1/pen PUT requests. See API spec for
-  *   pen to get an idea of what can live in this object.
-  * @param {function} callback
-  *   Callback triggered when intended action should be complete.
-  * @param {number} speedOverride
-  *   Percent of speed to set for this movement only.
-  */
+ * General logic sorting function for most "pen" requests.
+ *
+ * @param {object} inPenState
+ *   Raw object containing data from /v1/pen PUT requests. See API spec for
+ *   pen to get an idea of what can live in this object.
+ * @param {function} callback
+ *   Callback triggered when intended action should be complete.
+ * @param {number} speedOverride
+ *   Percent of speed to set for this movement only.
+ */
 export function setPen(inPenState, callback = () => { }, speedOverride = null) {
   const debug = gConf.get('debug');
 
@@ -155,13 +151,13 @@ export function setPen(inPenState, callback = () => { }, speedOverride = null) {
     } */
 
     // Convert the percentage or absolute in/mm XY values into absolute steps.
-    const absInput = inPenToSteps(point);
+    const absInput = utils.inPenToSteps(point);
     absInput.limit = 'workArea';
 
     // Are we parking?
     if (inPenState.park) {
       // Don't repark if already parked (but not if we're skipping the buffer)
-      const parkPos = centToSteps(bot.park, true);
+      const parkPos = utils.centToSteps(bot.park, true);
       if (
         state.x === parkPos.x
         && state.y === parkPos.y
@@ -195,16 +191,16 @@ export function setPen(inPenState, callback = () => { }, speedOverride = null) {
 }
 
 /**
-  * Set the "power" option
-  *
-  * @param {number} power
-  *   Value from 0 to 100 to send to the bot.
-  * @param callback
-  *   Callback triggered when operation should be complete.
-  * @param skipBuffer
-  *   Set to true to skip adding the command to the buffer and run it
-  *   immediately.
-  */
+ * Set the "power" option
+ *
+ * @param {number} power
+ *   Value from 0 to 100 to send to the bot.
+ * @param callback
+ *   Callback triggered when operation should be complete.
+ * @param skipBuffer
+ *   Set to true to skip adding the command to the buffer and run it
+ *   immediately.
+ */
 export function setPower(power, callback, skipBuffer) {
   const powers = botConf.get('penpower') || { min: 0, max: 0 };
 
@@ -221,22 +217,22 @@ export function setPower(power, callback, skipBuffer) {
 }
 
 /**
-  * Run a servo position from a given percentage or named height value into
-  * the buffer, or directly via skipBuffer.
-  *
-  * @param {number|string} inState
-  *   Named height preset machine name, or float between 0 & 1.
-  * @param callback
-  *   Callback triggered when operation should be complete.
-  * @param skipBuffer
-  *   Set to true to skip adding the command to the buffer and run it
-  *   immediately.
-  */
+ * Run a servo position from a given percentage or named height value into
+ * the buffer, or directly via skipBuffer.
+ *
+ * @param {number|string} inState
+ *   Named height preset machine name, or float between 0 & 1.
+ * @param callback
+ *   Callback triggered when operation should be complete.
+ * @param skipBuffer
+ *   Set to true to skip adding the command to the buffer and run it
+ *   immediately.
+ */
 export function setHeight(inState, callback, skipBuffer) {
   let servoDuration = botConf.get('servo:minduration');
 
   // Convert the incoming state
-  const conv = stateToHeight(inState);
+  const conv = utils.stateToHeight(inState);
   const { height = 0, state: stateValue = null } = conv;
 
   // If we're skipping the buffer, just set the height directly
@@ -275,20 +271,20 @@ export function setHeight(inState, callback, skipBuffer) {
 }
 
 /**
-  * Reset state of pen to current head (actualPen).
-  */
+ * Reset state of pen to current head (actualPen).
+ */
 export function resetState() {
-  applyObjectTo(actualPen.state, state);
+  utils.applyObjectTo(actualPen.state, state);
 }
 
 /**
-  * Park the pen.
-  *
-  * @param {boolean} direct
-  *   True to send direct and skip the buffer.
-  * @param {function} callback
-  *   Ya know.
-  */
+ * Park the pen.
+ *
+ * @param {boolean} direct
+ *   True to send direct and skip the buffer.
+ * @param {function} callback
+ *   Ya know.
+ */
 export function park(direct = false, callback = () => { }) {
   setHeight('up', () => {
     setPen({
@@ -301,12 +297,12 @@ export function park(direct = false, callback = () => { }) {
 }
 
 /**
-  * Force the values of a given set of keys within the pen state.
-  *
-  * @param {object} inState
-  *   Flat object of key/value pairs to FORCE into the pen state. Only used to
-  *   correct head state or to update position along the buffer.
-  */
+ * Force the values of a given set of keys within the pen state.
+ *
+ * @param {object} inState
+ *   Flat object of key/value pairs to FORCE into the pen state. Only used to
+ *   correct head state or to update position along the buffer.
+ */
 export function forceState(inState) {
   for (const [key, value] of Object.entries(inState)) {
     // Only set a value if the key exists in the state already.
@@ -317,11 +313,123 @@ export function forceState(inState) {
 }
 
 /**
-  * Set the internal state hash value.
-  *
-  * @param {string} hash
-  *   Buffer hash to set.
-  */
+ * Set the internal state hash value.
+ *
+ * @param {string} hash
+ *   Buffer hash to set.
+ */
 export function setHash(hash) {
   state.bufferHash = hash;
+}
+
+// Setup initial park position and set default.
+bindTo('controller.setup', 'pen', () => {
+  // Set initial pen position at park position
+  forceState(utils.centToSteps(bot.park, true));
+
+  // Trigger pen.setup with full state.
+  trigger('pen.setup', state, true);
+});
+
+/**
+ * Helper abstraction for checking if the tip of buffer pen is "down" or not.
+ *
+ * @param {object} inPen
+ *   The pen state object to check for down status, defaults to buffer tip.
+ * @returns {Boolean}
+ *   False if pen is considered up, true if pen is considered down.
+ */
+export function isDown(inPen) {
+  const checkPen = inPen?.state || state;
+  if (checkPen.state === 'up' || checkPen.state < 0.5) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Calculate the duration for a pen movement from the distance.
+ * Takes into account whether pen is up or down
+ *
+ * @param {float} distance
+ *   Distance in steps that we'll be moving
+ * @param {int} min
+ *   Optional minimum value for output duration, defaults to 1.
+ * @param {object} inPen
+ *   Incoming pen object to check (buffer tip or bot current).
+ * @param {number} speedOverride
+ *   Optional speed override, overrides calculated speed percent.
+ *
+ * @returns {number}
+ *   Millisecond duration of how long the move should take
+ */
+export function getDurationFromDistance(distance, min = 1, inPen, speedOverride = null) {
+  const minSpeed = parseFloat(botConf.get('speed:min'));
+  const maxSpeed = parseFloat(botConf.get('speed:max'));
+  const drawingSpeed = botConf.get('speed:drawing');
+  const movingSpeed = botConf.get('speed:moving');
+
+  // Use given speed over distance to calculate duration
+  let speed = (isDown(inPen)) ? drawingSpeed : movingSpeed;
+  if (speedOverride != null) {
+    speed = speedOverride;
+  }
+
+  speed = parseFloat(speed) / 100;
+
+  // Convert to steps from percentage
+  speed = (speed * (maxSpeed - minSpeed)) + minSpeed;
+
+  // Sanity check speed value
+  speed = speed > maxSpeed ? maxSpeed : speed;
+  speed = speed < minSpeed ? minSpeed : speed;
+
+  // How many steps a second?
+  return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
+}
+
+
+/**
+  * Given two points, find the difference and duration at current speed
+  *
+  * @param {{x: number, y: number}} src
+  *   Source position coordinate (in steps).
+  * @param {{x: number, y: number}} dest
+  *   Destination position coordinate (in steps).
+  * @param {number} speed
+  *   Speed override for this movement in percent.
+  *
+  * @returns {{d: number, x: number, y: number}}
+  *   Object containing the change amount in steps for x & y, along with the
+  *   duration in milliseconds.
+  */
+export function getPosChangeData(src, dest, speed = null) {
+  let change = {
+    x: Math.round(dest.x - src.x),
+    y: Math.round(dest.y - src.y),
+  };
+
+  // Calculate distance
+  const duration = getDurationFromDistance(utils.getVectorLength(change), 1, src, speed);
+
+  // Adjust change direction/inversion
+  if (botConf.get('controller').position === 'relative') {
+    // Invert X or Y to match stepper direction
+    change.x = gConf.get('invertAxis:x') ? change.x * -1 : change.x;
+    change.y = gConf.get('invertAxis:y') ? change.y * -1 : change.y;
+  } else { // Absolute! Just use the "new" absolute X & Y locations
+    change.x = state.x;
+    change.y = state.y;
+  }
+
+  // Swap motor positions
+  if (gConf.get('swapMotors')) {
+    change = {
+      x: change.y,
+      y: change.x,
+    };
+  }
+
+  return { d: duration, x: change.x, y: change.y };
 }

@@ -3,6 +3,7 @@
  */
 const hooks = { };
 const lateTrigger = {};
+const debug = false;
 
 /**
   * Binder binder! Registers a callback for an arbitrary event.
@@ -15,6 +16,7 @@ const lateTrigger = {};
       Function called when the event is triggered.
   */
 export function bindTo(event, caller, callback) {
+  if (debug) console.log('BINDER: BindTo', event, 'from', caller);
   if (typeof hooks[event] !== 'object') {
     hooks[event] = {};
   }
@@ -23,6 +25,7 @@ export function bindTo(event, caller, callback) {
 
   // Immediately trigger binding if there's a late binding trigger.
   if (lateTrigger[event]) {
+    if (debug) console.log('BINDER: LATE TRIGGER', event, caller);
     callback(lateTrigger[event]);
   }
 }
@@ -45,16 +48,18 @@ export function trigger(event, payload = {}, allowLateTrigger = false) {
     lateTrigger[event] = payload;
   }
 
+  if (debug) console.log('BINDER: TRIGGER', event);
+
   if (typeof hooks[event] === 'object') {
     // Debug for unbound triggers.
-    // if (gConf.get('debug') && !Object.keys(hooks[event]).length) {
-    //  console.log(`Event "${event}" triggered with NO BOUND IMPLEMENTORS`);
-    // }
+    if (debug && !Object.keys(hooks[event]).length) {
+      console.log(`BINDER: Event "${event}" triggered with NO BOUND IMPLEMENTORS`);
+    }
     for (const [caller, callback] of Object.entries(hooks[event])) {
       if (typeof callback === 'function') {
-        // if (gConf.get('debug')) {
-        //   console.log(`Event "${event}" triggered for "${caller}" with`, payload);
-        // }
+        if (debug) {
+          console.log(`BINDER: Event "${event}" triggered for "${caller}" with`, payload);
+        }
         runningPayload = callback(runningPayload);
 
         // If a binder implementation doesn't return, reset the payload.

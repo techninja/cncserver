@@ -49,7 +49,7 @@ handlers['/v2/projects'] = (req, res) => {
       }
 
       // Actually open the project.
-      projects.open(current);
+      projects.openProject(current);
     } else if (rendering !== undefined) {
       projects.setRenderingState(rendering);
     } else if (printing !== undefined) {

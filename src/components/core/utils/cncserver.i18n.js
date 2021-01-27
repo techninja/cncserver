@@ -7,6 +7,7 @@ import i18nextFSBackend from 'i18next-node-fs-backend';
 import i18nextMiddleware from 'i18next-express-middleware';
 import path from 'path';
 import { bindTo } from 'cs/binder';
+import { __basedir } from 'cs/utils';
 
 export const i18n = {
   t: s => s,
@@ -28,19 +29,19 @@ i18next
       lookupHeader: 'accept-language',
     },
     backend: {
-      loadPath: path.join(global.__basedir, 'locales', '{{ns}}', '{{lng}}.json'),
-      addPath: path.join(global.__basedir, 'locales', '{{ns}}', '{{lng}}.missing.json'),
+      loadPath: path.join(__basedir, 'src', 'locales', '{{ns}}', '{{lng}}.json'),
+      addPath: path.join(__basedir, 'src', 'locales', '{{ns}}', '{{lng}}.missing.json'),
     },
   })
   .then(t => {
     i18n.n = i18next;
     i18n.t = t;
   })
-  .catch((err) => {
+  .catch(err => {
     console.log(err);
   });
 
 // Bind to server config to initialize locale detection.
-bindTo('server.configure', 'i18n', (app) => {
+bindTo('server.configure', 'i18n', app => {
   app.use(i18nextMiddleware.handle(i18next));
 });

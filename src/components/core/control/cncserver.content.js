@@ -370,7 +370,7 @@ export function loadFromFile(fileItem, data) {
     // Build the final content item.
     item.source.content = fileName;
 
-    item.item = drawing.stage.import(finalItem.item, item.hash, item.bounds);
+    item.item = drawing.stage.importGroup(finalItem.item, item.hash, item.bounds);
     items.set(item.hash, item);
   }).catch(err => {
     console.error(err);
