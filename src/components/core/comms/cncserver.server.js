@@ -56,7 +56,7 @@ app.configure(() => {
   app.use(slashes());
 
   // Allow any implementing binder support for middleware or static routes.
-  trigger('server.configure', app);
+  trigger('server.configure', app, true);
 });
 
 // Start express HTTP server for API on the given port

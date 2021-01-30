@@ -23,6 +23,7 @@
  *
  */
 
+import 'cs/i18n';
 import { loadGlobalConfig, loadBotConfig } from 'cs/settings';
 import { initServer } from 'cs/ipc';
 import { connect, localTrigger } from 'cs/serial';
