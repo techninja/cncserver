@@ -49,7 +49,7 @@ gConf.env().argv();
   */
 export function loadGlobalConfig(cb) {
   // Pull conf from file
-  const configPath = path.resolve(__basedir, 'config.ini');
+  const configPath = path.resolve(__basedir, '..', 'config.ini');
   gConf.reset();
   gConf.use('file', {
     file: configPath,
@@ -90,7 +90,7 @@ export function loadGlobalConfig(cb) {
   *   globally configured bot type.
   */
 export function loadBotConfig(cb, botType = gConf.get('botType')) {
-  const botFile = path.resolve(__basedir, 'machine_types', `${botType}.ini`);
+  const botFile = path.resolve(__basedir, '..', 'machine_types', `${botType}.ini`);
 
   if (!fs.existsSync(botFile)) {
     console.error(
@@ -210,10 +210,10 @@ export function loadBotConfig(cb, botType = gConf.get('botType')) {
   *   A keyed array/object of all supported bot configurations and data.
   */
 export function getSupportedBots() {
-  const list = fs.readdirSync(path.resolve(__basedir, 'machine_types'));
+  const list = fs.readdirSync(path.resolve(__basedir, '..', 'machine_types'));
   const out = {};
   for (const i of list) {
-    const file = path.resolve(__basedir, 'machine_types', list[i]);
+    const file = path.resolve(__basedir, '..', 'machine_types', list[i]);
     const data = ini.parse(fs.readFileSync(file, 'utf-8'), 'utf-8');
     const type = list[i].split('.')[0];
     out[type] = {

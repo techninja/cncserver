@@ -12,7 +12,6 @@ export default function vectorize(imagePath, hash, bounds, settings) {
     const { method } = settings.vectorize;
     const script = path.resolve(
       __basedir,
-      'src',
       'components',
       'core',
       'drawing',

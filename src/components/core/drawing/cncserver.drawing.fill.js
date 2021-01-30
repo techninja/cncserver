@@ -14,7 +14,6 @@ export default function fill(
     const { method } = settings;
     const script = path.resolve(
       __basedir,
-      'src',
       'components',
       'core',
       'drawing',

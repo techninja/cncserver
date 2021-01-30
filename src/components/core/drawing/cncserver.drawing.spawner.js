@@ -7,7 +7,7 @@ import { spawn } from 'child_process'; // Process spawner.
 import ipc from 'node-ipc'; // Inter Process Comms (shared with ).
 import path from 'path'; // File System path management.
 import fs from 'fs';
-import { base } from 'cs/drawing';
+import { state as drawingBase } from 'cs/drawing/base';
 import { bindTo } from 'cs/binder';
 
 // Hold onto paths and settings to be injected, keyed on job hashes & work type.
@@ -42,8 +42,8 @@ const gotMessage = (packet, socket) => {
       // Our spawned worker module is ready! Send it the initial data.
       ipc.server.emit(socket, 'spawner.init', {
         size: {
-          width: base.size.width,
-          height: base.size.height,
+          width: drawingBase.size.width,
+          height: drawingBase.size.height,
         },
         object: workingQueueItem.object,
         settings: workingQueueItem.settings,

@@ -16,6 +16,9 @@ import { gConf, bot, botConf } from 'cs/settings';
 export { _extend as extend } from 'util'; // Util for cloning objects
 export { default as merge } from 'merge-deep';
 
+// MM to Inches const.
+export const MM_TO_INCHES = 25.4;
+
 /**
  * Apply byref all keys and values from left to right.
  *
@@ -43,7 +46,7 @@ export function applyObjectTo(source, dest, strict = false) {
 }
 
 // ES Module basedir replacement.
-export const __basedir = path.resolve('./');
+export const __basedir = path.resolve('./src/');
 
 /**
  * Sanity check a given coordinate within the absolute area.
@@ -99,6 +102,47 @@ export function getHash(data, saltMethod = 'increment') {
 }
 
 /**
+  * Validate that a directory at the given path exists.
+  *
+  * @param {string} dir
+  *   The full path of the dir.
+  *
+  * @return {string}
+  *   The full path dir, or an error is thrown if there's permission issues.
+  */
+export function getDir(dir) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+  return dir;
+}
+
+/**
+  * Get a named user content directory.
+  *
+  * @param {string} name
+  *   The arbitrary name of the dir.
+  *
+  * @return {string}
+  *   The full path of the writable path.
+  */
+export function getUserDir(name) {
+  // Ensure we have the base user folder.
+  const home = getDir(path.resolve(homedir(), 'cncserver'));
+  const botType = gConf.get('botType');
+
+  // Only if we have a bot type, use its specific home dir.
+  // This happens when this function is used before settings are available.
+  if (botType) {
+    const botHome = getDir(path.resolve(home, botType));
+
+    // Home base dir? or bot specific?
+    if (['projects', 'colorsets', 'implements', 'toolsets'].includes(name)) {
+      return getDir(path.resolve(botHome, name));
+    }
+  }
+  return getDir(path.resolve(home, name));
+}
+
+/**
   * Get list of files from a named user content directory.
   *
   * @param {string} name
@@ -121,31 +165,6 @@ export function getUserDirFiles(name, pattern = '*.*', mapFunc = x => x) {
   }
 
   return files.map(mapFunc);
-}
-
-/**
-  * Get an object of all JSON data in a given folder.
-  *
-  * @param {string} dir
-  *   The full path of the directory to search in.
-  *
-  * @return {object}
-  *   Object keyed on "name" of all items in dir. Empty object if invalid or no files.
-  */
-export function getJSONList(dir) {
-  const out = {};
-
-  if (fs.existsSync(dir)) {
-    const files = glob.sync(path.join(dir, '*.json'));
-    files.forEach((jsonPath) => {
-      const data = getJSONFile(jsonPath);
-      if (data && data.name) {
-        out[data.name] = data;
-      }
-    });
-  }
-
-  return out;
 }
 
 /**
@@ -173,6 +192,31 @@ export function getJSONFile(file) {
   }
 
   return data;
+}
+
+/**
+  * Get an object of all JSON data in a given folder.
+  *
+  * @param {string} dir
+  *   The full path of the directory to search in.
+  *
+  * @return {object}
+  *   Object keyed on "name" of all items in dir. Empty object if invalid or no files.
+  */
+export function getJSONList(dir) {
+  const out = {};
+
+  if (fs.existsSync(dir)) {
+    const files = glob.sync(path.join(dir, '*.json'));
+    files.forEach(jsonPath => {
+      const data = getJSONFile(jsonPath);
+      if (data && data.name) {
+        out[data.name] = data;
+      }
+    });
+  }
+
+  return out;
 }
 
 /**
@@ -232,11 +276,11 @@ export function getPresets(name) {
   *   with error and allowed value list if invalid.
   */
 export function isValidPreset(key, allowInherit = false, type = `${key}s`) {
-  return (source) => new Promise((resolve, reject) => {
+  return source => new Promise((resolve, reject) => {
     const keys = Object.keys(getPresets(type));
     if (allowInherit) keys.unshift('[inherit]');
     if (!keys.includes(source[key])) {
-      const err = new Error(`Invalid ${key}, must be one of allowed values`)
+      const err = new Error(`Invalid ${key}, must be one of allowed values`);
       err.allowedValues = keys;
       reject(err);
     }
@@ -328,47 +372,6 @@ export function singleLineString(strings, ...values) {
 }
 
 /**
-  * Validate that a directory at the given path exists.
-  *
-  * @param {string} dir
-  *   The full path of the dir.
-  *
-  * @return {string}
-  *   The full path dir, or an error is thrown if there's permission issues.
-  */
-export function getDir(dir) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-  return dir;
-}
-
-/**
-  * Get a named user content directory.
-  *
-  * @param {string} name
-  *   The arbitrary name of the dir.
-  *
-  * @return {string}
-  *   The full path of the writable path.
-  */
-export function getUserDir(name) {
-  // Ensure we have the base user folder.
-  const home = getDir(path.resolve(homedir(), 'cncserver'));
-  const botType = gConf.get('botType');
-
-  // Only if we have a bot type, use its specific home dir.
-  // This happens when this function is used before settings are available.
-  if (botType) {
-    const botHome = getDir(path.resolve(home, botType));
-
-    // Home base dir? or bot specific?
-    if (['projects', 'colorsets', 'implements', 'toolsets'].includes(name)) {
-      return getDir(path.resolve(botHome, name));
-    }
-  }
-  return getDir(path.resolve(home, name));
-}
-
-/**
   * Given two height positions, find the difference and pro-rate duration.
   *
   * @param {integer} src
@@ -394,27 +397,9 @@ export function getHeightChangeData(src, dest) {
 }
 
 /**
-  * Convert an incoming pen object absolute step coordinate values.
-  *
-  * @param {{x: number, y: number, abs: [in|mm]}} pen
-  *   Pen/Coordinate measured in percentage of total draw area, or absolute
-  *   distance to be converted to steps.
-  *
-  * @returns {{x: number, y: number}}
-  *   Converted coordinate in absolute steps.
-  */
-export function inPenToSteps(inPen) {
-  if (inPen.abs === 'in' || inPen.abs === 'mm') {
-    return absToSteps({ x: inPen.x, y: inPen.y }, inPen.abs);
-  }
-
-  return centToSteps({ x: inPen.x, y: inPen.y });
-}
-
-/**
   * Convert an absolute point object to absolute step coordinate values.
   *
-  * @param {{x: number, y: number, abs: [in|mm]}} point
+  * @param {{x: number, y: number}} point
   *   Coordinate measured in percentage of total draw area, or absolute
   *   distance to be converted to steps.
   * @param {string} scale
@@ -426,15 +411,15 @@ export function inPenToSteps(inPen) {
   * @returns {{x: number, y: number}}
   *   Converted coordinate in absolute steps.
   */
-export function absToSteps(point, scale, inMaxArea) {
-  // TODO: Don't operate by reference (intionally or otherwise), refactor.
-  // ALSO move '25.4' value to config.
+export function absToSteps({ x, y }, scale, inMaxArea) {
   // Convert Inches to MM.
+  let point = { x, y };
   if (scale === 'in') {
-    point = { x: point.x * 25.4, y: point.y * 25.4 };
+    point = { x: x * MM_TO_INCHES, y: y * MM_TO_INCHES };
   }
 
   // Return absolute calculation.
+  // TODO: validate this works for inches.
   return {
     x: (!inMaxArea ? bot.workArea.left : 0) + (point.x * bot.stepsPerMM.x),
     y: (!inMaxArea ? bot.workArea.top : 0) + (point.y * bot.stepsPerMM.y),
@@ -494,6 +479,24 @@ export function centToSteps(point, inMaxArea) {
 }
 
 /**
+  * Convert an incoming pen object absolute step coordinate values.
+  *
+  * @param {{x: number, y: number, abs: [in|mm]}} pen
+  *   Pen/Coordinate measured in percentage of total draw area, or absolute
+  *   distance to be converted to steps.
+  *
+  * @returns {{x: number, y: number}}
+  *   Converted coordinate in absolute steps.
+  */
+export function inPenToSteps(inPen) {
+  if (inPen.abs === 'in' || inPen.abs === 'mm') {
+    return absToSteps({ x: inPen.x, y: inPen.y }, inPen.abs);
+  }
+
+  return centToSteps({ x: inPen.x, y: inPen.y });
+}
+
+/**
   * Convert any string into a machine name.
   *
   * @param {string} string
@@ -501,7 +504,7 @@ export function centToSteps(point, inMaxArea) {
   * @returns {number}
   *   Length (in steps) of the given vector point
   */
-export function getMachineName(string = '', limit = 32){
+export function getMachineName(string = '', limit = 32) {
   return string
     .replace(/[^A-Za-z0-9- ]/g, '') // Remove unwanted characters.
     .replace(/\s{2,}/g, ' ') // Replace multi spaces with a single space
@@ -583,7 +586,7 @@ export function stateToHeight(state) {
 export function round(number, precision) {
   const p = 10 ** precision;
   return Math.round(number * p) / p;
-};
+}
 
 export function roundPoint(point, precision = 2) {
   if (Array.isArray(point)) {
@@ -597,7 +600,7 @@ export function roundPoint(point, precision = 2) {
     x: round(point.x, precision),
     y: round(point.y, precision),
   };
-};
+}
 
 /**
  * Wrap SVG string content with a header and footer.
@@ -612,9 +615,9 @@ export function roundPoint(point, precision = 2) {
  *   Final complete SVG text content.
  */
 export function wrapSVG(content, size) {
-  const header = `<?xml version="1.0" encoding="utf-8"?>
-  <svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="${size.width}" height="${size.height}">`;
-  return `${header}${content}</svg>`;
+  return singleLineString`<?xml version="1.0" encoding="utf-8"?>\n
+  <svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg"
+  width="${size.width}" height="${size.height}">${content}</svg>`;
 }
 
 /**
@@ -635,7 +638,7 @@ export function wrapSVG(content, size) {
   *   The output number after mapping.
   */
 export function map(x, inMin, inMax, outMin, outMax) {
-  return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+  return ((x - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
 }
 
 /**

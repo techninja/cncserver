@@ -29,8 +29,8 @@ i18next
       lookupHeader: 'accept-language',
     },
     backend: {
-      loadPath: path.join(__basedir, 'src', 'locales', '{{ns}}', '{{lng}}.json'),
-      addPath: path.join(__basedir, 'src', 'locales', '{{ns}}', '{{lng}}.missing.json'),
+      loadPath: path.join(__basedir, 'locales', '{{ns}}', '{{lng}}.json'),
+      addPath: path.join(__basedir, 'locales', '{{ns}}', '{{lng}}.missing.json'),
     },
   })
   .then(t => {

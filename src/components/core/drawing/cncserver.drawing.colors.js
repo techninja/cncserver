@@ -5,13 +5,13 @@
 // Paper.js is all about that parameter reassignment life.
 /* eslint-disable no-param-reassign */
 
-import path from 'path';
 import Paper from 'paper';
 import chroma from 'chroma-js';
 import { get as getImplement } from 'cs/drawing/implements';
 import * as utils from 'cs/utils';
 import * as tools from 'cs/tools';
 import * as projects from 'cs/projects';
+import * as matcher from 'cs/drawing/colors/matcher';
 import { layers } from 'cs/drawing/base';
 import { bindTo, trigger } from 'cs/binder';
 import { getDataDefault } from 'cs/schemas';
@@ -32,6 +32,17 @@ export const set = { // Set via initial preset or colorset loader.
   items: new Map(), // Items mapped by id.
   toolset: '', // Extra Toolset by machine name.
 };
+
+// Setup matcher Chroma library, colorset and project settings.
+matcher.setup({ chroma });
+
+bindTo('colors.update', bindID, colorset => {
+  matcher.setup({ colorset });
+});
+
+bindTo('projects.update', bindID, ({ options }) => {
+  matcher.setup({ options });
+});
 
 // TODO:
 // - We need a print job endpoint:
@@ -103,18 +114,19 @@ export function invalidPresets() {
 }
 
 // Fully translate a given non-map based colorset.
-export function translateSet(transSet, t = tx => tx) {
+export function translateSet(inputSet, t = tx => tx) {
+  const transSet = { ...inputSet };
   if (transSet) {
-    transSet.title = t(set.title);
-    transSet.description = t(set.description);
-    transSet.manufacturer = t(set.manufacturer);
+    transSet.title = t(transSet.title);
+    transSet.description = t(transSet.description);
+    transSet.manufacturer = t(transSet.manufacturer);
 
     transSet.items.forEach(item => {
       item.name = t(item.name);
     });
   }
 
-  return set;
+  return transSet;
 }
 
 /**
@@ -242,7 +254,7 @@ export function getColor(id, applyInheritance = false, withImplement = false) {
   */
 export const applyPreset = (presetName, t) => new Promise((resolve, reject) => {
   const newSet = getPreset(presetName);
-  if (newSet) {
+  if (newSet?.items) {
     utils.applyObjectTo(newSet, set);
     tools.sendUpdate();
     trigger('colors.update', setAsArray());
@@ -250,7 +262,7 @@ export const applyPreset = (presetName, t) => new Promise((resolve, reject) => {
     resolve();
   } else {
     const err = new Error(
-      utils.singleLineString`Preset with machine name ID '${presetName}' not
+      utils.singleLineString`Colorset preset with machine name ID '${presetName}' not
       found or failed to load.`
     );
     err.allowedValues = Object.keys(utils.getPresets('colorsets'));
@@ -260,7 +272,9 @@ export const applyPreset = (presetName, t) => new Promise((resolve, reject) => {
 
 // Save custom from set.
 export function saveCustom() {
-  utils.savePreset('colorsets', setAsArray());
+  const arrColorSet = setAsArray();
+  trigger('colors.update', arrColorSet);
+  utils.savePreset('colorsets', arrColorSet);
 }
 
 // Get the current colorset as a JSON ready object.
@@ -275,6 +289,7 @@ export function setDefault() {
     let defaultSet = utils.getPreset('colorsets', 'default-single-pen');
     defaultSet = trigger('colors.setDefault', defaultSet);
     utils.applyObjectTo(setAsMap(defaultSet), set);
+    trigger('colors.update', defaultSet);
     trigger('tools.update');
   });
 }
@@ -322,11 +337,35 @@ export function getWorkGroups() {
   const sorted = getSortedSet().reverse();
 
   sorted.forEach(({ id }) => {
-    if (id !== 'ignore') {
+    if (id !== IGNORE_ITEM) {
       groups[id] = [];
     }
   });
   return groups;
+}
+
+// Apply preview styles to an item.
+export function applyPreview(item, color) {
+  // If item matched to "ignore", hide it.
+  if (color.id === IGNORE_ITEM) {
+    item.strokeWidth = 0;
+  } else {
+    // Match colorset item effective implement size.
+    item.strokeWidth = color.implement.width;
+
+    // Save/set new color and matched ID.
+    // IMPORTANT: This is how tool set swaps are rendered.
+    // TODO: Set swaps from print groupings.
+    // item.data.colorID = colorID;
+    item.strokeColor = color.color;
+
+    // Assume less than full opacity with brush/watercolor paintings.
+    item.opacity = color.implement.type === 'brush' ? 0.8 : 1;
+
+    // Prevent sharp corners messing up render.
+    item.strokeCap = 'round';
+    item.strokeJoin = 'round';
+  }
 }
 
 /**
@@ -358,6 +397,8 @@ export function snapPathsToColorset(layer) {
     colorsetItems[id] = getColor(id, true, true);
   });
 
+  console.log('MATCHING ITEMS =====================================================');
+
   // Move through all preview groups, then all items within them.
   layer.children.forEach(group => {
     group.children.forEach(item => {
@@ -368,36 +409,13 @@ export function snapPathsToColorset(layer) {
         }
 
         // Find nearest color.
-        const nearestID = matchItemToColor(item);
+        const nearestID = matcher.matchItemToColor(item);
+        console.log('Matched', item.name, 'to', nearestID);
         if (nearestID !== IGNORE_ITEM) {
-          // colors.applyPreview(item, colorsetItems[nearestID]);
-          // printGroups[nearestID].addChild(item.clone());
+          applyPreview(item, colorsetItems[nearestID]);
+          printGroups[nearestID].addChild(item.clone());
         }
       }
     });
   });
-}
-
-// Apply preview styles to an item.
-export function applyPreview(item, color) {
-  // If item matched to "ignore", hide it.
-  if (color.id === 'ignore') {
-    item.strokeWidth = 0;
-  } else {
-    // Match colorset item effective implement size.
-    item.strokeWidth = color.implement.width;
-
-    // Save/set new color and matched ID.
-    // IMPORTANT: This is how tool set swaps are rendered.
-    // TODO: Set swaps from print groupings.
-    // item.data.colorID = colorID;
-    item.strokeColor = color.color;
-
-    // Assume less than full opacity with brush/watercolor paintings.
-    item.opacity = color.implement.type === 'brush' ? 0.8 : 1;
-
-    // Prevent sharp corners messing up render.
-    item.strokeCap = 'round';
-    item.strokeJoin = 'round';
-  }
 }

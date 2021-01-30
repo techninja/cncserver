@@ -20,13 +20,13 @@ export const httpServer = http.createServer(app);
 app.configure(() => {
   console.log('APP CONFIG ======================================= ');
   // Base static path for remote interface.
-  app.use('/', express.static(path.join(__basedir, 'src', 'interface')));
+  app.use('/', express.static(path.join(__basedir, 'interface')));
 
   // Configure module JS file mime type.
   express.static.mime.define({ 'text/javascript': ['mjs'] });
 
   // Add static libraries from node_modules.
-  const nm = path.resolve(__basedir, 'node_modules');
+  const nm = path.resolve(__basedir, '..', 'node_modules');
 
   // Custom static dirs.
   const statics = {
@@ -42,7 +42,7 @@ app.configure(() => {
     bootstrap: path.join(nm, 'bootstrap', 'dist'),
     'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
     webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
-    modules: path.resolve(__basedir, 'web_modules'),
+    modules: path.resolve(__basedir, '..', 'web_modules'),
     home: path.join(path.resolve(homedir(), 'cncserver')),
   };
 

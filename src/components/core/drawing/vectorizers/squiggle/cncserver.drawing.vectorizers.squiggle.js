@@ -1,10 +1,15 @@
 /**
  * @file Squiggle vectorizer!
  */
+import Paper from 'paper';
+import {
+  connect,
+  finish,
+  generateSpiralPath,
+  map
+} from '../cncserver.drawing.vectorizers.util.js';
 
-const { Group, Path } = require('paper');
-const util = require('../cncserver.drawing.vectorizers.util');
-
+const { Group, Path } = Paper;
 const components = {
   cyan: 'red',
   magenta: 'green',
@@ -54,7 +59,7 @@ function renderSquiggleAlongPath(image, path, colorComponent) {
       const color = image.getAverageColor(area);
       if (color) {
         const lum = 1 - bright(color[components[colorComponent]], 0.1);
-        const amp = util.map(lum, 0, 1, 0, (spacing + overlap) / 2);
+        const amp = map(lum, 0, 1, 0, (spacing + overlap) / 2);
         const density = Math.ceil(maxDensity * lum);
         const pointSpacing = sampleWidth / density;
 
@@ -101,7 +106,7 @@ function renderSquiggleAlongPath(image, path, colorComponent) {
 }
 
 // Connect to the main process, start the fill operation.
-util.connect('paper', (image, rawSettings) => {
+connect('paper', (image, rawSettings) => {
   settings = { ...rawSettings };
 
   // Convert color components from the schema verifiable object into the array
@@ -122,7 +127,9 @@ util.connect('paper', (image, rawSettings) => {
   if (style === 'lines') {
     // Build group with double length, double height lines to overlay
     const guideLines = new Group();
-    for (let y = image.bounds.top + spacing / 2; y < image.bounds.bottom + image.bounds.height; y = y + spacing - overlap) {
+    const yTop = image.bounds.top + spacing / 2;
+    const yBottom = image.bounds.bottom + image.bounds.height;
+    for (let y = yTop; y < yBottom; y = y + spacing - overlap) {
       guideLines.addChild(new Path([
         [image.bounds.left - image.bounds.width, y],
         [image.bounds.right, y],
@@ -137,7 +144,7 @@ util.connect('paper', (image, rawSettings) => {
       guideLines.rotation = angle + ((360 / colorComponents.length) * index);
 
       // Render squiggles for each guide line.
-      guideLines.children.forEach((guideLine) => {
+      guideLines.children.forEach(guideLine => {
         // Flip every other line around for easy reconnection
         if (evenOdd === null) {
           evenOdd = true;
@@ -161,12 +168,12 @@ util.connect('paper', (image, rawSettings) => {
       });
     });
   } else if (style === 'spiral') {
-    const spiral = util.generateSpiralPath(spacing, image.bounds, settings.squiggle.offset);
+    const spiral = generateSpiralPath(spacing, image.bounds, settings.squiggle.offset);
     colorComponents.forEach((colorComponent, index) => {
       spiral.rotation = angle + ((360 / colorComponents.length) * index);
       renderSquiggleAlongPath(image, spiral, colorComponent);
     });
   }
 
-  util.finish(exportGroup);
+  finish(exportGroup);
 });

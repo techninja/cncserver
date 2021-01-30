@@ -88,7 +88,7 @@ const globalSchema = {
 };
 
 // Compile list of all other filler modules and their schemas and merge them.
-const fillerPath = path.resolve(__basedir, 'src', 'components', 'core', 'drawing', 'fillers');
+const fillerPath = path.resolve(__basedir, 'components', 'core', 'drawing', 'fillers');
 fs.readdirSync(fillerPath).map(dir => {
   const fullPath = path.resolve(fillerPath, dir);
   if (fs.lstatSync(fullPath).isDirectory()) {

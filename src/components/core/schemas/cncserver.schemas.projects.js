@@ -51,7 +51,7 @@ const properties = {
     type: 'string',
     title: 'Suggested Colorset',
     description: 'Colorset preset attached to the project',
-    default: 'default',
+    default: 'default-single-pen',
   },
   options: {
     type: 'object',

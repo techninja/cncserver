@@ -46,6 +46,7 @@
     "cs/drawing/text": "./src/components/core/drawing/cncserver.drawing.text.js",
     "cs/drawing/accell": "./src/components/core/drawing/cncserver.drawing.accell.js",
     "cs/drawing/colors": "./src/components/core/drawing/cncserver.drawing.colors.js",
+    "cs/drawing/colors/matcher": "./src/interface/modules/utils/colorset-matcher.mjs",
     "cs/drawing/implements": "./src/components/core/drawing/cncserver.drawing.implements.js",
     "cs/drawing/stage": "./src/components/core/drawing/cncserver.drawing.stage.js",
     "cs/drawing/preview": "./src/components/core/drawing/cncserver.drawing.preview.js",

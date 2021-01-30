@@ -56,7 +56,7 @@ export const runner = {
   init: () => {
     runner.process = spawn(
       'node',
-      [path.join(__basedir, 'src', 'components', 'core', 'runner', 'cncserver.runner.js')]
+      [path.join(__basedir, 'components', 'core', 'runner', 'cncserver.runner.js')]
     );
 
     runner.process.stdout.on('data', rawData => {

@@ -1,19 +1,21 @@
 /**
  * @file Basic vectorizer using autotrace.
  */
+import Paper from 'paper';
+import { exec } from 'child_process';
+import { tmpdir } from 'os';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import jsdom from 'jsdom';
+import { connect, finish, info } from '../cncserver.drawing.vectorizers.util.js';
 
-const { Group, CompoundPath, Color } = require('paper');
-const { exec } = require('child_process');
-const { tmpdir } = require('os');
-const fs = require('fs');
-const path = require('path');
-const jsdom = require('jsdom');
-const util = require('../cncserver.drawing.vectorizers.util');
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { JSDOM } = jsdom;
+const { Group, CompoundPath, Color } = Paper;
 const bin = path.resolve(__dirname, 'bin', process.platform, 'autotrace');
 const tmp = path.resolve(tmpdir());
-const outputFile = path.resolve(tmp, `autotrace_output_${util.info.hash}.svg`);
+const outputFile = path.resolve(tmp, `autotrace_output_${info.hash}.svg`);
 
 let settings = { }; // Globalize contents of filler.vectorize >
 
@@ -59,7 +61,7 @@ const buildOptions = () => {
 };
 
 // Connect to the main process, start the vectorization operation.
-util.connect('bmp', (inputImagePath, rawSettings) => {
+connect('bmp', (inputImagePath, rawSettings) => {
   settings = { ...rawSettings };
 
   // Remove any previous run output file.
@@ -71,11 +73,11 @@ util.connect('bmp', (inputImagePath, rawSettings) => {
 
   const child = exec(fullExec);
 
-  child.stderr.on('data', (data) => {
+  child.stderr.on('data', data => {
     console.log('ERROR:', data);
   });
 
-  child.stdout.on('data', (data) => {
+  child.stdout.on('data', data => {
     console.log('Output:', data);
   });
 
@@ -88,12 +90,12 @@ util.connect('bmp', (inputImagePath, rawSettings) => {
       const svg = fs.readFileSync(outputFile, 'utf8');
       const dom = new JSDOM(svg, { contentType: 'text/xml' });
       const paths = dom.window.document.querySelectorAll('path');
-      paths.forEach((pathItem) => {
+      paths.forEach(pathItem => {
         const styleParts = pathItem.getAttribute('style').split(';');
         const styles = { fill: null, stroke: null };
-        styleParts.forEach((item) => {
+        styleParts.forEach(item => {
           const part = item.split(':');
-          styles[part[0]] = part[1];
+          [, styles[part[0]]] = part;
         });
 
         exportGroup.addChild(
@@ -107,10 +109,10 @@ util.connect('bmp', (inputImagePath, rawSettings) => {
       });
 
       exportGroup.fitBounds(settings.bounds);
-      util.finish(exportGroup);
+      finish(exportGroup);
     } else {
       console.log('No output file 😢', outputFile);
-      util.finish(new Group());
+      finish(new Group());
     }
   });
 });
