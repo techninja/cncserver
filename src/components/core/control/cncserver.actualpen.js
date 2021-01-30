@@ -38,4 +38,4 @@ export function forceState(inState) {
 }
 
 // On pen setup, force state to match.
-bindTo('pen.setup', forceState);
+bindTo('pen.setup', 'actualPen', forceState);

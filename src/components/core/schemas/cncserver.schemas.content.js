@@ -6,7 +6,7 @@
  */
 /* eslint-disable max-len */
 
-import { base } from 'cs/drawing';
+import { defaultBounds, state as drawingBase } from 'cs/drawing/base';
 import { bindTo } from 'cs/binder';
 
 const properties = {
@@ -121,17 +121,17 @@ const properties = {
 };
 
 // Set the schema level content boundaries after they've been defined.
-bindTo('paper.ready', () => {
-  const bounds = base.defaultBounds();
+bindTo('paper.ready', 'schemas.content', () => {
+  const bounds = defaultBounds();
   properties.bounds.properties.x.default = bounds.point.x;
   properties.bounds.properties.y.default = bounds.point.y;
   properties.bounds.properties.width.default = bounds.width;
   properties.bounds.properties.height.default = bounds.height;
 
-  properties.bounds.properties.x.maximum = base.size.width - 1;
-  properties.bounds.properties.y.maximum = base.size.height - 1;
-  properties.bounds.properties.width.maximum = base.size.width;
-  properties.bounds.properties.height.maximum = base.size.height;
+  properties.bounds.properties.x.maximum = drawingBase.size.width - 1;
+  properties.bounds.properties.y.maximum = drawingBase.size.height - 1;
+  properties.bounds.properties.width.maximum = drawingBase.size.width;
+  properties.bounds.properties.height.maximum = drawingBase.size.height;
 });
 
 const schema = {

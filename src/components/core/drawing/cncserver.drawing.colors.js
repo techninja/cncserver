@@ -73,10 +73,26 @@ bindTo('projects.update', bindID, ({ options }) => {
 // - UI: Flash all colors used on the brush tip.
 // - Why does selecting a preset save custom? Toolset related?
 
+// Fully translate a given non-map based colorset.
+export function translateSet(inputSet, t = tx => tx) {
+  const transSet = { ...inputSet };
+  if (transSet) {
+    transSet.title = t(transSet.title);
+    transSet.description = t(transSet.description);
+    transSet.manufacturer = t(transSet.manufacturer);
+
+    transSet.items.forEach(item => {
+      item.name = t(item.name);
+    });
+  }
+
+  return transSet;
+}
+
 // Render presets for the API, translating human readable strings.
 export function listPresets(t) {
   const sets = Object.values(utils.getPresets('colorsets'));
-  const sorted = sets.sort((a, b) => a.sortWeight > b.sortWeight ? 1 : -1);
+  const sorted = sets.sort((a, b) => (a.sortWeight > b.sortWeight ? 1 : -1));
   const out = {};
 
   // Translate strings.
@@ -113,20 +129,27 @@ export function invalidPresets() {
   return out;
 }
 
-// Fully translate a given non-map based colorset.
-export function translateSet(inputSet, t = tx => tx) {
-  const transSet = { ...inputSet };
-  if (transSet) {
-    transSet.title = t(transSet.title);
-    transSet.description = t(transSet.description);
-    transSet.manufacturer = t(transSet.manufacturer);
+// Take in a colorset and convert the items/tools to a map
+export function setAsMap(mapSet = {}) {
+  return {
+    ...mapSet,
+    items: utils.arrayToIDMap(mapSet.items),
+  };
+}
 
-    transSet.items.forEach(item => {
-      item.name = t(item.name);
-    });
-  }
+// Return a flat array version of the set.
+export function setAsArray(arrSet = set) {
+  return getDataDefault('colors', {
+    ...arrSet,
+    items: Array.from(arrSet.items.values()),
+  });
+}
 
-  return transSet;
+// Save custom from set.
+export function saveCustom() {
+  const arrColorSet = setAsArray();
+  trigger('colors.update', arrColorSet);
+  utils.savePreset('colorsets', arrColorSet);
 }
 
 /**
@@ -148,22 +171,6 @@ export const editSet = changedSet => new Promise(resolve => {
   saveCustom();
   resolve();
 });
-
-// Take in a colorset and convert the items/tools to a map
-export function setAsMap(mapSet = {}) {
-  return {
-    ...mapSet,
-    items: utils.arrayToIDMap(mapSet.items),
-  };
-}
-
-// Return a flat array version of the set.
-export function setAsArray(arrSet = set) {
-  return getDataDefault('colors', {
-    ...arrSet,
-    items: Array.from(arrSet.items.values()),
-  });
-}
 
 // Load and return a correctly mapped colorset from a preset name.
 // Pass translate function to rewrite translatable fields.
@@ -269,13 +276,6 @@ export const applyPreset = (presetName, t) => new Promise((resolve, reject) => {
     reject(err);
   }
 });
-
-// Save custom from set.
-export function saveCustom() {
-  const arrColorSet = setAsArray();
-  trigger('colors.update', arrColorSet);
-  utils.savePreset('colorsets', arrColorSet);
-}
 
 // Get the current colorset as a JSON ready object.
 export const getCurrentSet = t => translateSet(setAsArray(), t);
@@ -410,7 +410,6 @@ export function snapPathsToColorset(layer) {
 
         // Find nearest color.
         const nearestID = matcher.matchItemToColor(item);
-        console.log('Matched', item.name, 'to', nearestID);
         if (nearestID !== IGNORE_ITEM) {
           applyPreview(item, colorsetItems[nearestID]);
           printGroups[nearestID].addChild(item.clone());

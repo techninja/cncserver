@@ -126,7 +126,7 @@ fontList.getFonts().then(fonts => {
 });
 
 // Add SVG font enum.
-bindTo('drawing.text.setup', fonts => {
+bindTo('drawing.text.setup', 'schemas.text', fonts => {
   properties.font.enum = Object.keys(fonts);
   properties.font.options.enum_titles = Object.values(fonts).map(font => font.name);
 });
