@@ -3,7 +3,7 @@
  *
  * Renders a valid JSON Schema into a form with accompanying events.
  */
-/* globals document, Event, JSONEditor, cncserver, _ */
+/* globals document, Event, JSONEditor, cncserver */
 import { html, dispatch } from '/modules/hybrids.js';
 import jsonPath from '/modules/jsonpath.js';
 import apiInit from '/modules/utils/api-init.mjs';
@@ -32,7 +32,7 @@ function customizeForm(host) {
 
   // Customize the range sliders.
   const inputs = form.querySelectorAll('input[type=range]');
-  inputs.forEach((item) => {
+  inputs.forEach(item => {
     // Initial build setup value pulled from initial output.
     const out = item.parentNode.querySelector('output');
 
@@ -52,7 +52,9 @@ function customizeForm(host) {
       item.value = num.value;
       item.dispatchEvent(new Event('change'));
     });
-    item.addEventListener('input', () => { num.value = item.value; });
+    item.addEventListener('input', () => {
+      num.value = item.value;
+    });
 
     // Insert it above the slider.
     item.parentNode.insertBefore(num, item);
@@ -129,12 +131,12 @@ function addPresetSelect(host, item, type) {
  * @param {function} [cb=(item) => item]
  *   Callback called on each matching form element wrapper.
  */
-function matchingItems(host, pathStrings, cb = (item) => item) {
+function matchingItems(host, pathStrings, cb = item => item) {
   const form = host.shadowRoot.querySelector('form');
   if (pathStrings) {
     const paths = pathStrings.split(',');
     const pathItems = form.querySelectorAll('[data-schemapath]');
-    pathItems.forEach((item) => {
+    pathItems.forEach(item => {
       if (paths.includes(item.getAttribute('data-schemapath'))) {
         cb(item);
       }
@@ -151,7 +153,7 @@ function matchingItems(host, pathStrings, cb = (item) => item) {
 function externalUpdateForm(host) {
   // Update the number input for the range sliders.
   const inputs = host.shadowRoot.querySelectorAll('input[type=range]');
-  inputs.forEach((item) => {
+  inputs.forEach(item => {
     item.previousSibling.value = item.value;
   });
 
@@ -188,7 +190,9 @@ function externalUpdateForm(host) {
  *   Array of returns from map function.
  */
 function mapFormItemsMatching(host, query, mapFunc) {
-  return Array.from(host.shadowRoot.querySelector('form').querySelectorAll(query)).map(mapFunc);
+  return Array.from(
+    host.shadowRoot.querySelector('form').querySelectorAll(query)
+  ).map(mapFunc);
 }
 
 /**
