@@ -49,6 +49,7 @@ const globalSchema = {
     description: 'How much detail is preserved when converting curves. Smaller is higher resolution but less performant.',
     default: 0.25,
     minimum: 0.01,
+    step: 0.01,
     maximum: 5,
   },
   rotation: {
@@ -59,6 +60,7 @@ const globalSchema = {
     default: 28,
     minimum: -360,
     maximum: 360,
+    step: 0.1,
   },
   randomizeRotation: {
     type: 'boolean',
@@ -75,6 +77,7 @@ const globalSchema = {
     default: 0,
     minimum: -50,
     maximum: 50,
+    step: 0.1,
   },
   spacing: {
     type: 'number',
@@ -84,6 +87,7 @@ const globalSchema = {
     default: 3,
     minimum: 0.1,
     maximum: 100,
+    step: 0.1,
   },
 };
 

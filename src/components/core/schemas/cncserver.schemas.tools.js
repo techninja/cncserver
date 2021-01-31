@@ -23,12 +23,14 @@ const schema = {
       type: 'number',
       format: 'number',
       title: 'X Point',
+      step: 0.1,
       description: 'X coordinate of the position of the tool in mm.',
     },
     y: {
       type: 'number',
       format: 'number',
       title: 'Y Point',
+      step: 0.1,
       description: 'Y coordinate of top left position of the tool in mm away from parent top left.',
     },
     position: {
@@ -45,6 +47,7 @@ const schema = {
       title: 'Width',
       description: 'Width of the usable tool area in mm.',
       minimum: 1,
+      step: 0.1,
     },
     height: {
       type: 'number',
@@ -52,6 +55,7 @@ const schema = {
       title: 'Height',
       description: 'Height of the usable tool area in mm.',
       minimum: 1,
+      step: 0.1,
     },
     radius: {
       type: 'number',
@@ -59,6 +63,7 @@ const schema = {
       title: 'Radius',
       description: 'Amount in mm to curve corners of tool area. Set to 0 for square corners.',
       minimum: 0,
+      step: 0.1,
     },
     parent: {
       type: 'string',

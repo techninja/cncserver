@@ -85,6 +85,7 @@ const properties = {
             minimum: -1,
             maximum: 1,
             default: -0.5,
+            step: 0.01,
             options: { dependencies: { ignore: true } },
           },
         },

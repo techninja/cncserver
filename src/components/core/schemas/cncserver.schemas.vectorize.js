@@ -41,6 +41,7 @@ const globalSchema = {
         default: 0.05,
         minimum: -1,
         maximum: 1,
+        step: 0.01,
       },
       contrast: {
         type: 'number',
@@ -49,6 +50,7 @@ const globalSchema = {
         default: 0,
         minimum: -1,
         maximum: 1,
+        step: 0.01,
       },
       invert: {
         type: 'boolean',

@@ -39,11 +39,6 @@ function customizeForm(host) {
     // Hide it.
     out.style.display = 'none';
 
-    // Force the step value to something more precise, assuming float.
-    const type = item.closest('[data-schematype]').getAttribute('data-schematype');
-    item.step = type === 'integer' ? 1 : 0.01;
-    item.value = parseFloat(out.textContent);
-
     // Add a number input option.
     const num = document.createElement('input');
     num.type = 'number';

@@ -115,6 +115,7 @@ const properties = {
     default: 0,
     minimum: -360,
     maximum: 360,
+    step: 0.1,
     title: 'Text rotation',
     description: 'Angle to rotate the entire text object within the bounds.',
   },

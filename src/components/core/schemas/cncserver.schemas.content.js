@@ -88,6 +88,7 @@ const properties = {
         default: 0, // Set in bindTo below.
         minimum: 0,
         maximum: 1, // Set in bindTo below.
+        step: 0.1,
       },
       y: {
         type: 'number',
@@ -97,6 +98,7 @@ const properties = {
         default: 0, // Set in bindTo below.
         minimum: 0,
         maximum: 1, // Set in bindTo below.
+        step: 0.1,
       },
       width: {
         type: 'number',
@@ -106,6 +108,7 @@ const properties = {
         default: 1, // Set in bindTo below.
         minimum: 1,
         maximum: 2, // Set in bindTo below.
+        step: 0.1,
       },
       height: {
         type: 'number',
@@ -115,6 +118,7 @@ const properties = {
         default: 1, // Set in bindTo below.
         minimum: 1,
         maximum: 2, // Set in bindTo below.
+        step: 0.1,
       },
     },
   },

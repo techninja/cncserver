@@ -48,6 +48,7 @@ const schema = {
       minimum: 2,
       maximum: 20,
       default: 10,
+      step: 0.01,
     },
     handleColors: {
       type: 'array',
@@ -68,6 +69,7 @@ const schema = {
       minimum: 0.01,
       maximum: 35,
       default: 1,
+      step: 0.01,
     },
     length: {
       type: 'number',
@@ -77,6 +79,7 @@ const schema = {
       minimum: 0,
       maximum: 35,
       default: 0,
+      step: 0.01,
     },
     stiffness: {
       type: 'number',
@@ -87,6 +90,7 @@ const schema = {
       maximum: 1,
       default: 1,
       options: { dependencies: { type: ['brush', 'other'] } },
+      step: 0.01,
     },
     drawLength: {
       type: 'number',
@@ -97,6 +101,7 @@ const schema = {
       maximum: 3000,
       default: 0,
       options: { dependencies: { type: 'brush' } },
+      step: 0.1,
     },
   },
 };
