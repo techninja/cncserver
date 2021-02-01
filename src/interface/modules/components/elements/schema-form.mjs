@@ -22,62 +22,16 @@ const globalJSONEditorSettings = {
 };
 
 /**
- * Callback for post-JSONEditor build form adjustments.
+ * Dumb function to turn flat schema paths to object keys.
  *
- * @param {hybrids} host
- *   Host item to operate on.
+ * @param {string} name
+ *   Form element name usually matching "root[name]".
+ *
+ * @returns {string}
+ *   Just the string (will break for secondary level items.)
  */
-function customizeForm(host) {
-  const form = host.shadowRoot.querySelector('form');
-
-  // Customize the range sliders.
-  const inputs = form.querySelectorAll('input[type=range]');
-  inputs.forEach(item => {
-    // Initial build setup value pulled from initial output.
-    const out = item.parentNode.querySelector('output');
-
-    // Hide it.
-    out.style.display = 'none';
-
-    // Add a number input option.
-    const num = document.createElement('input');
-    num.type = 'number';
-    num.min = item.min;
-    num.max = item.max;
-    num.step = item.step;
-    num.value = item.value;
-
-    // Lock the two together through change/input events.
-    num.addEventListener('change', () => {
-      item.value = num.value;
-      item.dispatchEvent(new Event('change'));
-    });
-    item.addEventListener('input', () => {
-      num.value = item.value;
-    });
-
-    // Insert it above the slider.
-    item.parentNode.insertBefore(num, item);
-  });
-
-  // Insert forms inside preset keys.
-  matchingItems(host, host.presetPaths, item => {
-    if (item.getAttribute('data-schemapath') === 'root.implement') {
-      addPresetSelect(host, item, 'implement');
-    }
-
-    if (item.getAttribute('data-schemapath') === 'root.toolset') {
-      addPresetSelect(host, item, 'toolset');
-    }
-  });
-
-  // Hide items if the host requests it.
-  matchingItems(host, host.hidePaths, item => { item.style.display = 'none'; });
-
-  // Disable items if the host requests it.
-  matchingItems(host, host.disablePaths, item => {
-    item.querySelector('.form-control').disabled = true;
-  });
+function bareName(name) {
+  return name.replace('root[', '').replace(']', '');
 }
 
 /**
@@ -106,7 +60,7 @@ function addPresetSelect(host, item, type) {
 
   // Bind change to insert value.
   select.addEventListener('change', () => {
-    input.value = select.selected
+    input.value = select.selected;
     input.dispatchEvent(new Event('change'));
   });
 
@@ -145,38 +99,6 @@ function matchingItems(host, pathStrings, cb = item => item) {
 }
 
 /**
- * Callback for external data post build form updates.
- *
- * @param {hybrids} host
- *   Host item to operate on.
- */
-function externalUpdateForm(host) {
-  // Update the number input for the range sliders.
-  const inputs = host.shadowRoot.querySelectorAll('input[type=range]');
-  inputs.forEach(item => {
-    item.previousSibling.value = item.value;
-  });
-
-  // Ensure presets have correct selections.
-  matchingItems(host, host.presetPaths, item => {
-    const selector = item.querySelector('.preset-selector')
-    selector.selected = item.querySelector('input').value;
-
-    // Try to get parent preset option (currently only for implements).
-    if (selector.allowInherit) {
-      selector.parentPreset = host.parentNode.host.parentImplement || '';
-      selector.color = host.parentNode.host?.data?.color || '#000000';
-    }
-  });
-
-  // Disable items if the host requests it.
-  mapFormItemsMatching(host, '.form-control[disabled]', item => item.disabled = false);
-  matchingItems(host, host.disablePaths, item => {
-    item.querySelector('.form-control').disabled = true;
-  });
-}
-
-/**
  * Run a map function on a result set of a query within the form.
  *
  * @param {hybrids} host
@@ -193,6 +115,103 @@ function mapFormItemsMatching(host, query, mapFunc) {
   return Array.from(
     host.shadowRoot.querySelector('form').querySelectorAll(query)
   ).map(mapFunc);
+}
+
+/**
+ * Callback for post-JSONEditor build form adjustments.
+ *
+ * @param {hybrids} host
+ *   Host item to operate on.
+ */
+function customizeForm(host) {
+  const form = host.shadowRoot.querySelector('form');
+
+  // Customize the range sliders.
+  const inputs = form.querySelectorAll('input[type=range]');
+  inputs.forEach(item => {
+    // Initial build setup value pulled from initial output.
+    const out = item.parentNode.querySelector('output');
+
+    // Hide it.
+    out.style.display = 'none';
+
+    // Add a number input option.
+    const num = document.createElement('input');
+    num.type = 'number';
+    num.min = item.min;
+    num.max = item.max;
+    num.step = item.step;
+    num.value = item.value;
+
+    // Lock the two together through change/input events.
+    num.addEventListener('change', () => {
+      item.value = num.value;
+      item.dispatchEvent(new Event('change'));
+      dispatch(host, 'rangeinput',
+        { detail: { name: bareName(item.name), value: item.value } });
+    });
+    item.addEventListener('input', () => {
+      num.value = item.value;
+      dispatch(host, 'rangeinput',
+        { detail: { name: bareName(item.name), value: item.value } });
+    });
+
+    // Insert it above the slider.
+    item.parentNode.insertBefore(num, item);
+  });
+
+  // Insert forms inside preset keys.
+  matchingItems(host, host.presetPaths, item => {
+    if (item.getAttribute('data-schemapath') === 'root.implement') {
+      addPresetSelect(host, item, 'implement');
+    }
+
+    if (item.getAttribute('data-schemapath') === 'root.toolset') {
+      addPresetSelect(host, item, 'toolset');
+    }
+  });
+
+  // Hide items if the host requests it.
+  matchingItems(host, host.hidePaths, item => { item.style.display = 'none'; });
+
+  // Disable items if the host requests it.
+  matchingItems(host, host.disablePaths, item => {
+    item.querySelector('.form-control').disabled = true;
+  });
+}
+
+/**
+ * Callback for external data post build form updates.
+ *
+ * @param {hybrids} host
+ *   Host item to operate on.
+ */
+function externalUpdateForm(host) {
+  // Update the number input for the range sliders.
+  const inputs = host.shadowRoot.querySelectorAll('input[type=range]');
+  inputs.forEach(item => {
+    item.previousSibling.value = item.value;
+  });
+
+  // Ensure presets have correct selections.
+  matchingItems(host, host.presetPaths, item => {
+    const selector = item.querySelector('.preset-selector');
+    selector.selected = item.querySelector('input').value;
+
+    // Try to get parent preset option (currently only for implements).
+    if (selector.allowInherit) {
+      selector.parentPreset = host.parentNode.host.parentImplement || '';
+      selector.color = host.parentNode.host?.data?.color || '#000000';
+    }
+  });
+
+  // Disable items if the host requests it.
+  mapFormItemsMatching(host, '.form-control[disabled]', item => {
+    item.disabled = false;
+  });
+  matchingItems(host, host.disablePaths, item => {
+    item.querySelector('.form-control').disabled = true;
+  });
 }
 
 /**
@@ -217,9 +236,8 @@ function dataChange(host) {
       externalUpdateForm(host);
 
       // Dispatch host event for build customization update.
-      dispatch(host, 'build-update', {
-        detail: { form: host.shadowRoot.querySelector('form') },
-      });
+      dispatch(host, 'build-update',
+        { detail: { form: host.shadowRoot.querySelector('form') } });
 
       host.editor.data.last = { ...host.editor.data.current };
       if (host.debug) console.log('EXTERNAL, last data set', host.editor.data.last);
@@ -231,9 +249,8 @@ function dataChange(host) {
     // Are there any actual changes?
     if (Object.keys(diffObject).length) {
       // Dispatch change with changed values.
-      dispatch(host, 'change', {
-        detail: { diffObject, data: host.editor.data.current }
-      });
+      dispatch(host, 'change',
+        { detail: { diffObject, data: host.editor.data.current } });
       if (host.debug) console.log('Diff', diffObject);
       host.editor.data.last = { ...host.editor.data.current };
     } else if (host.debug) {
@@ -267,6 +284,7 @@ function setSchemaFromEndpoint(host, endpoint) {
         }
       }
       host.schema = data;
+      return true;
     });
     return true;
   }
@@ -287,7 +305,7 @@ function apiChangeFactory(defaultAPI = '') {
     set: (host, value) => {
       console.log('Api change...', value);
       if (host.shadowRoot && host.initialized) {
-        // If it worked, set value.
+      // If it worked, set value.
         if (setSchemaFromEndpoint(host, value)) {
           console.log('Good API!');
           return value;
@@ -310,7 +328,6 @@ function apiChangeFactory(defaultAPI = '') {
     },
   };
 }
-
 
 /**
  * Factory for managing host schema change/value.
