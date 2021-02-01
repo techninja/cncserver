@@ -2,7 +2,7 @@
  * @file Colorset settings schema.
  *
  */
-/* eslint-disable max-len, global-require */
+
 const properties = {
   name: {
     type: 'string',
@@ -56,9 +56,11 @@ const properties = {
   },
 };
 
-module.exports = () => ({
+const schema = {
   type: 'object',
   required: ['title'],
   title: 'Colors',
   properties,
-});
+};
+
+export default schema;

@@ -6,7 +6,7 @@ import { html } from '/modules/hybrids.js';
 export default styles => ({
   text: '',
   icon: '',
-  style: 'plain',
+  type: 'plain',
   loading: false,
   desc: '',
   fullwidth: false,
@@ -14,10 +14,10 @@ export default styles => ({
   disabled: false,
 
   render: ({
-    style, icon, text, desc, fullwidth, active, disabled, loading
+    icon, text, desc, fullwidth, active, disabled, loading, type
   }) => {
     const linkClasses = { button: true, 'is-active': active, 'is-loading': loading };
-    if (style) linkClasses[`is-${style}`] = true;
+    if (type) linkClasses[`is-${type}`] = true;
 
     return html`
     ${styles}

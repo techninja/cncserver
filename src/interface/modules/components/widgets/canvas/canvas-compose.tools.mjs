@@ -51,6 +51,9 @@ function select(item) {
     return;
   }
 
+  // Set host element focus when selecting.
+  host.focus();
+
   const reset = item.rotation === 0 && item.scaling.x === 1 && item.scaling.y === 1;
   let { bounds } = item;
 
@@ -417,11 +420,12 @@ export default function initTools(originalHost) {
 
   // Keybindings.
   tool.onKeyDown = (event) => {
-    if (selectRect) {
+    // Only enable keybindings if there's a selection, AND we're focused.
+    if (selectRect && document.activeElement === host) {
       // Nudge selected objects.
       if (['up', 'down', 'left', 'right'].indexOf(event.key) !== -1) {
         const adjust = [0, 0];
-        const amount = event.modifiers.shift ? 50 : 10;
+        const amount = event.modifiers.shift ? 50 : event.modifiers.alt ? 1 : 10;
         switch (event.key) {
           case 'up':
             adjust[1] = -amount;
@@ -444,6 +448,7 @@ export default function initTools(originalHost) {
         selectRect.ppath.translate(adjust);
 
         updateItemBounds(selectRect.itemName, selectRect.bounds);
+        event.preventDefault();
       }
 
       // Delete a selected path
@@ -451,6 +456,7 @@ export default function initTools(originalHost) {
         cncserver.api.content.item.delete(selectRect.itemName);
         dispatch(host, 'selectionchange', { detail: { selection: null } });
         setCursor();
+        event.preventDefault();
       }
 
       // Deselect
@@ -458,6 +464,7 @@ export default function initTools(originalHost) {
         deselect();
         setCursor();
         dispatch(host, 'selectionchange', { detail: { selection: null } });
+        event.preventDefault();
       }
     }
   };

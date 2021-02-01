@@ -13,7 +13,24 @@ export default styles => ({
 
   render: ({
     items, name, description, parentImplement, set,
-  }) => html`
+  }) => {
+
+    // TODO: Generate this via the API.
+    const defaultItem = {
+      id: '',
+      name: 'New Color',
+      color: '#000000',
+      printWeight: 0,
+      selectionMethod: 'color',
+      colorWeight: 0,
+      opacityMin: 0,
+      opacityMax: 0.75,
+      strokeWidthMin: 0,
+      strokeWidthMax: 2,
+      implement: '[inherit]',
+    };
+
+    return html`
     ${styles}
     <style>
       .item {
@@ -68,24 +85,25 @@ export default styles => ({
           <button-single
             title="Edit"
             icon="edit"
-            style="secondary"
+            type="secondary"
             onclick=${handleSwitch('edit-color', { destProps: { data: item, parentImplement } })}
           ></button-single>
           <button-single
             title="Delete"
             icon="trash-alt"
-            style="warning"
+            type="warning"
           ></button-single>
         </div>
       </div>
     `)}
     </div>
 
-    <!--TODO: Add support for adding new colors. <button-single
+    <button-single
       text="Add"
       icon="plus-circle"
-      style="success"
-      onclick=${handleSwitch('edit-color', { destProps: { data: {}, parentImplement } })}
-    ></button-single>-->
-  `,
+      type="info"
+      onclick=${handleSwitch('edit-color', { destProps: { data: defaultItem, parentImplement } })}
+    ></button-single>
+  `;
+  },
 });

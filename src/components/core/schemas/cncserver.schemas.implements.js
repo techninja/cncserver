@@ -3,7 +3,7 @@
  *
  */
 /* eslint-disable max-len */
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Implement Details',
   required: ['type', 'name'],
@@ -48,6 +48,7 @@ module.exports = () => ({
       minimum: 2,
       maximum: 20,
       default: 10,
+      step: 0.01,
     },
     handleColors: {
       type: 'array',
@@ -68,6 +69,7 @@ module.exports = () => ({
       minimum: 0.01,
       maximum: 35,
       default: 1,
+      step: 0.01,
     },
     length: {
       type: 'number',
@@ -77,6 +79,7 @@ module.exports = () => ({
       minimum: 0,
       maximum: 35,
       default: 0,
+      step: 0.01,
     },
     stiffness: {
       type: 'number',
@@ -87,6 +90,7 @@ module.exports = () => ({
       maximum: 1,
       default: 1,
       options: { dependencies: { type: ['brush', 'other'] } },
+      step: 0.01,
     },
     drawLength: {
       type: 'number',
@@ -97,6 +101,9 @@ module.exports = () => ({
       maximum: 3000,
       default: 0,
       options: { dependencies: { type: 'brush' } },
+      step: 0.1,
     },
   },
-});
+};
+
+export default schema;

@@ -6,7 +6,7 @@
  *
  */
 /* eslint-disable max-len */
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Path',
   properties: {
@@ -25,4 +25,6 @@ module.exports = () => ({
       default: 'black',
     },
   },
-});
+};
+
+export default schema;

@@ -37,6 +37,17 @@ const properties = {
     options: { enum_titles: ['Color', 'Opacity', 'Stroke Width'] },
     default: 'color',
   },
+  selectionOverrides: {
+    type: 'array',
+    title: 'Selection Overrides',
+    description: 'Set of colors that will override all other selection methods.',
+    items: {
+      type: 'string',
+      format: 'color',
+      title: 'Path Color',
+    },
+    default: [],
+  },
   colorWeight: {
     type: 'number',
     title: 'Color Weighting',
@@ -44,6 +55,7 @@ const properties = {
     format: 'range',
     minimum: -1,
     maximum: 1,
+    step: 0.01,
     default: 0,
     options: { dependencies: { selectionMethod: 'color' } },
   },
@@ -54,6 +66,7 @@ const properties = {
     format: 'range',
     minimum: 0,
     maximum: 0.99,
+    step: 0.01,
     default: 0,
     options: { dependencies: { selectionMethod: 'opacity' } },
   },
@@ -65,6 +78,7 @@ const properties = {
     minimum: 0.01,
     maximum: 1,
     default: 0.75,
+    step: 0.01,
     options: { dependencies: { selectionMethod: 'opacity' } },
   },
   strokeWidthMin: {
@@ -74,6 +88,7 @@ const properties = {
     format: 'range',
     minimum: 0,
     maximum: 39.99,
+    step: 0.01,
     default: 0,
     options: { dependencies: { selectionMethod: 'strokeWidth' } },
   },
@@ -84,6 +99,7 @@ const properties = {
     format: 'range',
     minimum: 0.01,
     maximum: 40,
+    step: 0.01,
     default: 2,
     options: { dependencies: { selectionMethod: 'strokeWidth' } },
   },
@@ -95,9 +111,11 @@ const properties = {
   },
 };
 
-module.exports = () => ({
+const schema = {
   type: 'object',
   title: 'Colorset Item',
   required: ['color', 'name', 'id', 'selectionMethod'],
   properties,
-});
+};
+
+export default schema;

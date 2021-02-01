@@ -1,17 +1,28 @@
 /**
  * @file Abstraction module for watercolorbot specific stuff.
  */
+import { bindTo } from 'cs/binder';
+import * as pen from 'cs/pen';
+import * as control from 'cs/control';
+import * as tools from 'cs/tools';
+import { getColorID } from 'cs/drawing/base';
+import { getPreset } from 'cs/utils';
 
 // Exposed export.
 const watercolorbot = {
-  id: 'watercolorbot',
+  id: 'bots.watercolorbot',
   paintDistance: 0,
   maxPaintDistance: 150, // 48.2 * 10,
 };
 
-module.exports = (cncserver) => {
+/**
+ * Initialize bot specific code.
+ *
+ * @export
+ */
+export default function initBot() {
   // Bot support in use parent callback.
-  watercolorbot.checkInUse = (botConf) => {
+  watercolorbot.checkInUse = botConf => {
     watercolorbot.inUse = botConf.name === 'WaterColorBot';
   };
 
@@ -27,7 +38,7 @@ module.exports = (cncserver) => {
    *   How many times to move.
    */
   watercolorbot.wigglePen = (axis, rawTravel, iterations) => {
-    const start = { x: Number(cncserver.pen.state.x), y: Number(cncserver.pen.state.y) };
+    const start = { x: Number(pen.state.x), y: Number(pen.state.y) };
     let i = 0;
     const travel = Number(rawTravel); // Make sure it's not a string
 
@@ -55,7 +66,7 @@ module.exports = (cncserver) => {
         point[axis] += (toggle ? travel : travel * -1);
       }
 
-      cncserver.control.movePenAbs(point);
+      control.movePenAbs(point);
 
       i++;
 
@@ -63,7 +74,7 @@ module.exports = (cncserver) => {
       if (i <= iterations) {
         _wiggleSlave(!toggle);
       } else { // Done wiggling, go back to start
-        cncserver.control.movePenAbs(start);
+        control.movePenAbs(start);
       }
     }
 
@@ -74,26 +85,26 @@ module.exports = (cncserver) => {
   // Run a full wash in all the waters.
   watercolorbot.fullWash = () => {
     // TODO: Fix water0 overreach
-    cncserver.tools.changeTo('water0dip');
-    cncserver.tools.changeTo('water1');
-    cncserver.tools.changeTo('water2');
+    tools.changeTo('water0dip');
+    tools.changeTo('water1');
+    tools.changeTo('water2');
   };
 
   // Reink with a water dip.
-  watercolorbot.reink = (tool = cncserver.pen.state.tool) => {
-    cncserver.tools.changeTo('water0dip');
-    cncserver.tools.changeTo(tool);
+  watercolorbot.reink = (tool = pen.state.tool) => {
+    tools.changeTo('water0dip');
+    tools.changeTo(tool);
   };
 
   // Bind the wiggle to the toolchange event.
-  cncserver.binder.bindTo('tool.change', watercolorbot.id, (tool) => {
+  bindTo('tool.change', 'watercolorbot', tool => {
     // Only trigger this when the current tool isn't a wait.
     if (typeof tool.wait === 'undefined') {
       // Set the height based on what kind of tool it is.
       const downHeight = tool.name.indexOf('water') !== -1 ? 'wash' : 'draw';
 
       // Brush down
-      cncserver.pen.setHeight(downHeight);
+      pen.setHeight(downHeight);
 
       // Wiggle the brush a bit
       watercolorbot.wigglePen(
@@ -103,7 +114,7 @@ module.exports = (cncserver) => {
       );
 
       // Put the pen back up when done!
-      cncserver.pen.setHeight('up');
+      pen.setHeight('up');
 
       // Reset paintDistance
       watercolorbot.paintDistance = 0;
@@ -111,17 +122,17 @@ module.exports = (cncserver) => {
   });
 
   // Bind to begin of rendering path color group.
-  cncserver.binder.bindTo('control.render.group.begin', watercolorbot.id, (colorID) => {
+  bindTo('control.render.group.begin', watercolorbot.id, (colorID) => {
     watercolorbot.fullWash();
   });
 
   // Bind to end of rendering everything, wash that brush.
-  cncserver.binder.bindTo('control.render.finish', watercolorbot.id, () => {
+  bindTo('control.render.finish', watercolorbot.id, () => {
     watercolorbot.fullWash();
   });
 
   // Bind to path parsing for printing, allows for splitting paths to reink.
-  cncserver.binder.bindTo('control.render.path.select', watercolorbot.id, (paths) => {
+  bindTo('control.render.path.select', watercolorbot.id, paths => {
     // Only trigger this when WCB is in use.
     // TODO: don't trigger this for non reinking implements 😬
     if (watercolorbot.inUse) {
@@ -158,20 +169,19 @@ module.exports = (cncserver) => {
   });
 
   // Bind to render path complete, to trigger reinking as needed
-  cncserver.binder.bindTo('control.render.path.finish', watercolorbot.id, (path) => {
+  bindTo('control.render.path.finish', watercolorbot.id, path => {
     watercolorbot.paintDistance += path.length;
     if (watercolorbot.paintDistance >= watercolorbot.maxPaintDistance - 1) {
-      watercolorbot.reink(cncserver.drawing.base.getColorID(path));
+      watercolorbot.reink(getColorID(path));
     }
   });
 
   // Bind to color setdefault to set watercolors
-  cncserver.binder.bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (
+  bindTo('colors.setDefault', watercolorbot.id, passthroughSet => (
     watercolorbot.inUse
-      ? cncserver.utils.getPreset('colorsets', 'generic-watercolor-generic')
+      ? getPreset('colorsets', 'generic-watercolor-generic')
       : passthroughSet
   ));
-
 
   return watercolorbot;
 };

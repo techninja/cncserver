@@ -4,18 +4,29 @@
  * Holds all standardized processes for managing IPC, paper setup, and export
  * so the fill algorithm can do whatever it needs.
  */
+import Paper from 'paper';
+import clipperLib from 'js-angusj-clipper';
+import ipc from 'node-ipc';
+
 const {
   Project, Size, Path, CompoundPath,
-} = require('paper');
-const clipperLib = require('js-angusj-clipper');
-const ipc = require('node-ipc');
+} = Paper;
 
+export const state = {
+  project: {}, // Placeholder for paper project to work off of.
+};
 const hostname = 'cncserver';
 const ipcBase = {
   hash: process.argv[2],
   subIndex: process.argv[3],
   type: 'filler',
 };
+
+// Catch uncaught exceptions to clean things up.
+process.addListener('uncaughtException', err => {
+  console.error(err);
+  process.exit(1);
+});
 
 // Config IPC.
 ipc.config.silent = true;
@@ -27,7 +38,7 @@ const send = (command, data = {}) => {
 };
 
 // Clipper helper utilities.
-const clipper = {
+export const clipper = {
   scalePrecision: 10000,
   getInstance: async () => clipperLib.loadNativeClipperLibInstanceAsync(
     clipperLib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
@@ -51,7 +62,7 @@ const clipper = {
 
           c.flatten(resolution);
           geometries[pathIndex] = [];
-          c.segments.forEach((s) => {
+          c.segments.forEach(s => {
             geometries[pathIndex].push(clipper.translatePoint(s.point));
           });
 
@@ -71,7 +82,7 @@ const clipper = {
 
       geometries[0] = [];
       p.flatten(resolution);
-      p.segments.forEach((s) => {
+      p.segments.forEach(s => {
         geometries[0].push(clipper.translatePoint(s.point));
       });
     }
@@ -98,9 +109,9 @@ const clipper = {
     const out = [];
 
     if (result && result.length) {
-      result.forEach((subPathPoints) => {
+      result.forEach(subPathPoints => {
         const subPath = new Path();
-        subPathPoints.forEach((point) => {
+        subPathPoints.forEach(point => {
           subPath.add({
             x: point.x / clipper.scalePrecision,
             y: point.y / clipper.scalePrecision,
@@ -117,99 +128,87 @@ const clipper = {
   },
 };
 
-const exp = {
-  connect: (initCallback) => {
-    ipc.connectTo(hostname, () => {
-      // Setup bindings now that the socket is ready.
-      ipc.of[hostname].on('connect', () => {
-        // Connected! Tell the server we're ready for data.
-        send('ready', ipcBase);
-      });
-
-      // Bind central init, this gives us everything we need to do the work!
-      ipc.of[hostname].on('spawner.init', ({ size, object, settings }) => {
-        exp.project = new Project(new Size(size));
-        const item = exp.project.activeLayer.importJSON(object);
-        // console.log('Path:', item.name, `${Math.round(item.length * 10) / 10}mm long`);
-
-        // For any non-zero value, we want to inset the object before it gets in.
-        if (settings.inset) {
-          clipper.getInstance().then((clipperInstance) => {
-            const geo = clipper.getPathGeo(item, settings.flattenResolution);
-            const paths = clipper.getOffsetPaths(geo, settings.inset, clipperInstance);
-
-            initCallback(new CompoundPath(paths), settings);
-          });
-        } else {
-          initCallback(item, settings);
-        }
-      });
-
-      // Cancel/quit the process.
-      ipc.of[hostname].on('cancel', () => { process.exit(0); });
+export function connect(initCallback) {
+  ipc.connectTo(hostname, () => {
+    // Setup bindings now that the socket is ready.
+    ipc.of[hostname].on('connect', () => {
+      // Connected! Tell the server we're ready for data.
+      send('ready', ipcBase);
     });
-  },
 
-  // Get information about this spawn process.
-  info: { ...ipcBase },
+    // Bind central init, this gives us everything we need to do the work!
+    ipc.of[hostname].on('spawner.init', ({ size, object, settings }) => {
+      state.project = new Project(new Size(size));
+      const item = state.project.activeLayer.importJSON(object);
+      // console.log('Path:', item.name, `${Math.round(item.length * 10) / 10}mm long`);
 
-  // Report progress on processing.
-  progress: (status, value) => {
-    send('progress', { ...ipcBase, status, value });
-  },
+      // For any non-zero value, we want to inset the object before it gets in.
+      if (settings.inset) {
+        clipper.getInstance().then(clipperInstance => {
+          const geo = clipper.getPathGeo(item, settings.flattenResolution);
+          const paths = clipper.getOffsetPaths(geo, settings.inset, clipperInstance);
 
-  // Final fill paths! Send and host will shutdown when done.
-  finish: (paths = {}) => {
-    send('complete', {
-      ...ipcBase,
-      result: paths.exportJSON(), // exp.project.activeLayer.exportJSON()
-    });
-  },
-
-  // Get only the ID of closest point in an intersection array.
-  getClosestIntersectionID: (srcPoint, points) => {
-    let closestID = 0;
-    let closest = srcPoint.getDistance(points[0].point);
-
-    points.forEach((destPoint, index) => {
-      const dist = srcPoint.getDistance(destPoint.point);
-      if (dist < closest) {
-        closest = dist;
-        closestID = index;
+          initCallback(new CompoundPath(paths), settings);
+        });
+      } else {
+        initCallback(item, settings);
       }
     });
 
-    return closestID;
-  },
+    // Cancel/quit the process.
+    ipc.of[hostname].on('cancel', () => { process.exit(0); });
+  });
+}
 
-  // Will return true if the given point is in either the top left or bottom
-  // right otuside the realm of the bound rect:
-  //         |
-  //   (true)| (false)
-  // ----------------+
-  //         | Bounds|
-  // (false) |(false)| (false)
-  //         +----------------
-  //         (false) | (true)
-  //                 |
-  pointBeyond: (point, bounds) => {
-    // Outside top left
-    if (point.x < bounds.left && point.y < bounds.top) return true;
+// Get information about this spawn process.
+export const info = { ...ipcBase };
 
-    // Outside bottom right
-    if (point.x > bounds.right && point.y > bounds.bottom) return true;
+// Report progress on processing.
+export function progress(status, value) {
+  send('progress', { ...ipcBase, status, value });
+}
 
-    // Otherwise, not.
-    return false;
-  },
+// Final fill paths! Send and host will shutdown when done.
+export function finish(paths = {}) {
+  send('complete', {
+    ...ipcBase,
+    result: paths.exportJSON(), // exp.project.activeLayer.exportJSON()
+  });
+}
 
-  // Add in the Clipper utilities.
-  clipper,
-};
+// Get only the ID of closest point in an intersection array.
+export function getClosestIntersectionID(srcPoint, points) {
+  let closestID = 0;
+  let closest = srcPoint.getDistance(points[0].point);
 
-process.addListener('uncaughtException', (err) => {
-  console.error(err);
-  process.exit(1);
-});
+  points.forEach((destPoint, index) => {
+    const dist = srcPoint.getDistance(destPoint.point);
+    if (dist < closest) {
+      closest = dist;
+      closestID = index;
+    }
+  });
 
-module.exports = exp;
+  return closestID;
+}
+
+// Will return true if the given point is in either the top left or bottom
+// right otuside the realm of the bound rect:
+//         |
+//   (true)| (false)
+// ----------------+
+//         | Bounds|
+// (false) |(false)| (false)
+//         +----------------
+//         (false) | (true)
+//                 |
+export function pointBeyond(point, bounds) {
+  // Outside top left
+  if (point.x < bounds.left && point.y < bounds.top) return true;
+
+  // Outside bottom right
+  if (point.x > bounds.right && point.y > bounds.bottom) return true;
+
+  // Otherwise, not.
+  return false;
+}

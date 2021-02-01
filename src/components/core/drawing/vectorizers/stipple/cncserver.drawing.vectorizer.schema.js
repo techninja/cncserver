@@ -56,9 +56,11 @@ const properties = {
   },
 };
 
-module.exports = {
+const schema = {
   type: 'object',
   title: 'Stipple Dot Vectorization',
   options: { collapsed: true },
   properties,
 };
+
+export default schema;

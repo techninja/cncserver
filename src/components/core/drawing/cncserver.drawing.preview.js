@@ -1,56 +1,54 @@
 /**
  * @file Code for drawing preview/render layer management.
  */
-/* eslint-disable implicit-arrow-linebreak */
-const { Group } = require('paper');
+import Paper from 'paper';
+import { layers } from 'cs/drawing/base';
+import { sendPaperUpdate } from 'cs/sockets';
+import { wrapSVG } from 'cs/utils';
 
-const preview = { id: 'drawing.preview' };
+const { Group } = Paper;
 
-module.exports = (cncserver, drawing) => {
-  const { layers } = drawing.base;
+// Clear all items off the preview and update.
+export function clearAll() {
+  layers.preview.removeChildren();
+  sendPaperUpdate('preview');
+}
 
-  // Clear all items off the preview and update.
-  preview.clearAll = () => {
-    layers.preview.removeChildren();
-    cncserver.sockets.sendPaperUpdate('preview');
-  };
+// Remove an item from the preview layer, returns true if it worked.
+export function remove(hash, sendUpdate = false) {
+  if (layers.preview.children[hash]) {
+    layers.preview.children[hash].remove();
+    if (sendUpdate) sendPaperUpdate('preview');
+    return true;
+  }
+  return false;
+}
 
-  // Remove an item from the stage, returns true if it worked.
-  preview.remove = (hash, sendUpdate = false) => {
-    if (layers.preview.children[hash]) {
-      layers.preview.children[hash].remove();
-      if (sendUpdate) cncserver.sockets.sendPaperUpdate('preview');
-      return true;
-    }
-    return false;
-  };
+// Get a full preview SVG of the preview layer content.
+export function getPreviewSVG() {
+  const svgContent = layers.stage.exportSVG({ asString: true });
+  return wrapSVG(svgContent);
+}
 
-  // Get a full preview SVG of the stage layer content.
-  preview.getPreviewSVG = () => {
-    const svgContent = layers.stage.exportSVG({ asString: true });
-    return cncserver.utils.wrapSVG(svgContent);
-  };
+// Import rendered content into the hash group.
+export function addRender(importItem, hash, adjustments = {}) {
+  layers.preview.activate();
 
-  // Assumes clean internally rendered JSON.
-  // Add the JSON and return the item within the hash group.
-  preview.addRenderJSON = (json, hash, adjustments = {}) =>
-    preview.addRender(layers.preview.importJSON(json), hash, adjustments);
+  const renderGroup = layers.preview.children[hash] || new Group({ name: hash });
+  renderGroup.addChild(importItem);
 
-  // Import rendered into the hash group.
-  preview.addRender = (importItem, hash, adjustments = {}) => {
-    layers.preview.activate();
+  // Apply adjustments to the item before sending final update.
+  // eslint-disable-next-line no-param-reassign
+  Object.entries(adjustments).forEach(([key, value]) => { importItem[key] = value; });
 
-    const renderGroup = layers.preview.children[hash] || new Group({ name: hash });
-    renderGroup.addChild(importItem);
+  // Send final update for the addition of this item.
+  sendPaperUpdate('preview');
 
-    // Apply adjustments to the item before sending final update.
-    Object.entries(adjustments).forEach(([key, value]) => { importItem[key] = value; });
+  return importItem;
+}
 
-    // Send final update for the addition of this item.
-    cncserver.sockets.sendPaperUpdate('preview');
-
-    return importItem;
-  };
-
-  return preview;
-};
+// Assumes clean internally rendered JSON.
+// Add the JSON and return the item within the hash group.
+export function addRenderJSON(json, hash, adjustments = {}) {
+  return addRender(layers.preview.importJSON(json), hash, adjustments);
+}

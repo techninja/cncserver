@@ -4,16 +4,19 @@
   "description": "A web based a web based CNC Server/Controller to drive @makersylvia's WaterColorBot and beyond",
   "main": "cncserver.js",
   "author": "techninja",
+  "type": "module",
   "license": "MIT",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
-    "@json-editor/json-editor": "^2.2.0",
+    "@json-editor/json-editor": "https://github.com/techninja/json-editor.git#no-undefined-data",
+    "@node-loader/import-maps": "^1.0.3",
     "ajv": "^6.12.0",
     "axios": "^0.19.0",
     "body-parser": "^1.17.1",
     "bootstrap": "^4.4.1",
     "bulma": "^0.7.5",
     "canvas": "^2.6.0",
+    "chroma-js": "^2.1.0",
     "connect-slashes": "techninja/connect-slashes#ignore-files",
     "data-uri-to-buffer": "^3.0.0",
     "datauri": "^2.0.0",
@@ -33,7 +36,6 @@
     "jsonpath": "^1.0.2",
     "merge-deep": "^3.0.2",
     "nconf": "0.8.4",
-    "nearest-color": "^0.4.4",
     "node-ipc": "8.9.2",
     "paper": "^0.12.3",
     "paper-jsdom": "^0.12.3",
@@ -41,7 +43,7 @@
     "request": "*",
     "select2": "^4.0.12",
     "semver": "^6.3.0",
-    "serialport": "7.1.5",
+    "serialport": "^9",
     "snowpack": "^1.4.0",
     "socket.io": "^2.3.0",
     "underscore": "^1.9.2",
@@ -49,12 +51,15 @@
     "zodiac-ts": "^1.0.3"
   },
   "devDependencies": {
+    "@jsenv/importmap-eslint-resolver": "^2.4.0",
     "babel-eslint": "^10.1.0",
     "chai": "*",
     "eslint": "^7.2.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
-    "mocha": "*"
+    "mocha": "*",
+    "prettier": "^2.2.1",
+    "prettier-eslint": "^12.0.0"
   },
   "engines": {
     "node": ">= 10.0.0"
@@ -65,7 +70,67 @@
   },
   "scripts": {
     "lint": "eslint \"src/**/*.js\"",
-    "start": "node ./src/cncserver",
+    "start": "node --experimental-loader @node-loader/import-maps ./src/cncserver.js",
+    "test": "node --experimental-loader @node-loader/import-maps ./src/test.js",
     "prepare": "snowpack"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "parserOptions": {
+      "ecmaVersion": 2017
+    },
+    "extends": "airbnb-base",
+    "plugins": [
+      "import"
+    ],
+    "rules": {
+      "no-restricted-syntax": "off",
+      "no-underscore-dangle": "off",
+      "no-plusplus": "off",
+      "import/prefer-default-export": [
+        0
+      ],
+      "import/no-unresolved": [
+        2,
+        {
+          "ignore": [
+            "cs/*"
+          ]
+        }
+      ],
+      "max-len": [
+        "error",
+        {
+          "code": 90
+        }
+      ],
+      "comma-dangle": [
+        "error",
+        {
+          "exports": "never",
+          "functions": "never",
+          "arrays": "always-multiline",
+          "objects": "always-multiline"
+        }
+      ],
+      "object-property-newline": [
+        2,
+        {
+          "allowAllPropertiesOnSameLine": true
+        }
+      ],
+      "arrow-parens": [
+        2,
+        "as-needed"
+      ],
+      "class-methods-use-this": "off",
+      "no-console": "off",
+      "no-multi-str": "off"
+    }
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "arrowParens": "avoid"
   }
 }

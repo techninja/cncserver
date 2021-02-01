@@ -93,7 +93,7 @@ export default (styles) => ({
     <notify-modal
       header="Time to change the implement:"
       message=${`Please remove ${implement}, we are now ready to draw with ${newImplement}.`}
-      style="success"
+      type="success"
       onclose=${hideModal}
       active=${modalActive}
     >
@@ -119,14 +119,14 @@ export default (styles) => ({
           icon="clock"
           onclick=${hideModal}
           text="I'm not ready yet."
-          style="danger"
+          type="danger"
           fullwidth
         ></button-single>
         <button-single
           icon="check"
           onclick=${hideModal}
           text=${`${newImplement} is ready`}
-          style="success"
+          type="success"
           fullwidth
         ></button-single>
       </div>

@@ -273,7 +273,7 @@ export default styles => ({
     <notify-modal
       header="Error Adding Content:"
       message=${message}
-      style="danger"
+      type="danger"
       onclose=${hideModal}
       active=${!!message}
       limit
@@ -281,7 +281,7 @@ export default styles => ({
       <button-single
         onclick=${hideModal}
         text="Ok"
-        style="warning"
+        type="warning"
         fullwidth
       ></button-single>
     </notify-modal>
@@ -337,7 +337,7 @@ export default styles => ({
       <button-single
         onclick=${addContent(mode, type)}
         text=${`Add ${labelType(type)}`}
-        style="primary"
+        type="primary"
         loading=${loading}
         icon="plus"
         fullwidth

@@ -6,7 +6,7 @@
  *
  */
 /* eslint-disable max-len */
-const strokeSchema = {
+const properties = {
   render: {
     type: 'boolean',
     format: 'checkbox',
@@ -23,4 +23,10 @@ const strokeSchema = {
   },
 };
 
-module.exports = () => ({ type: 'object', title: 'Stroke', properties: strokeSchema });
+const schema = {
+  type: 'object',
+  title: 'Stroke',
+  properties,
+};
+
+export default schema;
