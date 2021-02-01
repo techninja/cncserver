@@ -1,26 +1,164 @@
 /**
  * @file Colorset Editor: edit single color element definition.
  */
-/* globals cncserver */
+/* globals cncserver, chroma, document */
+import apiInit from '/modules/utils/api-init.mjs';
 import { html } from '/modules/hybrids.js';
 import { handleSwitch } from './pane-utils.mjs';
 import dataDiff from '/modules/utils/data-diff.mjs';
+import * as matcher from '/modules/utils/colorset-matcher.mjs';
 
+// Shared among all instances of this component, but that's fine as they
+// just represent localized copies of "current", and are refreshed on load.
+let colorset = {};
+
+/**
+ * Initialize this component by getting the colorset and project settings.
+ */
+function updateData() {
+  apiInit(() => {
+    cncserver.api.colors.stat().then(({ data: { set } }) => {
+      cncserver.api.projects.current.stat().then(({ data: { options } }) => {
+        matcher.setup({ options, chroma });
+        colorset = set;
+      });
+    });
+  });
+}
+
+/**
+ * Add current state as new color.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ */
 function addDone(host) {
   // TODO: Add validation with user interaction.
   cncserver.api.colors.add(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
+    updateData();
   });
 }
 
+/**
+ * Save current state back for existing color.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ */
 function saveDone(host) {
   cncserver.api.colors.save(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
+    updateData();
   });
 }
 
+/**
+ * Loop through all top level content items on the stage.
+ *
+ * @param {Function} itr
+ *   Iterator function passed to map.
+ *
+ * @returns {object}
+ *   Map return array.
+ */
+function mapStageItems(itr) {
+  const items = document
+    .querySelector('canvas-compose')
+    .canvas
+    .scope
+    .project
+    .layers
+    .stage
+    .children[0]
+    .children
+    .content
+    .children;
+  return items.map(itr);
+}
 
-export default (styles) => ({
+/**
+ * Undo any preview level customizations to the stage layer.
+ */
+function clearPreview() {
+  mapStageItems(item => {
+    if (item.strokeColor && item.data.startOpacity) {
+      item.opacity = item.data.startOpacity;
+    }
+  });
+}
+
+/**
+ * Preview current color items that will be selected.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ * @param {object} [overrides={}]
+ *   Flat keyed object of values to inject for override.
+ */
+function previewChange(host, overrides = {}) {
+  // Mesh in the item being edited.
+  const hostData = { ...host.form.editor.data.current, ...overrides };
+  matcher.setup({ colorset, overrideItem: hostData });
+
+  mapStageItems(item => {
+    if (item.strokeColor) {
+      if (!item.data.startOpacity) {
+        item.data.startOpacity = item.opacity;
+      } else {
+        item.opacity = item.data.startOpacity;
+      }
+
+      // const itemColor = item.strokeColor.toCSS(true);
+      const matchKey = matcher.matchItemToColor(item);
+      if (hostData.id === matchKey) {
+        item.opacity = 1;
+      } else {
+        item.opacity = 0.1;
+      }
+    }
+  });
+}
+
+/**
+ * Catch Ranged input value change and send that over for preview changes.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ * @param {Event} event
+ *   Event object from input.
+ */
+function onRangeInput(host, event) {
+  const override = {};
+  override[event.detail.name] = event.detail.value;
+  previewChange(host, override);
+}
+
+/**
+ * Focus event callback for the form.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ * @param {Event} event
+ *   Event object from input.
+ */
+function onFocus(host) {
+  previewChange(host);
+}
+
+/**
+ * Blur event callback for the form.
+ *
+ * @param {Hybrids} host
+ *   Hybrids DOM root.
+ * @param {Event} event
+ *   Event object from input.
+ */
+function onBlur(host) {
+  clearPreview(host);
+}
+
+export default styles => ({
   initialized: false,
   returnTo: 'colors',
   parentImplement: '',
@@ -37,7 +175,7 @@ export default (styles) => ({
       text=${isNew ? 'Add' : 'Save'}
       icon=${isNew ? 'plus-square' : 'save'}
       type=${isNew ? 'info' : 'success'}
-      onclick=${isNew ? addDone : saveDone }
+      onclick=${isNew ? addDone : saveDone}
     ></button-single>
     <button-single
       text="Cancel"
@@ -48,12 +186,18 @@ export default (styles) => ({
     <schema-form
       api="colors"
       json-path="$.properties.items.items"
+      onrangeinput=${onRangeInput}
+      onchange=${onFocus}
+      onfocus=${onFocus}
+      onblur=${onBlur}
       preset-paths="root.implement"
       data=${data}
       disablePaths=${isNew ? '' : 'root.id'}
+      arrays
       plain
       minimal
     ></schema-form>
+    ${updateData}
   `;
   },
 });
