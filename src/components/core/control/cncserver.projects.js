@@ -8,7 +8,9 @@ import dataUriToBuffer from 'data-uri-to-buffer';
 import { homedir } from 'os';
 import * as utils from 'cs/utils';
 import { getDataDefault } from 'cs/schemas';
-import { colors, stage, preview, temp } from 'cs/drawing';
+import {
+  colors, stage, preview, temp
+} from 'cs/drawing';
 import { bindTo, trigger } from 'cs/binder';
 import { renderPathsToMoves } from 'cs/control';
 import * as content from 'cs/content';
@@ -132,7 +134,7 @@ export function getItems() {
 export const getCurrentHash = () => state.current;
 
 // Customize the stored object to be more appropriate for responses.
-export function getResponseItem(hash) {
+export function getResponseItem(hash = state.current) {
   const project = { ...items.get(hash) };
   delete project.dir;
   return project;
@@ -142,7 +144,7 @@ export function getResponseItem(hash) {
 // TODO: add support for adding content on creation.
 // TODO: When does creating a project not set it as current?
 export function addItem({
-  title, description = '', name, open, options = {}
+  title, description = '', name, open, options = {},
 }) {
   const cDate = new Date();
 
@@ -209,6 +211,8 @@ export function saveProjectFiles(hash = state.current) {
 
   // Write the final settings file.
   fs.writeFileSync(path.resolve(dir, PROJECT_JSON), JSON.stringify(saveItem, null, 2));
+
+  trigger('projects.update', getResponseItem());
 }
 
 // Add (or update) a content instance entry for a project.
@@ -320,6 +324,7 @@ export function editItem({ hash }, {
 
     if (changes) {
       items.set(hash, project);
+      trigger('projects.update', project);
       saveProjectFiles(hash);
       resolve(getResponseItem(hash));
     } else {
@@ -347,7 +352,7 @@ export const removeItem = hash => new Promise((resolve, reject) => {
 });
 
 // Wait till after Paper.js and schemas are loaded and get home folder, load projects.
-bindTo('schemas.loaded', 'projects', () => {
+bindTo('paper.ready', 'projects', () => {
   state.homeDir = utils.getUserDir('projects');
   loadProjects();
   initProject();
