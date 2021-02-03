@@ -24,7 +24,7 @@ export const state = {
   project: {},
 };
 
-bindTo('controller.setup', bindID, () => {
+bindTo('schemas.loaded', bindID, () => {
   // Setup the project with the max cavas size in mm.
   state.size = new Size(bot.maxAreaMM.width, bot.maxAreaMM.height);
 
