@@ -1,7 +1,6 @@
 /**
  * @file CNCServer ReSTful API endpoint module for pen state management.
  */
-import { sendPenUpdate } from 'cs/sockets';
 import { forceState } from 'cs/pen';
 import * as actualPen from 'cs/actualPen';
 import { bot, gConf } from 'cs/settings';
@@ -47,8 +46,6 @@ handlers['/v2/motors'] = function motorsMain(req) {
           y: park.y,
           lastDuration: 0,
         });
-
-        sendPenUpdate();
 
         if (gConf.get('debug')) {
           console.log('Motor offset reset to park position');

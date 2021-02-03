@@ -275,6 +275,7 @@ export function setHeight(inState, callback, skipBuffer) {
  */
 export function resetState() {
   utils.applyObjectTo(actualPen.state, state);
+  trigger('pen.update', state);
 }
 
 /**
@@ -304,12 +305,8 @@ export function park(direct = false, callback = () => { }) {
  *   correct head state or to update position along the buffer.
  */
 export function forceState(inState) {
-  for (const [key, value] of Object.entries(inState)) {
-    // Only set a value if the key exists in the state already.
-    if (key in state) {
-      state[key] = value;
-    }
-  }
+  utils.applyObjectTo(inState, state, true);
+  trigger('pen.update', state);
 }
 
 /**
@@ -388,7 +385,6 @@ export function getDurationFromDistance(distance, min = 1, inPen, speedOverride 
   // How many steps a second?
   return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
 }
-
 
 /**
   * Given two points, find the difference and duration at current speed

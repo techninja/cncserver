@@ -9,7 +9,6 @@ import * as pen from 'cs/pen';
 import * as actualPen from 'cs/actualPen';
 import * as tools from 'cs/tools';
 import run from 'cs/run';
-import { sendPenUpdate } from 'cs/sockets';
 import { colors, base, accell } from 'cs/drawing';
 import { trigger } from 'cs/binder';
 import { sendMessage } from 'cs/ipc';
@@ -101,9 +100,6 @@ export function actuallyMove(destination, callback, speedOverride = null) {
     pen.resetState();
   }
 
-  // Trigger an update for pen position
-  sendPenUpdate();
-
   // Delayed callback (if used)
   if (callback) {
     setTimeout(() => {
@@ -151,9 +147,6 @@ export function actuallyMoveHeight(height, stateValue, cb) {
     height,
     lastDuration: change.d,
   });
-
-  // Trigger an update for pen position.
-  sendPenUpdate();
 
   // Delayed callback (if used)
   if (cb) {

@@ -7,7 +7,7 @@ import { trigger as binderTrigger } from 'cs/binder';
 import { sendMessage } from 'cs/ipc';
 import { bot, gConf } from 'cs/settings';
 import { resetState, getPosChangeData } from 'cs/pen';
-import { state as actualPenState, updateState as updateActualPen } from 'cs/actualPen';
+import { state as actualPenState, forceState as forceActualPen } from 'cs/actualPen';
 import { setBatchRunningState } from 'cs/api';
 import {
   sendBufferVars,
@@ -91,9 +91,7 @@ export function pause() {
   state.paused = true;
 
   // Hold on to the current actualPen to return to before resuming.
-  state.pausePen = extend(
-    {}, actualPenState
-  );
+  state.pausePen = { ...actualPenState };
   sendMessage('buffer.pause');
   sendBufferVars();
 }
@@ -126,7 +124,7 @@ export function startItem(hash) {
 
     // Update the state of the actualPen to match the one in the buffer.
     item.pen.bufferHash = hash;
-    updateActualPen(item.pen);
+    forceActualPen(item.pen);
   } else {
     // TODO: when this happens, account for why or PREVENT IT.
     console.error(
