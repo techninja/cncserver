@@ -20,8 +20,10 @@ export const state = {};
   *   EG: After a cancel/estop.
   */
 export function forceState(inState) {
-  applyObjectTo(inState, state);
-  trigger('actualpen.update', state);
+  // Only trigger update if state changed.
+  if (applyObjectTo(inState, state)) {
+    trigger('actualpen.update', state);
+  }
 }
 
 // On pen setup, force state to match.

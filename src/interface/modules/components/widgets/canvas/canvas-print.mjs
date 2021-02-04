@@ -4,14 +4,23 @@
 /* globals cncserver, paper */
 import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 const { Shape, Group, Path } = paper;
 
-// Hold the position states.
-let currentPos = {};
-let destinationPos = {};
-let stepsPerMM = null;
-let tempPosition = null;
+// Hold the crosshair position states.
+const crosshairs = {
+  current: {}, // Actual Bot Position Crosshair.
+  destination: {}, // Eventual Bot Destination Crosshair.
+};
+
+const state = {
+  stepsPerMM: null,
+  temp: {
+    current: null,
+    destination: null,
+  },
+};
 
 /**
  * Util function to get x/y steps converted to MM.
@@ -23,7 +32,7 @@ let tempPosition = null;
  *   [X,Y] array of coordinate in mm.
  */
 function stepsToPaper({ x, y }) {
-  return [x / stepsPerMM.x, y / stepsPerMM.y];
+  return [x / state.stepsPerMM.x, y / state.stepsPerMM.y];
 }
 
 /**
@@ -38,7 +47,7 @@ function initPrint(host) {
 
   // Make crosshair (on active overlay layer).
   const size = 15 / host.canvas.viewScale;
-  currentPos = new Group({
+  crosshairs.current = new Group({
     children: [
       new Shape.Circle([0, 0], size),
       new Path.Line([-size * 1.5, 0], [-size / 5, 0]),
@@ -51,15 +60,28 @@ function initPrint(host) {
     name: 'currentPos',
   });
 
-  destinationPos = currentPos.clone();
-  destinationPos.name = 'destinationPos';
-  destinationPos.strokeColor = 'green';
-  destinationPos.strokeWidth = size / 2;
-  destinationPos.sendToBack();
+  // Make secondary destination crosshair.
+  const dest = crosshairs.current.clone();
+  dest.name = 'destinationPos';
+  dest.strokeColor = 'green';
+  dest.strokeWidth = size / 3;
+  dest.sendToBack();
+  crosshairs.destination = dest;
 
   // Set position if we have one saved from socket.
-  if (tempPosition) {
-    host.position = { pos: stepsToPaper(tempPosition), dur: 0 };
+  if (state.temp.current) {
+    host.current = {
+      type: 'current',
+      pos: stepsToPaper(state.temp.current),
+      lastDuration: 0,
+    };
+  }
+  if (state.temp.destination) {
+    host.destination = {
+      type: 'destination',
+      pos: stepsToPaper(state.temp.destination),
+      lastDuration: 0,
+    };
   }
 }
 
@@ -70,11 +92,29 @@ function initPrint(host) {
  *   Host object to operate on.
  */
 function bindSocketPosition(host) {
-  cncserver.socket.on('pen update', ({ x, y, lastDuration: dur }) => {
-    if (stepsPerMM) {
-      host.position = { pos: stepsToPaper({ x, y }), dur };
+  onUpdate('actualPen', ({ x, y, lastDuration }) => {
+    if (state.stepsPerMM) {
+      host.current = {
+        type: 'current',
+        pos: stepsToPaper({ x, y }),
+        lastDuration,
+      };
     } else {
-      tempPosition = { x, y };
+      state.temp.current = { x, y };
+      console.log('Temp current set', state.temp.current);
+    }
+  });
+
+  onUpdate('pen', ({ x, y, lastDuration }) => {
+    if (state.stepsPerMM) {
+      host.destination = {
+        type: 'destination',
+        pos: stepsToPaper({ x, y }),
+        lastDuration,
+      };
+    } else {
+      state.temp.destination = { x, y };
+      console.log('Temp destination set', state.temp.destination);
     }
   });
 }
@@ -88,17 +128,22 @@ function bindSocketPosition(host) {
  * @returns
  *   Hybrids factory for managing host method state.
  */
-function positionChangeFactory(defaultPos = { pos: [0, 0], dur: 0 }) {
+function positionChangeFactory(
+  defaultPos = { type: 'current', pos: [0, 0], lastDuration: 0 }
+) {
   return {
     set: (host, value) => {
       // Are we ready to set the value?
-      if (stepsPerMM) {
+      if (state.stepsPerMM) {
         // If the duration is more than cutoff, animate it
-        if (value.dur > 150) {
-          currentPos.tweenTo({ position: value.pos }, value.dur);
+        if (value.type === 'current') {
+          if (value.lastDuration > 150) {
+            crosshairs.current.tweenTo({ position: value.pos }, value.lastDuration);
+          } else {
+            crosshairs.current.position = value.pos;
+          }
         } else {
-          // Set position directly
-          currentPos.position = value.pos;
+          crosshairs.destination.position = value.pos;
         }
       }
       return value;
@@ -132,15 +177,15 @@ function init(host, { detail }) {
 
     // Get the bot size details and initialize the canvas with it.
     cncserver.api.settings.bot().then(({ data: bot }) => {
-      stepsPerMM = {
+      state.stepsPerMM = {
         x: bot.maxArea.width / bot.maxAreaMM.width,
         y: bot.maxArea.height / bot.maxAreaMM.height,
       };
 
       const workspace = new paper.Rectangle({
         from: [
-          bot.workArea.left / stepsPerMM.x,
-          bot.workArea.top / stepsPerMM.y,
+          bot.workArea.left / state.stepsPerMM.x,
+          bot.workArea.top / state.stepsPerMM.y,
         ],
         to: [bot.maxAreaMM.width, bot.maxAreaMM.height],
       });
@@ -160,7 +205,8 @@ function init(host, { detail }) {
 }
 
 export default styles => ({
-  position: positionChangeFactory(),
+  current: positionChangeFactory(),
+  destination: positionChangeFactory(),
   canvas: {},
 
   render: () => html`

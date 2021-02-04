@@ -303,10 +303,15 @@ export function park(direct = false, callback = () => { }) {
  * @param {object} inState
  *   Flat object of key/value pairs to FORCE into the pen state. Only used to
  *   correct head state or to update position along the buffer.
+ * @param {bool} skipUpdate
+ *   If true, no update will be sent.
  */
-export function forceState(inState) {
+export function forceState(inState, skipUpdate = false) {
+  // Only trigger update if not skipping.
   utils.applyObjectTo(inState, state, true);
-  trigger('pen.update', state);
+  if (!skipUpdate) {
+    trigger('pen.update', state);
+  }
 }
 
 /**

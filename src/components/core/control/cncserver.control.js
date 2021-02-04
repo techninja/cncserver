@@ -273,10 +273,11 @@ export function movePenAbs(
   // Only if we actually moved anywhere should we queue a movement
   if (distance !== 0) {
     // Set the tip of buffer pen at new position
+    // TODO: Figure out a better way to do all of this.
     pen.forceState({
       x: point.x,
       y: point.y,
-    });
+    }, true);
 
     // Adjust the distance counter based on movement amount, not if we're off
     // the canvas though.

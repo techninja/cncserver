@@ -9,7 +9,7 @@ document.addEventListener('cncserver-init', () => {
   apiReady = true;
 });
 
-export default (callback) => {
+export default callback => {
   if (apiReady) {
     callback();
   } else {

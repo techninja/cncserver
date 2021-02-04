@@ -29,20 +29,30 @@ export const MM_TO_INCHES = 25.4;
  *   Destination single level object to be modified.
  * @param {bool} strict
  *   If true, only keys existing on the destination will be set.
+ *
+ * @returns {boolean}
+ *   True if there was a difference, false if no change.
  */
 export function applyObjectTo(source, dest, strict = false) {
+  let hasChanges = false;
   Object.entries(source).forEach(([key, value]) => {
     // eslint-disable-next-line no-param-reassign
     if (strict) {
       if (key in dest) {
-        // eslint-disable-next-line no-param-reassign
-        dest[key] = value;
+        if (dest[key] !== value) {
+          hasChanges = true;
+          // eslint-disable-next-line no-param-reassign
+          dest[key] = value;
+        }
       }
-    } else {
+    } else if (dest[key] !== value) {
+      hasChanges = true;
       // eslint-disable-next-line no-param-reassign
       dest[key] = value;
     }
   });
+
+  return hasChanges;
 }
 
 // ES Module basedir replacement.
