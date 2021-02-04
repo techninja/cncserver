@@ -101,7 +101,6 @@ function bindSocketPosition(host) {
       };
     } else {
       state.temp.current = { x, y };
-      console.log('Temp current set', state.temp.current);
     }
   });
 
@@ -114,7 +113,6 @@ function bindSocketPosition(host) {
       };
     } else {
       state.temp.destination = { x, y };
-      console.log('Temp destination set', state.temp.destination);
     }
   });
 }
