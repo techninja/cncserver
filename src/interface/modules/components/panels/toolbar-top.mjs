@@ -3,20 +3,18 @@
  */
 /* globals cncserver */
 import { html } from '/modules/hybrids.js';
-import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 // Initialize the panel.
 function init(host) {
-  apiInit(() => {
-    if (!host.initialized) {
-      host.initialized = true;
+  if (!host.initialized) {
+    host.initialized = true;
 
-      // Bind to pen updates.
-      cncserver.socket.on('pen update', ({ state }) => {
-        host.penState = state;
-      });
-    }
-  });
+    // Bind to pen updates.
+    onUpdate('pen update', ({ state }) => {
+      host.penState = state;
+    });
+  }
 }
 
 // TODO: Add support for skip buffer park.

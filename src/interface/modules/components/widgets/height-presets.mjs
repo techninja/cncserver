@@ -4,6 +4,7 @@
 /* globals cncserver */
 import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 // Set the height via preset name.
 function setHeight(preset) {
@@ -19,7 +20,7 @@ function init(host) {
       host.initialized = true;
 
       // Bind height change to pen updates.
-      cncserver.socket.on('pen update', ({ state }) => {
+      onUpdate('pen', ({ state }) => {
         host.currentHeight = state;
       });
 

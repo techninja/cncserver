@@ -4,13 +4,14 @@
 /* globals cncserver */
 import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 // Load and group all tools from the API.
 function loadTools(host) {
   cncserver.api.tools.list().then(({ data: { tools: toolArray } }) => {
     if (toolArray.length) {
       const toolGroups = {};
-      toolArray.forEach((tool) => {
+      toolArray.forEach(tool => {
         const group = tool.group || 'Default';
 
         if (!toolGroups[group]) toolGroups[group] = [];
@@ -40,7 +41,7 @@ function init(host) {
       host.initialized = true;
 
       // Bind tool change to pen updates.
-      cncserver.socket.on('pen update', ({ tool }) => {
+      onUpdate('pen', ({ tool }) => {
         host.currentTool = tool;
       });
 
@@ -50,7 +51,7 @@ function init(host) {
 }
 
 // Export the widget definition.
-export default (styles) => ({
+export default styles => ({
   initialized: false,
   currentTool: 'color0',
   toolGroups: [],
@@ -62,7 +63,7 @@ export default (styles) => ({
         <div>
           <h3>${name}</h3>
           <div class="tools">
-            ${tools.map((tool) => html`
+            ${tools.map(tool => html`
               <button-single
                 text=${tool.id}
                 onclick=${switchTool(tool.id)}>
