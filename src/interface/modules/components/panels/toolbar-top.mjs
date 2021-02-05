@@ -1,7 +1,6 @@
 /**
  * @file Top toolbar panel definition with bindings.
  */
-/* globals cncserver */
 import { html } from '/modules/hybrids.js';
 import { onUpdate } from '/modules/utils/live-state.mjs';
 
@@ -11,7 +10,7 @@ function init(host) {
     host.initialized = true;
 
     // Bind to pen updates.
-    onUpdate('pen update', ({ state }) => {
+    onUpdate('pen', ({ state }) => {
       host.penState = state;
     });
   }
