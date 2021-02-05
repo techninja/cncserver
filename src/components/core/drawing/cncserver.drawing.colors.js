@@ -75,8 +75,9 @@ bindTo('projects.update', bindID, ({ options }) => {
 
 // Fully translate a given non-map based colorset.
 export function translateSet(inputSet, t = tx => tx) {
-  const transSet = { ...inputSet };
-  if (transSet) {
+  let transSet = null;
+  if (inputSet) {
+    transSet = { ...inputSet };
     transSet.title = t(transSet.title);
     transSet.description = t(transSet.description);
     transSet.manufacturer = t(transSet.manufacturer);
