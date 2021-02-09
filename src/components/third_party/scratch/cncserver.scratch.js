@@ -8,7 +8,6 @@ import * as control from 'cs/control';
 import * as tools from 'cs/tools';
 import { bot, botConf, gConf } from 'cs/settings';
 import run from 'cs/run';
-import { sendPenUpdate } from 'cs/sockets';
 import { createServerEndpoint } from 'cs/rest';
 import * as buffer from 'cs/buffer';
 
@@ -237,7 +236,6 @@ function penRequest(req) {
 
     // You must zero FIRST then disable, otherwise actualPen is overwritten
     run('custom', 'EM,0,0');
-    sendPenUpdate();
   }
   return { code: 200, body: '' };
 }
