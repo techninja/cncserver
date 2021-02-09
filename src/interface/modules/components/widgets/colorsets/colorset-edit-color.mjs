@@ -2,29 +2,11 @@
  * @file Colorset Editor: edit single color element definition.
  */
 /* globals cncserver, chroma, document */
-import apiInit from '/modules/utils/api-init.mjs';
 import { html } from '/modules/hybrids.js';
 import { handleSwitch } from './pane-utils.mjs';
 import dataDiff from '/modules/utils/data-diff.mjs';
 import * as matcher from '/modules/utils/colorset-matcher.mjs';
-
-// Shared among all instances of this component, but that's fine as they
-// just represent localized copies of "current", and are refreshed on load.
-let colorset = {};
-
-/**
- * Initialize this component by getting the colorset and project settings.
- */
-function updateData() {
-  apiInit(() => {
-    cncserver.api.colors.stat().then(({ data: { set } }) => {
-      cncserver.api.projects.current.stat().then(({ data: { options } }) => {
-        matcher.setup({ options, chroma });
-        colorset = set;
-      });
-    });
-  });
-}
+import { colorset, project } from '/modules/utils/live-state.mjs';
 
 /**
  * Add current state as new color.
@@ -36,7 +18,6 @@ function addDone(host) {
   // TODO: Add validation with user interaction.
   cncserver.api.colors.add(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
-    updateData();
   });
 }
 
@@ -49,7 +30,6 @@ function addDone(host) {
 function saveDone(host) {
   cncserver.api.colors.save(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
-    updateData();
   });
 }
 
@@ -99,7 +79,9 @@ function clearPreview() {
 function previewChange(host, overrides = {}) {
   // Mesh in the item being edited.
   const hostData = { ...host.form.editor.data.current, ...overrides };
-  matcher.setup({ colorset, overrideItem: hostData });
+  matcher.setup({
+    chroma, colorset, overrideItem: hostData, options: project.options,
+  });
 
   mapStageItems(item => {
     if (item.strokeColor) {
@@ -197,7 +179,6 @@ export default styles => ({
       plain
       minimal
     ></schema-form>
-    ${updateData}
   `;
   },
 });
