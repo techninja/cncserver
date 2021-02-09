@@ -5,25 +5,29 @@
 import { html, svg } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
 
-
 function setHostFromPreset(host, preset) {
-  apiInit(() => {
-    host.loading = true;
-    cncserver.api.implements.get(preset).then(({ data }) => {
-      data.title = `${data.manufacturer} ${data.title}`;
-      delete data.sortWeight;
-      delete data.manufacturer;
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === 'handleColors') data[key] = data[key].join(',');
-        host[key] = data[key];
+  if (preset) {
+    apiInit(() => {
+      host.loading = true;
+      cncserver.api.implements.get(preset).then(({ data }) => {
+        data.title = `${data.manufacturer} ${data.title}`;
+        delete data.sortWeight;
+        delete data.manufacturer;
+        Object.entries(data).forEach(([key, value]) => {
+          if (key === 'handleColors') data[key] = value.join(',');
+          host[key] = value;
+        });
+        host.loading = false;
+        host.failed = false;
+      }).catch(err => {
+        console.error(`Failed to read the preset: "${preset}":`, err);
+        // Reset the preset if there was any error.
+        host.preset = '';
+        host.loading = false;
+        host.failed = true;
       });
-      host.loading = false;
-    }).catch((err) => {
-      // Reset the preset if there was any error.
-      host.preset = '';
-      host.loading = false;
     });
-  });
+  }
 }
 
 export default () => ({
@@ -34,6 +38,8 @@ export default () => ({
   bracketNotch: 5,
   bracketPadding: 5,
   loading: false,
+  failed: false,
+  debug: false,
 
   // Switch to true for no labels/brackets.
   plain: false,
@@ -43,8 +49,8 @@ export default () => ({
 
   // Implement specifics.
   handleColors: 'yellow',
-  handleWidth: 10,
-  width: 1,
+  handleWidth: 0,
+  width: 0,
   length: 0,
   type: 'pen',
   stiffness: 1,
@@ -58,6 +64,9 @@ export default () => ({
     bracketPadding,
     plain,
     loading,
+    failed,
+    preset,
+    debug,
 
     // Implement specifics.
     handleColors,
@@ -68,6 +77,14 @@ export default () => ({
     stiffness,
     color,
   }) => {
+    // Fail if we don't have width or handleWidth
+    if (!width || !handleWidth) {
+      failed = true;
+    }
+
+    // Failed mode is also plain.
+    plain = plain || failed;
+
     // Sanity check inputs.
     // TODO: This is a mess.
     if (!handleColors) handleColors = 'yellow';
@@ -290,6 +307,13 @@ export default () => ({
           ${width}mm
         </text>
         <path class="bracket" d="${brackets.bottom.d}"/>
+      </g>
+      `}
+      ${failed && svg`
+      <text class="fail-warning" title="Failed to load">X</text>
+      <g>
+        <rect x="0" y="0" width="100%" height="100%" opacity="0.5" fill="red"></rect>
+        <text x="0" y="50" font-family="Arial" font-size="35" fill="black">X</text>
       </g>
       `}
     `}
