@@ -22,7 +22,7 @@ bindings = { triggerBind };
 
 export function bindAll(newBindings = {}) {
   bindings = { ...bindings, ...newBindings };
-};
+}
 
 /**
  * Setter for simulation state change.
@@ -129,7 +129,7 @@ const handleConnectionError = (err, options) => {
     retries++;
     console.log(`Serial connection to "${options.port}" failed, retrying ${retries}/${options.autoReconnectTries}`);
     setTimeout(() => {
-      module.exports.connect(options);
+      connect(options);
     }, options.autoReconnectRate);
   } else {
     setSimulation(true);
