@@ -41,12 +41,11 @@ function itemChangeFactory() {
         // console.log('Active change:', value, index, host.home, host.index);
       }
 
-
       // Dispatch the change up from the host.
       dispatch(host, 'change', { detail: { name: host.children[index].name } });
       return host.children[index].name;
     },
-    connect: (host) => {
+    connect: host => {
       host.activeItem = '';
     },
   };
@@ -58,26 +57,35 @@ export default styles => ({
   height: 100,
   width: 100,
   initialized: false,
+  widthUnit: '%', // Any CSS unit is allowed. Defaults here.
 
   // Sets and returns active item by name
   activeItem: itemChangeFactory(),
   home: '',
   index: 0,
 
-  render: ({ height, width, items, index }) => html`
+  render: ({
+    height, width, widthUnit, items, index,
+  }) => html`
     ${styles}
     <style>
+      :host {
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
       .slide-wrapper {
-        width: ${width}px;
+        width: ${width}${widthUnit};
         border: 1px solid red;
         overflow: hidden;
       }
       .slides {
         height: ${height}px;
         display: grid;
-        grid-template-columns: repeat(${items.length}, ${width}px);
+        width: ${items.length * width}${widthUnit};
+        grid-template-columns: repeat(${items.length}, 1fr);
         transition: margin-left 0.5s ease;
-        margin-left: -${index * width}px;
+        margin-left: -${index * width}${widthUnit};
       }
     </style>
     <div class="slide-wrapper">
