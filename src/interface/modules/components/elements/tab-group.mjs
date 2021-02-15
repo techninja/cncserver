@@ -8,7 +8,7 @@ import { html, children, dispatch } from '/modules/hybrids.js';
 // Function factory takes tab name and returns callback
 // which can be added as event listener
 function activate(name) {
-  return (host) => {
+  return host => {
     // Set next active element by it's name
     host.activeItem = name;
 
@@ -18,7 +18,7 @@ function activate(name) {
   };
 }
 
-export default (styles) => ({
+export default styles => ({
   // Children defined in 'tab-item.js'
   items: children(TabItem),
 
@@ -26,14 +26,23 @@ export default (styles) => ({
   // used by the user of tab-group element
   activeItem: {
     set: ({ items }, name) => items
-      .filter((item) => (item.active = item.name === name))
+      .filter(item => (item.active = item.name === name))
       .map(({ name }) => name)[0],
   },
   render: ({ items }) => html`
     ${styles}
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
+    </style>
     <nav class="tabs is-boxed">
       <ul>
-      ${items.map(({ text, active, icon, name }) => html`
+      ${items.map(({
+    text, active, icon, name,
+  }) => html`
         <li class="${active ? 'is-active' : ''} ${active ? 'active' : ''}" onclick="${activate(name)}">
           <a>
             <span class="icon is-small">
