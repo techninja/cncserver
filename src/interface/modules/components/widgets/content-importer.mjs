@@ -48,9 +48,9 @@ function labelType(type) {
  *   Promise that resolves with the content once FileReader completes.
  */
 function loadAsText(file, asURI = false) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const reader = new FileReader();
-    reader.onload = (loadedEvent) => {
+    reader.onload = loadedEvent => {
       // Result contains loaded file contents.
       resolve(loadedEvent.target.result);
     };
@@ -108,7 +108,7 @@ function handleErr(host, err) {
  *   Hybrids host function.
  */
 function addContent(mode, type) {
-  return (host) => {
+  return host => {
     // Don't do anything if we're already doing something.
     if (host.loading) return;
     host.showModal = true;
@@ -131,7 +131,7 @@ function addContent(mode, type) {
         // File upload!
         const fileInput = host.shadowRoot.querySelector('input.file');
         if (fileInput.files.length) {
-          loadAsText(fileInput.files[0], type === 'raster').then((content) => {
+          loadAsText(fileInput.files[0], type === 'raster').then(content => {
             cncserver.api.content.add.local(type, content, data)
               .then(() => handleSuccess(host))
               .catch(err => handleErr(host, err));
@@ -254,6 +254,7 @@ export default styles => ({
       #source-type-wrapper {
         position: absolute;
         right: 1em;
+        z-index: 2;
       }
 
       @media only screen and (max-width: 1230px) {
