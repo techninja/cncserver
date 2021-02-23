@@ -4,7 +4,7 @@
 import { dispatch } from '/modules/hybrids.js';
 
 export function handleSwitch(destination = '', options = {}) {
-  return (host) => {
+  return host => {
     dispatch(host, 'switchpane', { detail: { destination, options } });
   };
 }
