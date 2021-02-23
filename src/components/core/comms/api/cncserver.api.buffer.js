@@ -43,7 +43,7 @@ handlers['/v2/buffer'] = function bufferMain(req, res) {
 
     // Did we actually change position since pausing?
     let changedSincePause = false;
-    if (bufferState.pausePen) {
+    if (bufferState.pausePen && req.route.method === 'put') {
       if (bufferState.pausePen.x !== actualPenState.x
           || bufferState.pausePen.y !== actualPenState.y
           || bufferState.pausePen.height !== actualPenState.height) {
