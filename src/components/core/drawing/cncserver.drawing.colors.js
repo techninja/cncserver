@@ -43,35 +43,6 @@ bindTo('projects.update', bindID, ({ options }) => {
   matcher.setup({ options });
 });
 
-// TODO:
-// - We need a print job endpoint:
-//   - POST to create a job. Options include
-//     - Alert types?
-//     - WCB specific: How to retool
-//     - Colorset options
-//     -
-//   - Each job is saved as a file, read directly by the runner?
-//   - Job contains the full contents of final PRINT layer?
-//   - Rip out all the start/stop stuff. Move control stuff out to print job
-// -
-// - Reset printing state
-// - Write unified colorset item selection for colorset job management and parsing
-// - UI: Build work preview tool for printing to show jobs, preview items, reorder!
-// - UI: Allow editing any implement preset from preset selection, with reloading after.
-// - UI: Implement swap with audible alerts
-// - UH... Merge? Do a whole damn print, rinse and repeat.
-
-// - COLOR SELECTION
-// -- Using selection rule project
-// -- Write in a way that lets us preview immediately as we change rules
-// -- Add support for ADDING new colorset items (This was broken)
-// -- Customize colorset to have rules for all items
-// -- Rewrite colorset item selection based on rules (and new color distance algo)
-
-// Total bonus:
-// - UI: Flash all colors used on the brush tip.
-// - Why does selecting a preset save custom? Toolset related?
-
 // Fully translate a given non-map based colorset.
 export function translateSet(inputSet, t = tx => tx) {
   let transSet = null;
