@@ -3,13 +3,16 @@
 */
 import * as utils from 'cs/utils';
 
+// Inherit tag.
+export const IMPLEMENT_PARENT = '[inherit]';
+
 // List Existing Presets.
 export function listPresets(t, customOnly) {
   const sets = customOnly
     ? utils.getCustomPresets('implements')
     : utils.getPresets('implements');
   const items = Object.values(sets);
-  const sorted = items.sort((a, b) => a.sortWeight > b.sortWeight ? 1 : -1);
+  const sorted = items.sort((a, b) => (a.sortWeight > b.sortWeight ? 1 : -1));
   const out = {};
 
   // TODO: Translate implement titles.

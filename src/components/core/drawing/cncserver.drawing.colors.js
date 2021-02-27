@@ -7,7 +7,7 @@
 
 import Paper from 'paper';
 import chroma from 'chroma-js';
-import { get as getImplement } from 'cs/drawing/implements';
+import { get as getImplement, IMPLEMENT_PARENT } from 'cs/drawing/implements';
 import * as utils from 'cs/utils';
 import * as tools from 'cs/tools';
 import * as projects from 'cs/projects';
@@ -20,7 +20,6 @@ import { sendPaperUpdate } from 'cs/sockets';
 const { Color, Group } = Paper;
 
 const DEFAULT_PRESET = 'default-single-pen';
-const IMPLEMENT_PARENT = '[inherit]';
 const IGNORE_ITEM = '[IGNORE]';
 const bindID = 'drawing.colors';
 

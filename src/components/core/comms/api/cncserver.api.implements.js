@@ -8,8 +8,10 @@ import {
   edit,
   get,
   add,
-  deleteImplement
+  deleteImplement,
+  IMPLEMENT_PARENT
 } from 'cs/drawing/implements';
+import { colors } from 'cs/drawing';
 import { validateData } from 'cs/schemas';
 import { singleLineString, merge } from 'cs/utils';
 import { err } from 'cs/rest';
@@ -51,7 +53,13 @@ handlers['/v2/implements'] = (req, res) => {
 // Item handler.
 handlers['/v2/implements/:implementName'] = (req, res) => {
   // Sanity check color ID
-  const { implementName } = req.params;
+  let { implementName } = req.params;
+
+  // Allow inherit to redirect to colorset parent default.
+  if (implementName === IMPLEMENT_PARENT) {
+    implementName = colors.set.implement;
+  }
+
   const implement = get(implementName);
 
   if (!implement) {
