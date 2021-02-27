@@ -14,10 +14,12 @@ export default styles => ({
   disabled: false,
 
   render: ({
-    icon, text, desc, fullwidth, active, disabled, loading, type
+    icon, text, desc, fullwidth, active, disabled, loading, type,
   }) => {
     const linkClasses = { button: true, 'is-active': active, 'is-loading': loading };
     if (type) linkClasses[`is-${type}`] = true;
+
+    const buttonStyle = { display: fullwidth ? 'flex' : 'inline-block' };
 
     return html`
     ${styles}
@@ -26,8 +28,12 @@ export default styles => ({
         display: inline;
       }
     </style>
-    <a class="${linkClasses}" disabled=${disabled} style=${{ display: fullwidth ? 'flex' : 'inline-block' }} title="${desc}">
-      ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
+    <a class="${linkClasses}" disabled=${disabled} style=${buttonStyle} title="${desc}">
+      ${icon && html`
+        <span class="icon">
+          <i class="fas fa-${icon}" aria-hidden="true"></i>
+        </span>
+      `}
       ${text && html`<span>${text}</span>`}
     </a>
   `;
