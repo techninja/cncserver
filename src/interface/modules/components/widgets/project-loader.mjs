@@ -34,6 +34,7 @@ function currentProjectChangeFactory() {
 function infoChange(host) {
   const inputs = host.shadowRoot.querySelectorAll('input');
   cncserver.api.projects.item.update(host.current, {
+    name: inputs.item(0).value.trim() || inputs.item(0).placeholder,
     title: inputs.item(0).value.trim() || inputs.item(0).placeholder,
     description: inputs.item(1).value.trim() || inputs.item(1).placeholder,
   }).catch(() => { });

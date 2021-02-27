@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "toolsets"
+  },
+  "name": "default",
+  "manufacturer": "Generic",
+  "title": "Default Toolset",
+  "description": "Empty default toolset.",
+  "items": []
+}

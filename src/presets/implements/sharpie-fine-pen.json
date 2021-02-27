@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "sharpie-fine-pen",
+  "manufacturer": "Sharpie",
+  "title": "Fine Point Art Pen",
+  "sortWeight": -5,
+  "handleWidth": 10,
+  "handleColors": [
+    "#b7b9b8"
+  ],
+  "width": 0.4,
+  "length": 5,
+  "stiffness": 1,
+  "drawLength": 0
+}

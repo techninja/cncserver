@@ -4,19 +4,17 @@
 /* globals cncserver */
 import { html } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 // Load and group all tools from the API.
 function loadTools(host) {
-  cncserver.api.tools.list().then(response => {
-    if (response.data) {
+  cncserver.api.tools.list().then(({ data: { tools: toolArray } }) => {
+    if (toolArray.length) {
       const toolGroups = {};
-      response.data.tools.forEach(tool => {
-        const td = response.data.toolData[tool];
-        const group = td.group || 'Default';
+      toolArray.forEach(tool => {
+        const group = tool.group || 'Default';
 
-        if (!toolGroups[group]) {
-          toolGroups[group] = [];
-        }
+        if (!toolGroups[group]) toolGroups[group] = [];
 
         toolGroups[group].push(tool);
       });
@@ -43,7 +41,7 @@ function init(host) {
       host.initialized = true;
 
       // Bind tool change to pen updates.
-      cncserver.socket.on('pen update', ({ tool }) => {
+      onUpdate('pen', ({ tool }) => {
         host.currentTool = tool;
       });
 
@@ -61,31 +59,19 @@ export default styles => ({
     ${styles}
     <label-title icon="toolbox">Tools:</label-title>
     <div class="field">
-      ${toolGroups.map(
-        ({ name, tools }) => html`
-          <div>
-            <h3>${name}</h3>
-            <div class="tools">
-              ${tools.map(toolName => {
-                if (toolName === currentTool) {
-                  return html`
-                    <wl-button>${toolName}</wl-button>
-                  `;
-                }
-                return html`
-                  <wl-button
-                    flat
-                    inverted
-                    outlined
-                    onclick="${switchTool(toolName)}"
-                    >${toolName}</wl-button
-                  >
-                `;
-              })}
-            </div>
+      ${toolGroups.map(({ name, tools }) => html`
+        <div>
+          <h3>${name}</h3>
+          <div class="tools">
+            ${tools.map(tool => html`
+              <button-single
+                text=${tool.id}
+                onclick=${switchTool(tool.id)}>
+              ></button-single>
+            `)}
           </div>
-        `
-      )}
+        </div>
+      `)}
     </div>
     ${init}
   `,

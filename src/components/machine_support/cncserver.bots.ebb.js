@@ -2,42 +2,51 @@
  * @file Abstraction module for EiBotBoard specific support.
  * @see http://evil-mad.github.io/EggBot/ebb.html
  */
-const semver = require('semver');
+import semver from 'semver';
+import { bindTo } from 'cs/binder';
+import run from 'cs/run';
+import { setSetupCommands } from 'cs/serial';
+import { cmdstr } from 'cs/buffer';
+import { botConf } from 'cs/settings';
+import { getSerialValue } from 'cs/ipc';
+import { singleLineString as SLS } from 'cs/utils';
 
-const ebb = { id: 'ebb', version: {} }; // Exposed export.
+const ebb = { id: 'bots.ebb', version: {} }; // Exposed export.
 const minVersion = '>=2.2.7';
 let controller = {}; // Placeholder for machine config export.
 
-module.exports = (cncserver) => {
+/**
+ * Initialize bot specific code.
+ *
+ * @export
+ */
+export default function initBot() {
   // Bot support in use parent callback.
-  ebb.checkInUse = (botConf) => {
-    ebb.inUse = botConf.controller.name === 'EiBotBoard';
+  ebb.checkInUse = botConfig => {
+    ebb.inUse = botConfig.controller.name === 'EiBotBoard';
   };
 
   // Bind EBB support on controller setup -before- serial connection.
-  cncserver.binder.bindTo('controller.setup', ebb.id, (controller) => {
-    if (controller.name === 'EiBotBoard') {
-      cncserver.serial.setSetupCommands([
+  bindTo('controller.setup', ebb.id, controllerConfig => {
+    if (controllerConfig.name === 'EiBotBoard') {
+      setSetupCommands([
         // Set motor precision.
-        cncserver.buffer.cmdstr(
-          'enablemotors',
-          { p: cncserver.settings.botConf.get('speed:precision') }
-        ),
+        cmdstr('enablemotors', { p: botConf.get('speed:precision') }),
       ]);
     }
   });
 
   // Bind to serial connection.
-  cncserver.binder.bindTo('serial.connected', ebb.id, () => {
+  bindTo('serial.connected', ebb.id, () => {
     // Exit early if we've already done this (happens on reconnects).
     if (ebb.version.value) {
       return;
     }
 
-    controller = cncserver.settings.botConf.get('controller');
+    controller = botConf.get('controller');
 
     // Get EBB version.
-    cncserver.ipc.getSerialValue('version').then((message) => {
+    getSerialValue('version').then(message => {
       if (message.includes(controller.error)) {
         console.error('='.repeat(76));
         console.error('Failed to load version information! Message given:');
@@ -52,19 +61,23 @@ module.exports = (cncserver) => {
         value: version,
         string: message,
       };
-      console.log(`Connected to ${controller.manufacturer} ${controller.name}, firmware v${version}`);
+      console.log(
+        SLS`Connected to ${controller.manufacturer} ${controller.name},
+          firmware v${version}`
+      );
       if (!semver.satisfies(version, minVersion)) {
         console.error('='.repeat(76));
-        console.error(`ERROR: Firmware version does not meet minimum requirements (${minVersion})`);
-        console.error('To upgrade, see: https://wiki.evilmadscientist.com/Updating_EBB_firmware');
+        console.error(SLS`ERROR: Firmware version does not meet minimum
+          requirements (${minVersion})`);
+        console.error(SLS`To upgrade, see:
+          https://wiki.evilmadscientist.com/Updating_EBB_firmware`);
         console.error('='.repeat(76));
       }
     });
   });
 
-
   // Bind to general controller message returns.
-  cncserver.binder.bindTo('serial.message', ebb.id, (message) => {
+  bindTo('serial.message', ebb.id, message => {
     // If this isn't an acknowledgement of a working command...
     if (message !== controller.ack) {
       if (message.includes(controller.error)) {
@@ -118,8 +131,8 @@ module.exports = (cncserver) => {
    */
   // TODO: Find/replace all instances of "serial.sendEBBSetup"
   ebb.sendSetup = (id, value) => {
-    cncserver.run('custom', `SC,${id},${value}`);
+    run('custom', `SC,${id},${value}`);
   };
 
   return ebb;
-};
+}

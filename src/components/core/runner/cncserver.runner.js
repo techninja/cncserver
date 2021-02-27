@@ -7,10 +7,13 @@
  * socket messages, always use the API to communicate via serial, not this.
  */
 
-// REQUIRES ====================================================================
-const { Readable, Writable } = require('stream');
-const serial = require('./cncserver.runner.serial');
-const ipc = require('./cncserver.runner.ipc')({
+// Imports ====================================================================
+import { Readable, Writable } from 'stream';
+
+import * as serial from './cncserver.runner.serial.js';
+import initIPC from './cncserver.runner.ipc.js';
+
+const ipc = initIPC({
   ipcHost: 'cncserver',
   config: {
     id: 'cncrunner',
@@ -56,7 +59,7 @@ function instructionStreamWrite(item, _, callback) {
   // Some items don't have any rendered commands, only run those that do!
   if (item.commands.length) {
     durationTimer = new Date();
-    serial.writeMultiple(item.commands, (err) => {
+    serial.writeMultiple(item.commands, err => {
       setTimeout(() => {
         ipc.sendMessage('buffer.item.done', item.hash);
         state.instructionIsExecuting = false;
@@ -135,7 +138,7 @@ const directRenderer = new Writable({
   highWaterMark: 1,
   write: (item, _, callback) => {
     if (global.config.showSerial) console.log('DIRECT Stream writing!', item.commands);
-    serial.writeMultiple(item.commands, (err) => {
+    serial.writeMultiple(item.commands, err => {
       setTimeout(() => {
         callback(err);
       }, item.duration);
@@ -167,7 +170,7 @@ state.setPaused = (paused, init = false) => {
 /**
  * Simulation state setter
  */
-state.setSimulation = (isSimulating) => {
+state.setSimulation = isSimulating => {
   state.simulation = isSimulating;
   ipc.sendMessage('serial.simulation', isSimulating);
 };
@@ -202,7 +205,7 @@ serial.bindAll({
   },
 
   // Called on serial close if reconnect fails.
-  close: (err) => {
+  close: err => {
     console.log(err);
     console.log(`Serial Disconnected: ${err.toString()}`);
     ipc.sendMessage('serial.disconnected', {
@@ -274,7 +277,7 @@ function gotMessage(packet) {
 }
 
 // Catch any uncaught error.
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   // Assume Disconnection and kill the process.
   serial.triggerBind('disconnect', err);
   console.error('Uncaught error, disconnected from server, shutting down');

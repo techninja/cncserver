@@ -17,6 +17,15 @@ export default styles => ({
 
     return html`
     ${styles}
+    <style>
+      :host {
+        display: inline-block;
+      }
+
+      label {
+        cursor: inherit;
+      }
+    </style>
     <label class="${labelClasses}" title="${desc}">
       ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
       <span><slot></slot></span>

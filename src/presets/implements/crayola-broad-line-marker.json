@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "crayola-broad-line-marker",
+  "manufacturer": "Crayola",
+  "title": "Broad Line Marker",
+  "sortWeight": -20,
+  "handleWidth": 14.5,
+  "handleColors": [
+    "#EEEEEE"
+  ],
+  "width": 1,
+  "length": 8,
+  "stiffness": 1,
+  "drawLength": 0
+}

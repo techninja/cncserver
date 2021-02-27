@@ -35,31 +35,31 @@ export default styles => ({
         onclick="${turtleMove('left', 90)}"
         desc="Turn left 90 degrees"
         icon="undo-alt"
-        style="large"
+        type="large"
       ></button-single>
       <button-single
         onclick="${turtleMove('forward', 10)}"
         desc="Move forward 10"
         icon="angle-up"
-        style="large"
+        type="large"
       ></button-single>
       <button-single
         onclick="${turtleMove('forward', 0)}"
         desc="Move to center positon (0)"
         icon="crosshairs"
-        style="large"
+        type="large"
       ></button-single>
       <button-single
         onclick="${turtleMove('forward', 100)}"
         desc="Move forward 100"
         icon="angle-double-up"
-        style="large"
+        type="large"
       ></button-single>
       <button-single
         onclick="${turtleMove('right', 90)}"
         desc="Turn right 90 degrees"
         icon="redo-alt"
-        style="large"
+        type="large"
       ></button-single>
 
       <span title="Turtle angle" class="icon is-large">

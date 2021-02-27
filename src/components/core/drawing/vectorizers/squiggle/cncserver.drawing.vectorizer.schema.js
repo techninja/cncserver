@@ -132,9 +132,11 @@ const properties = {
   },
 };
 
-module.exports = {
+const schema = {
   type: 'object',
-  title: 'Squiggle method options',
+  title: 'Squiggle Density Vectorization',
   options: { collapsed: true },
   properties,
 };
+
+export default schema;

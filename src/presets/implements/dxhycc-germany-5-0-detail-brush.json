@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "dxhycc-germany-5-0-detail-brush",
+  "manufacturer": "Dxhycc",
+  "title": "\"Germany\" size 5/0 fine detail",
+  "sortWeight": 30,
+  "handleWidth": 4.8,
+  "handleColors": [
+    "#111111",
+    "#EEEEEE"
+  ],
+  "width": 1.5,
+  "length": 7.9,
+  "stiffness": 0.35,
+  "drawLength": 180
+}

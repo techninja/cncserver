@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "sharpie-ultra-fine-marker",
+  "manufacturer": "Sharpie",
+  "title": "Ultra Fine Point Marker #37000",
+  "sortWeight": 0,
+  "handleWidth": 11,
+  "handleColors": [
+    "#b7b9b8"
+  ],
+  "width": 0.5,
+  "length": 6.1,
+  "stiffness": 1,
+  "drawLength": 0
+}

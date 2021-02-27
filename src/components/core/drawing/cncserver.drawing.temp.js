@@ -1,39 +1,35 @@
 /**
  * @file Code for drawing temp layer management.
  */
-/* eslint-disable implicit-arrow-linebreak */
-const { Group } = require('paper');
+import Paper from 'paper';
+import { layers } from 'cs/drawing/base';
+import { sendPaperUpdate } from 'cs/sockets';
 
-const temp = { id: 'drawing.temp' };
+const { Group } = Paper;
 
-module.exports = (cncserver, drawing) => {
-  const { layers } = drawing.base;
+// Clear all items off the temp layer.
+export function clearAll() {
+  layers.temp.removeChildren();
+}
 
-  // Clear all items off the temp layer.
-  temp.clearAll = () => {
-    layers.temp.removeChildren();
-  };
+// Import temp item into a hash group, return group with item(s).
+export function addItem(importItem, hash, adjustments = {}) {
+  layers.temp.activate();
+  const item = importItem.copyTo(layers.temp);
 
-  // Add the JSON and return the item within the hash group.
-  temp.addJSON = (json, hash, adjustments = {}) =>
-    temp.addItem(layers.temp.importJSON(json), hash, adjustments);
+  const tempGroup = layers.temp.children[hash] || new Group({ name: hash });
+  tempGroup.addChild(item);
 
-  // Import temp item into a hash group, return group with item(s).
-  temp.addItem = (importItem, hash, adjustments = {}) => {
-    layers.temp.activate();
-    const item = importItem.copyTo(layers.temp);
+  // Apply adjustments to the item before sending final update.
+  Object.entries(adjustments).forEach(([key, value]) => { item[key] = value; });
 
-    const tempGroup = layers.temp.children[hash] || new Group({ name: hash });
-    tempGroup.addChild(item);
+  // Send final update for the addition of this item.
+  sendPaperUpdate('preview');
 
-    // Apply adjustments to the item before sending final update.
-    Object.entries(adjustments).forEach(([key, value]) => { item[key] = value; });
+  return tempGroup;
+}
 
-    // Send final update for the addition of this item.
-    cncserver.sockets.sendPaperUpdate('preview');
-
-    return tempGroup;
-  };
-
-  return temp;
-};
+// Add the JSON and return the item within the hash group.
+export function addJSON(json, hash, adjustments = {}) {
+  return addItem(layers.temp.importJSON(json), hash, adjustments);
+}

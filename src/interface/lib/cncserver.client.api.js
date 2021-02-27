@@ -18,6 +18,7 @@ let axios = {}; // Placeholder.
 
 // Initialize wrapper object is this library is being used elsewhere
 const cncserver = {
+  contentTimeout: 20000,
   init: ({
     domain = 'localhost',
     port = 4242,
@@ -25,7 +26,7 @@ const cncserver = {
     version = 2,
     ax,
     socketio,
-  }) => new Promise((resolve) => {
+  }) => new Promise(resolve => {
     axios = ax;
     if (socketio) {
       cncserver.socket = socketio(`${protocol}://${domain}:${port}`);
@@ -90,6 +91,7 @@ function _request(method, path, options = {}) {
   return axios.request({
     url,
     method,
+    params: options.params,
     data: options.data,
     timeout: options.timeout || 5000,
   });
@@ -140,18 +142,20 @@ cncserver.api = {
     },
 
     renderStage: () => _patch('projects', { data: { rendering: true } }),
-    drawPreview: () => _patch('projects', { data: { drawing: true } }),
+    startPrinting: () => _patch('projects', { data: { printing: true } }),
     schema: () => _options('projects'),
   },
   content: {
     stat: () => _get('content'),
     add: {
-      direct: data => _post('content', { data }),
+      direct: data => _post('content', { data, timeout: cncserver.contentTimeout }),
       local: (type, content, options = {}) => _post('content', {
         data: { ...options, source: { type, content } },
+        timeout: cncserver.contentTimeout,
       }),
       remote: (type, url, options = {}) => _post('content', {
         data: { ...options, source: { type, url } },
+        timeout: cncserver.contentTimeout,
       }),
     },
 
@@ -166,15 +170,33 @@ cncserver.api = {
   colors: {
     stat: () => _get('colors'),
     preset: preset => _post('colors', { data: { preset } }),
+    deletePreset: preset => _delete('colors', { data: { preset } }),
+    get: id => _get(`colors/${id}`),
     add: data => _post('colors', { data }),
-    save: data => _put(`colors/${data.id}`, { data }),
-    delete: id => _delete(`colors/${id}`),
+    editSet: data => _patch('colors', { data }),
+    save: data => _patch(`colors/${data.id}`, { data }),
+    delete: id => _delete(`colors/${id}/`),
+    schema: () => _options('colors'),
+  },
+  implements: {
+    stat: () => _get('implements'),
+    get: preset => _get(`implements/${preset}`),
+    add: data => _post('implements', { data }),
+    edit: data => _patch('implements', { data }),
+    save: data => _put(`implements/${data.name}/`, { data }),
+    delete: name => _delete(`implements/${name}/`),
+    schema: () => _options('implements'),
   },
   pen: {
     /**
      * Get pen stat without doing anything else. Directly sets state.
      */
-    stat: () => _get('pen'),
+    stat: (actual = false) => {
+      if (actual) {
+        return _get('pen', { params: { actual: 1 } });
+      }
+      return _get('pen');
+    },
 
     /**
      * Set pen position height
@@ -219,7 +241,7 @@ cncserver.api = {
      *   {x, y} point object of coordinate within 0-100% of canvas to move to,
      *   or with `abs` key set to 'mm' or 'in' for absolute position.
      */
-    move: (point) => {
+    move: point => {
       if (typeof point === 'undefined') {
         return Promise.reject(new Error('Invalid coordinates for move'));
       }
@@ -309,15 +331,15 @@ cncserver.api = {
 
   // Scratch turtle/abstracted API, non-ReSTful.
   scratch: {
-    move: (direction, amount) => new Promise((success) => {
+    move: (direction, amount) => new Promise(success => {
       _get(`/move.${direction}./${amount}`).then(() => {
         cncserver.api.scratch.stat().then(success);
       });
     }),
-    stat: () => new Promise((success) => {
+    stat: () => new Promise(success => {
       _get('/poll').then(({ data }) => {
         const out = {};
-        data.split('\n').forEach((item) => {
+        data.split('\n').forEach(item => {
           const [key, val] = item.split(' ');
           out[key] = val;
         });
@@ -450,7 +472,7 @@ cncserver.api = {
       _post('batch', {
         data: dump,
         timeout: 1000 * 60 * 10, // Timeout of 10 mins!
-        success: (d) => {
+        success: d => {
           console.timeEnd('process-batch');
           console.info(d);
           callback();

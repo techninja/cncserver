@@ -5,11 +5,14 @@
  * application to import and use for settings validation and documentation.
  */
 /* eslint-disable max-len */
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const svgPatterns = [];
-fs.readdirSync(path.resolve(__dirname, 'patterns')).map((file) => {
+fs.readdirSync(path.resolve(__dirname, 'patterns')).map(file => {
   svgPatterns.push(file.split('.')[0]);
 });
 
@@ -90,9 +93,11 @@ const properties = {
   },
 };
 
-module.exports = {
+const schema = {
   type: 'object',
-  title: 'Pattern method options',
+  title: 'Pattern Fill',
   options: { collapsed: true },
   properties,
 };
+
+export default schema;

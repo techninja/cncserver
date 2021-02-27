@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "prang-size-6-brush",
+  "manufacturer": "Prang",
+  "title": "Size 6 round",
+  "sortWeight": -60,
+  "handleWidth": 5.7,
+  "handleColors": [
+    "#d3bf3a",
+    "#222b52"
+  ],
+  "width": 4,
+  "length": 14.6,
+  "stiffness": 0.65,
+  "drawLength": 530
+}

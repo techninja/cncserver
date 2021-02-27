@@ -2,9 +2,9 @@
  * @file CNC Server runner IPC wrapper code, used to manage communication and
  * events between processes.
  */
-const ipc = require('node-ipc');
+import ipc from 'node-ipc';
 
-module.exports = (options) => {
+export default function initIPC(options) {
   // Setup passed config.
   for (const [key, val] of Object.entries(options.config)) {
     ipc.config[key] = val;
@@ -57,4 +57,4 @@ module.exports = (options) => {
   };
 
   return exp;
-};
+}

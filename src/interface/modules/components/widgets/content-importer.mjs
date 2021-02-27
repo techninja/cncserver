@@ -48,9 +48,9 @@ function labelType(type) {
  *   Promise that resolves with the content once FileReader completes.
  */
 function loadAsText(file, asURI = false) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const reader = new FileReader();
-    reader.onload = (loadedEvent) => {
+    reader.onload = loadedEvent => {
       // Result contains loaded file contents.
       resolve(loadedEvent.target.result);
     };
@@ -108,7 +108,7 @@ function handleErr(host, err) {
  *   Hybrids host function.
  */
 function addContent(mode, type) {
-  return (host) => {
+  return host => {
     // Don't do anything if we're already doing something.
     if (host.loading) return;
     host.showModal = true;
@@ -131,7 +131,7 @@ function addContent(mode, type) {
         // File upload!
         const fileInput = host.shadowRoot.querySelector('input.file');
         if (fileInput.files.length) {
-          loadAsText(fileInput.files[0], type === 'raster').then((content) => {
+          loadAsText(fileInput.files[0], type === 'raster').then(content => {
             cncserver.api.content.add.local(type, content, data)
               .then(() => handleSuccess(host))
               .catch(err => handleErr(host, err));
@@ -240,26 +240,53 @@ export default styles => ({
     sourceTypes, type, mode, message, loading,
   }) => html`
     ${styles}
-    <section id="content-importer">
-      <div class=${{ modal: 1, 'is-active': message }}>
-        <div class="modal-background" onclick=${hideModal}></div>
-        <div class="modal-content">
-          <article class="message is-danger">
-            <div class="message-header">
-              <p>Error Adding Content:</p>
-              <button class="delete" aria-label="delete" onclick=${hideModal}></button>
-            </div>
-            <div class="message-body">${message}</div>
-            <button-single
-              onclick=${hideModal}
-              title="Ok"
-              style="warning"
-              fullwidth
-            ></button-single>
-          </article>
-        </div>
-      </div>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
 
+      section {
+        position: relative;
+      }
+
+      #source-type-wrapper {
+        position: absolute;
+        right: 1em;
+        z-index: 2;
+      }
+
+      @media only screen and (max-width: 1230px) {
+        #source-type-wrapper {
+          position: relative;
+          right: auto;
+          margin-bottom: 1em;
+        }
+      }
+
+      #source-type {
+        font-size: 1.2em;
+      }
+
+    </style>
+    <notify-loading debug active=${loading} text="Loading..."></notify-loading>
+    <notify-modal
+      header="Error Adding Content:"
+      message=${message}
+      type="danger"
+      onclose=${hideModal}
+      active=${!!message}
+      limit
+    >
+      <button-single
+        onclick=${hideModal}
+        text="Ok"
+        type="warning"
+        fullwidth
+      ></button-single>
+    </notify-modal>
+    <section>
       <div id="source-type-wrapper">
         <label for="source-type">Source Type:</label>
         <select id="source-type" onchange=${changeType}>
@@ -269,7 +296,7 @@ export default styles => ({
         </select>
       </div>
       <tab-group onchange=${changeMode}>
-        <tab-item title="Upload/Remote" icon="cloud-upload-alt" name="remote" active>
+        <tab-item text="Upload/Remote" icon="cloud-upload-alt" name="remote" active>
           <div class="field">
             <div class="control">
               <label-title icon="file-image">Upload ${labelType(type)}:</label-title>
@@ -286,7 +313,7 @@ export default styles => ({
             </div>
           </div>
         </tab-item>
-        <tab-item title="Paste/Text" icon="keyboard" name="local">
+        <tab-item text="Paste/Text" icon="keyboard" name="local">
           <div class="field">
             <div class="control">
               <label-title icon="align-left">
@@ -310,8 +337,8 @@ export default styles => ({
       </div>
       <button-single
         onclick=${addContent(mode, type)}
-        title=${`Add ${labelType(type)}`}
-        style="primary"
+        text=${`Add ${labelType(type)}`}
+        type="primary"
         loading=${loading}
         icon="plus"
         fullwidth

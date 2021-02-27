@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "sharpie-fine-marker",
+  "manufacturer": "Sharpie",
+  "title": "Fine Point Marker",
+  "sortWeight": -10,
+  "handleWidth": 12.3,
+  "handleColors": [
+    "#b7b9b8"
+  ],
+  "width": 1,
+  "length": 7,
+  "stiffness": 1,
+  "drawLength": 0
+}

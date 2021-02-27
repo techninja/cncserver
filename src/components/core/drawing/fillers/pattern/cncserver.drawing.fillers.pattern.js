@@ -2,10 +2,12 @@
  * @file Path fill algortihm module: Node filler app for running the pattern
  * path fill (overlaying a given large space filling path over the fill object).
  */
-const { Path, Group } = require('paper');
-const fs = require('fs');
-const path = require('path');
-const fillUtil = require('../cncserver.drawing.fillers.util');
+import Paper from 'paper';
+import fs from 'fs';
+import path from 'path';
+import * as fillUtil from '../cncserver.drawing.fillers.util.js';
+
+const { Path, Group } = Paper;
 
 let viewBounds = {};
 let settings = {}; // Globalize settings from settings.fill >
@@ -82,7 +84,7 @@ function generateFromLib(name, fillPath) {
 
   let pattern = root.clone();
 
-  // With our pattern, we have to tile it along X and y until it fits the bounds of our path.
+  // With our pattern, we tile it along X and y until it fits the bounds of our path.
   const { bounds } = fillPath;
 
   // Tile till we reach the width.
@@ -221,7 +223,7 @@ function applyDensity(density, singlePath) {
       break;
   }
 
-  densityArray.forEach((angle) => {
+  densityArray.forEach(angle => {
     patternGroup.addChild(singlePath.clone().rotate(angle));
   });
 
@@ -273,9 +275,9 @@ function generatePattern(name, fillPath) {
 
 // Actually connect to the main process, start the fill operation.
 fillUtil.connect((fillPath, rawSettings) => {
-  fillUtil.clipper.getInstance().then((clipper) => {
+  fillUtil.clipper.getInstance().then(clipper => {
     settings = { ...rawSettings };
-    viewBounds = fillUtil.project.view.bounds;
+    viewBounds = fillUtil.state.project.view.bounds;
     const pattern = generatePattern(settings.pattern.pattern, fillPath);
 
     // Convert the paths to clipper geometry.

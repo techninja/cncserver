@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "crayola-size-3-brush",
+  "manufacturer": "Crayola",
+  "title": "Size 3 #1127",
+  "sortWeight": -75,
+  "handleWidth": 4.7,
+  "handleColors": [
+    "#ffff00"
+  ],
+  "width": 3,
+  "length": 10.75,
+  "stiffness": 0.25,
+  "drawLength": 482
+}

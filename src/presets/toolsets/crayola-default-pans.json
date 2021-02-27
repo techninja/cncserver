@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "toolsets"
+  },
+  "name": "crayola-default-pans",
+  "manufacturer": "Crayola",
+  "title": "Rounded oval pan positions",
+  "description": "8 standard ovular pan positions used by most manufacturers",
+  "items": [
+    {
+      "id": "color0",
+      "title": "Color pan position 1",
+      "x": 18.5,
+      "y": 14.5,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color1",
+      "title": "Color pan position 2",
+      "x": 18.5,
+      "y": 41.5,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color2",
+      "title": "Color pan position 3",
+      "x": 18.5,
+      "y": 66,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color3",
+      "title": "Color pan position 4",
+      "x": 18.5,
+      "y": 91,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color4",
+      "title": "Color pan position 5",
+      "x": 18.5,
+      "y": 116.5,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color5",
+      "title": "Color pan position 6",
+      "x": 18.5,
+      "y": 143,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color6",
+      "title": "Color pan position 7",
+      "x": 18.5,
+      "y": 169,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    },
+    {
+      "id": "color7",
+      "title": "Color pan position 8",
+      "x": 18.5,
+      "y": 194,
+      "width": 27,
+      "height": 19,
+      "radius": 15,
+      "parent": "pan",
+      "group": "Colors",
+      "position": "center"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "dxhycc-germany-1-4-flat-brush",
+  "manufacturer": "Dxhycc",
+  "title": "\"Germany\" size 1/4 flat",
+  "sortWeight": 20,
+  "handleWidth": 8,
+  "handleColors": [
+    "#111111",
+    "#EEEEEE"
+  ],
+  "width": 5.5,
+  "length": 10,
+  "stiffness": 0.55,
+  "drawLength": 300
+}

@@ -1,15 +1,16 @@
+/* eslint-disable no-param-reassign */
 /**
  * @file Stipple vectorizer
  */
+import Paper from 'paper';
+import { exec } from 'child_process';
+import { tmpdir } from 'os';
+import fs from 'fs';
+import path from 'path';
+import * as utils from '../cncserver.drawing.vectorizers.util.js';
 
-const { Group } = require('paper');
-const { exec } = require('child_process');
-const { tmpdir } = require('os');
-const fs = require('fs');
-const path = require('path');
-const util = require('../cncserver.drawing.vectorizers.util');
-
-const bin = path.resolve(__dirname, 'bin', process.platform, 'voronoi_stippler');
+const { Group } = Paper;
+const bin = path.resolve('.', 'bin', process.platform, 'voronoi_stippler');
 const tmp = tmpdir();
 
 let settings = { }; // Globalize settings.vectorize >
@@ -41,8 +42,8 @@ const buildOptions = () => {
 };
 
 // Connect to the main process, start the vectorization operation.
-util.connect('png', (input, rawSettings) => {
-  const output = path.resolve(tmp, `stipple_output_${util.info.hash}.svg`);
+utils.connect('png', (input, rawSettings) => {
+  const output = path.resolve(tmp, `stipple_output_${utils.info.hash}.svg`);
   settings = {
     ...rawSettings.stipple,
     input,
@@ -58,11 +59,11 @@ util.connect('png', (input, rawSettings) => {
   console.log('Executing:', fullExec);
   const child = exec(fullExec);
 
-  child.stderr.on('data', (data) => {
+  child.stderr.on('data', data => {
     console.error('ERROR:', data);
   });
 
-  child.stdout.on('data', (data) => {
+  child.stdout.on('data', data => {
     if (data.includes('% Complete')) {
       const progress = Math.min(100, parseInt(data.split('%')[0], 10));
       console.log('Progress:', progress);
@@ -73,23 +74,23 @@ util.connect('png', (input, rawSettings) => {
     if (fs.existsSync(output)) {
       console.log('Importing file', output);
 
-      util.project.importSVG(output, {
+      utils.state.project.importSVG(output, {
         expandShapes: true,
-        onLoad: (group) => {
+        onLoad: group => {
           group.fitBounds(rawSettings.bounds);
 
           // Should be a flat list of circles converted to 4 segment paths.
-          group.children.forEach((item) => {
+          group.children.forEach(item => {
             item.strokeColor = item.fillColor;
             item.strokeWidth = 0.5;
             item.fillColor = null;
           });
-          util.finish(group);
+          utils.finish(group);
         },
       });
     } else {
       console.log('No output file 😢', output);
-      util.finish(new Group());
+      utils.finish(new Group());
     }
   });
 });

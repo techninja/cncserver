@@ -18,57 +18,18 @@
  * cncserver.start({
  *   error: function callback(err){ // ERROR! },
  *   success: function callback(){ // SUCCESS! },
- *   disconnect: function callback(){ //BOT DISCONNECTED! }
+ *   disconnect: function callback(){ // BOT DISCONNECTED! }
  * };
  *
  */
 
+import 'cs/i18n';
+import { loadGlobalConfig, loadBotConfig } from 'cs/settings';
+import { initServer } from 'cs/ipc';
+import { connect, localTrigger } from 'cs/serial';
+import 'cs/bots';
+
 // CONFIGURATION ===============================================================
-const cncserver = { // Master object for holding/passing stuff!
-  bot: {}, // Holds clean rendered settings set after botConfig is loaded
-  exports: {}, // This entire object will be added to the module.exports,
-};
-
-global.__basedir = __dirname;
-
-// Global Defaults (also used to write the initial config.ini)
-cncserver.globalConfigDefaults = {
-  httpPort: 4242,
-  httpLocalOnly: true,
-  swapMotors: false, // Global setting for bots that don't have it configured
-  invertAxis: {
-    x: false,
-    y: false,
-  },
-  maximumBlockingCallStack: 100, // Limit for the # blocking sequential calls
-  showSerial: false, // Specific debug to show serial data.
-  serialPath: '{auto}', // Empty for auto-config
-  bufferLatencyOffset: 30, // Number of ms to move each command closer together
-  corsDomain: '*', // Start as open to CORs enabled browser clients
-  debug: false,
-  botType: 'watercolorbot',
-  scratchSupport: true,
-  flipZToggleBit: false,
-  botOverride: {
-    info: 'Override bot settings E.G. > [botOverride.eggbot] servo:max = 1234',
-  },
-};
-
-// COMPONENT REQUIRES ==========================================================
-
-// Load all components.
-const components = require('./components');
-
-// TODO: Find a better way to do this.
-for (const [key, path] of Object.entries(components)) {
-  // eslint-disable-next-line global-require, import/no-dynamic-require
-  const component = require(path)(cncserver);
-  cncserver[key] = component;
-  if (component && component.exports) {
-    cncserver.exports = { ...cncserver.exports, ...component.exports };
-    delete component.exports;
-  }
-}
 
 // TODO: Convert to promises instaed of endless callbacks and error management.
 
@@ -94,29 +55,28 @@ for (const [key, path] of Object.entries(components)) {
 // INTIAL SETUP ================================================================
 
 // Load the Global Configuration (from config, defaults & CL vars)
-cncserver.settings.loadGlobalConfig(() => {
-  // Only if we're running standalone... try to start the server immediately!
-  if (!module.parent) {
-    // Load the bot specific configuration, defaulting to gConf bot type
-    cncserver.settings.loadBotConfig(() => {
-      cncserver.ipc.initServer({ localRunner: true }, () => {
-        // Runner is ready! Attempt Initial Serial Connection.
-        cncserver.serial.connect({
-          error: () => {
-            console.error('CONNECTSERIAL ERROR!');
-            cncserver.serial.localTrigger('simulationStart');
-            cncserver.serial.localTrigger('serialReady');
-          },
-          connect: () => {
-            cncserver.serial.localTrigger('serialReady');
-          },
-          disconnect: () => {
-            cncserver.serial.localTrigger('serialClose');
-          },
-        });
+loadGlobalConfig(() => {
+  // Try to start the server immediately!
+  // Load the bot specific configuration, defaulting to gConf bot type
+  loadBotConfig(() => {
+    initServer({ localRunner: true }, () => {
+      // Runner is ready! Attempt Initial Serial Connection.
+      connect({
+        error: () => {
+          console.error('CONNECTSERIAL ERROR!');
+          localTrigger('simulationStart');
+          localTrigger('serialReady');
+        },
+        connect: () => {
+          localTrigger('serialReady');
+        },
+        disconnect: () => {
+          localTrigger('serialClose');
+        },
       });
     });
-  } else { // Export the module's useful API functions! =================
+  });
+  /* } else { // Export the module's useful API functions! =================
     // Enherit all module added exports.
     module.exports = cncserver.exports;
 
@@ -131,7 +91,7 @@ cncserver.settings.loadGlobalConfig(() => {
         module.exports.penUpdateTrigger = options.penUpdate;
       }
 
-      cncserver.settings.loadBotConfig(() => {
+      loadBotConfig(() => {
         // Before we can attempt to connect to the serialport, we must ensure
         // The IPC runner is connected...
 
@@ -175,5 +135,5 @@ cncserver.settings.loadGlobalConfig(() => {
     module.exports.serialReadyInit = () => {
       cncserver.serial.localTrigger('serialReady');
     };
-  }
+  } */
 });

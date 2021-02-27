@@ -3,21 +3,26 @@
  * serial writes and batch processes.
  */
 // Base serialport module globals.
-const SerialPort = require('serialport');
-
+import SerialPort from 'serialport';
 
 // State vars.
 let port;
 let simulation = true;
 
+let bindings = {};
+
 // Event bindings object and helpers.
-let bindings = {
-  triggerBind: (name, ...args) => {
-    if (bindings[name] && typeof bindings[name] === 'function') {
-      bindings[name](...args);
-    }
-  },
-};
+export function triggerBind(name, ...args) {
+  if (bindings[name] && typeof bindings[name] === 'function') {
+    bindings[name](...args);
+  }
+}
+
+bindings = { triggerBind };
+
+export function bindAll(newBindings = {}) {
+  bindings = { ...bindings, ...newBindings };
+}
 
 /**
  * Setter for simulation state change.
@@ -27,7 +32,7 @@ let bindings = {
  * @param  {function} callback
  *   Callback when it should be sent/drained.
  */
-const setSimulation = (status) => {
+const setSimulation = status => {
   simulation = !!status;
   bindings.triggerBind('simulation', simulation);
 };
@@ -40,7 +45,7 @@ const setSimulation = (status) => {
  * @param  {function} callback
  *   Callback when it should be sent/drained.
  */
-const write = (command, callback) => {
+export function write(command, callback) {
   if (simulation) {
     if (global.config.showSerial) console.info(`Simulating serial write: ${command}`);
     setTimeout(() => {
@@ -71,7 +76,7 @@ const write = (command, callback) => {
       if (callback) callback(err);
     }
   }
-};
+}
 
 /**
  * Execute a set of commands representing a single buffer action item to write,
@@ -83,7 +88,7 @@ const write = (command, callback) => {
  * @returns {boolean}
  *   True if success, false if failure
  */
-const writeMultiple = (commands, callback, index = 0) => {
+export function writeMultiple(commands, callback, index = 0) {
   // Ensure commands is an array if only one sent.
   if (typeof commands === 'string') {
     // eslint-disable-next-line no-param-reassign
@@ -91,7 +96,7 @@ const writeMultiple = (commands, callback, index = 0) => {
   }
 
   // Run the command at the index.
-  write(commands[index], (err) => {
+  write(commands[index], err => {
     // eslint-disable-next-line no-param-reassign
     index++; // Increment the index.
 
@@ -113,7 +118,7 @@ const writeMultiple = (commands, callback, index = 0) => {
   });
 
   return true;
-};
+}
 
 let retries = 0;
 const handleConnectionError = (err, options) => {
@@ -124,7 +129,7 @@ const handleConnectionError = (err, options) => {
     retries++;
     console.log(`Serial connection to "${options.port}" failed, retrying ${retries}/${options.autoReconnectTries}`);
     setTimeout(() => {
-      module.exports.connect(options);
+      connect(options);
     }, options.autoReconnectRate);
   } else {
     setSimulation(true);
@@ -134,13 +139,13 @@ const handleConnectionError = (err, options) => {
 };
 
 // Exported connection function.
-const connect = (options) => {
+export function connect(options) {
   if (global.debug) console.log(`Connect to: ${JSON.stringify(options)}`);
   global.connectOptions = options;
 
   // Note: runner doesn't do autodetection.
   try {
-    port = new SerialPort(options.port, options, (err) => {
+    port = new SerialPort(options.port, options, err => {
       if (!err) {
         retries = 0;
         setSimulation(false);
@@ -150,7 +155,7 @@ const connect = (options) => {
         // Send setup commands
         if (options.setupCommands.length) {
           console.log('Sending bot specific board setup...');
-          writeMultiple(options.setupCommands, (error) => {
+          writeMultiple(options.setupCommands, error => {
             if (global.debug && error) {
               console.log(`SerialPort says: ${error.toString()}`);
             }
@@ -162,7 +167,7 @@ const connect = (options) => {
 
         // Bind read, reconnect logic and close/disconnect.
         parser.on('data', bindings.read);
-        port.on('close', (error) => {
+        port.on('close', error => {
           if (error.disconnect) bindings.triggerBind('disconnect');
           // If we got disconnected, throw to the try/catch for reconnect.
           handleConnectionError(error, options);
@@ -174,15 +179,4 @@ const connect = (options) => {
   } catch (err) {
     handleConnectionError(err, options);
   }
-};
-
-// Build direct export object.
-module.exports = {
-  connect,
-  write,
-  writeMultiple,
-  triggerBind: bindings.triggerBind,
-  bindAll: (newBindings = {}) => {
-    bindings = { ...bindings, ...newBindings };
-  },
-};
+}

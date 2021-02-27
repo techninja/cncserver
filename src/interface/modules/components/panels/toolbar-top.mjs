@@ -1,22 +1,19 @@
 /**
  * @file Top toolbar panel definition with bindings.
  */
-/* globals cncserver */
 import { html } from '/modules/hybrids.js';
-import apiInit from '/modules/utils/api-init.mjs';
+import { onUpdate } from '/modules/utils/live-state.mjs';
 
 // Initialize the panel.
 function init(host) {
-  apiInit(() => {
-    if (!host.initialized) {
-      host.initialized = true;
+  if (!host.initialized) {
+    host.initialized = true;
 
-      // Bind to pen updates.
-      cncserver.socket.on('pen update', ({ state }) => {
-        host.penState = state;
-      });
-    }
-  });
+    // Bind to pen updates.
+    onUpdate('pen', ({ state }) => {
+      host.penState = state;
+    });
+  }
 }
 
 // TODO: Add support for skip buffer park.
@@ -27,16 +24,16 @@ export default styles => ({
     ${styles}
 
     <button-single
-      title="Park"
+      text="Park"
       icon="home"
-      style="warning"
+      type="warning"
       onclick="cncserver.api.pen.park()"
     ></button-single>
 
     <button-single
-      title="Unlock & ⇱∅"
+      text="Unlock & ⇱∅"
       icon="unlock"
-      style="secondary"
+      type="secondary"
       onclick="cncserver.api.motors.unlock().then(cncserver.api.pen.zero());"
     ></button-single>
 
@@ -44,10 +41,10 @@ export default styles => ({
       onchange="cncserver.api.pen.height(this.state ? 0 : 1)"
       on-title="Down ⭳"
       on-icon="pen"
-      on-style="success"
+      on-type="success"
       off-title="Up ↥"
       off-icon="pen"
-      off-style="warning"
+      off-type="warning"
       state=${penState === 'up' || penState === 0}
     ></button-toggle>
 

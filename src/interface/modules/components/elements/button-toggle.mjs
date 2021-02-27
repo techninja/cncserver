@@ -17,19 +17,19 @@ export default styles => ({
   fullwidth: false,
   onTitle: 'On',
   onIcon: 'smile',
-  onStyle: 'success',
+  onType: 'success',
   offTitle: 'Off',
   offIcon: 'frown',
-  offStyle: '',
+  offType: '',
 
   render: (props) => {
     const word = props.state ? 'on' : 'off';
-    const style = props[`${word}Style`];
+    const type = props[`${word}Type`];
     const title = props[`${word}Title`];
     const icon = props[`${word}Icon`];
 
     const aClasses = { button: true, 'is-fullwidth': props.fullwidth };
-    if (style) aClasses[`is-${style}`] = true;
+    if (type) aClasses[`is-${type}`] = true;
 
     const iconClasses = { fas: true };
     if (icon) iconClasses[`fa-${icon}`] = true;

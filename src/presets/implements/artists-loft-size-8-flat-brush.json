@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "artists-loft-size-8-flat-brush",
+  "manufacturer": "Artist's Loft",
+  "title": "Size 8 flat",
+  "sortWeight": -40,
+  "handleWidth": 5.9,
+  "handleColors": [
+    "#e0ca69",
+    "#5f82bc"
+  ],
+  "width": 7,
+  "length": 12,
+  "stiffness": 0.75,
+  "drawLength": 450
+}

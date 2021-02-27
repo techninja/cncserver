@@ -19,11 +19,7 @@ function layerChangeFactory(defaultLayer = '') {
     set: (host, value) => {
       // If set externally (no through tabs), update the tabs.
       if (host.shadowRoot) {
-        const tg = host.shadowRoot.querySelector('wl-tab-group');
-        if (tg) {
-          // Update the indicator AFTER this runs.
-          setTimeout(() => { tg.updateIndicatorPosition(); }, 1);
-        }
+        host.shadowRoot.querySelector('tab-group').activeItem = value;
       }
 
       // If we have layers setup, update visibility.
@@ -60,7 +56,7 @@ function init(host, { detail }) {
 
   apiInit(() => {
     // Tell the paper canvas to watch for updates on these layers.
-    host.canvas.scope.watchUpdates(['stage', 'preview']);
+    host.canvas.scope.watchUpdates(['stage', 'preview', 'print']);
 
     // Get the bot size to apply to the canvas.
     cncserver.api.settings.bot().then(({ data: bot }) => {
@@ -80,7 +76,7 @@ function init(host, { detail }) {
       // Initialize the paper-canvas with bot size details.
       host.canvas.scope.paperInit({
         size: new paper.Size(bot.maxAreaMM),
-        layers: ['draw', 'stage', 'preview'],
+        layers: ['draw', 'stage', 'preview', 'print'],
         workspace,
       }).then(() => {
         // Bind the tools for the canvas.
@@ -99,29 +95,34 @@ function bubbleUpdate(host, { detail: { layer } }) {
 }
 
 // Change visible layer based on tab input.
-function tabChange(host, event) {
-  const { name } = event.path[0];
+function tabChange(host, { detail: { name } }) {
   host.layer = name;
 }
 
 // Final component export.
-export default styles => ({
+export default (styles) => ({
   layer: layerChangeFactory('stage'),
   socketPayloads: {},
   canvas: {}, // Reference to initialized paper-canvas object.
 
   render: ({ layer }) => html`
     ${styles}
-    <wl-tab-group onchange=${tabChange}>
-      <wl-tab name="draw" checked=${layer === 'draw'}>Draw</wl-tab>
-      <wl-tab name="stage" checked=${layer === 'stage'}>Stage</wl-tab>
-      <wl-tab name="preview" checked=${layer === 'preview'}>Preview</wl-tab>
-    </wl-tab-group>
+    <tab-group onchange=${tabChange}>
+      <tab-item text="Draw" icon="draw-polygon" name="draw" active=${layer === 'draw'}>
+      </tab-item>
+      <tab-item text="Stage" icon="object-group" name="stage" active=${layer === 'stage'}>
+      </tab-item>
+      <tab-item text="Preview" icon="eye" name="preview" active=${layer === 'preview'}>
+      </tab-item>
+      <tab-item text="Print" icon="print" name="print" active=${layer === 'print'}>
+      </tab-item>
+    </tab-group>
 
     <paper-canvas
       name="compose"
       onpaperinit=${init}
       onlayerupdate=${bubbleUpdate}
+      workspace-only
     ></paper-canvas>
   `,
 });
