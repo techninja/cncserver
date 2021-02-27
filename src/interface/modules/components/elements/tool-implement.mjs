@@ -6,7 +6,7 @@ import { html, svg } from '/modules/hybrids.js';
 import apiInit from '/modules/utils/api-init.mjs';
 
 function setHostFromPreset(host, preset) {
-  if (preset) {
+  if (preset && preset !== 'null') {
     apiInit(() => {
       host.loading = true;
       cncserver.api.implements.get(preset).then(({ data }) => {
@@ -213,7 +213,7 @@ export default () => ({
     const extraWidth = plain ? 0 : 50;
     const viewBox = [
       0, 0,
-      handle.left + largerWidth + extraWidth + bracketSize * 2, // Width.
+      handle.left + largerWidth + extraWidth + bracketSize * 2.5, // Width.
       handle.top + handle.height + brush.height + bracketSize * 2
       + bracketNotch * 2 + bracketPadding + textHeight * 2, // Height.
     ];
