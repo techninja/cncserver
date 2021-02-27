@@ -244,12 +244,22 @@ export const changeTo = (
   // Set the tip of state pen to the tool now that the change is done.
   forceState({ tool: name });
 
+  if (index && tool.wait) {
+    const { implement } = colors.getColor(index);
+    forceState({ implement, colorsetItem: index });
+  }
+
+  // Run force state in as the next step to be resumed.
+  /* if (index && tool.wait) {
+    console.log('BUFFERING implement forcestate ===============');
+    run('callback', () => {
+
+      console.log('RUNNING implement forcestate ===============', implement, index);
+    });
+  } */
+
   // Trigger the binder event.
-  trigger('tool.change', {
-    ...tool,
-    index,
-    name,
-  });
+  trigger('tool.change', { ...tool, index, name });
 
   // Finish up.
   if (waitForCompletion) { // Run inside the buffer

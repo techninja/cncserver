@@ -10,8 +10,6 @@ import { cmdstr } from 'cs/buffer';
 import run from 'cs/run';
 import * as actualPen from 'cs/actualPen';
 
-// const { Path } = Paper;
-
 // The pen state: this holds the state of the pen at the "latest tip" of the buffer,
 // meaning that as soon as an instruction intended to be run in the buffer is
 // received, this is updated to reflect the intention of the buffered item.
@@ -21,12 +19,12 @@ export const state = {
   z: null,
   state: 0, // Pen state is from 0 (up/off) to 1 (down/on)
   height: 0, // Last set pen height in output servo value
-  power: 0,
-  busy: false,
-  tool: 'color0', // TODO: This seems wrong and assuming.
-  implement: '', // Implement string.
-  offCanvas: false,
-  bufferHash: '', // Holds the last pen buffer hash.
+  power: 0, // Pen power (only used in special circumstances)
+  tool: null, // Current tool ID string.
+  colorsetItem: null, // Current colorset item ID.
+  implement: null, // Inherit current colorset implement by default.
+  bufferHash: null, // Holds the last pen buffer hash.
+  offCanvas: false, // Whether the current position is beyond the edges.
   lastDuration: 0, // Holds the last movement timing in milliseconds
   distanceCounter: 0, // Holds a running tally of distance travelled
   simulation: 0, // Fake everything and act like it's working, no serial
