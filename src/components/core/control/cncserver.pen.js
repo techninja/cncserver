@@ -256,6 +256,7 @@ export function setHeight(inState, callback, skipBuffer) {
 
   // Actually set tip of buffer to given sanitized state & servo height.
   state.height = height;
+  state.z = height;
   state.state = stateValue;
 
   // Run the height into the command buffer

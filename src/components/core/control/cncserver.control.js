@@ -38,7 +38,7 @@ export function offCanvasChange(newValue) {
         run('callback', () => {
           pen.setHeight('up', false, true);
           const { height } = utils.stateToHeight('up');
-          pen.forceState({ height });
+          pen.forceState({ z: height, height });
         });
       }
     } else { // Pen is now back in bounds
@@ -46,9 +46,11 @@ export function offCanvasChange(newValue) {
       console.log('Go back to:', pen.state.back);
 
       // Assume starting from up state & height (ensures correct timing)
+      const newHeight = utils.stateToHeight('up').height;
       pen.forceState({
         state: 'up',
-        height: utils.stateToHeight('up').height,
+        height: newHeight,
+        z: newHeight,
       });
       pen.setHeight(pen.state.back);
     }
@@ -144,6 +146,7 @@ export function actuallyMoveHeight(height, stateValue, cb) {
     }));
 
   actualPen.forceState({
+    z: height,
     height,
     lastDuration: change.d,
   });
