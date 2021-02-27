@@ -38,6 +38,7 @@ export default styles => ({
         text-align: center;
         height: 64px;
         padding-top: 20px;
+        display: inline;
       }
 
       .item .icon {

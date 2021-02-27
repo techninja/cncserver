@@ -66,8 +66,15 @@ export default styles => ({
     setTitle, setDescription, items, slide, parentImplement, set,
   }) => html`
     ${styles}
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
+    </style>
 
-    <slide-group height="600" width="200" home="colors" activeItem=${slide}>
+    <slide-group height="350" width="100" home="colors" activeItem=${slide}>
       <slide-item name="presets">
         <colorset-presets
           onswitchpane=${switchPane}
