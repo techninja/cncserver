@@ -15,9 +15,11 @@ export default styles => ({
   active: false,
   limit: false,
 
-  render: ({ type, icon, header, desc, active, message, limit }) => {
+  render: ({
+    type, icon, header, active, message, limit,
+  }) => {
     const messageClasses = {
-      message: true,
+      'modal-card-body': true,
     };
     messageClasses[`is-${type}`] = true;
 
@@ -33,7 +35,6 @@ export default styles => ({
       :host {
         display: block;
         overflow: hidden;
-        height: 100%;
       }
 
       .modal-content {
@@ -49,28 +50,34 @@ export default styles => ({
         position: absolute;
       }
 
-      slot {
-        display: block;
-        width: 100%;
-        margin-top: 1em;
+      header .icon {
+        color: black;
+        margin-right: 1em;
+        font-size: 1.5em;
       }
     </style>
 
     <div class=${modalClasses}>
       <div class="modal-background" onclick=${dispatchClose}></div>
-      <div class="modal-content">
-        <article class=${messageClasses}>
-          <div class="message-header">
-            <p>${header}</p>
-            <button class="delete" aria-label="delete" onclick=${dispatchClose}></button>
-          </div>
-          <div class="message-body">
-            <p>${message}</p>
-            <div class="buttons"><slot></slot></div>
-          </div>
-        </article >
-      </div >
-    </div >
-  `
+      <div class="modal-card">
+        <header class="modal-card-head">
+          ${icon && html`
+            <span class="icon">
+              <i class="fas fa-${icon}" aria-hidden="true"></i>
+            </span>
+          `}
+          <p class="modal-card-title">${header}</p>
+          <button class="delete" aria-label="close" onclick=${dispatchClose}></button>
+        </header>
+        <section class=${messageClasses}>
+          ${message && html`<p>${message}</p>`}
+          <slot name="message"></slot>
+        </section>
+        <footer class="modal-card-foot">
+          <slot name="buttons"></slot>
+        </footer>
+      </div>
+    </div>
+  `;
   },
 });
