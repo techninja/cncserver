@@ -49,26 +49,37 @@ export function onUpdate(key, cb) {
 /**
  * Apply byref all keys and values from left to right.
  *
+ * @export
  * @param {object} source
  *   Source single level object with key/values to set from.
  * @param {object} dest
  *   Destination single level object to be modified.
  * @param {bool} strict
  *   If true, only keys existing on the destination will be set.
+ *
+ * @returns {boolean}
+ *   True if there was a difference, false if no change.
  */
-function applyObjectTo(source, dest, strict = false) {
+export function applyObjectTo(source, dest, strict = false) {
+  let hasChanges = false;
   Object.entries(source).forEach(([key, value]) => {
     // eslint-disable-next-line no-param-reassign
     if (strict) {
       if (key in dest) {
-        // eslint-disable-next-line no-param-reassign
-        dest[key] = value;
+        if (dest[key] !== value) {
+          hasChanges = true;
+          // eslint-disable-next-line no-param-reassign
+          dest[key] = value;
+        }
       }
-    } else {
+    } else if (dest[key] !== value) {
+      hasChanges = true;
       // eslint-disable-next-line no-param-reassign
       dest[key] = value;
     }
   });
+
+  return hasChanges;
 }
 
 /**
