@@ -10,7 +10,7 @@
     "connect-slashes": "techninja/connect-slashes#ignore-files",
     "express": "~3.0.0",
     "ini": "1.3.4",
-    "nconf": "0.8.4",
+    "nconf": "0.11.4",
     "node-ipc": "8.9.2",
     "request": "*",
     "serialport": "8.0.5",
