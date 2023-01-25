@@ -6,7 +6,7 @@
  * Taking in only the global CNCServer object, add's the "serial" object.
  *
  */
-var SerialPort = require("serialport");
+const { SerialPort } = require("serialport");
 
 module.exports = function(cncserver){
   cncserver.serial = {
