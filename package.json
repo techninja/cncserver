@@ -16,23 +16,14 @@
     "serialport": "^10.5.0",
     "socket.io": "^4.5.4"
   },
-  "devDependencies": {
-    "chai": "*",
-    "grunt": "*",
-    "grunt-cli": "*",
-    "grunt-contrib-jshint": "*",
-    "grunt-mocha-test": "*",
-    "mocha": "*"
-  },
   "engines": {
-    "node": ">= 4.0.0"
+    "node": ">=16"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/techninja/cncserver.git"
   },
   "scripts": {
-    "test": "grunt --verbose",
     "start": "node cncserver"
   }
 }
