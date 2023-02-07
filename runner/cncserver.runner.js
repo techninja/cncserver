@@ -12,7 +12,7 @@
 
 // REQUIRES ====================================================================
 const { SerialPort, ReadlineParser } = require('serialport');
-const ipc = require('node-ipc').default;
+const ipc = require('@node-ipc/node-ipc').default;
 
 // CONFIGURATION ===============================================================
 ipc.config.id = 'cncrunner';

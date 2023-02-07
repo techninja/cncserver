@@ -1,7 +1,7 @@
 'use strict';
 
 const { spawn } = require('child_process');
-const ipc = require('node-ipc').default;
+const ipc = require('@node-ipc/node-ipc').default;
 
 let runnerInitCallback = null;
 
