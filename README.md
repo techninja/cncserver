@@ -1,10 +1,12 @@
 # CNC server
 
-A node.js based RESTful API to serial interface control for plotters, originally
-created for ["Super-Awesome" Sylvia's WaterColorBot](http://watercolorbot.com),
-the awesome pen plotter that paints with watercolors, thought up by
-[MakerSylvia](http://twitter.com/makersylvia) and produced by the incredible
-staff at [Evil Mad Scientist](http://http://www.evilmadscientist.com).
+<img src="https://github.com/techninja/cncserver/blob/v3/src/interface/icon.png?raw=true" style="float: right">
+
+A [Node.js](https://nodejs.org/) based RESTful API to serial interface control for plotters, originally
+created for the [WaterColorBot](http://watercolorbot.com), currently aimed at [EBB controller](https://shop.evilmadscientist.com/productsmenu/188) based plotters from [Evil Mad Scientist Laboratories](https://www.evilmadscientist.com/) like
+[Axidraw](https://axidraw.com/), [Eggbot](https://egg-bot.com/), and other DIY implementations.
+
+The purpose of the project is to abstract the nitty-gritty details for controlling a drawing robot, and utilizing proven web technologies, to simplify the interface and make drawing bots easier and more useful, either at your desk with a GUI, or via your own script running remotely.
 
 ## Features
 
@@ -22,37 +24,18 @@ down to a minimum.
 - An even simpler [API](SCRATCH.API.md) allows for Scratch programming support, with [examples](https://github.com/evil-mad/watercolorblocks).
 - Accepts direct X/Y absolute pen positions as percentage of total width/height.
 - Client agnostic! We don't care what controls the bot, as long as it follows
-  the rules. See it in use by [US President Barack Obama on an iPad](http://www.youtube.com/watch?v=2HfgGDOZPCQ&feature=player_embedded#t=1992s)!
+  the rules. See it in use by [US President Barack Obama on an iPad](https://youtu.be/2HfgGDOZPCQ?t=1928)!
 - Configuration file and argument driven (see
   [example here](machine_types/watercolorbot.ini)), allows for server
   customization to fit _almost_ any style of bot using a supported controller.
 
 ## Installation
 
-#### Preamble: User or Developer?
+### Install Node.js
 
-CNC Server provides the API used by the WaterColorBot and the RoboPaint
-application, but **if you're looking to just get your bot up and running, you
-should head over to the main
-[RoboPaint page](http://github.com/evil-mad/robopaint) and download the installer
-for your system.**
+Unless you already have it installed, either download [the installer for your operating system](http://www.nodejs.com/download), or use [node version manager](https://github.com/nvm-sh/nvm). We recommend using at least version 18+, although lower versions may work.
 
-If you're a developer looking to make your own API client or interface, then
-continue on!
-
-#### Install Node.js
-
-CNC Server runs on Node.js! Download [the installer for your operating system](http://www.nodejs.com/download). We recommend using version 18 although lower versions may work. To run a node application, simply type `node filename.js` into a command line or terminal.
-
-#### Install npm
-
-**npm** is the **N** ode **P** ackage **M** anager, and it makes installing stuff
-_really_ easy. If you used the node installer for Windows or Mac, you should
-already have it! On Linux, (with curl installed), as an admin, simply run
-`curl https://www.npmjs.com/install.sh | sh` in a terminal. If you're having
-trouble read [here](https://www.npmjs.com/doc/README.html).
-
-#### CNC server files
+### CNC server files
 
 - **For easy updating from master:** Use the handy GUI! Click the
   "Clone in Mac/Windows" button at the top of the
@@ -65,7 +48,7 @@ trouble read [here](https://www.npmjs.com/doc/README.html).
   a branch, and submit a pull request! We're always looking for contributions that
   make things better for everyone, fix issues, or add features!
 
-#### Installing NPM Dependencies
+### Installing NPM Dependencies
 
 With your system setup and everything else installed, open a terminal and make your
 way to the `cncserver` folder, and enter `npm install` (you may need to preface
@@ -123,6 +106,4 @@ will be merged into the project!
 ## ETC.
 
 All code MIT licensed. Created by TechNinja, with support and collaboration from
-[Evil Mad Scientist](http://evilmadscientist.com). Don't forget, you can
-discover more crazy maker fun with
-[Sylvia's Super-Awesome Maker Show](http://sylviashow.com)!
+[Evil Mad Scientist](http://evilmadscientist.com).
