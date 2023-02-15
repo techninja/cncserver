@@ -162,6 +162,7 @@
     version: '1'
   };
 
+  $draw.update = () => {}
 
   // Socket.io stream data events =========================
   socket.on('pen update', function(data){
@@ -290,7 +291,7 @@
 
 
   // Setup live display box, pull in the bot specific settings
-  cncserver.api.settings.bot(function(bot) {
+  cncserver.api.settings.bot(function(bot) {        
     $('#bot legend:first').text('Live Status: ' + bot.name);
 
     // Find the view scale
