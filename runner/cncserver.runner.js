@@ -154,7 +154,7 @@ function gotMessage(packet) {
 
 // Runner doesn't do any autodetection, just connects to whatever server says to
 function connectSerial({ path, baudRate }) {
-  if (config.debug) console.log('Connect to:' + JSON.stringify(options));
+  if (config.debug) console.log('Connect to:' + JSON.stringify({ path, baudRate }));
   try {
     port = new SerialPort({ path, baudRate }, (err) => {
       if (!err) {
