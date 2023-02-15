@@ -17,6 +17,9 @@ module.exports = (cncserver) => {
 
   cncserver.app.use('/', express.static(__dirname + '/../example'));
   cncserver.app.use(slashes());
+  cncserver.app.use(bodyParser.urlencoded({
+    extended: true
+  }));
   cncserver.app.use(bodyParser.json());
 
   // Start express HTTP server for API on the given port

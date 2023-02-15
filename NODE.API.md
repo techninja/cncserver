@@ -92,7 +92,7 @@ manage? Well, *this is the function for you!*
 ```javascript
 cncserver.createServerEndpoint('/v1/foo/:bar', function(req, res) {
 
-  if (req.route.method == 'get') { // Is this a GET request?
+  if (req.method == 'GET') { // Is this a GET request?
     if (req.params.bar == 'woot') { // What was the value of :bar from the path?
       return {code: 200, body: {thisIs: 'a triumph'}}; // 200 - OK + Body Data
     } else {
