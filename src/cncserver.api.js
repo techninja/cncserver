@@ -62,7 +62,6 @@ module.exports = function(cncserver) {
   // Return/Set PEN state  API =================================================
   cncserver.createServerEndpoint("/v1/pen", function(req, res){
     if (req.method === 'PUT') {
-      console.log(req.body)
       // SET/UPDATE pen status
       cncserver.control.setPen(req.body, function(stat){
         var code = 200;
