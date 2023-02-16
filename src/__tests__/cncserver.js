@@ -9,14 +9,14 @@ const instance = axios.create({
 });
 let server;
 
-describe('watercolorbot', () => {
+describe('cncserver', () => {
   before(async () => {
     server = await createTestServer();
   });
   after(() => {
     server.kill();
   });
-  it('works', async () => {
+  it('watercolorbot', async () => {
     await makeRequests(instance, requests.watercolorbot['/v1/settings']);
     await makeRequests(instance, requests.watercolorbot['/v1/buffer']);
     await makeRequests(instance, requests.watercolorbot['/v1/motors']);
