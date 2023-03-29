@@ -12,7 +12,7 @@ import {
   colors, stage, preview, temp
 } from 'cs/drawing';
 import { bindTo, trigger } from 'cs/binder';
-import { renderPathsToMoves } from 'cs/control';
+// import { renderPathsToMoves } from 'cs/control';
 import * as content from 'cs/content';
 
 const PROJECT_JSON = 'cncserver.project.json';
@@ -392,7 +392,7 @@ export function setPrintingState(newState) {
   if (newState) {
     // TODO:
     console.log('Start printing!');
-    renderPathsToMoves();
+    // renderPathsToMoves();
   } else {
     // TODO:
     console.log('Stop printing!');

@@ -122,17 +122,17 @@ export default function initBot() {
   });
 
   // Bind to begin of rendering path color group.
-  bindTo('control.render.group.begin', watercolorbot.id, (colorID) => {
+  bindTo('print.render.group.begin', watercolorbot.id, colorID => {
     watercolorbot.fullWash();
   });
 
   // Bind to end of rendering everything, wash that brush.
-  bindTo('control.render.finish', watercolorbot.id, () => {
+  bindTo('print.render.finish', watercolorbot.id, () => {
     watercolorbot.fullWash();
   });
 
   // Bind to path parsing for printing, allows for splitting paths to reink.
-  bindTo('control.render.path.select', watercolorbot.id, paths => {
+  bindTo('print.render.path.select', watercolorbot.id, paths => {
     // Only trigger this when WCB is in use.
     // TODO: don't trigger this for non reinking implements 😬
     if (watercolorbot.inUse) {
@@ -169,7 +169,7 @@ export default function initBot() {
   });
 
   // Bind to render path complete, to trigger reinking as needed
-  bindTo('control.render.path.finish', watercolorbot.id, path => {
+  bindTo('print.render.path.finish', watercolorbot.id, path => {
     watercolorbot.paintDistance += path.length;
     if (watercolorbot.paintDistance >= watercolorbot.maxPaintDistance - 1) {
       watercolorbot.reink(getColorID(path));
@@ -184,4 +184,4 @@ export default function initBot() {
   ));
 
   return watercolorbot;
-};
+}

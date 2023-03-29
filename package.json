@@ -40,6 +40,7 @@
     "paper": "^0.12.3",
     "paper-jsdom": "^0.12.3",
     "path-to-regexp": "^1.7.0",
+    "png-metadata": "^1.0.2",
     "request": "*",
     "select2": "^4.0.12",
     "semver": "^6.3.0",
