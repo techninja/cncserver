@@ -7,7 +7,9 @@ import { spawn } from 'child_process'; // Process spawner.
 import nodeIPC from 'node-ipc'; // Inter Process Comms for runner.
 import path from 'path';
 import { trigger } from 'cs/binder';
-import { cmdstr, startItem, removeItem, setRunning } from 'cs/buffer';
+import {
+  cmdstr, startItem, removeItem, setRunning
+} from 'cs/buffer';
 import { gConf, botConf } from 'cs/settings';
 import { callbacks as serialCallbacks } from 'cs/serial';
 import { forceState } from 'cs/pen';
@@ -106,6 +108,27 @@ export const getSerialValue = (command, options = {}) => new Promise(resolve => 
 });
 
 /**
+  * Raw serial helper for getting an async value from the serial port, always direct.
+  *
+  * @param  {string} command
+  *   Raw serial string to send.
+  *
+  * @return {Promise}
+  *   Promise that will always succeed with next message from serial.
+  */
+export const getSerialValueRaw = command => new Promise(resolve => {
+  process.nextTick(() => {
+    console.log('Sending raw', command);
+    sendMessage('serial.direct.command', {
+      commands: [command],
+      duration: 0,
+    });
+
+    state.getSerialValueCallback = resolve;
+  });
+});
+
+/**
   * IPC Message callback event parser/handler.
   *
   * @param  {object} packet
@@ -171,7 +194,9 @@ export function ipcGotMessage(packet, socket) {
     case 'serial.data':
       // Either get the value for a caller, or trigger generic bind.
       messages.forEach(message => {
-        if (state.getSerialValueCallback && message !== botConf.get('controller').ack) {
+        // TODO: Does this work every time?
+        // && message !== botConf.get('controller').ack) {
+        if (state.getSerialValueCallback) {
           state.getSerialValueCallback(message);
           state.getSerialValueCallback = null;
         } else {
