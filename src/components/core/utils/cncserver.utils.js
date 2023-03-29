@@ -524,13 +524,13 @@ export function getMachineName(string = '', limit = 32) {
 }
 
 /**
-  * Get the distance/length of the given vector coordinate
-  *
-  * @param {{x: number, y: number}} vector
-  *   Object representing coordinate away from (0,0)
-  * @returns {number}
-  *   Length (in steps) of the given vector point
-  */
+ * Get the distance/length of the given vector coordinate
+ *
+ * @param {{x: number, y: number}} vector
+ *   Object representing coordinate away from (0,0)
+ * @returns {number}
+ *   Length (in steps) of the given vector point
+ */
 export function getVectorLength(vector) {
   return Math.sqrt((vector.x ** 2) + (vector.y ** 2));
 }
