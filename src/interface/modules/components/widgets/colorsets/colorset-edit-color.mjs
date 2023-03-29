@@ -16,6 +16,7 @@ import { colorset, project } from '/modules/utils/live-state.mjs';
  */
 function addDone(host) {
   // TODO: Add validation with user interaction.
+  clearPreview();
   cncserver.api.colors.add(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
   });
@@ -28,6 +29,7 @@ function addDone(host) {
  *   Hybrids DOM root.
  */
 function saveDone(host) {
+  clearPreview();
   cncserver.api.colors.save(dataDiff(host.form.editor.data.current)).then(() => {
     handleSwitch(host.returnTo, { reload: true })(host);
   });
