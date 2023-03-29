@@ -32,6 +32,7 @@
     "cs/api/handlers/implements": "./src/components/core/comms/api/cncserver.api.implements.js",
     "cs/api/handlers/projects": "./src/components/core/comms/api/cncserver.api.projects.js",
     "cs/api/handlers/content": "./src/components/core/comms/api/cncserver.api.content.js",
+    "cs/api/handlers/serial": "./src/components/core/comms/api/cncserver.api.serial.js",
     "cs/bots": "./src/components/machine_support/index.js",
     "cs/bots/base": "./src/components/machine_support/cncserver.bots.base.js",
     "cs/bots/ebb": "./src/components/machine_support/cncserver.bots.ebb.js",

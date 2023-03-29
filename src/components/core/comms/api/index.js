@@ -10,6 +10,7 @@ import { handlers as colors } from 'cs/api/handlers/colors';
 import { handlers as imps } from 'cs/api/handlers/implements';
 import { handlers as projects } from 'cs/api/handlers/projects';
 import { handlers as content } from 'cs/api/handlers/content';
+import { handlers as serial } from 'cs/api/handlers/serial';
 
 export const handlers = {
   ...settings,
@@ -21,4 +22,5 @@ export const handlers = {
   ...imps,
   ...projects,
   ...content,
+  ...serial,
 };
