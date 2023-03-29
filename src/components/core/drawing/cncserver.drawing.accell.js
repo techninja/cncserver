@@ -8,6 +8,9 @@ export const state = {
   renderStatus: 'idle',
 };
 
+// Time before work is sent to the callback for long operations.
+const splitTimeout = 2500;
+
 // Path planning Settings
 const s = {
   accelRate: 25, // 10, // Percentage increase over distance.
@@ -15,8 +18,6 @@ const s = {
   minSpeed: 15, // 5,
   resolution: 0.5, // Steps to check along path by
   maxDeflection: 10, // 5,
-  // Time before work is sent to the callback for long operations.
-  splitTimeout: 2500,
 };
 
 // Path planning:
@@ -227,7 +228,7 @@ export function getPoints(path, resultCallback) {
       }
 
       // Is this taking too long? Split the work up.
-      if (new Date() - splitTimer > s.splitTimeout) {
+      if (new Date() - splitTimer > splitTimeout) {
         resultCallback(
           getSmoothed(vals, results).slice(returnResultIndex)
         );
