@@ -6,7 +6,7 @@
  * Taking in only the global CNCServer object, add's the "serial" object.
  *
  */
-var SerialPort = require("serialport");
+const { SerialPort } = require("serialport");
 
 module.exports = function(cncserver){
   cncserver.serial = {
@@ -75,7 +75,7 @@ module.exports = function(cncserver){
         console.log('Attempting to open serial port: "' + connectPath + '"...');
 
         var connectData =  {
-          port: connectPath,
+          path: connectPath,
           baudRate : Number(botController.baudRate)
         };
 
@@ -123,7 +123,7 @@ module.exports = function(cncserver){
         // Add this port to the clean list if its vendor ID isn't undefined.
         if (typeof port.vendorId !== 'undefined') {
           cleanList.push(port);
-          portNames.push(port.comName);
+          portNames.push(port.path);
         }
 
         // OS specific board detection based on serialport 2.0.5
@@ -131,7 +131,7 @@ module.exports = function(cncserver){
         case 'win32':
           // Match by manufacturer partial only.
           if (portMaker.indexOf(botMaker) !== -1) {
-            detectList.push(port.comName);
+            detectList.push(port.path);
           }
 
           break;
@@ -141,7 +141,7 @@ module.exports = function(cncserver){
             // Match by exact product ID (hex to dec), or PNP ID partial
             if (portProductId === botProductId ||
                 portPnpId.indexOf(botName) !== -1) {
-              detectList.push(port.comName);
+              detectList.push(port.path);
             }
           }
         }

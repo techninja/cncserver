@@ -38,7 +38,7 @@ module.exports = function(cncserver) {
 
       if (cncserver.gConf.get('debug') && path !== '/poll') {
         console.log(
-          req.route.method.toUpperCase(),
+          req.method.toUpperCase(),
           req.route.path,
           JSON.stringify(req.body)
         );
@@ -46,7 +46,7 @@ module.exports = function(cncserver) {
 
       // Handle CORS Pre-flight OPTIONS request ourselves
       // TODO: Allow implementers to define options and allowed methods.
-      if (req.route.method === 'options') {
+      if (req.method === 'OPTIONS') {
         res.set(
           'Access-Control-Allow-Methods',
           'PUT, POST, GET, DELETE'
