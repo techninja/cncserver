@@ -84,6 +84,17 @@
       "description": "Set of primary colors in standard order. Use for stock Crayola, store brand or movable primary color pans."
     }
   },
+  "default": {
+    "_meta": {
+      "creator": "techninja",
+      "target": "en-US",
+      "basetype": "colorset"
+    },
+    "default": {
+      "name": "Default Standard Black Pen",
+      "description": "Single assumed black pen default for basic plots."
+    }
+  },
   "prang": {
     "_meta": {
       "creator": "rogerfachini",

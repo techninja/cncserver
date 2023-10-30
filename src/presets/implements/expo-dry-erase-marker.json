@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "expo-dry-erase-marker",
+  "manufacturer": "Expo",
+  "title": "Slimline white board marker",
+  "sortWeight": -10,
+  "handleWidth": 10.8,
+  "handleColors": [
+    "#eeeeee"
+  ],
+  "width": 2.8,
+  "length": 6,
+  "stiffness": 1,
+  "drawLength": 0
+}

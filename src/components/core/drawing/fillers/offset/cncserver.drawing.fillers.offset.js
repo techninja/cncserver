@@ -3,29 +3,44 @@
  * "cam" style offset fill utilizing the "clipper" and cam.js libraries.
  */
 
-const { Group } = require('paper');
-const fillUtil = require('../cncserver.drawing.fillers.util');
+import Paper from 'paper';
+import { connect, clipper, finish } from '../cncserver.drawing.fillers.util.js';
 
-let settings = {};
-let exportGroup = {};
+const { Group } = Paper;
 
 // Connect to the main process, start the fill operation.
-fillUtil.connect((path, settingsOverride) => {
-  fillUtil.clipper.getInstance().then((clipper) => {
-    settings = { ...settings, ...settingsOverride };
-    exportGroup = new Group();
+connect((path, { flattenResolution, spacing, offset }) => {
+  clipper.getInstance().then(clipperInstance => {
+    const exportGroup = new Group();
 
     let items = [];
     let increment = 0;
-    const geo = fillUtil.clipper.getPathGeo(path, settings.flattenResolution);
+    const geo = clipper.getPathGeo(path, flattenResolution);
+    let angle = 0;
     while (items) {
-      items = fillUtil.clipper.getOffsetPaths(geo, settings.spacing + increment, clipper);
+      items = clipper.getOffsetPaths(geo, spacing + increment, clipperInstance);
       if (items) {
-        exportGroup.addChildren(items);
-        increment += settings.spacing;
+        // Try to connect the shells.
+        if (offset.connectShells && exportGroup.lastChild && items.length === 1) {
+          exportGroup.lastChild.closed = false;
+          angle += 4.2;
+          items[0].rotate(angle);
+          items[0].segments.forEach(({ point: { x, y } }) => {
+            exportGroup.lastChild.add([x, y]);
+          });
+        } else {
+          angle += 4.2;
+          items[0].rotate(angle);
+          items[0].smooth();
+          exportGroup.addChildren(items);
+        }
+        increment += spacing;
       }
     }
 
-    fillUtil.finish(exportGroup);
+    // TODO: Add support for settings.offset.fillGaps
+    //  - Add the centerline of the last fill shape(s).
+
+    finish(exportGroup);
   });
 });

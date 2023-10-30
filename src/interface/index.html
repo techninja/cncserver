@@ -1,109 +1,113 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <script src="/jquery/jquery.min.js"></script>
+    <script src="/underscore/underscore-min.js"></script>
+    <script src="/jsonform/jsonform.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/paper/paper-full.min.js"></script>
+    <script src="/axios/axios.min.js"></script>
+    <script src="/select2/js/select2.full.min.js"></script>
+    <script src="/jsoneditor/jsoneditor.js"></script>
+    <script src="/chroma/chroma.js"></script>
 
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <script src="/jquery/jquery.min.js"></script>
-  <script src="/underscore/underscore-min.js"></script>
-  <script src="/jsonform/jsonform.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/paper/paper-full.min.js"></script>
-  <script src="/axios/axios.min.js"></script>
-  <script src="/select2/js/select2.full.min.js"></script>
-  <script src="/jsoneditor/jsoneditor.js"></script>
+    <link rel="stylesheet" href="/font-awesome/fontawesome.min.css" />
+    <link rel="stylesheet" href="/font-awesome/solid.min.css" />
+    <link rel="stylesheet" href="/font-awesome/brands.min.css" />
+    <link rel="stylesheet" href="/bulma/bulma.min.css" />
+    <link rel="stylesheet" href="/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="/styles/interface.css" />
+    <script type="module" src="/modules/components/index.mjs"></script>
+  </head>
+  <title>CNC Server client</title>
 
-  <link rel="stylesheet" href="/font-awesome/fontawesome.min.css" />
-  <link rel="stylesheet" href="/font-awesome/solid.min.css" />
-  <link rel="stylesheet" href="/font-awesome/brands.min.css" />
-  <link rel="stylesheet" href="/bulma/bulma.min.css" />
-  <link rel="stylesheet" href="/select2/css/select2.min.css" />
-  <link rel="stylesheet" href="/styles/interface.css" />
-  <script type="module" src="/modules/weightless.js"></script>
-  <script type="module" src="/modules/components/index.mjs"></script>
-</head>
-<title>CNC Server client</title>
+  <body>
+    <main-title> <implement-status></implement-status> </main-title>
 
-<body>
-  <main-title></main-title>
-  <tab-group id="main-content">
-    <tab-item title="Composing" icon="pencil-ruler" name="compose" active>
-      <div class="columns">
-        <section class="column is-half">
-          <tab-group>
-            <tab-item title="Project" icon="project-diagram" name="basic">
-              <project-loader></project-loader>
-            </tab-item>
-            <tab-item title="Content" icon="vector-square" name="advanced" active>
-              <content-importer></content-importer>
-            </tab-item>
-            <tab-item title="Settings" icon="cogs" name="settings">
-              <draw-settings></draw-settings>
-            </tab-item>
-          </tab-group>
-        </section>
+    <tab-group id="main-content">
+      <tab-item text="Composing" icon="pencil-ruler" name="compose" active>
+        <div class="columns">
+          <section class="column is-half">
+            <tab-group>
+              <tab-item text="Project" icon="project-diagram" name="basic">
+                <project-loader></project-loader>
+              </tab-item>
+              <tab-item text="Content" icon="vector-square" name="advanced" active>
+                <content-importer></content-importer>
+              </tab-item>
+              <tab-item text="Settings" icon="cogs" name="settings">
+                <draw-settings></draw-settings>
+              </tab-item>
+              <tab-item text="Color Set" icon="palette" name="colorset">
+                <colorset-editor></colorset-editor>
+              </tab-item>
+            </tab-group>
+          </section>
 
-        <section class="column is-half" id="right-col-preview">
-          <canvas-compose></canvas-compose>
-        </section>
-      </div>
-    </tab-item>
+          <section class="column is-half" id="right-col-preview">
+            <canvas-compose tabindex="0"></canvas-compose>
+          </section>
+        </div>
+      </tab-item>
 
-    <tab-item title="Printing" icon="print" name="print">
-      <div class="columns">
-        <section class="column is-half">
-          <tab-group>
-            <tab-item title="Basic" icon="vial" name="basic">
-              <scratch-controls></scratch-controls>
-              <tools-basic></tools-basic>
-              <height-presets></height-presets>
-            </tab-item>
-            <tab-item title="Advanced" icon="vials" name="advanced" active>
+      <tab-item text="Printing" icon="print" name="print">
+        <div class="columns">
+          <section class="column is-half">
+            <tab-group>
+              <tab-item text="Basic" icon="vial" name="basic">
+                <scratch-controls></scratch-controls>
+                <tools-basic></tools-basic>
+                <height-presets></height-presets>
+              </tab-item>
+              <tab-item text="Advanced" icon="vials" name="advanced">
+                <h2>TODO</h2>
+              </tab-item>
+              <tab-item text="Settings" icon="cogs" name="settings">
+                <height-settings></height-settings>
+              </tab-item>
+              <tab-item text="Tests" icon="tasks" name="tests"> </tab-item>
+            </tab-group>
+          </section>
 
-            </tab-item>
-            <tab-item title="Settings" icon="cogs" name="settings">
-              <height-settings></height-settings>
-            </tab-item>
-            <tab-item title="Tests" icon="tasks" name="tests">
+          <section class="column is-half" id="right-col-preview">
+            <div class="box">
+              <toolbar-top></toolbar-top>
+            </div>
 
-            </tab-item>
-          </tab-group>
-        </section>
+            <canvas-print></canvas-print>
 
-        <section class="column is-half" id="right-col-preview">
-          <div class="box">
-            <toolbar-top></toolbar-top>
-          </div>
+            <div class="box">
+              <toolbar-bottom></toolbar-bottom>
+            </div>
+          </section>
+        </div>
+      </tab-item>
+    </tab-group>
 
-          <canvas-print></canvas-print>
+    <script type="module">
+      import cncserver from '/lib/cncserver.client.api.js';
+      import preview from '/modules/preview.mjs';
+      import shapes from '/modules/shapes.mjs';
+      import { pen, onUpdate } from '/modules/utils/live-state.mjs';
 
-          <div class="box">
-            <toolbar-bottom></toolbar-bottom>
-          </div>
-        </section>
-      </div>
-    </tab-item>
-  </tab-group>
+      // Globalize various imports.
+      ['cncserver', 'preview', 'shapes'].forEach(name => {
+        window[name] = eval(name);
+      });
 
-  <script type="module">
-    import cncserver from '/lib/cncserver.client.api.js';
-    import preview from '/modules/preview.mjs';
-    import shapes from '/modules/shapes.mjs';
-
-    // Globalize various imports.
-    ['cncserver', 'preview', 'shapes'].forEach(name => {
-      window[name] = eval(name);
-    });
-
-    // Initialize CNC Server connection details
-    cncserver.init({
-      domain: document.domain,
-      port: location.port ? location.port : 80,
-      protocol: 'http',
-      version: '2',
-      ax: axios,
-      socketio: io,
-    });
-  </script>
-</body>
-
+      // Initialize CNC Server connection details
+      cncserver.init({
+        domain: document.domain,
+        port: location.port ? location.port : 80,
+        protocol: 'http',
+        version: '2',
+        ax: axios,
+        socketio: io,
+      });
+    </script>
+  </body>
 </html>

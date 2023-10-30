@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "pen",
+  "name": "pilot-g2-ball-point",
+  "manufacturer": "Pilot",
+  "title": "G2 Ball Point Pen 07",
+  "sortWeight": -45,
+  "handleWidth": 11,
+  "handleColors": [
+    "#222222"
+  ],
+  "width": 0.7,
+  "length": 5.5,
+  "stiffness": 1,
+  "drawLength": 0
+}

@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "cncserverVersion": "3.0.0-beta1",
+    "fileType": "implements"
+  },
+  "type": "brush",
+  "name": "dxhycc-germany-3-8-wedge-brush",
+  "manufacturer": "Dxhycc",
+  "title": "\"Germany\" size 3/8 wedge",
+  "sortWeight": 25,
+  "handleWidth": 9.5,
+  "handleColors": [
+    "#111111",
+    "#EEEEEE"
+  ],
+  "width": 11,
+  "length": 23,
+  "stiffness": 0.45,
+  "drawLength": 650
+}

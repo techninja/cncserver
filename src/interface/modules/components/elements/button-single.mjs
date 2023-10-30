@@ -4,9 +4,9 @@
 import { html } from '/modules/hybrids.js';
 
 export default styles => ({
-  title: '',
+  text: '',
   icon: '',
-  style: 'plain',
+  type: 'plain',
   loading: false,
   desc: '',
   fullwidth: false,
@@ -14,16 +14,27 @@ export default styles => ({
   disabled: false,
 
   render: ({
-    style, icon, title, desc, fullwidth, active, disabled, loading
+    icon, text, desc, fullwidth, active, disabled, loading, type,
   }) => {
     const linkClasses = { button: true, 'is-active': active, 'is-loading': loading };
-    if (style) linkClasses[`is-${style}`] = true;
+    if (type) linkClasses[`is-${type}`] = true;
+
+    const buttonStyle = { display: fullwidth ? 'flex' : 'inline-block' };
 
     return html`
     ${styles}
-    <a class="${linkClasses}" disabled=${disabled} style=${{ display: fullwidth ? 'flex' : 'inline-block' }} title="${desc}">
-      ${icon && html`<span class="icon"><i class="fas fa-${icon}" aria-hidden="true"></i></span>`}
-      ${title && html`<span>${title}</span>`}
+    <style>
+      :host {
+        display: inline;
+      }
+    </style>
+    <a class="${linkClasses}" disabled=${disabled} style=${buttonStyle} title="${desc}">
+      ${icon && html`
+        <span class="icon">
+          <i class="fas fa-${icon}" aria-hidden="true"></i>
+        </span>
+      `}
+      ${text && html`<span>${text}</span>`}
     </a>
   `;
   },
