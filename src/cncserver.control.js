@@ -309,7 +309,7 @@ module.exports = function(cncserver) {
     }
 
     // Make a local copy of point as we don't want to mess with its values ByRef
-    var point = extend({}, inPoint);
+    const point = extend({}, inPoint);
 
     // Sanity check absolute position input point and round everything (as we
     // only move in whole number steps)
@@ -318,7 +318,7 @@ module.exports = function(cncserver) {
 
     // If moving in the workArea only, limit to allowed workArea, and trigger
     // on/off screen events when we go offscreen, retaining suggested position.
-    var startOffCanvasChange = false;
+    let startOffCanvasChange = false;
     if (point.limit === 'workArea') {
       // Off the Right
       if (point.x > cncserver.bot.workArea.right) {
@@ -368,8 +368,8 @@ module.exports = function(cncserver) {
     }
 
     // Calculate change from end of buffer pen position
-    var source = {x: cncserver.pen.x, y: cncserver.pen.y};
-    var change = {
+    const source = {x: cncserver.pen.x, y: cncserver.pen.y};
+    const change = {
       x: Math.round(point.x - cncserver.pen.x),
       y: Math.round(point.y - cncserver.pen.y)
     };
@@ -388,8 +388,8 @@ module.exports = function(cncserver) {
      position.
      @see executeNext - for more details on how this is handled.
     */
-    var distance = cncserver.utils.getVectorLength(change);
-    var duration = cncserver.utils.getDurationFromDistance(distance);
+    const distance = cncserver.utils.getVectorLength(change);
+    const duration = cncserver.utils.getDurationFromDistance(distance);
 
     // Only if we actually moved anywhere should we queue a movement
     if (distance !== 0) {
