@@ -368,7 +368,6 @@ module.exports = function(cncserver) {
     }
 
     // Calculate change from end of buffer pen position
-    const source = {x: cncserver.pen.x, y: cncserver.pen.y};
     const change = {
       x: Math.round(point.x - cncserver.pen.x),
       y: Math.round(point.y - cncserver.pen.y)
@@ -389,11 +388,16 @@ module.exports = function(cncserver) {
      @see executeNext - for more details on how this is handled.
     */
     const distance = cncserver.utils.getVectorLength(change);
-    const duration = cncserver.utils.getDurationFromDistance(distance);
+    const duration = cncserver.utils.getDurationFromDistance(
+      distance,
+      cncserver.pen
+    );
 
     // Only if we actually moved anywhere should we queue a movement
     if (distance !== 0) {
-      // Set the tip of buffer pen at new position
+      // Set the tip of buffer pen at new position, while preserving existing pen
+      // data for our move command
+      const source = extend({}, cncserver.pen);
       cncserver.pen.x = point.x;
       cncserver.pen.y = point.y;
 
