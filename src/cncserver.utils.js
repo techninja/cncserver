@@ -50,15 +50,13 @@ module.exports = function(cncserver) {
    *
    * @param {float} distance
    *   Distance in steps that we'll be moving
-   * @param {int} min
-   *   Optional minimum value for output duration, defaults to 1.
    * @param {object} inPen
    *   Incoming pen object to check (buffer tip or bot current).
    * @returns {number}
    *   Millisecond duration of how long the move should take
    */
-  cncserver.utils.getDurationFromDistance = function(distance, min, inPen) {
-    if (typeof min === "undefined") min = 1;
+  cncserver.utils.getDurationFromDistance = function(distance, inPen) {
+    const min = 1;
 
     const minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
     const maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
@@ -81,10 +79,11 @@ module.exports = function(cncserver) {
   };
 
   /**
-   * Given two points, find the difference and duration at current speed
+   * Given the a pen and a destination, find the difference and duration at
+   * current speed
    *
-   * @param {{x: number, y: number}} src
-   *   Source position coordinate (in steps).
+   * @param {object} inPen
+   *   Incoming pen object to check (buffer tip or bot current).
    * @param {{x: number, y: number}} dest
    *   Destination position coordinate (in steps).
    *
@@ -92,18 +91,15 @@ module.exports = function(cncserver) {
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  cncserver.utils.getPosChangeData = function(src, dest) {
+  cncserver.utils.getPosChangeData = function(inPen, dest) {
      let change = {
-      x: Math.round(dest.x - src.x),
-      y: Math.round(dest.y - src.y)
+      x: Math.round(dest.x - inPen.x),
+      y: Math.round(dest.y - inPen.y)
     };
 
     // Calculate duration
-    const duration = cncserver.utils.getDurationFromDistance(
-      cncserver.utils.getVectorLength(change),
-      1,
-      src
-    );
+    const distance = cncserver.utils.getVectorLength(change);
+    const duration = cncserver.utils.getDurationFromDistance(distance, inPen);
 
     // Adjust change direction/inversion
     if (cncserver.botConf.get('controller').position === "relative") {
