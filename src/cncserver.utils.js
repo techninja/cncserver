@@ -20,11 +20,32 @@ module.exports = function(cncserver) {
    */
   cncserver.utils.sanityCheckAbsoluteCoord = function(point) {
     var maxArea = cncserver.bot.maxArea;
-    point.x = point.x > maxArea.width ? maxArea.width : point.x;
-    point.y = point.y > maxArea.height ? maxArea.height : point.y;
-    point.x = point.x < 0 ? 0 : point.x;
-    point.y = point.y < 0 ? 0 : point.y;
+    cncserver.utils.constrainPoint(point, {
+      left: 0,
+      right: maxArea.width,
+      top: 0,
+      bottom: maxArea.height
+    });
   };
+
+  /**
+   * Constrain a given point to the given bounds
+   * @param {{x: number, y: number}} point
+   *   The point to be checked and possibly modified.
+   * @param {{
+   *   top: number,
+   *   right: number,
+   *   bottom: number,
+   *   left: number
+   * }} bounds
+   *   The bounds to constrain the point to.
+   */
+    cncserver.utils.constrainPoint = function(point, bounds) {
+      point.x = Math.max(point.x, bounds.left);
+      point.x = Math.min(point.x, bounds.right);
+      point.y = Math.max(point.y, bounds.top);
+      point.y = Math.min(point.y, bounds.bottom);
+    };
 
 
   /**

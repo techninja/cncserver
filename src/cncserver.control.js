@@ -320,27 +320,8 @@ module.exports = function(cncserver) {
     // on/off screen events when we go offscreen, retaining suggested position.
     let startOffCanvasChange = false;
     if (point.limit === 'workArea') {
-      // Off the Right
-      if (point.x > cncserver.bot.workArea.right) {
-        point.x = cncserver.bot.workArea.right;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Left
-      if (point.x < cncserver.bot.workArea.left) {
-        point.x = cncserver.bot.workArea.left;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Top
-      if (point.y < cncserver.bot.workArea.top) {
-        point.y = cncserver.bot.workArea.top;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Bottom
-      if (point.y > cncserver.bot.workArea.bottom) {
-        point.y = cncserver.bot.workArea.bottom;
+      if (!cncserver.bot.inWorkArea(point)) {
+        cncserver.utils.constrainPoint(point, cncserver.bot.workArea)
         startOffCanvasChange = true;
       }
 
