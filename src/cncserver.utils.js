@@ -60,13 +60,13 @@ module.exports = function(cncserver) {
   cncserver.utils.getDurationFromDistance = function(distance, min, inPen) {
     if (typeof min === "undefined") min = 1;
 
-    var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
-    var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
-    var drawingSpeed = cncserver.botConf.get('speed:drawing');
-    var movingSpeed = cncserver.botConf.get('speed:moving');
+    const minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
+    const maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
+    const drawingSpeed = cncserver.botConf.get('speed:drawing');
+    const movingSpeed = cncserver.botConf.get('speed:moving');
 
     // Use given speed over distance to calculate duration
-    var speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
+    let speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
     speed = parseFloat(speed) / 100;
 
     // Convert to steps from percentage
@@ -93,13 +93,13 @@ module.exports = function(cncserver) {
    *   duration in milliseconds.
    */
   cncserver.utils.getPosChangeData = function(src, dest) {
-     var change = {
+     let change = {
       x: Math.round(dest.x - src.x),
       y: Math.round(dest.y - src.y)
     };
 
     // Calculate duration
-    var duration = cncserver.utils.getDurationFromDistance(
+    const duration = cncserver.utils.getDurationFromDistance(
       cncserver.utils.getVectorLength(change),
       1,
       src
