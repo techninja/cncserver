@@ -144,6 +144,41 @@ module.exports = function(cncserver) {
   };
 
   /**
+   * Given the a change and a duration, upate the change (if neccessary) to
+   * avoid falling below the minimum number of steps per second for each axis.
+   *
+   * @param {{x: number, y: number}} change
+   *   The movement to sanitize.
+   * @param {number} duration
+   *   The duration of the movement in seconds.
+   */
+  cncserver.utils.sanityCheckMovement = function(change, duration) {
+    const axes = cncserver.botConf.get('controller').axes;
+    const axisMin = parseFloat(cncserver.botConf.get('speed:axisMin'));
+
+    const orthogonal = axes === 'orthogonal';
+
+    const minStepsPerAxis = Math.floor(duration * axisMin / 1000);
+
+    let changeA = orthogonal ? change.x : change.x + change.y;
+    let changeB = orthogonal ? change.y : change.x - change.y;
+    
+    // Where change in a given axis is too slow, we set the change on that axis
+    // to zero, and treat this as 'close enough' to the movement requested by
+    // the user
+    if (changeA !== 0 && Math.abs(changeA) <= minStepsPerAxis) {
+      changeA = 0;
+    }
+
+    if (changeB !== 0 && Math.abs(changeB) <= minStepsPerAxis) {
+      changeB = 0;
+    }
+
+    change.x = orthogonal ? changeA : Math.round((changeA + changeB) / 2);
+    change.y = orthogonal ? changeB : Math.round((changeA - changeB) / 2);
+  }
+
+  /**
    * Given two height positions, find the difference and pro-rate duration.
    *
    * @param {integer} src
