@@ -76,7 +76,7 @@ module.exports = function(cncserver) {
     speed = speed > maxSpeed ? maxSpeed : speed;
     speed = speed < minSpeed ? minSpeed : speed;
 
-    // How many steps a second?
+    // Calculate duration in milliseconds
     return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
   };
 
@@ -98,7 +98,7 @@ module.exports = function(cncserver) {
       y: Math.round(dest.y - src.y)
     };
 
-    // Calculate distance
+    // Calculate duration
     var duration = cncserver.utils.getDurationFromDistance(
       cncserver.utils.getVectorLength(change),
       1,
