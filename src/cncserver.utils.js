@@ -151,23 +151,17 @@ module.exports = function(cncserver) {
    *   duration in milliseconds.
    */
   cncserver.utils.getMoveCommandData = function(inPen, dest) {
-     let change = {
-      x: Math.round(dest.x - inPen.x),
-      y: Math.round(dest.y - inPen.y)
-    };
-
-    // Calculate duration
-    const distance = cncserver.utils.getVectorLength(change);
-    const duration = cncserver.utils.getDurationFromDistance(distance, inPen);
-
+     const movementData = cncserver.utils.getMovementData(inPen, dest);
+     const {duration, change, destination} = movementData;
+    
     // Adjust change direction/inversion
     if (cncserver.botConf.get('controller').position === "relative") {
       // Invert X or Y to match stepper direction
       change.x = cncserver.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
       change.y = cncserver.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
     } else { // Absolute! Just use the "new" absolute X & Y locations
-      change.x = dest.x;
-      change.y = dest.y;
+      change.x = destination.x;
+      change.y = destination.y;
     }
 
     // Swap motor positions
