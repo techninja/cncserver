@@ -374,35 +374,32 @@ module.exports = function(cncserver) {
       cncserver.pen
     );
 
-    // Only if we actually moved anywhere should we queue a movement
-    if (distance !== 0) {
-      // Set the tip of buffer pen at new position, while preserving existing pen
-      // data for our move command
-      const source = extend({}, cncserver.pen);
-      cncserver.pen.x = point.x;
-      cncserver.pen.y = point.y;
+    // Set the tip of buffer pen at new position, while preserving existing pen
+    // data for our move command
+    const source = extend({}, cncserver.pen);
+    cncserver.pen.x = point.x;
+    cncserver.pen.y = point.y;
 
-      // Adjust the distance counter based on movement amount, not if we're off
-      // the canvas though.
-      if (cncserver.utils.penDown() &&
-          !cncserver.pen.offCanvas &&
-          cncserver.bot.inWorkArea(point)) {
-        cncserver.pen.distanceCounter = parseFloat(
-          Number(distance) + Number(cncserver.pen.distanceCounter)
-        );
-      }
-
-      // Queue the final absolute move (serial command generated later)
-      cncserver.run(
-        'move',
-        {
-          x: cncserver.pen.x,
-          y: cncserver.pen.y,
-          source: source
-        },
-        duration
+    // Adjust the distance counter based on movement amount, not if we're off
+    // the canvas though.
+    if (cncserver.utils.penDown() &&
+        !cncserver.pen.offCanvas &&
+        cncserver.bot.inWorkArea(point)) {
+      cncserver.pen.distanceCounter = parseFloat(
+        Number(distance) + Number(cncserver.pen.distanceCounter)
       );
     }
+
+    // Queue the final absolute move (serial command generated later)
+    cncserver.run(
+      'move',
+      {
+        x: cncserver.pen.x,
+        y: cncserver.pen.y,
+        source: source
+      },
+      duration
+    );
 
     // Required start offCanvas change -after- movement has been queued
     if (startOffCanvasChange) {
