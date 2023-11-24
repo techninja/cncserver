@@ -478,7 +478,7 @@ module.exports = function(cncserver) {
   cncserver.control.actuallyMove = function(destination, callback) {
     // Get the amount of change/duration from difference between actualPen and
     // absolute position in given destination
-    var change = cncserver.utils.getPosChangeData(
+    var change = cncserver.utils.getMoveCommandData(
       cncserver.actualPen,
       destination
     );

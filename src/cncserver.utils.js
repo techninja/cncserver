@@ -100,8 +100,46 @@ module.exports = function(cncserver) {
   };
 
   /**
+   * Given the a pen and a destination, compute the duration, and distance of
+   * the movement, along with the change and destination updated to avoid
+   * impossibly slow axis speeds
+   *
+   * @param {object} inPen
+   *   Incoming pen object to check (buffer tip or bot current).
+   * @param {{x: number, y: number}} dest
+   *   Destination position coordinate (in steps).
+   *
+   * @returns {{
+   *   duration: number,
+   *   distance: number,
+   *   change: {x: number, y: number}},
+   *   destination: {x: number, y: number}},
+   * }}
+   *   Object containining data secribing the movement, after adjustments to
+   *   avoid impossibly slow axis speeds
+   */
+  cncserver.utils.getMovementData = function(inPen, dest) {
+    const change = {
+      x: Math.round(dest.x - inPen.x),
+      y: Math.round(dest.y - inPen.y)
+    };
+
+    const distance = cncserver.utils.getVectorLength(change);
+    const duration = cncserver.utils.getDurationFromDistance(distance, inPen);
+
+    cncserver.utils.sanityCheckMovement(change, duration);
+
+    const destination = {
+      x: Math.round(inPen.x + change.x),
+      y: Math.round(inPen.y + change.y)
+    }
+
+    return {duration, distance, change, destination};
+  }
+
+  /**
    * Given the a pen and a destination, find the difference and duration at
-   * current speed
+   * current speed, as needed to render our move command
    *
    * @param {object} inPen
    *   Incoming pen object to check (buffer tip or bot current).
@@ -112,7 +150,7 @@ module.exports = function(cncserver) {
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  cncserver.utils.getPosChangeData = function(inPen, dest) {
+  cncserver.utils.getMoveCommandData = function(inPen, dest) {
      let change = {
       x: Math.round(dest.x - inPen.x),
       y: Math.round(dest.y - inPen.y)
