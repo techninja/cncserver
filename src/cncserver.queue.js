@@ -243,7 +243,7 @@ module.exports = function(cncserver) {
     if (typeof item.command === "object") { // Detailed buffer object
       switch (item.command.type) {
         case 'absmove':
-          var change = cncserver.utils.getPosChangeData(
+          var change = cncserver.utils.getMoveCommandData(
             item.command.source,
             item.command
           );
