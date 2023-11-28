@@ -20,11 +20,32 @@ module.exports = function(cncserver) {
    */
   cncserver.utils.sanityCheckAbsoluteCoord = function(point) {
     var maxArea = cncserver.bot.maxArea;
-    point.x = point.x > maxArea.width ? maxArea.width : point.x;
-    point.y = point.y > maxArea.height ? maxArea.height : point.y;
-    point.x = point.x < 0 ? 0 : point.x;
-    point.y = point.y < 0 ? 0 : point.y;
+    cncserver.utils.constrainPoint(point, {
+      left: 0,
+      right: maxArea.width,
+      top: 0,
+      bottom: maxArea.height
+    });
   };
+
+  /**
+   * Constrain a given point to the given bounds
+   * @param {{x: number, y: number}} point
+   *   The point to be checked and possibly modified.
+   * @param {{
+   *   top: number,
+   *   right: number,
+   *   bottom: number,
+   *   left: number
+   * }} bounds
+   *   The bounds to constrain the point to.
+   */
+    cncserver.utils.constrainPoint = function(point, bounds) {
+      point.x = Math.max(point.x, bounds.left);
+      point.x = Math.min(point.x, bounds.right);
+      point.y = Math.max(point.y, bounds.top);
+      point.y = Math.min(point.y, bounds.bottom);
+    };
 
 
   /**
@@ -50,23 +71,21 @@ module.exports = function(cncserver) {
    *
    * @param {float} distance
    *   Distance in steps that we'll be moving
-   * @param {int} min
-   *   Optional minimum value for output duration, defaults to 1.
    * @param {object} inPen
    *   Incoming pen object to check (buffer tip or bot current).
    * @returns {number}
    *   Millisecond duration of how long the move should take
    */
-  cncserver.utils.getDurationFromDistance = function(distance, min, inPen) {
-    if (typeof min === "undefined") min = 1;
+  cncserver.utils.getDurationFromDistance = function(distance, inPen) {
+    const min = 1;
 
-    var minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
-    var maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
-    var drawingSpeed = cncserver.botConf.get('speed:drawing');
-    var movingSpeed = cncserver.botConf.get('speed:moving');
+    const minSpeed = parseFloat(cncserver.botConf.get('speed:min'));
+    const maxSpeed = parseFloat(cncserver.botConf.get('speed:max'));
+    const drawingSpeed = cncserver.botConf.get('speed:drawing');
+    const movingSpeed = cncserver.botConf.get('speed:moving');
 
     // Use given speed over distance to calculate duration
-    var speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
+    let speed = (cncserver.utils.penDown(inPen)) ? drawingSpeed : movingSpeed;
     speed = parseFloat(speed) / 100;
 
     // Convert to steps from percentage
@@ -76,15 +95,54 @@ module.exports = function(cncserver) {
     speed = speed > maxSpeed ? maxSpeed : speed;
     speed = speed < minSpeed ? minSpeed : speed;
 
-    // How many steps a second?
+    // Calculate duration in milliseconds
     return Math.max(Math.abs(Math.round(distance / speed * 1000)), min);
   };
 
   /**
-   * Given two points, find the difference and duration at current speed
+   * Given the a pen and a destination, compute the duration, and distance of
+   * the movement, along with the change and destination updated to avoid
+   * impossibly slow axis speeds
    *
-   * @param {{x: number, y: number}} src
-   *   Source position coordinate (in steps).
+   * @param {object} inPen
+   *   Incoming pen object to check (buffer tip or bot current).
+   * @param {{x: number, y: number}} dest
+   *   Destination position coordinate (in steps).
+   *
+   * @returns {{
+   *   duration: number,
+   *   distance: number,
+   *   change: {x: number, y: number}},
+   *   destination: {x: number, y: number}},
+   * }}
+   *   Object containining data secribing the movement, after adjustments to
+   *   avoid impossibly slow axis speeds
+   */
+  cncserver.utils.getMovementData = function(inPen, dest) {
+    const change = {
+      x: Math.round(dest.x - inPen.x),
+      y: Math.round(dest.y - inPen.y)
+    };
+
+    const distance = cncserver.utils.getVectorLength(change);
+    const duration = cncserver.utils.getDurationFromDistance(distance, inPen);
+
+    cncserver.utils.sanityCheckMovement(change, duration);
+
+    const destination = {
+      x: Math.round(inPen.x + change.x),
+      y: Math.round(inPen.y + change.y)
+    }
+
+    return {duration, distance, change, destination};
+  }
+
+  /**
+   * Given the a pen and a destination, find the difference and duration at
+   * current speed, as needed to render our move command
+   *
+   * @param {object} inPen
+   *   Incoming pen object to check (buffer tip or bot current).
    * @param {{x: number, y: number}} dest
    *   Destination position coordinate (in steps).
    *
@@ -92,27 +150,18 @@ module.exports = function(cncserver) {
    *   Object containing the change amount in steps for x & y, along with the
    *   duration in milliseconds.
    */
-  cncserver.utils.getPosChangeData = function(src, dest) {
-     var change = {
-      x: Math.round(dest.x - src.x),
-      y: Math.round(dest.y - src.y)
-    };
-
-    // Calculate distance
-    var duration = cncserver.utils.getDurationFromDistance(
-      cncserver.utils.getVectorLength(change),
-      1,
-      src
-    );
-
+  cncserver.utils.getMoveCommandData = function(inPen, dest) {
+     const movementData = cncserver.utils.getMovementData(inPen, dest);
+     const {duration, change, destination} = movementData;
+    
     // Adjust change direction/inversion
     if (cncserver.botConf.get('controller').position === "relative") {
       // Invert X or Y to match stepper direction
       change.x = cncserver.gConf.get('invertAxis:x') ? change.x * -1 : change.x;
       change.y = cncserver.gConf.get('invertAxis:y') ? change.y * -1 : change.y;
     } else { // Absolute! Just use the "new" absolute X & Y locations
-      change.x = cncserver.pen.x;
-      change.y = cncserver.pen.y;
+      change.x = destination.x;
+      change.y = destination.y;
     }
 
     // Swap motor positions
@@ -125,6 +174,41 @@ module.exports = function(cncserver) {
 
     return {d: duration, x: change.x, y: change.y};
   };
+
+  /**
+   * Given the a change and a duration, upate the change (if neccessary) to
+   * avoid falling below the minimum number of steps per second for each axis.
+   *
+   * @param {{x: number, y: number}} change
+   *   The movement to sanitize.
+   * @param {number} duration
+   *   The duration of the movement in seconds.
+   */
+  cncserver.utils.sanityCheckMovement = function(change, duration) {
+    const axes = cncserver.botConf.get('controller').axes;
+    const axisMin = parseFloat(cncserver.botConf.get('speed:axisMin'));
+
+    const orthogonal = axes === 'orthogonal';
+
+    const minStepsPerAxis = Math.floor(duration * axisMin / 1000);
+
+    let changeA = orthogonal ? change.x : change.x + change.y;
+    let changeB = orthogonal ? change.y : change.x - change.y;
+    
+    // Where change in a given axis is too slow, we set the change on that axis
+    // to zero, and treat this as 'close enough' to the movement requested by
+    // the user
+    if (changeA !== 0 && Math.abs(changeA) <= minStepsPerAxis) {
+      changeA = 0;
+    }
+
+    if (changeB !== 0 && Math.abs(changeB) <= minStepsPerAxis) {
+      changeB = 0;
+    }
+
+    change.x = orthogonal ? changeA : Math.round((changeA + changeB) / 2);
+    change.y = orthogonal ? changeB : Math.round((changeA - changeB) / 2);
+  }
 
   /**
    * Given two height positions, find the difference and pro-rate duration.

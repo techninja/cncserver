@@ -309,7 +309,7 @@ module.exports = function(cncserver) {
     }
 
     // Make a local copy of point as we don't want to mess with its values ByRef
-    var point = extend({}, inPoint);
+    const point = extend({}, inPoint);
 
     // Sanity check absolute position input point and round everything (as we
     // only move in whole number steps)
@@ -318,29 +318,10 @@ module.exports = function(cncserver) {
 
     // If moving in the workArea only, limit to allowed workArea, and trigger
     // on/off screen events when we go offscreen, retaining suggested position.
-    var startOffCanvasChange = false;
+    let startOffCanvasChange = false;
     if (point.limit === 'workArea') {
-      // Off the Right
-      if (point.x > cncserver.bot.workArea.right) {
-        point.x = cncserver.bot.workArea.right;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Left
-      if (point.x < cncserver.bot.workArea.left) {
-        point.x = cncserver.bot.workArea.left;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Top
-      if (point.y < cncserver.bot.workArea.top) {
-        point.y = cncserver.bot.workArea.top;
-        startOffCanvasChange = true;
-      }
-
-      // Off the Bottom
-      if (point.y > cncserver.bot.workArea.bottom) {
-        point.y = cncserver.bot.workArea.bottom;
+      if (!cncserver.bot.inWorkArea(point)) {
+        cncserver.utils.constrainPoint(point, cncserver.bot.workArea)
         startOffCanvasChange = true;
       }
 
@@ -367,12 +348,16 @@ module.exports = function(cncserver) {
       return 0; // Don't return any distance for buffer skipped movements
     }
 
-    // Calculate change from end of buffer pen position
-    var source = {x: cncserver.pen.x, y: cncserver.pen.y};
-    var change = {
-      x: Math.round(point.x - cncserver.pen.x),
-      y: Math.round(point.y - cncserver.pen.y)
-    };
+    /*
+     Movement data is only calculated as relative from last assumed point,
+     which may not actually ever happen, though it is likely to happen.
+     Buffered items may not be pushed out of order, but previous location may
+     have changed as user might pause the buffer, and move the actualPen
+     position.
+     @see executeNext - for more details on how this is handled.
+    */
+    const movementData = cncserver.utils.getMovementData(cncserver.pen, point);
+    const {duration, distance, change, destination} = movementData;
 
     // Don't do anything if there's no change
     if (change.x === 0 && change.y === 0) {
@@ -380,44 +365,32 @@ module.exports = function(cncserver) {
       return 0;
     }
 
-    /*
-     Duration/distance is only calculated as relative from last assumed point,
-     which may not actually ever happen, though it is likely to happen.
-     Buffered items may not be pushed out of order, but previous location may
-     have changed as user might pause the buffer, and move the actualPen
-     position.
-     @see executeNext - for more details on how this is handled.
-    */
-    var distance = cncserver.utils.getVectorLength(change);
-    var duration = cncserver.utils.getDurationFromDistance(distance);
+    // Set the tip of buffer pen at new position, while preserving existing pen
+    // data for our move command
+    const source = extend({}, cncserver.pen);
+    cncserver.pen.x = destination.x;
+    cncserver.pen.y = destination.y;
 
-    // Only if we actually moved anywhere should we queue a movement
-    if (distance !== 0) {
-      // Set the tip of buffer pen at new position
-      cncserver.pen.x = point.x;
-      cncserver.pen.y = point.y;
-
-      // Adjust the distance counter based on movement amount, not if we're off
-      // the canvas though.
-      if (cncserver.utils.penDown() &&
-          !cncserver.pen.offCanvas &&
-          cncserver.bot.inWorkArea(point)) {
-        cncserver.pen.distanceCounter = parseFloat(
-          Number(distance) + Number(cncserver.pen.distanceCounter)
-        );
-      }
-
-      // Queue the final absolute move (serial command generated later)
-      cncserver.run(
-        'move',
-        {
-          x: cncserver.pen.x,
-          y: cncserver.pen.y,
-          source: source
-        },
-        duration
+    // Adjust the distance counter based on movement amount, not if we're off
+    // the canvas though.
+    if (cncserver.utils.penDown() &&
+        !cncserver.pen.offCanvas &&
+        cncserver.bot.inWorkArea(point)) {
+      cncserver.pen.distanceCounter = parseFloat(
+        Number(distance) + Number(cncserver.pen.distanceCounter)
       );
     }
+
+    // Queue the final absolute move (serial command generated later)
+    cncserver.run(
+      'move',
+      {
+        x: point.x,
+        y: point.y,
+        source: source
+      },
+      duration
+    );
 
     // Required start offCanvas change -after- movement has been queued
     if (startOffCanvasChange) {
@@ -488,28 +461,28 @@ module.exports = function(cncserver) {
    * Actually move the position of the pen, called inside and outside buffer
    * runs, figures out timing/offset based on actualPen position.
    *
-   * @param {{x: number, y: number}} destination
+   * @param {{x: number, y: number}} point
    *   Absolute destination coordinate position (in steps).
    * @param {function} callback
    *   Optional, callback for when operation should have completed.
    */
-  cncserver.control.actuallyMove = function(destination, callback) {
-    // Get the amount of change/duration from difference between actualPen and
+  cncserver.control.actuallyMove = function(point, callback) {
+    // Get movement data from difference between actualPen and
     // absolute position in given destination
-    var change = cncserver.utils.getPosChangeData(
+    const {duration, destination} = cncserver.utils.getMovementData(
       cncserver.actualPen,
-      destination
+      point
     );
 
-    cncserver.control.commandDuration = Math.max(change.d, 0);
+    cncserver.control.commandDuration = Math.max(duration, 0);
 
     // Execute the command immediately via serial.direct.command.
     cncserver.ipc.sendMessage('serial.direct.command', {
       commands: cncserver.buffer.render({
         command: {
           type: 'absmove',
-          x: destination.x,
-          y: destination.y,
+          x: point.x,
+          y: point.y,
           source: cncserver.actualPen
         },
         duration: cncserver.control.commandDuration
@@ -517,7 +490,7 @@ module.exports = function(cncserver) {
     });
 
     // Set the correct duration and new position through to actualPen
-    cncserver.actualPen.lastDuration = change.d;
+    cncserver.actualPen.lastDuration = duration;
     cncserver.actualPen.x = destination.x;
     cncserver.actualPen.y = destination.y;
 
