@@ -4,7 +4,7 @@
  * Taking in only the global CNCServer object, add's the "serial" object.
  *
  */
-import SerialPort from 'serialport';
+import { SerialPort } from 'serialport';
 import * as ipc from 'cs/ipc';
 import * as server from 'cs/server';
 import { botConf, gConf } from 'cs/settings';

@@ -17,47 +17,45 @@ export const app = express(); // Create router (app).
 export const httpServer = http.createServer(app);
 
 // Global express initialization (must run before any endpoint creation)
-app.configure(() => {
-  console.log('APP CONFIG ======================================= ');
-  // Base static path for remote interface.
-  app.use('/', express.static(path.join(__basedir, 'interface')));
+console.log('APP CONFIG ======================================= ');
+// Base static path for remote interface.
+app.use('/', express.static(path.join(__basedir, 'interface')));
 
-  // Configure module JS file mime type.
-  express.static.mime.define({ 'text/javascript': ['mjs'] });
+// Configure module JS file mime type.
+// express.static.mime.define({ 'text/javascript': ['mjs'] });
 
-  // Add static libraries from node_modules.
-  const nm = path.resolve(__basedir, '..', 'node_modules');
+// Add static libraries from node_modules.
+const nm = path.resolve(__basedir, '..', 'node_modules');
 
-  // Custom static dirs.
-  const statics = {
-    paper: path.join(nm, 'paper', 'dist'),
-    axios: path.join(nm, 'axios', 'dist'),
-    jquery: path.join(nm, 'jquery', 'dist'),
-    jsonform: path.join(nm, 'jsonform', 'lib'),
-    underscore: path.join(nm, 'underscore'),
-    bulma: path.join(nm, 'bulma', 'css'),
-    chroma: path.join(nm, 'chroma-js'),
-    select2: path.join(nm, 'select2', 'dist'),
-    jsoneditor: path.join(nm, '@json-editor', 'json-editor', 'dist'),
-    bootstrap: path.join(nm, 'bootstrap', 'dist'),
-    'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
-    webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
-    modules: path.resolve(__basedir, '..', 'web_modules'),
-    home: path.join(path.resolve(homedir(), 'cncserver')),
-  };
+// Custom static dirs.
+const statics = {
+  paper: path.join(nm, 'paper', 'dist'),
+  axios: path.join(nm, 'axios', 'dist'),
+  jquery: path.join(nm, 'jquery', 'dist'),
+  jsonform: path.join(nm, 'jsonform', 'lib'),
+  underscore: path.join(nm, 'underscore'),
+  bulma: path.join(nm, 'bulma', 'css'),
+  chroma: path.join(nm, 'chroma-js'),
+  select2: path.join(nm, 'select2', 'dist'),
+  jsoneditor: path.join(nm, '@json-editor', 'json-editor', 'dist'),
+  bootstrap: path.join(nm, 'bootstrap', 'dist'),
+  'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
+  webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
+  modules: path.resolve(__basedir, '..', 'web_modules'),
+  home: path.join(path.resolve(homedir(), 'cncserver')),
+};
 
-  // Add routing for all static dirs.
-  Object.entries(statics).forEach(([staticPath, dirSource]) => {
-    app.use(`/${staticPath}`, express.static(dirSource));
-  });
-
-  // Setup remaining middleware.
-  app.use(express.bodyParser());
-  app.use(slashes());
-
-  // Allow any implementing binder support for middleware or static routes.
-  trigger('server.configure', app, true);
+// Add routing for all static dirs.
+Object.entries(statics).forEach(([staticPath, dirSource]) => {
+  app.use(`/${staticPath}`, express.static(dirSource));
 });
+
+// Setup remaining middleware.
+app.use(express.json());
+app.use(slashes());
+
+// Allow any implementing binder support for middleware or static routes.
+trigger('server.configure', app, true);
 
 // Start express HTTP server for API on the given port
 let serverStarted = false;

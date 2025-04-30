@@ -358,9 +358,9 @@ bindTo('paper.ready', 'projects', () => {
   initProject();
 
   // Load last. DEBUG
-  setTimeout(() => {
-    openProject('6a1253d8aaefb233');
-  }, 1);
+  // setTimeout(() => {
+  //   openProject('6a1253d8aaefb233');
+  // }, 1);
 });
 
 // Rendering and print state management.

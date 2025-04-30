@@ -2,7 +2,7 @@
  * @file Abstraction module for all Socket I/O related code for CNC Server!
  *
  */
-import socketio from 'socket.io';
+import { Server as socketio } from 'socket.io';
 import { bindTo, trigger } from 'cs/binder';
 import { httpServer } from 'cs/server';
 import { setPen, state as penState } from 'cs/pen';
@@ -11,7 +11,7 @@ import { state as bufferState } from 'cs/buffer';
 import { layers } from 'cs/drawing/base';
 import { snapPathsToColorset } from 'cs/drawing/colors';
 
-const io = socketio(httpServer);
+const io = new socketio(httpServer);
 
 // Shortcut functions for move/height streaming.
 export const shortcut = {

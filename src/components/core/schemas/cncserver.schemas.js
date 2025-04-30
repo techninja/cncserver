@@ -6,7 +6,7 @@ import { trigger, bindTo } from 'cs/binder';
 import schemas from 'cs/schemas/index';
 import { applyObjectTo } from 'cs/utils';
 
-const ajv = Ajv({
+const ajv = new Ajv({
   allErrors: true,
   removeAdditional: true,
   unknownFormats: [

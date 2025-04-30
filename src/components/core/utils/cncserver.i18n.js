@@ -3,8 +3,8 @@
  * @see https://www.i18next.com/translation-function/essentials
  */
 import i18next from 'i18next';
-import i18nextFSBackend from 'i18next-node-fs-backend';
-import i18nextMiddleware from 'i18next-express-middleware';
+import i18nextFSBackend from 'i18next-fs-backend';
+import i18nextMiddleware from 'i18next-http-middleware';
 import path from 'path';
 import { bindTo } from 'cs/binder';
 import { __basedir } from 'cs/utils';

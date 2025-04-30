@@ -2,7 +2,7 @@
  * @file Abstraction module for generic util helper functions for CNC Server!
  */
 import crypto from 'crypto'; // Crypto library for hashing.
-import glob from 'glob';
+import { glob } from 'glob';
 
 // File Utils.
 import { homedir } from 'os';
