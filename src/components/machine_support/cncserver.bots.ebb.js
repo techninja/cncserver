@@ -8,8 +8,10 @@ import run from 'cs/run';
 import { setSetupCommands } from 'cs/serial';
 import { cmdstr } from 'cs/buffer';
 import { botConf } from 'cs/settings';
-import { getSerialValue } from 'cs/ipc';
+import { getSerialValue, sendMessage } from 'cs/ipc';
 import { singleLineString as SLS } from 'cs/utils';
+import { get as getImplement } from 'cs/drawing/implements';
+import { set as colorSet, getIDs, getColor } from 'cs/drawing/colors';
 
 const ebb = { id: 'bots.ebb', version: {} }; // Exposed export.
 const minVersion = '>=2.2.7';
@@ -56,7 +58,7 @@ export default function initBot() {
         return;
       }
 
-      const version = message.split(' ').pop();
+      const version = message.split('Version ').pop().split(/\s/)[0];
       ebb.version = {
         value: version,
         string: message,
@@ -65,6 +67,26 @@ export default function initBot() {
         SLS`Connected to ${controller.manufacturer} ${controller.name},
           firmware v${version}`
       );
+
+      // Send current implement params to vbot for preview rendering.
+      const implementName = colorSet.implement || 'crayola-size-3-brush';
+      const imp = getImplement(implementName) || {};
+      const w = Number(imp.width ?? 3);
+      const l = Number(imp.length ?? 10.75);
+      const s = Number(imp.stiffness ?? 0.25);
+      const o = Number(imp.opacity ?? 0.75);
+
+      // Send colorset colors to vbot so the preview renders with correct colors.
+      const colorCmds = getIDs().map((id, slot) => {
+        const item = getColor(id);
+        return `; SET color ${slot} ${item.color}`;
+      });
+
+      sendMessage('serial.direct.command', {
+        commands: [`; SET implement ${w} ${l} ${s} ${o}`, ...colorCmds],
+        duration: 0,
+      });
+
       if (!semver.satisfies(version, minVersion)) {
         console.error('='.repeat(76));
         console.error(SLS`ERROR: Firmware version does not meet minimum

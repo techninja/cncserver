@@ -7,6 +7,7 @@ import * as control from 'cs/control';
 import * as tools from 'cs/tools';
 import { getColorID } from 'cs/drawing/base';
 import { getPreset } from 'cs/utils';
+import run from 'cs/run';
 
 // Exposed export.
 const watercolorbot = {
@@ -88,12 +89,14 @@ export default function initBot() {
     tools.changeTo('water0dip');
     tools.changeTo('water1');
     tools.changeTo('water2');
+    run('custom', '; MARK wash');
   };
 
   // Reink with a water dip.
   watercolorbot.reink = (tool = pen.state.tool) => {
     tools.changeTo('water0dip');
     tools.changeTo(tool);
+    run('custom', `; MARK reink ${tool}`);
   };
 
   // Bind the wiggle to the toolchange event.
@@ -123,12 +126,14 @@ export default function initBot() {
 
   // Bind to begin of rendering path color group.
   bindTo('print.render.group.begin', watercolorbot.id, colorID => {
+    run('custom', '; PRINT start');
     watercolorbot.fullWash();
   });
 
   // Bind to end of rendering everything, wash that brush.
   bindTo('print.render.finish', watercolorbot.id, () => {
     watercolorbot.fullWash();
+    run('custom', '; PRINT end');
   });
 
   // Bind to path parsing for printing, allows for splitting paths to reink.

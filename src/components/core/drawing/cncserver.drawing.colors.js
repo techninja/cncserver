@@ -344,16 +344,11 @@ export function applyPreview(item, color) {
   *
   * @param {paper.Layer} layer
   */
-export function snapPathsToColorset(layer) {
-  // This gets called every time there's an update to the render "preview" layer.
-  //  - Layer children is a list of content Group() items by hash
-  //  - Each group contains all the paths
+export const isMatcherReady = () => matcher.isReady();
 
-  // To snap all the paths to a color, we should move through each path
-  // Priorty?
-  //  - Line color
-  //  - Line thickness (not transferred yet, need to add)
-  //  - Line Transparency (not transferred, need to add)
+export function snapPathsToColorset(layer) {
+  // Bail if colorset isn't initialized yet.
+  if (!matcher.isReady()) return;
 
   // Remove everything on print, rebuild it from here.
   layers.print.removeChildren();
@@ -368,7 +363,7 @@ export function snapPathsToColorset(layer) {
     colorsetItems[id] = getColor(id, true, true);
   });
 
-  console.log('MATCHING ITEMS =====================================================');
+  // console.log('MATCHING ITEMS =====================================================');
 
   // Move through all preview groups, then all items within them.
   layer.children.forEach(group => {
