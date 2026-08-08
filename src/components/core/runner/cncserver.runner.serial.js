@@ -3,7 +3,7 @@
  * serial writes and batch processes.
  */
 // Base serialport module globals.
-import SerialPort from 'serialport';
+import { SerialPort, ReadlineParser } from 'serialport';
 
 // State vars.
 let port;
@@ -145,12 +145,14 @@ export function connect(options) {
 
   // Note: runner doesn't do autodetection.
   try {
-    port = new SerialPort(options.port, options, err => {
+    port = new SerialPort({ path: options.port, baudRate: options.baudRate }, err => {
       if (!err) {
         retries = 0;
         setSimulation(false);
-        const { Readline } = SerialPort.parsers;
-        const parser = port.pipe(new Readline({ delimiter: '\r' }));
+        const parser = port.pipe(new ReadlineParser({ delimiter: '\r' }));
+
+        // Bind read before triggering connect so responses aren't dropped.
+        parser.on('data', bindings.read);
 
         // Send setup commands
         if (options.setupCommands.length) {
@@ -159,14 +161,13 @@ export function connect(options) {
             if (global.debug && error) {
               console.log(`SerialPort says: ${error.toString()}`);
             }
+            // Trigger connect only after setup commands complete.
+            bindings.triggerBind('connect', options);
           });
+        } else {
+          bindings.triggerBind('connect', options);
         }
 
-        // Trigger connect binding.
-        bindings.triggerBind('connect', options);
-
-        // Bind read, reconnect logic and close/disconnect.
-        parser.on('data', bindings.read);
         port.on('close', error => {
           if (error.disconnect) bindings.triggerBind('disconnect');
           // If we got disconnected, throw to the try/catch for reconnect.

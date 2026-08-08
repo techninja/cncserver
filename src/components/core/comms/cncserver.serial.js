@@ -114,27 +114,27 @@ export function connect(options) {
   callbacks.success = options.success;
 
   // Run everything through the callback as port list is async.
-  console.log('Finding available serial ports...');
+    // console.log('Finding available serial ports...');
   const botController = botConf.get('controller');
   autoDetectPort(botController, ports => {
     // Give some console feedback on ports.
     if (gConf.get('debug')) {
-      console.log('Full Available Port Data:', ports.full);
+      // console.log('Full Available Port Data:', ports.full);
     } else {
       const names = ports.names.length ? ports.names.join(', ') : '[NONE]';
-      console.log(`Available Serial ports: ${names}`);
+      // console.log(`Available Serial ports: ${names}`);
     }
 
     const passedPort = gConf.get('serialPath');
     if (passedPort === '' || passedPort === '{auto}') {
       if (ports.auto.length) {
         gConf.set('serialPath', ports.auto[0]);
-        console.log(`Using first detected port: "${ports.auto[0]}"...`);
+        // console.log(`Using first detected port: "${ports.auto[0]}"...`);
       } else {
         console.error('No matching serial ports detected.');
       }
     } else {
-      console.log(`Using passed serial port "${passedPort}"...`);
+      // console.log(`Using passed serial port "${passedPort}"...`);
     }
 
     // Send connect to runner...
@@ -154,7 +154,7 @@ export function connect(options) {
         });
       }
     } else {
-      console.log(`Attempting to open serial port: "${connectPath}"...`);
+      // console.log(`Attempting to open serial port: "${connectPath}"...`);
 
       const connectData = {
         port: connectPath,
@@ -165,7 +165,7 @@ export function connect(options) {
         setupCommands: state.setupCommands,
       };
 
-      ipc.sendMessage('serial.connect', connectData);
+      ipc.connect(connectData);
     }
   });
 }
@@ -185,12 +185,12 @@ export function localTrigger(event) {
 
   switch (event) {
     case 'simulationStart':
-      console.log('=======Continuing in SIMULATION MODE!!!============');
+      // console.log('=======Continuing in SIMULATION MODE!!!============');
       forceState({ simulation: 1 });
       break;
 
     case 'serialReady':
-      console.log(`CNC server API listening on ${restriction}:${port}`);
+      // console.log(`CNC server API listening on ${restriction}:${port}`);
 
       forceState({ simulation: 0 });
       localTrigger('botInit');

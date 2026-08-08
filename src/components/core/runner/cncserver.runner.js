@@ -7,8 +7,12 @@
  * socket messages, always use the API to communicate via serial, not this.
  */
 
-// Imports ====================================================================
 import { Readable, Writable } from 'stream';
+import fs from 'fs';
+import readline from 'readline';
+import net from 'net';
+import path from 'path';
+import { homedir } from 'os';
 
 import * as serial from './cncserver.runner.serial.js';
 import initIPC from './cncserver.runner.ipc.js';
@@ -38,6 +42,144 @@ global.config = {
   debug: false,
   showSerial: false,
 };
+
+// ── Move file runner ──────────────────────────────────────────────────────────
+
+// Live control state — adjusted by Unix socket commands.
+const liveControl = {
+  speedMultiplier: 1.0,
+  zMin: 0,
+  zMax: 100,
+};
+
+let moveFileRunning = false;
+
+// Send one command and wait for the bot to ACK it before resolving.
+function writeAndWaitAck(command) {
+  return new Promise((resolve, reject) => {
+    serial.write(command, err => { if (err) reject(err); });
+    // ACK arrives via the read binding — stash the resolver.
+    serial._pendingAck = resolve;
+  });
+}
+
+// Called from the read binding for every serial line received.
+function handleSerialRead(data) {
+  const str = data.toString().trim();
+  if (!str) return;
+  ipc.sendMessage('serial.data', str);
+  if (serial._pendingAck) {
+    const resolve = serial._pendingAck;
+    serial._pendingAck = null;
+    resolve(str);
+  }
+}
+
+// Read the entire move file line by line, sending each command and awaiting ACK.
+async function runMoveFile(filePath) {
+  moveFileRunning = true;
+  const spm = global.config.stepsPerMM;
+  const pos = { x: 0, y: 0 };
+
+  // Wait for the file to exist (it may be truncated/created just before this).
+  while (!fs.existsSync(filePath)) await new Promise(r => setTimeout(r, 50));
+
+  // Poll for new lines — cncrender streams strokes in as print.js renders them.
+  let offset = 0;
+  let idleMs = 0;
+  const IDLE_TIMEOUT = 10000; // give up after 10s of no new data
+
+  while (moveFileRunning) {
+    const stat = fs.statSync(filePath);
+
+    if (stat.size > offset) {
+      idleMs = 0;
+      const fd = fs.openSync(filePath, 'r');
+      const buf = Buffer.alloc(stat.size - offset);
+      fs.readSync(fd, buf, 0, buf.length, offset);
+      fs.closeSync(fd);
+      offset = stat.size;
+
+      const lines = buf.toString().split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let msg;
+        try { msg = JSON.parse(line); } catch { continue; }
+
+        if (msg.t === 'move') {
+          const dur = Math.round((msg.dur || 1) / liveControl.speedMultiplier);
+          const absX = spm ? Math.round(msg.x * spm.x) : Math.round(msg.x);
+          const absY = spm ? Math.round(msg.y * spm.y) : Math.round(msg.y);
+          const dx = absX - pos.x;
+          const dy = absY - pos.y;
+          pos.x = absX;
+          pos.y = absY;
+          await writeAndWaitAck(`SM,${dur},${dx},${dy}`);
+        } else if (msg.t === 'z') {
+          const height = msg.z === 0 ? liveControl.zMin : liveControl.zMax;
+          await writeAndWaitAck(`SP,${height}`);
+        }
+      }
+    } else {
+      idleMs += 50;
+      if (idleMs >= IDLE_TIMEOUT) {
+        console.log('RUNNER: move file idle timeout, stopping');
+        break;
+      }
+      await new Promise(r => setTimeout(r, 50));
+    }
+  }
+
+  moveFileRunning = false;
+  console.log('RUNNER: move file run complete');
+}
+
+function startMoveFileRun(filePath) {
+  moveFileRunning = false; // cancel any in-progress run
+  console.log('RUNNER: starting move file run:', filePath);
+  runMoveFile(filePath).catch(err => console.error('RUNNER: runMoveFile error:', err));
+}
+
+// ── Unix socket live control ──────────────────────────────────────────────────
+
+const SOCKET_PATH = path.resolve(homedir(), 'cncserver', 'runner.sock');
+
+function startControlSocket() {
+  // Remove stale socket if present.
+  if (fs.existsSync(SOCKET_PATH)) fs.unlinkSync(SOCKET_PATH);
+
+  const server = net.createServer(conn => {
+    const rl = readline.createInterface({ input: conn });
+    rl.on('line', line => {
+      let msg;
+      try { msg = JSON.parse(line); } catch { return; }
+      switch (msg.cmd) {
+        case 'speed':
+          liveControl.speedMultiplier = Math.max(0.1, Number(msg.multiplier) || 1.0);
+          break;
+        case 'z_range':
+          liveControl.zMin = Number(msg.min ?? 0);
+          liveControl.zMax = Number(msg.max ?? 100);
+          break;
+        case 'pause':
+          state.setPaused(true);
+          break;
+        case 'resume':
+          state.setPaused(false);
+          break;
+        default:
+          break;
+      }
+    });
+  });
+
+  server.listen(SOCKET_PATH, () => {
+    if (global.debug) console.log(`RUNNER: control socket at ${SOCKET_PATH}`);
+  });
+
+  server.on('error', err => console.error('RUNNER socket error:', err.message));
+}
+
 
 // This node stream buffers instructions to be written to the serial port.
 let instructionStream = null;
@@ -188,7 +330,9 @@ serial.bindAll({
   simulation: state.setSimulation,
 
   // Called for every line read from the serial port.
-  read: data => ipc.sendMessage('serial.data', data.toString()),
+  read: data => {
+    handleSerialRead(data);
+  },
 
   // Called for any fatal initialization or transmission error.
   error: (type, err) => {
@@ -231,6 +375,7 @@ function gotMessage(packet) {
         console.log('Config data:', JSON.stringify(data));
         global.debug = true;
       }
+      startControlSocket();
       break;
     case 'runner.shutdown':
       console.log('Recieved kill signal from host, shutting down runner.');
@@ -270,6 +415,10 @@ function gotMessage(packet) {
     case 'buffer.clear': // Clear the entire buffer.
       initInstructionStreams();
       console.log('BUFFER CLEARED');
+      break;
+
+    case 'movefile.start':
+      startMoveFileRun(data);
       break;
 
     default:

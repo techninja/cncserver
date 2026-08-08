@@ -1,258 +1,185 @@
 /**
- * @file Abstraction module for all Inter Process Communication related code
- * for talking to the "runner" process, for CNC Server!
- *
+ * @file Abstraction module for all Inter Process Communication related code.
+ * cncrunner (Rust) is the sole serial owner — spawned once on connect,
+ * killed on shutdown. All serial I/O routes through its stdin/stdout.
  */
-import { spawn } from 'child_process'; // Process spawner.
-import nodeIPC from 'node-ipc'; // Inter Process Comms for runner.
+import { spawn } from 'child_process';
+import readline from 'readline';
+import nodeIPC from 'node-ipc';
 import path from 'path';
-import { trigger } from 'cs/binder';
-import {
-  cmdstr, startItem, removeItem, setRunning
-} from 'cs/buffer';
-import { gConf, botConf } from 'cs/settings';
+import { trigger, bindTo } from 'cs/binder';
+import { gConf, botConf, bot } from 'cs/settings';
 import { callbacks as serialCallbacks } from 'cs/serial';
 import { forceState } from 'cs/pen';
 import { __basedir } from 'cs/utils';
 
-// IPC server config.
-nodeIPC.config.silent = true;
-nodeIPC.config.id = 'cncserver';
-nodeIPC.config.retry = 1500;
+const CNCRUNNER_BIN = path.resolve(
+  __basedir, '..', 'src', 'cncrunner', 'target', 'debug', 'cncrunner'
+);
 
-// TODO: Evaluate usage of state to ensure only what we need exported is exported.
+// Active cncrunner child process.
+let proc = null;
+
+// Cached firmware version from ready event.
+let cachedVersion = null;
+
+// Pending resolver for getSerialValue — resolved by next "data" event.
 export const state = {
-  runnerSocket: {}, // The IPC socket for communicating to the runner
-  runnerInitCallback: null, // Placeholder for init set callback.
   getSerialValueCallback: null,
 };
 
-/**
-  * Send a message to the runner.
-  *
-  * @param  {string} command
-  *   The string identifier for the command in dot notation.
-  * @param  {object/string} data
-  *   Data to be sent message receiver on client.
-  * @param  {object} socket
-  *   The IPC socket to send to, defaults to initial connect socket.
-  *
-  * @return {null}
-  */
-export function sendMessage(command, data, socket = state.runnerSocket) {
-  const packet = {
-    command,
-    data,
-  };
+// ── Output ────────────────────────────────────────────────────────────────────
 
-  nodeIPC.server.emit(socket, 'app.message', packet);
+function sendToRunner(obj) {
+  if (!proc) return;
+  try { proc.stdin.write(JSON.stringify(obj) + '\n'); } catch { /* gone */ }
 }
 
-// Define the runner tracker object.
-export const runner = {
-  process: {},
-
-  /**
-    * Start up & init the Runner process via node
-    */
-  init: () => {
-    runner.process = spawn(
-      'node',
-      [path.join(__basedir, 'components', 'core', 'runner', 'cncserver.runner.js')]
-    );
-
-    runner.process.stdout.on('data', rawData => {
-      const data = rawData.toString().split('\n');
-      for (const i in data) {
-        if (data[i].length) console.log(`RUNNER:${data[i]}`);
+export function sendMessage(command, data) {
+  // Map legacy IPC command names to cncrunner stdin messages.
+  switch (command) {
+    case 'serial.direct.command':
+      // data.commands is an array — send each as an immediate write.
+      for (const cmd of (data.commands || [])) {
+        sendToRunner({ cmd: 'write', data: cmd });
       }
-    });
-
-    runner.process.stderr.on('data', data => {
-      console.log(`RUNNER ERROR: ${data}`);
-    });
-
-    runner.process.on('exit', exitCode => {
-      // TODO: Restart it? Who knows.
-      console.log(`RUNNER EXITED: ${exitCode}`);
-    });
-  },
-
-  shutdown: () => {
-    console.log('Killing runner process before exiting...');
-    runner.process.kill();
-    process.exit();
-  },
-};
-
-/**
-  * Helper for getting an async value from the serial port, always direct.
-  *
-  * @param  {string} command
-  *   A named machine configuration command.
-  * @param  {object} options
-  *   Keyed value replacement options for the command.
-  *
-  * @return {Promise}
-  *   Promise that will always succeed with next message from serial.
-  */
-export const getSerialValue = (command, options = {}) => new Promise(resolve => {
-  process.nextTick(() => {
-    sendMessage('serial.direct.command', {
-      commands: [cmdstr(command, options)],
-      duration: 0,
-    });
-
-    state.getSerialValueCallback = resolve;
-  });
-});
-
-/**
-  * Raw serial helper for getting an async value from the serial port, always direct.
-  *
-  * @param  {string} command
-  *   Raw serial string to send.
-  *
-  * @return {Promise}
-  *   Promise that will always succeed with next message from serial.
-  */
-export const getSerialValueRaw = command => new Promise(resolve => {
-  process.nextTick(() => {
-    console.log('Sending raw', command);
-    sendMessage('serial.direct.command', {
-      commands: [command],
-      duration: 0,
-    });
-
-    state.getSerialValueCallback = resolve;
-  });
-});
-
-/**
-  * IPC Message callback event parser/handler.
-  *
-  * @param  {object} packet
-  *   The entire message object directly from the event.
-  * @param  {object} socket
-  *   The originating IPC client socket object.
-  *
-  * @return {null}
-  */
-export function ipcGotMessage(packet, socket) {
-  const { data } = packet;
-  const messages = typeof data === 'string' ? data.trim().split('\n') : [];
-  const { baudRate } = botConf.get('controller');
-
-  switch (packet.command) {
-    case 'runner.ready':
-      state.runnerSocket = socket;
-      sendMessage('runner.config', {
-        debug: gConf.get('debug'),
-        ack: botConf.get('controller').ack,
-        showSerial: gConf.get('showSerial'),
-      });
-
-      if (state.runnerInitCallback) state.runnerInitCallback();
-      break;
-
-    // Sync simulation state from runner.
-    case 'serial.simulation':
-      forceState({ simulation: packet ? 1 : 0 });
-      break;
-
-    case 'serial.connected':
-      console.log(
-        `Serial connection open at ${baudRate}bps`
-      );
-
-      trigger('serial.connected');
-
-      if (serialCallbacks.connect) serialCallbacks.connect(data);
-      if (serialCallbacks.success) serialCallbacks.success(data);
-      break;
-
-    case 'serial.disconnected':
-      if (serialCallbacks.disconnect) serialCallbacks.disconnect(data);
-      break;
-
-    case 'serial.error':
-      if (packet.type === 'connect') {
-        console.log(
-          'Serial port failed to connect. Is it busy or in use? Error #10'
-        );
-        console.log('SerialPort says:', packet.message);
-        if (serialCallbacks.complete) serialCallbacks.complete(data);
-      } else {
-        // TODO: Add better error message here, or figure out when this
-        // happens.
-        console.log('Serial failed to send data. Error #44');
-      }
-
-      if (serialCallbacks.error) serialCallbacks.error(data);
-      break;
-
-    case 'serial.data':
-      // Either get the value for a caller, or trigger generic bind.
-      messages.forEach(message => {
-        // TODO: Does this work every time?
-        // && message !== botConf.get('controller').ack) {
-        if (state.getSerialValueCallback) {
-          state.getSerialValueCallback(message);
-          state.getSerialValueCallback = null;
-        } else {
-          trigger('serial.message', message);
-        }
-      });
-      break;
-
-    case 'buffer.item.start':
-      // Buffer action item begun to run.
-      startItem(data);
-      break;
-
-    case 'buffer.item.done':
-      // Buffer item has completed.
-      removeItem(data);
-      break;
-
-    case 'buffer.empty':
-      // TODO: Is this needed?
-      break;
-
-    case 'buffer.running':
-      setRunning(data);
       break;
     default:
+      break;
   }
 }
 
-/**
-  * Initialize and start the IPC server
-  *
-  * @param  {object} options
-  *   localRunner {boolean}: true if we should try to init the runner locally,
-  *     false to defer starting the runner to the parent application.
-  * @param  {Function} callback
-  *   Function called when the runner is connected and ready.
-  *
-  * @return {null}
-  */
-export function initServer(options, callback) {
-  state.runnerInitCallback = callback;
+// ── cncrunner lifecycle ───────────────────────────────────────────────────────
 
-  // Initialize and start the IPC Server...
-  nodeIPC.serve(() => {
-    trigger('ipc.serve');
-    nodeIPC.server.on('app.message', ipcGotMessage);
+export function connect(connectData) {
+  if (proc) {
+    try { proc.kill(); } catch { /* gone */ }
+    proc = null;
+  }
+
+  const cfg = {
+    port:           connectData.port,
+    baud:           connectData.baudRate,
+    setup_commands: connectData.setupCommands || [],
+    steps_per_mm:   bot.stepsPerMM,
+    z_min:          0,
+    z_max:          100,
+  };
+
+  console.log(`[cncrunner] spawning on ${cfg.port}`);
+  proc = spawn(CNCRUNNER_BIN, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+
+  proc.stdin.write(JSON.stringify(cfg) + '\n');
+
+  const rl = readline.createInterface({ input: proc.stdout });
+  rl.on('line', line => {
+    if (!line.trim()) return;
+    let msg;
+    try { msg = JSON.parse(line); } catch { return; }
+
+    switch (msg.t) {
+      case 'ready':
+        console.log(`Serial connection open at ${cfg.baud}bps`);
+        cachedVersion = `EBBv13_and_above EB Firmware Version ${msg.version}`;
+        // Resolve any pending version query immediately.
+        if (state.getSerialValueCallback) {
+          const cb = state.getSerialValueCallback;
+          state.getSerialValueCallback = null;
+          cb(cachedVersion);
+        }
+        trigger('serial.connected');
+        if (serialCallbacks.connect) serialCallbacks.connect();
+        if (serialCallbacks.success) serialCallbacks.success();
+        forceState({ simulation: 0 });
+        break;
+
+      case 'data':
+        if (state.getSerialValueCallback) {
+          const cb = state.getSerialValueCallback;
+          state.getSerialValueCallback = null;
+          cb(msg.msg);
+        } else {
+          trigger('serial.message', msg.msg);
+        }
+        break;
+
+      case 'pos':
+        trigger('runner.pos', { x: msg.x, y: msg.y });
+        break;
+
+      case 'ack':
+        trigger('runner.ack', msg.i);
+        break;
+
+      case 'done':
+        console.log('[cncrunner] print done');
+        trigger('runner.done');
+        break;
+
+      case 'error':
+        console.error('[cncrunner]', msg.msg);
+        trigger('serial.message', msg.msg);
+        break;
+
+      default:
+        break;
+    }
   });
 
-  nodeIPC.server.start();
-  console.log('Starting IPC server, waiting for runner client to start...');
-
-  if (options.localRunner) {
-    // Register an event callback to shutdown the runner if we're exiting.
-    process.on('SIGTERM', runner.shutdown);
-    process.on('SIGINT', runner.shutdown);
-    runner.init();
-  }
+  proc.stderr.on('data', d => console.error(`[cncrunner] ${d.toString().trim()}`));
+  proc.on('exit', code => {
+    console.log(`[cncrunner] exited: ${code}`);
+    proc = null;
+    if (serialCallbacks.disconnect) serialCallbacks.disconnect();
+  });
 }
+
+export function shutdown() {
+  if (proc) { try { proc.kill(); } catch { /* gone */ } proc = null; }
+}
+
+// ── Serial value helper (used by ebb.js for version query etc.) ───────────────
+
+export const getSerialValue = (command) => new Promise(resolve => {
+  if (command === 'version' && cachedVersion) {
+    // Version already known from ready event — resolve immediately.
+    resolve(cachedVersion);
+    return;
+  }
+  // For any other command, set callback and send as immediate write.
+  state.getSerialValueCallback = resolve;
+  sendToRunner({ cmd: 'write', data: command });
+});
+
+export const getSerialValueRaw = command => new Promise(resolve => {
+  state.getSerialValueCallback = resolve;
+  sendToRunner({ cmd: 'write', data: command });
+});
+
+// ── Binder wiring ─────────────────────────────────────────────────────────────
+
+export function initServer(options, callback) {
+  if (options.localRunner) {
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+  }
+
+  // Keep the node-ipc server alive for the spawner (fill/vectorize workers).
+  nodeIPC.config.silent = true;
+  nodeIPC.config.id = 'cncserver';
+  nodeIPC.serve(() => {
+    trigger('ipc.serve');
+  });
+  nodeIPC.server.start();
+
+  // Start move file run when print rendering is ready.
+  bindTo('print.movefile.ready', 'ipc', filePath => {
+    console.log('[cncrunner] starting run:', filePath);
+    sendToRunner({ cmd: 'run', file: filePath });
+  });
+
+  if (callback) callback();
+}
+
+// Legacy no-ops kept so callers don't break during transition.
+export const runner = { init: () => {}, shutdown };
