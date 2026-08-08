@@ -8,8 +8,9 @@ import pathToRegexp from 'path-to-regexp';
 import { createServerEndpoint } from 'cs/rest';
 import { gConf } from 'cs/settings';
 import { handlers } from 'cs/api/handlers';
+import { batchState, setBatchRunningState } from 'cs/buffer';
 
-export const batchState = { batchRunning: false };
+export { batchState, setBatchRunningState };
 
 // CNC Server API ============================================================
 // Enpoints are created and assigned via a server path to respond to, and
@@ -165,10 +166,6 @@ function processBatchData(commands, callback, index, goodCount) {
 }
 
 // Batch Command API =========================================================
-export function setBatchRunningState(runningState = false) {
-  batchState.batchRunning = !!runningState;
-}
-
 createServerEndpoint('/v1/batch', (req, res) => {
   // Create a new batch set.
   if (req.route.method === 'post') {

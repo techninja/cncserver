@@ -3,7 +3,6 @@
  *
  */
 import express from 'express'; // Express Webserver Requires
-import slashes from 'connect-slashes'; // Middleware to manage URI slashes
 import http from 'http';
 import path from 'path';
 import { homedir } from 'os';
@@ -17,7 +16,7 @@ export const app = express(); // Create router (app).
 export const httpServer = http.createServer(app);
 
 // Global express initialization (must run before any endpoint creation)
-console.log('APP CONFIG ======================================= ');
+// console.log('APP CONFIG ======================================= ');
 // Base static path for remote interface.
 app.use('/', express.static(path.join(__basedir, 'interface')));
 
@@ -41,7 +40,7 @@ const statics = {
   bootstrap: path.join(nm, 'bootstrap', 'dist'),
   'font-awesome': path.join(nm, '@fortawesome', 'fontawesome-free', 'css'),
   webfonts: path.join(nm, '@fortawesome', 'fontawesome-free', 'webfonts'),
-  modules: path.resolve(__basedir, '..', 'web_modules'),
+  modules: path.resolve(__basedir, 'interface', 'modules'),
   home: path.join(path.resolve(homedir(), 'cncserver')),
 };
 
@@ -50,9 +49,13 @@ Object.entries(statics).forEach(([staticPath, dirSource]) => {
   app.use(`/${staticPath}`, express.static(dirSource));
 });
 
+// Serve hybrids ES module entry as /modules/hybrids.js
+app.get('/modules/hybrids.js', (req, res) => {
+  res.sendFile(path.join(__basedir, 'interface', 'lib', 'hybrids.js'));
+});
+
 // Setup remaining middleware.
 app.use(express.json());
-app.use(slashes());
 
 // Allow any implementing binder support for middleware or static routes.
 trigger('server.configure', app, true);
@@ -95,6 +98,11 @@ export function start() {
     gConf.get('httpPort'),
     hostname,
     () => {
+      console.log(
+        `HTTP server listening on ${
+          hostname || '*'
+        }:${gConf.get('httpPort')}`
+      );
       // Properly close down server on fail/close
       process.on('SIGTERM', err => {
         console.log(err);

@@ -30,22 +30,26 @@ export function createStaticEndpoint(userPath, sourcePath, options) {
   *   Callback triggered on HTTP request
   */
 export function createServerEndpoint(path, callback) {
+  // console.log(`  ENDPOINT: ${path}`);
   const what = Object.prototype.toString;
   app.all(path, (req, res) => {
     res.set('Content-Type', 'application/json; charset=UTF-8');
     res.set('Access-Control-Allow-Origin', gConf.get('corsDomain'));
 
+    // Express 5 removed req.route.method; use req.method directly.
+    const method = req.method.toLowerCase();
+    req.route.method = method; // keep for handler callbacks that read it
+
     if (gConf.get('debug') && path !== '/poll') {
       console.log(
-        req.route.method.toUpperCase(),
+        method.toUpperCase(),
         req.route.path,
         JSON.stringify(req.body)
       );
     }
 
     // Handle CORS Pre-flight OPTIONS request ourselves
-    // TODO: Allow implementers to define options and allowed methods.
-    if (req.route.method === 'options') {
+    if (method === 'options') {
       res.set(
         'Access-Control-Allow-Methods',
         'PUT, PATCH, POST, GET, DELETE'
