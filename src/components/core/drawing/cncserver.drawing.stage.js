@@ -5,7 +5,6 @@
 import Paper from 'paper';
 import { layers, fitBounds, workspace } from 'cs/drawing/base';
 import { sendPaperUpdate } from 'cs/sockets';
-import { wrapSVG } from 'cs/utils';
 
 const { Group, Path } = Paper;
 
@@ -82,16 +81,20 @@ export function importGroup(importItem, hash, bounds) {
 }
 
 // Get a full preview SVG of the stage layer content.
-export function getPreviewSVG() {
-  // Hide bounds rects.
+export function getPreviewSVG(paperColor = null) {
   toggleRects(false);
-
-  const svgContent = layers.stage.exportSVG({ asString: true });
-
-  // Show bounds rects.
+  let svgContent = layers.stage.exportSVG({ asString: true });
   toggleRects(true);
 
-  return wrapSVG(svgContent, workspace);
+  const w = Math.round(workspace.width);
+  const h = Math.round(workspace.height);
+  const vx = Math.round(workspace.left);
+  const vy = Math.round(workspace.top);
+  const bg = paperColor ? `<rect x="${vx}" y="${vy}" width="${w}" height="${h}" fill="${paperColor}"/>` : '';
+
+  // Inject dimensions, viewBox and paper background into Paper's exported SVG tag.
+  return svgContent
+    .replace('<svg>', `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${vx} ${vy} ${w} ${h}">${bg}`);
 }
 
 // Update an item on the stage with its action item.

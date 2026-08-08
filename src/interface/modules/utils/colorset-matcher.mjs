@@ -21,6 +21,9 @@ export function setup({ chroma, colorset, options, overrideItem }) {
   if (overrideItem) state.overrideItem = overrideItem;
 }
 
+// Returns true if the colorset has been initialized with items.
+export const isReady = () => !!state.colorset?.items?.length;
+
 // Set weighting values for color distance calculations.
 export function setWeights({ luma, chroma }) {
   state.lumaWeight = luma;

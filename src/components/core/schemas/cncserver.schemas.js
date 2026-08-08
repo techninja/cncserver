@@ -2,6 +2,7 @@
  * @file Wrapper module for verifying data to schemas, and providing errors.
  */
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import { trigger, bindTo } from 'cs/binder';
 import schemas from 'cs/schemas/index';
 import { applyObjectTo } from 'cs/utils';
@@ -9,19 +10,29 @@ import { applyObjectTo } from 'cs/utils';
 const ajv = new Ajv({
   allErrors: true,
   removeAdditional: true,
-  unknownFormats: [
-    'checkbox', 'color', 'range', 'tabs', 'categories', 'number', 'textarea'
-  ],
+  strictTypes: false,   // format on boolean/number is intentional (UI hints)
+  strictSchema: false,  // step, options etc. are intentional UI-hint keywords
 });
+
+// Standard formats (date, email, uri, etc.)
+addFormats(ajv);
+
+// UI-hint formats used by the form renderer — registered as pass-through.
+// These are valid in the json-editor/jsonforms convention.
+['checkbox', 'color', 'range', 'tabs', 'categories', 'number', 'textarea'].forEach(
+  fmt => ajv.addFormat(fmt, { type: 'string', validate: () => true })
+);
 
 // Format the AJV field error messages.
 function formatMessages(errors) {
   const fields = errors.reduce((acc, e) => {
-    if (e.dataPath.length && e.dataPath[0] === '.') {
+    const path = e.instancePath || e.dataPath || '';
+    if (path.length) {
+      const key = path.replace(/^\/|\./, '').replace(/\//g, '.');
       const av = e.params.allowedValues ? `: ${e.params.allowedValues.join(', ')}` : '';
-      acc[e.dataPath.slice(1)] = [`${e.message}${av}`];
+      acc[key] = [`${e.message}${av}`];
     } else {
-      acc[e.dataPath] = [e.message];
+      acc[path] = [e.message];
     }
     return acc;
   }, {});

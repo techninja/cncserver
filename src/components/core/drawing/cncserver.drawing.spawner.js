@@ -4,11 +4,21 @@
  * Manages secondary processes for work hash based functions.
  */
 import { spawn } from 'child_process'; // Process spawner.
+import readline from 'readline';
 import ipc from 'node-ipc'; // Inter Process Comms (shared with ).
 import path from 'path'; // File System path management.
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { state as drawingBase } from 'cs/drawing/base';
 import { bindTo } from 'cs/binder';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const CNCRENDER_BIN = path.resolve(
+  __dirname,
+  '../../../../cncrender/bin',
+  process.platform,
+  'cncrender'
+);
 
 // Hold onto paths and settings to be injected, keyed on job hashes & work type.
 const workingQueue = {};
@@ -139,3 +149,42 @@ const spawner = ({
 });
 
 export default spawner;
+
+/**
+ * Spawn cncrender (Rust binary) with a single NDJSON job.
+ *
+ * @param {object} job  Plain object with at minimum { job, hash }.
+ * @param {Function} [onProgress]  Called with each progress line object.
+ * @returns {Promise<object>}  Resolves with the result line object.
+ */
+export function cncrenderJob(job, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!fs.existsSync(CNCRENDER_BIN)) {
+      reject(new Error(`cncrender binary not found: ${CNCRENDER_BIN}`));
+      return;
+    }
+
+    const proc = spawn(CNCRENDER_BIN, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const rl = readline.createInterface({ input: proc.stdout });
+
+    rl.on('line', line => {
+      if (!line.trim()) return;
+      let msg;
+      try { msg = JSON.parse(line); } catch { return; }
+      if (msg.type === 'result') {
+        resolve(msg);
+      } else if (msg.type === 'progress' && onProgress) {
+        onProgress(msg);
+      }
+    });
+
+    proc.stderr.on('data', d => console.error(`CNCRENDER ERR: ${d}`));
+    proc.on('error', reject);
+    proc.on('close', code => {
+      if (code) reject(new Error(`cncrender exited with code ${code}`));
+    });
+
+    proc.stdin.write(`${JSON.stringify(job)}\n`);
+    proc.stdin.end();
+  });
+}

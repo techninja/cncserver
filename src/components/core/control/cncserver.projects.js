@@ -8,11 +8,12 @@ import dataUriToBuffer from 'data-uri-to-buffer';
 import { homedir } from 'os';
 import * as utils from 'cs/utils';
 import { getDataDefault } from 'cs/schemas';
+import { botConf } from 'cs/settings';
 import {
   colors, stage, preview, temp
 } from 'cs/drawing';
 import { bindTo, trigger } from 'cs/binder';
-// import { renderPathsToMoves } from 'cs/control';
+import { renderPathsToMoves, killAllCncrenderProcs } from 'cs/print';
 import * as content from 'cs/content';
 
 const PROJECT_JSON = 'cncserver.project.json';
@@ -66,11 +67,10 @@ export function openProject(hash) {
   preview.clearAll();
 
   // Apply the colorset preset in the project, if we can.
-  if (project.colorset) {
-    colors.applyPreset(project.colorset).catch(e => {
-      console.error(e);
-    });
-  }
+  const colorsetName = project.colorset || botConf.get('defaultColorset') || 'default-single-pen';
+  colors.applyPreset(colorsetName).catch(e => {
+    console.error(e);
+  });
 
   // Get all the info loaded into the content items, and get the file data.
   Object.entries(project.content).forEach(([, item]) => {
@@ -85,7 +85,7 @@ export function openProject(hash) {
       data = fs.readFileSync(filePath).toString();
     }
 
-    content.loadFromFile(item, data);
+      content.loadFromFile(item, data);
   });
 
   trigger('projects.update', project);
@@ -95,9 +95,17 @@ export function openProject(hash) {
 
 // Initialize with a "current" project.
 function initProject() {
+  // Open the most recently modified existing project if any exist.
+  if (items.size > 0) {
+    const latest = [...items.values()].sort(
+      (a, b) => new Date(b.modified) - new Date(a.modified)
+    )[0];
+    openProject(latest.hash);
+    return;
+  }
+
+  // No projects exist, create a default.
   const now = new Date();
-  // Create a temp project or load last.
-  // TODO: When deleting an open project, default to this.
   addItem({
     title: 'New Project',
     description: `Automatic project created ${now.toLocaleDateString()}`,
@@ -207,7 +215,8 @@ export function saveProjectFiles(hash = state.current) {
   delete saveItem.dir;
 
   // Save the preview.
-  fs.writeFileSync(path.resolve(dir, PREVIEW_SVG), stage.getPreviewSVG());
+  const paperColor = item.options?.paper?.color || null;
+  fs.writeFileSync(path.resolve(dir, PREVIEW_SVG), stage.getPreviewSVG(paperColor));
 
   // Write the final settings file.
   fs.writeFileSync(path.resolve(dir, PROJECT_JSON), JSON.stringify(saveItem, null, 2));
@@ -283,31 +292,29 @@ export function editItem({ hash }, {
     let changes = false;
     const project = items.get(hash);
 
-    // Change name (must rename folder).
-    if (name) {
+    // Change title
+    if (title) {
       changes = true;
+      project.title = title;
+    }
+
+    // Change name (must rename folder). Derive from title if not explicitly given.
+    if (name || title) {
       const newName = utils.getMachineName(name || title, 15);
 
       // Name change? Rename the dest folder.
       if (newName !== project.name) {
+        changes = true;
         const oldPath = getProjectDirName({ hash: project.hash, name: project.name });
         const newPath = getProjectDirName({ hash: project.hash, name: newName });
 
-        // If the old dir exists, rename it.
         if (fs.existsSync(oldPath)) {
           fs.renameSync(oldPath, newPath);
         }
 
         project.dir = newPath;
+        project.name = newName;
       }
-
-      project.name = newName;
-    }
-
-    // Change title
-    if (title) {
-      changes = true;
-      project.title = title;
     }
 
     // Change Description.
@@ -372,13 +379,9 @@ export function setRenderingState(newState, specificHash = null) {
 
   if (newState) {
     renderCurrentContent(specificHash).then(() => {
-      // TODO: Send async stream update for render completion.
-      // ...and render start?
       state.rendering = false;
-
-      // Clear out the temp layer to free memory.
-      // TODO: Move this to a binder event?
       temp.clearAll();
+      saveProjectFiles();
     });
   } else {
     // TODO: Stop the render...somehow?
@@ -390,11 +393,11 @@ export function setPrintingState(newState) {
   if (state.printing === newState) return;
 
   if (newState) {
-    // TODO:
     console.log('Start printing!');
-    // renderPathsToMoves();
+    console.log('[projects] calling renderPathsToMoves...');
+    renderPathsToMoves();
   } else {
-    // TODO:
+    killAllCncrenderProcs();
     console.log('Stop printing!');
   }
   state.printing = newState;

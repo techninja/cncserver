@@ -8,7 +8,6 @@ import { sendMessage } from 'cs/ipc';
 import { bot, gConf } from 'cs/settings';
 import { resetState, getPosChangeData } from 'cs/pen';
 import { state as actualPenState, forceState as forceActualPen } from 'cs/actualPen';
-import { setBatchRunningState } from 'cs/api';
 import {
   sendBufferVars,
   sendBufferAdd,
@@ -17,6 +16,12 @@ import {
   sendMessageUpdate,
   sendCallbackUpdate
 } from 'cs/sockets';
+
+// Batch running state — lives here to avoid circular import with cs/api.
+export const batchState = { batchRunning: false };
+export function setBatchRunningState(runningState = false) {
+  batchState.batchRunning = !!runningState;
+}
 
 // Buffer State variables
 export const state = {

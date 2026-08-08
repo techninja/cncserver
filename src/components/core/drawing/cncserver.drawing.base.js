@@ -5,6 +5,11 @@
 // Paper does everything with getters and settings attached to object params.
 /* eslint-disable no-param-reassign */
 
+// Paper.js needs a browser-like `self` with DOMParser for SVG import in Node.
+// paper-jsdom's requireName detection breaks under ESM, so we set it up manually.
+import { JSDOM } from 'jsdom';
+const { window: _jsdomWindow } = new JSDOM('<html><body></body></html>', { url: 'file://' + process.cwd() + '/' });
+global.self = _jsdomWindow;
 import Paper from 'paper';
 import { trigger, bindTo } from 'cs/binder';
 import { bot } from 'cs/settings';
@@ -33,6 +38,8 @@ bindTo('schemas.loaded', bindID, () => {
   workspace.top = bot.workAreaMM.top;
   workspace.bottom = bot.workAreaMM.bottom;
   workspace.right = bot.workAreaMM.right;
+  workspace.width = bot.workAreaMM.right - bot.workAreaMM.left;
+  workspace.height = bot.workAreaMM.bottom - bot.workAreaMM.top;
 
   state.project = new Project(state.size);
 
@@ -105,7 +112,7 @@ export function fitToWorkspace(bounds) {
   if (adjBounds.point.y < 0) adjBounds.point.y = 0;
 
   // Offset for top/left workspaces.
-  adjBounds.point = adjBounds.point.add(workspace);
+  adjBounds.point = adjBounds.point.add(new Point(workspace.left, workspace.top));
 
   // Keep width/height from overflowing.
   if (adjBounds.right > workspace.right) {

@@ -61,7 +61,7 @@ export function loadGlobalConfig(cb) {
     // Save Global Conf file defaults if not saved
     if (!fs.existsSync(configPath)) {
       const def = gConf.stores.defaults.store;
-      for (const [key, value] in Object.entries(def)) {
+      for (const [key, value] of Object.entries(def)) {
         if (key !== 'type') {
           gConf.set(key, value);
         }
@@ -213,9 +213,9 @@ export function getSupportedBots() {
   const list = fs.readdirSync(path.resolve(__basedir, '..', 'machine_types'));
   const out = {};
   for (const i of list) {
-    const file = path.resolve(__basedir, '..', 'machine_types', list[i]);
+    const file = path.resolve(__basedir, '..', 'machine_types', i);
     const data = ini.parse(fs.readFileSync(file, 'utf-8'), 'utf-8');
-    const type = list[i].split('.')[0];
+    const type = i.split('.')[0];
     out[type] = {
       name: data.name,
       data,

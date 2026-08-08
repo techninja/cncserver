@@ -283,7 +283,7 @@ export const addItem = payload => new Promise((resolve, reject) => {
     const hash = getHash(item);
     item.hash = hash;
 
-    item.item = drawing.stage.import(payload.item, hash, item.bounds);
+    item.item = drawing.stage.importGroup(payload.item, hash, item.bounds || null);
     items.set(hash, item);
 
     const responseItem = getResponseItem(hash);
@@ -325,7 +325,7 @@ export const editItem = (
         item.source.content = filePath;
         item.hash = hash;
 
-        item.item = drawing.stage.import(finalItem.item, hash, item.bounds);
+        item.item = drawing.stage.importGroup(finalItem.item, hash, item.bounds);
         items.set(hash, item);
 
         const responseItem = getResponseItem(hash);

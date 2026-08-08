@@ -65,7 +65,7 @@ function moveRequest(req) {
 
     if (turtle.degrees > 360) turtle.degrees -= 360;
     if (turtle.degrees < 0) turtle.degrees += 360;
-    console.log(`Rotate ${op} ${arg} deg. to ${turtle.degrees} deg.`);
+    // console.log(`Rotate ${op} ${arg} deg. to ${turtle.degrees} deg.`);
     return { code: 200, body: '' };
   }
 
@@ -84,8 +84,8 @@ function moveRequest(req) {
     if (turtle.degrees > 360) turtle.degrees -= 360;
     if (turtle.degrees < 0) turtle.degrees += 360;
 
-    console.log(`Rotate relative towards ${point.x}, ${point.y}
-      from ${turtle.x}, ${turtle.y} to ${turtle.degrees} deg`);
+    // console.log(`Rotate relative towards ${point.x}, ${point.y}
+      // from ${turtle.x}, ${turtle.y} to ${turtle.degrees} deg`);
     return { code: 200, body: '' };
   }
 
@@ -93,9 +93,9 @@ function moveRequest(req) {
   if (op === 'absturn') {
     // Correct for "standard" Turtle orientation in Scratch.
     turtle.degrees = parseInt(arg, 10) - 90;
-    console.log(
-      `Rotate to ${arg} scratch degrees (actual angle ${turtle.degrees} deg)`
-    );
+    // console.log(
+      //   `Rotate to ${arg} scratch degrees (actual angle ${turtle.degrees} deg)`
+      // );
     return { code: 200, body: '' };
   }
 
@@ -112,7 +112,7 @@ function moveRequest(req) {
   if (op === 'forward') {
     arg = parseInt(arg, 10);
 
-    console.log(`Move pen by ${arg} steps`);
+    // console.log(`Move pen by ${arg} steps`);
     const radians = turtle.degrees * (Math.PI / 180);
     turtle.x = Math.round(turtle.x + Math.cos(radians) * arg * sizeMultiplier);
     turtle.y = Math.round(turtle.y + Math.sin(radians) * arg * sizeMultiplier);
@@ -150,12 +150,12 @@ function moveRequest(req) {
       }
     }
 
-    console.log(`Move pen to coord ${turtle.x}, ${turtle.y}`);
+    // console.log(`Move pen to coord ${turtle.x}, ${turtle.y}`);
   }
 
   // Attempt to move pen to desired point (may be off screen)
   const distance = control.movePenAbs(turtle);
-  if (distance === 0) console.log('Not moved any distance');
+  if (distance === 0) { /* not moved */ }
 
   // Add up distance counter
   if ((pen.isDown()) && !pen.state.offCanvas) {

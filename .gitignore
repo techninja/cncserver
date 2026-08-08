@@ -17,6 +17,9 @@ npm-debug.log
 /web_modules/*
 /build/*
 
+src/cncrender/target/
+src/cncrunner/target/
+
 config.ini
 
 test_*
